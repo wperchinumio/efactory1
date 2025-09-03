@@ -70,21 +70,53 @@ export default function OnlineCustomersPage() {
 	}, [rows, filter, sortField, direction]);
 
 	function BrowserIcon({ short }: { short: string }) {
-		const brand =
-			short?.startsWith('Chrome') ? (
-				<IconBrandChrome className='text-success w-[18px] h-[18px]' />
-			) : short?.startsWith('Firefox') ? (
-				<IconBrandFirefox className='text-warning w-[18px] h-[18px]' />
-			) : short?.startsWith('Safari') ? (
-				<IconBrandSafari className='text-info w-[18px] h-[18px]' />
-			) : short?.startsWith('Edge') ? (
-				<IconBrandEdge className='text-primary w-[18px] h-[18px]' />
-			) : short?.startsWith('Opera') ? (
-				<IconBrandOpera className='text-danger w-[18px] h-[18px]' />
-			) : (
-				<IconBrandChrome className='text-font-color-100 w-[18px] h-[18px]' />
-			);
-		return <div className='inline-flex items-center justify-center w-[22px] h-[22px] rounded-full bg-primary-10'>{brand}</div>;
+		const getBrowserConfig = (browserName: string) => {
+			if (browserName?.startsWith('Chrome')) {
+				return {
+					icon: <IconBrandChrome className='w-[16px] h-[16px]' />,
+					bgColor: 'bg-success-50',
+					iconColor: 'text-success'
+				};
+			} else if (browserName?.startsWith('Firefox')) {
+				return {
+					icon: <IconBrandFirefox className='w-[16px] h-[16px]' />,
+					bgColor: 'bg-orange-100',
+					iconColor: 'text-warning'
+				};
+			} else if (browserName?.startsWith('Safari')) {
+				return {
+					icon: <IconBrandSafari className='w-[16px] h-[16px]' />,
+					bgColor: 'bg-blue-100',
+					iconColor: 'text-info'
+				};
+			} else if (browserName?.startsWith('Edge')) {
+				return {
+					icon: <IconBrandEdge className='w-[16px] h-[16px]' />,
+					bgColor: 'bg-primary-10',
+					iconColor: 'text-primary'
+				};
+			} else if (browserName?.startsWith('Opera')) {
+				return {
+					icon: <IconBrandOpera className='w-[16px] h-[16px]' />,
+					bgColor: 'bg-red-100',
+					iconColor: 'text-danger'
+				};
+			} else {
+				return {
+					icon: <IconBrandChrome className='w-[16px] h-[16px]' />,
+					bgColor: 'bg-border-color',
+					iconColor: 'text-font-color-100'
+				};
+			}
+		};
+
+		const config = getBrowserConfig(short);
+		
+		return (
+			<div className={`inline-flex items-center justify-center w-[28px] h-[28px] rounded-lg ${config.bgColor} ${config.iconColor} shadow-shadow-sm`}>
+				{config.icon}
+			</div>
+		);
 	}
 
 	async function handleMapClick(ip?: string) {
@@ -107,72 +139,181 @@ export default function OnlineCustomersPage() {
 	const isFiltered = filtered.length !== total && total > 0;
 
 	return (
-		<div className='md:px-6 sm:px-3 pt-4'>
-			<div className='container-fluid'>
-				<div className='card bg-card-color border border-dashed border-border-color rounded-2xl p-0 shadow-shadow-lg overflow-hidden'>
-					<div className='flex flex-wrap items-center justify-between gap-4 px-4 pt-4'>
-						<div>
-							<div className='text-[18px]/[26px] md:text-[20px]/[28px] font-semibold'>Online Customers{total ? `: ${total}` : ''} {isFiltered ? <span className='text-font-color-100'>({filtered.length} filtered)</span> : null}</div>
-							<div className='text-[12px]/[1] text-font-color-100'>Last refresh: {refreshedAt ? new Date(refreshedAt).toLocaleString() : ''}</div>
+		<div className='md:px-6 sm:px-3 pt-8 md:pt-10 h-[calc(100svh-140px)] overflow-hidden'>
+			{/* Top Filter Bar */}
+			<div className='container-fluid mb-4'>
+				<div className='max-w-[1120px] mx-auto flex items-center justify-between gap-4'>
+					<div className='flex items-center gap-3'>
+						<div className='relative'>
+							<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
+							<input 
+								className='form-input pl-9 pr-3 py-2 text-[14px] min-w-[250px] border-border-color focus:border-primary focus:ring-2 focus:ring-primary-10 rounded-2xl' 
+								placeholder='Search customers...' 
+								value={filter} 
+								onChange={(e) => setFilter(e.target.value)} 
+							/>
 						</div>
-						<div className='flex items-center gap-2'>
-							<div className='relative'>
-								<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-2 top-1/2 -translate-y-1/2' />
-								<input className='form-input pl-7' placeholder='filter' value={filter} onChange={(e) => setFilter(e.target.value)} />
+						{total > 0 && (
+							<div className='text-font-color-100 text-[14px]/[20px]'>
+								{isFiltered ? (
+									<span>Showing {filtered.length} of {total} customers</span>
+								) : (
+									<span>{total} customers online</span>
+								)}
 							</div>
-							<button className='btn btn-secondary' onClick={load} disabled={loading}>Refresh</button>
-						</div>
+						)}
 					</div>
-					<div className='overflow-auto max-h-[65svh]'>
-						<table className='w-full min-w-[900px]'>
-							<thead>
-								<tr className='text-left text-font-color-100 text-[12px]/[1] uppercase border-b border-dashed border-border-color bg-body-color sticky top-0 z-[1]'>
-									<th className='py-2 px-2 w-[40px]'>#</th>
-									<th className='py-2 px-2 cursor-pointer select-none' onClick={() => { setSortField('username'); setDirection(direction === 'asc' ? 'desc' : 'asc'); }}><span className='inline-flex items-center gap-1'>Username <IconArrowsSort className='w-[14px] h-[14px]' /></span></th>
-									<th className='py-2 px-2 cursor-pointer select-none' onClick={() => { setSortField('company_name'); setDirection(direction === 'asc' ? 'desc' : 'asc'); }}><span className='inline-flex items-center gap-1'>Company <IconArrowsSort className='w-[14px] h-[14px]' /></span></th>
-									<th className='py-2 px-2 cursor-pointer select-none' onClick={() => { setSortField('short_browser'); setDirection(direction === 'asc' ? 'desc' : 'asc'); }}><span className='inline-flex items-center gap-1'>Browser <IconArrowsSort className='w-[14px] h-[14px]' /></span></th>
-								</tr>
-							</thead>
-							<tbody>
-								{filtered.map((r, i) => (
-									<tr key={r.row_id} className='border-b border-dashed border-border-color hover:bg-primary-10'>
-										<td className='py-2 px-2'>{i + 1}</td>
-										<td className='py-2 px-2'>
-											<div className={`font-medium ${r.is_master ? 'text-white font-semibold' : ''}`}>{r.username}</div>
-											<div className='text-font-color-100 text-[12px]'>
-												<span className='inline-flex items-center gap-1'>
-													<IconWorldPin className='w-[14px] h-[14px] text-primary' />
-													<button className='underline underline-offset-2 decoration-dotted hover:text-primary' onClick={() => handleMapClick(r.ip_address)} disabled={!r.ip_address || r.ip_address.startsWith('192.168')}>Map</button>
-												</span>
-											</div>
-										</td>
-										<td className='py-2 px-2'>
-											<div className='font-semibold'>{`${r.account_number} - ${r.location}`}</div>
-											<div className='text-font-color-100'>{r.company_name} <span className='text-primary pl-2'>{r.company_code}</span></div>
-										</td>
-										<td className='py-2 px-2'>
-											<div className='inline-flex items-center gap-2'>
-												<BrowserIcon short={r.short_browser} />
-												<span>{r.short_browser}</span>
-											</div>
-											<div className='text-font-color-100 text-[11px]/[1] pl-[26px]'>{r.long_browser}</div>
-										</td>
-									</tr>
-								))}
-							</tbody>
-						</table>
-					</div>
+					<button className='btn btn-secondary' onClick={load} disabled={loading}>
+						{loading ? 'Refreshing...' : 'Refresh'}
+					</button>
 				</div>
 			</div>
+
+			<div className='container-fluid pb-0 h-full'>
+				<div className='card bg-card-color border border-dashed border-border-color rounded-2xl p-6 md:p-8 shadow-shadow-lg max-w-[1120px] mx-auto'>
+					<div className='mb-4 flex items-end justify-between gap-4'>
+						<div>
+							<div className='text-[18px]/[26px] md:text-[20px]/[28px] font-semibold'>Online Customers</div>
+							<div className='text-font-color-100 text-[14px]/[20px]'>
+								{refreshedAt && (
+									<span>Last updated: {new Date(refreshedAt).toLocaleString()}</span>
+								)}
+							</div>
+						</div>
+					</div>
+
+					<ul
+						className={`${filtered.length === 0 ? 'min-h-[240px] flex items-center justify-center' : filtered.length <= 4 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 items-start gap-4 overflow-auto custom-scrollbar p-3`}
+						style={{ maxHeight: filtered.length <= 4 ? undefined : 'calc(100svh - 140px - 320px)' }}
+					>
+						{filtered.length === 0 ? (
+							<li className='col-span-full text-center text-font-color-100'>
+								<div className='text-[48px] mb-2'>👥</div>
+								<div className='text-[16px] font-medium mb-1'>
+									{total === 0 ? 'No customers online' : 'No customers match your search'}
+								</div>
+								<div className='text-[14px]'>
+									{total === 0 ? 'Check back later for active customers' : 'Try adjusting your search terms'}
+								</div>
+							</li>
+						) : (
+							filtered.map((customer, i) => {
+								const initials = customer.username
+									.toUpperCase()
+									.replace(/[^A-Z0-9]/g, '')
+									.slice(0, 2);
+								
+								const locationTokens = String(customer.location || '')
+									.split(/[-,]/)
+									.map((t) => t.trim())
+									.filter(Boolean)
+									.slice(0, 3);
+
+								return (
+									<li
+										key={customer.row_id}
+										className='relative group border border-dashed border-border-color rounded-xl bg-card-color transition-all duration-200 hover:shadow-shadow-lg hover:-translate-y-[1px] hover:border-primary-10'
+									>
+										<div className='p-4 md:p-5 flex flex-col gap-3'>
+											{/* Header with avatar and basic info */}
+											<div className='flex items-center gap-3'>
+												<div className='w-[48px] h-[48px] min-w-[48px] rounded-lg flex items-center justify-center font-semibold text-white bg-gradient-to-br from-primary to-secondary shadow-shadow-sm'>
+													{initials}
+												</div>
+												<div className='flex-1 min-w-0'>
+													<div className='flex items-center gap-2 mb-1'>
+														<span className={`truncate font-semibold ${customer.is_master ? 'text-primary' : 'text-white'}`}>
+															{customer.username}
+														</span>
+														{customer.is_master && (
+															<span className='inline-flex items-center justify-center rounded-sm bg-primary text-white px-2 py-1 text-[10px]/[1.2] font-medium'>
+																MASTER
+															</span>
+														)}
+													</div>
+													<div className='text-font-color-100 text-[12px]/[1] truncate'>
+														#{i + 1} of {filtered.length}
+													</div>
+												</div>
+											</div>
+
+											{/* Company information */}
+											<div className='space-y-1'>
+												<div className='font-medium text-white text-[14px]/[20px] truncate'>
+													{customer.account_number} - {customer.location}
+												</div>
+												<div className='text-font-color-100 text-[13px]/[18px] truncate'>
+													{customer.company_name}
+													{customer.company_code && (
+														<span className='ml-2 px-2 py-[2px] rounded-md bg-primary-10 text-primary text-[11px]/[1] uppercase font-medium'>
+															{customer.company_code}
+														</span>
+													)}
+												</div>
+											</div>
+
+											{/* Location tags */}
+											{locationTokens.length > 0 && (
+												<div className='flex flex-wrap gap-1'>
+													{locationTokens.map((token, idx) => (
+														<span key={idx} className='px-2 py-[2px] rounded-md bg-secondary text-white text-[10px]/[1] uppercase font-medium'>
+															{token}
+														</span>
+													))}
+												</div>
+											)}
+
+											{/* Browser and actions */}
+											<div className='flex items-center justify-between pt-2 border-t border-dashed border-border-color'>
+												<div className='flex items-center gap-2'>
+													<BrowserIcon short={customer.short_browser} />
+													<div className='flex flex-col'>
+														<span className='text-[12px]/[16px] font-medium text-white'>
+															{customer.short_browser}
+														</span>
+														<span className='text-[10px]/[14px] text-font-color-100 truncate max-w-[120px]'>
+															{customer.long_browser}
+														</span>
+													</div>
+												</div>
+												
+												<button 
+													className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-border-color hover:bg-primary-10 hover:border-primary text-[11px]/[1] text-font-color-100 hover:text-primary transition-colors opacity-0 group-hover:opacity-100' 
+													onClick={() => handleMapClick(customer.ip_address)} 
+													disabled={!customer.ip_address || customer.ip_address.startsWith('192.168')}
+												>
+													<IconWorldPin className='w-[12px] h-[12px]' />
+													<span>Map</span>
+												</button>
+											</div>
+										</div>
+									</li>
+								);
+							})
+						)}
+					</ul>
+				</div>
+			</div>
+			
+			{/* Map Modal */}
 			{mapOpen && mapCoords ? (
 				<div className='fixed inset-0 z-50 flex items-center justify-center bg-black-50 backdrop-blur-sm'>
 					<div className='bg-card-color rounded-xl shadow-shadow-lg border border-border-color overflow-hidden w-[90vw] max-w-[900px]'>
 						<div className='p-4 border-b border-border-color flex items-center justify-between'>
-							<div className='font-semibold'>Customer location</div>
-							<button className='btn btn-white !border-border-color' onClick={() => setMapOpen(false)}>Cancel</button>
+							<div className='font-semibold text-[16px]/[24px]'>Customer Location</div>
+							<button className='btn btn-white !border-border-color' onClick={() => setMapOpen(false)}>
+								Close
+							</button>
 						</div>
 						<div className='h-[70svh]'>
-							<iframe title='map' width='100%' height='100%' frameBorder='0' scrolling='no' src={`https://maps.google.com/maps?q=${mapCoords.lat},${mapCoords.lng}&hl=en&z=10&output=embed`} />
+							<iframe 
+								title='Customer location map' 
+								width='100%' 
+								height='100%' 
+								frameBorder='0' 
+								scrolling='no' 
+								src={`https://maps.google.com/maps?q=${mapCoords.lat},${mapCoords.lng}&hl=en&z=10&output=embed`} 
+							/>
 						</div>
 					</div>
 				</div>

@@ -6,6 +6,7 @@ import { loginForAccount } from '@/lib/api/auth';
 import type { AvailableAccountItem } from '@/lib/api/models/auth';
 import { useRouter } from 'next/router';
 import LoadingOverlay from '@/components/common/LoadingOverlay';
+import { IconSearch } from '@tabler/icons-react';
 
 function getInitials(username: string) {
 	return (username || '')
@@ -27,14 +28,7 @@ function SelectCustomerPageInner() {
 		setAccounts(list);
 	}, []);
 
-	useEffect(() => {
-		function onGlobalSearch(ev: Event) {
-			const detail = (ev as CustomEvent<string>).detail ?? '';
-			setFilter(String(detail));
-		}
-		window.addEventListener('global-search-change', onGlobalSearch as any);
-		return () => window.removeEventListener('global-search-change', onGlobalSearch as any);
-	}, []);
+	// Removed global search dependency - now using local filter
 
 
 
@@ -76,8 +70,28 @@ function SelectCustomerPageInner() {
 	return (
 		<div className='md:px-6 sm:px-3 pt-8 md:pt-10 h-[calc(100svh-140px)] overflow-hidden'>
 			{submitting && <LoadingOverlay text='Switching account...' />}
+			{/* Top Filter Bar */}
+			<div className='container-fluid mb-4'>
+				<div className='max-w-[1120px] mx-auto flex items-center justify-between gap-4'>
+					<div className='flex items-center gap-3'>
+						<div className='relative'>
+							<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
+							<input 
+								className='form-input pl-9 pr-3 py-2 text-[14px] min-w-[250px] border-border-color focus:border-primary focus:ring-2 focus:ring-primary-10 rounded-2xl' 
+								placeholder='Search accounts...' 
+								value={filter} 
+								onChange={(e) => setFilter(e.target.value)} 
+							/>
+						</div>
+						<div className='text-font-color-100 text-[14px]/[20px]'>
+							<span>{filtered.length} accounts available</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
 			<div className='container-fluid pb-0 h-full'>
-				<div className='card bg-card-color border border-dashed border-border-color rounded-2xl p-6 md:p-8 shadow-shadow-lg mt-2 md:mt-4 max-w-[1120px] mx-auto'>
+				<div className='card bg-card-color border border-dashed border-border-color rounded-2xl p-6 md:p-8 shadow-shadow-lg max-w-[1120px] mx-auto'>
 					<div className='mb-4 flex items-end justify-between gap-4'>
 						<div>
 							<div className='text-[18px]/[26px] md:text-[20px]/[28px] font-semibold'>LOGIN TO EFACTORY</div>
@@ -90,8 +104,8 @@ function SelectCustomerPageInner() {
 					</div>
 
 					<ul
-						className={`${filtered.length === 1 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 lg:grid-cols-2 items-start gap-4 overflow-auto custom-scrollbar p-3`}
-						style={{ maxHeight: filtered.length === 1 ? undefined : 'calc(100svh - 140px - 260px)' }}
+						className={`${filtered.length === 1 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 items-start gap-4 overflow-auto custom-scrollbar p-3`}
+						style={{ maxHeight: filtered.length === 1 ? undefined : 'calc(100svh - 140px - 300px)' }}
 					>
 						{filtered.map((u, i) => {
 							const initials = getInitials(u.username);
