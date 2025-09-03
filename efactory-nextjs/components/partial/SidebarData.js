@@ -41,10 +41,10 @@ export const menuList = [
         icon: IconReport,
         link: "Reports",
         children: [
-            { link: "By Time", url: "/reports/by-time" },
-            { link: "By Ship Service", url: "/reports/by-ship-service" },
-            { link: "By Channel", url: "/reports/by-channel" },
-            { link: "By Account", url: "/reports/by-account" },
+            { link: "By Time", url: "/admin/analytics/profiles/by-time" },
+            { link: "By Ship Service", url: "/admin/analytics/profiles/by-ship-service" },
+            { link: "By Channel", url: "/admin/analytics/profiles/by-channel" },
+            { link: "By Account", url: "/admin/analytics/profiles/by-account" },
         ]
     },
     {

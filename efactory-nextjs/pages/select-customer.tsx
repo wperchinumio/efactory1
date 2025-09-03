@@ -36,6 +36,8 @@ function SelectCustomerPageInner() {
 		return () => window.removeEventListener('global-search-change', onGlobalSearch as any);
 	}, []);
 
+
+
 	const filtered = useMemo(() => {
 		const q = filter.trim().toLowerCase();
 		let list = accounts;
@@ -72,10 +74,10 @@ function SelectCustomerPageInner() {
 	}
 
 	return (
-		<div className='md:px-6 sm:px-3 pt-4'>
+		<div className='md:px-6 sm:px-3 pt-8 md:pt-10 h-[calc(100svh-140px)] overflow-hidden'>
 			{submitting && <LoadingOverlay text='Switching account...' />}
-			<div className='container-fluid max-w-[1100px] mx-auto'>
-				<div className='card bg-card-color border border-dashed border-border-color rounded-2xl p-4 md:p-6 shadow-shadow-lg'>
+			<div className='container-fluid pb-0 h-full'>
+				<div className='card bg-card-color border border-dashed border-border-color rounded-2xl p-6 md:p-8 shadow-shadow-lg mt-2 md:mt-4 max-w-[1120px] mx-auto'>
 					<div className='mb-4 flex items-end justify-between gap-4'>
 						<div>
 							<div className='text-[18px]/[26px] md:text-[20px]/[28px] font-semibold'>LOGIN TO EFACTORY</div>
@@ -87,7 +89,10 @@ function SelectCustomerPageInner() {
 						</div>
 					</div>
 
-					<ul className='grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-[65svh] overflow-auto custom-scrollbar p-2'>
+					<ul
+						className={`${filtered.length === 1 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 lg:grid-cols-2 items-start gap-4 overflow-auto custom-scrollbar p-3`}
+						style={{ maxHeight: filtered.length === 1 ? undefined : 'calc(100svh - 140px - 260px)' }}
+					>
 						{filtered.map((u, i) => {
 							const initials = getInitials(u.username);
 							const isSelected = selectedUsername === u.username;
@@ -95,7 +100,7 @@ function SelectCustomerPageInner() {
 								.split(',')
 								.map((t) => t.trim())
 								.filter(Boolean)
-								.slice(0, 8); // show more but cap to avoid overflow
+								.slice(0, 8);
 							return (
 								<li
 									key={u.username}
@@ -109,15 +114,15 @@ function SelectCustomerPageInner() {
 										</div>
 										<div className='flex-1 min-w-0'>
 											<div className='flex items-center gap-2'>
-												<span className='truncate font-medium'>{u.username}</span>
+												<span className='truncate font-semibold text-white'>{u.username}</span>
 												{u.is_EDI ? <span className='inline-flex items-center justify-center rounded-sm bg-black text-white px-2 text-[10px]/[1.2]'>EDI</span> : null}
 											</div>
-											<div className='truncate text-primary'>{u.company}</div>
+											<div className='truncate text-font-color-100'>{u.company}</div>
 										</div>
 										<div className='text-right text-font-color-100 text-[12px]/[1] flex flex-col gap-2 items-end max-w-[40%]'>
 											<div className='flex flex-wrap gap-1 justify-end'>
 												{locTokens.map((t) => (
-													<span key={t} className='px-2 py-[2px] rounded-md bg-primary-10 text-primary text-[11px]/[1] uppercase'>
+													<span key={t} className='px-2 py-[2px] rounded-md bg-primary text-white text-[11px]/[1] uppercase'>
 														{t}
 													</span>
 												))}

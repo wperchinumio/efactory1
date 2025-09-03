@@ -376,9 +376,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         if (typeof window !== 'undefined') window.location.href = '/auth/sign-in';
     }
 
-    const auth = getAuthToken();
-    const roles = Array.isArray(auth?.user_data?.roles) ? auth?.user_data?.roles : [];
-    const isAdmin = roles.includes('ADM');
+    // Avoid reading localStorage during SSR to prevent hydration mismatch
+    const [isAdmin, setIsAdmin] = useState(false)
+    useEffect(() => {
+        const auth = getAuthToken();
+        const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+        setIsAdmin(roles.includes('ADM'))
+    }, [])
 
     return (
         <>

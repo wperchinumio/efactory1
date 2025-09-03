@@ -39,10 +39,18 @@ import {
     IconVideo,
     IconDots,
     IconChevronsDown,
+    IconLogin2,
+    IconUsers,
+    IconLicense,
+    IconClockHour4,
+    IconTruckDelivery,
+    IconChartBar,
+    IconUserCircle,
 } from '@tabler/icons-react'
 import NewProject from '../../pages/app/project/NewProject';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getAuthToken } from '@/lib/auth/storage';
 
 export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleChat }) {
 
@@ -90,6 +98,26 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
         setNewProjectSidebar(!newProjectSidebar)
     }
 
+    // Defer role detection to the client after mount to avoid SSR hydration mismatch
+    const [isAdmin, setIsAdmin] = useState(false)
+    useEffect(() => {
+        const auth = getAuthToken();
+        const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+        setIsAdmin(roles.includes('ADM'))
+    }, [])
+
+    const adminData = [
+        { devider: 'ADMIN' },
+        { icon: IconLogin2, link: 'Login to eFactory', url: '/select-customer' },
+        { icon: IconUsers, link: 'Online Customers', url: '/admin/online-customers' },
+        { icon: IconLicense, link: 'License Summary', url: '/admin/license-summary' },
+        { icon: IconUserCircle, link: 'eFactory Users', url: '/admin/users' },
+        { icon: IconClockHour4, link: 'By Time', url: '/admin/analytics/profiles/by-time' },
+        { icon: IconTruckDelivery, link: 'By Ship Service', url: '/admin/analytics/profiles/by-ship-service' },
+        { icon: IconChartBar, link: 'By Channel', url: '/admin/analytics/profiles/by-channel' },
+        { icon: IconChartBar, link: 'By Account', url: '/admin/analytics/profiles/by-account' },
+    ];
+
     const isDocumentationPage = (url) => {
         return documentationItem.some(item => item.url === url);
     };
@@ -99,7 +127,9 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
     };
 
     let data;
-    if (isDocumentationPage(pageUrl)) {
+    if (isAdmin) {
+        data = adminData; // show only admin menu for DCL users
+    } else if (isDocumentationPage(pageUrl)) {
         data = documentationItem;
     } else if (isCrmManagement(pageUrl)) {
         data = crmManagement;
@@ -175,6 +205,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                 </button>
                 <NewProject newProjectSidebar={newProjectSidebar} toggleNewProject={toggleNewProject} />
             </div>
+            {/* When admin, render a flat list (no groups) */}
             <ul className='sidebar-list px-3 mb-4 main-menu'>
                 {data.map((item, key) => (
                     item.children ? <li key={key} className='sidebar-listitem'>
@@ -187,32 +218,12 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                             {menuActive === key ? <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />}
                         </button>
                         <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${menuActive === key ? 'block' : 'hidden'}`}>
-                            {item.children.map((res, key) => (
-                                res.children ?
-                                    <li key={key}>
-                                        <button
-                                            onClick={() => menuToggleSub(key)}
-                                            className={`flex items-center gap-10 w-full py-2 text-[14px]/[20px] relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-24px] rtl:before:right-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${menuActiveSub === key ? 'text-secondary before:!block' : ''}`}
-                                        >
-                                            <span>{res.link}</span>
-                                            {menuActiveSub === key ? <IconChevronsDown className="stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : <IconChevronRight className="stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />}
-                                        </button>
-                                        <ul className={`ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${menuActiveSub === key ? 'block' : 'hidden'}`}>
-                                            {res.children.map((sub, key) => (
-                                                <li key={key}>
-                                                    <Link href={sub.url} onClick={() => { window.innerWidth < 1200 && setMobileNav(false) }} className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-24px] rtl:before:right-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.url ? 'text-secondary before:!block' : ''}`}>
-                                                        {sub.link}
-                                                    </Link>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </li>
-                                    :
-                                    <li key={key}>
-                                        <Link href={res.url} onClick={() => { window.innerWidth < 1200 && setMobileNav(false) }} className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-24px] rtl:before:right-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === res.url ? 'text-secondary before:!block' : ''}`}>
-                                            {res.link}
-                                        </Link>
-                                    </li>
+                            {item.children.map((sub, subKey) => (
+                                <li key={subKey}>
+                                    <Link href={sub.url} onClick={() => { window.innerWidth < 1200 && setMobileNav(false) }} className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-24px] rtl:before:right-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.url ? 'text-secondary before:!block' : ''}`}>
+                                        {sub.link}
+                                    </Link>
+                                </li>
                             ))}
                         </ul>
                     </li>
@@ -229,6 +240,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                             </li>
                 ))}
             </ul>
+            {/* bottom shortcuts unchanged */}
             <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-3 border border-dashed rounded-xl p-2 mt-auto'>
                 <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-[2px] after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
                     <span title='My Schedule'>
@@ -249,7 +261,6 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                     <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
                 </Link>
             </div>
-            {/* The long schedule/chat sidebars remain as in the theme; omitted for brevity */}
         </>
     )
 }
