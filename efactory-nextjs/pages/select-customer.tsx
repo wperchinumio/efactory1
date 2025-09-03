@@ -21,11 +21,19 @@ function SelectCustomerPageInner() {
 	const [selectedUsername, setSelectedUsername] = useState<string>('');
 	const [submitting, setSubmitting] = useState(false);
 	const [accounts, setAccounts] = useState<AvailableAccountItem[]>([]);
+	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		const token = getAuthToken();
 		const list = Array.isArray(token?.available_accounts) ? (token!.available_accounts as any) : [];
 		setAccounts(list);
+	}, []);
+
+	useEffect(() => {
+		// Focus the search input when component mounts
+		if (searchInputRef.current) {
+			searchInputRef.current.focus();
+		}
 	}, []);
 
 	// Removed global search dependency - now using local filter
@@ -118,12 +126,12 @@ function SelectCustomerPageInner() {
 							return (
 								<li
 									key={u.username}
-									className={`relative group border border-dashed border-border-color rounded-xl bg-card-color transition-all duration-200 hover:shadow-shadow-lg hover:-translate-y-[1px] ${isSelected ? 'ring-2 ring-inset ring-primary' : ''}`}
+									className={`relative group border border-dashed border-border-color rounded-xl bg-card-color transition-all duration-200 hover:bg-primary-10 ${isSelected ? 'ring-2 ring-inset ring-primary' : ''}`}
 									onClick={() => setSelectedUsername(u.username)}
 									onDoubleClick={handleProceed}
 								>
 									<div className='p-4 md:p-5 flex items-center gap-4'>
-										<div className='w-[44px] h-[44px] min-w-[44px] rounded-lg flex items-center justify-center font-semibold text-white bg-gradient-to-br from-primary to-secondary shadow-shadow-sm'>
+										<div className='w-[44px] h-[44px] min-w-[44px] rounded-lg flex items-center justify-center font-semibold text-white bg-gradient-to-br from-primary to-secondary'>
 											{initials}
 										</div>
 										<div className='flex-1 min-w-0'>
@@ -142,7 +150,7 @@ function SelectCustomerPageInner() {
 												))}
 											</div>
 											<span className='text-font-color-400'>{i + 1}/{filtered.length}</span>
-											<button className='btn btn-outline-secondary btn-sm opacity-0 group-hover:opacity-100 transition' onClick={handleProceed} disabled={!isSelected || submitting}>
+											<button className='btn btn-outline-secondary btn-sm' onClick={handleProceed} disabled={!isSelected || submitting}>
 												Select
 											</button>
 										</div>

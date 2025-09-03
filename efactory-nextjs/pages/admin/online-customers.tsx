@@ -113,7 +113,7 @@ export default function OnlineCustomersPage() {
 		const config = getBrowserConfig(short);
 		
 		return (
-			<div className={`inline-flex items-center justify-center w-[24px] h-[24px] rounded-md ${config.bgColor} ${config.iconColor} shadow-shadow-sm`}>
+			<div className={`inline-flex items-center justify-center w-[24px] h-[24px] rounded-md ${config.bgColor} ${config.iconColor}`}>
 				{config.icon}
 			</div>
 		);
@@ -183,8 +183,8 @@ export default function OnlineCustomersPage() {
 					</div>
 
 					<ul
-						className={`${filtered.length === 0 ? 'min-h-[240px] flex items-center justify-center' : filtered.length === 1 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 items-start gap-3 overflow-auto custom-scrollbar p-3`}
-						style={{ maxHeight: filtered.length === 0 ? undefined : filtered.length === 1 ? undefined : 'calc(100svh - 140px - 300px)' }}
+						className={`${filtered.length === 0 ? 'min-h-[240px] flex items-center justify-center' : filtered.length <= 4 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 items-start gap-3 overflow-auto custom-scrollbar p-3`}
+						style={{ maxHeight: filtered.length === 0 ? undefined : filtered.length <= 4 ? undefined : 'calc(100svh - 140px - 240px)' }}
 					>
 						{filtered.length === 0 ? (
 							<li className='col-span-full text-center text-font-color-100'>
@@ -212,18 +212,18 @@ export default function OnlineCustomersPage() {
 								return (
 									<li
 										key={customer.row_id}
-										className='relative group border border-dashed border-border-color rounded-xl bg-card-color transition-all duration-200 hover:shadow-shadow-lg hover:-translate-y-[1px] hover:border-primary-10'
+										className='relative group border border-dashed border-border-color rounded-xl bg-card-color transition-all duration-200 hover:bg-primary-10'
 									>
 										<div className='p-4 flex items-center gap-4'>
 											{/* Avatar */}
-											<div className='w-[40px] h-[40px] min-w-[40px] rounded-lg flex items-center justify-center font-semibold text-white bg-gradient-to-br from-primary to-secondary shadow-shadow-sm'>
+											<div className='w-[40px] h-[40px] min-w-[44px] rounded-lg flex items-center justify-center font-semibold text-white bg-gradient-to-br from-primary to-secondary'>
 												{initials}
 											</div>
 											
 											{/* Main Content - Horizontal Layout */}
 											<div className='flex-1 min-w-0 grid grid-cols-12 gap-4 items-center'>
-												{/* Customer Info - Takes 4 columns */}
-												<div className='col-span-4 min-w-0'>
+												{/* Customer Info - Takes 3 columns (reduced from 4) */}
+												<div className='col-span-3 min-w-0'>
 													<div className='flex items-center gap-2 mb-1'>
 														<span className={`truncate font-semibold text-[14px]/[20px] ${customer.is_master ? 'text-primary' : 'text-font-color'}`}>
 															{customer.username}
@@ -258,8 +258,8 @@ export default function OnlineCustomersPage() {
 													</div>
 												</div>
 
-												{/* Browser Info - Takes 3 columns */}
-												<div className='col-span-3 min-w-0'>
+												{/* Browser Info - Takes 4 columns (increased from 3) */}
+												<div className='col-span-4 min-w-0'>
 													<div className='flex items-center gap-2'>
 														<BrowserIcon short={customer.short_browser} />
 														<div className='min-w-0'>
@@ -276,7 +276,7 @@ export default function OnlineCustomersPage() {
 												{/* Actions - Takes 2 columns */}
 												<div className='col-span-2 flex justify-end'>
 													<button 
-														className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-border-color hover:bg-primary-10 hover:border-primary text-[10px]/[1] text-font-color-100 hover:text-primary transition-colors opacity-0 group-hover:opacity-100' 
+														className='btn btn-outline-secondary text-[10px]/[1]' 
 														onClick={() => handleMapClick(customer.ip_address)} 
 														disabled={!customer.ip_address || customer.ip_address.startsWith('192.168')}
 													>
