@@ -381,45 +381,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         <button onClick={toggleNote} className='xl:hidden sm:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
                             <IconNote className='stroke-[1.5] w-[20px] h-[20px]' />
                         </button>
-                        <div className='relative group'>
-                            <button className='xl:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
-                                <IconWorld className='stroke-[1.5]' />
-                            </button>
-                            <div className='bg-card-color text-font-color rounded-xl overflow-auto max-h-[50svh] custom-scrollbar w-[200px] shadow-shadow-lg absolute end-0 top-full origin-top-right rtl:origin-top-left z-[1] opacity-0 invisible scale-0 transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:scale-100'>
-                                <ul>
-                                    <li className='py-10 px-15 border-b border-dashed border-border-color transition-all hover:bg-primary-10'>
-                                        <Link href="#" className='flex items-center gap-2'>
-                                            <Image src={flag_uk} width="" height="" alt='language' className='w-[20px] h-[15px] min-w-[20px]' />
-                                            UK English
-                                        </Link>
-                                    </li>
-                                    <li className='py-10 px-15 border-b border-dashed border-border-color transition-all hover:bg-primary-10'>
-                                        <Link href="#" className='flex items-center gap-2'>
-                                            <Image src={flag_us} width="" height="" alt='language' className='w-[20px] h-[15px] min-w-[20px]' />
-                                            US English
-                                        </Link>
-                                    </li>
-                                    <li className='py-10 px-15 border-b border-dashed border-border-color transition-all hover:bg-primary-10'>
-                                        <Link href="#" className='flex items-center gap-2'>
-                                            <Image src={flag_de} width="" height="" alt='language' className='w-[20px] h-[15px] min-w-[20px]' />
-                                            Germany
-                                        </Link>
-                                    </li>
-                                    <li className='py-10 px-15 border-b border-dashed border-border-color transition-all hover:bg-primary-10'>
-                                        <Link href="#" className='flex items-center gap-2'>
-                                            <Image src={flag_in} width="" height="" alt='language' className='w-[20px] h-[15px] min-w-[20px]' />
-                                            Hindi
-                                        </Link>
-                                    </li>
-                                    <li className='py-10 px-15 transition-all hover:bg-primary-10'>
-                                        <Link href="#" className='flex items-center gap-2'>
-                                            <Image src={flag_sa} width="" height="" alt='language' className='w-[20px] h-[15px] min-w-[20px]' />
-                                            Saudi Arabia
-                                        </Link>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+
                         <button onClick={toggleChat} className='xl:hidden sm:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
                             <IconMessage className='stroke-[1.5] w-[20px] h-[20px]' />
                         </button>
