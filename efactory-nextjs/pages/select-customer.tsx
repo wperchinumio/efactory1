@@ -128,6 +128,7 @@ function SelectCustomerPageInner() {
 										</div>
 										<div className='flex-1 min-w-0'>
 											<div className='flex items-center gap-2'>
+												<span className='truncate font-semibold text-font-color'>{u.username}</span>
 												{u.is_EDI ? <span className='inline-flex items-center justify-center rounded-sm bg-black text-white px-2 text-[10px]/[1.2]'>EDI</span> : null}
 											</div>
 											<div className='truncate text-font-color-100'>{u.company}</div>

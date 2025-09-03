@@ -113,7 +113,7 @@ export default function OnlineCustomersPage() {
 		const config = getBrowserConfig(short);
 		
 		return (
-			<div className={`inline-flex items-center justify-center w-[28px] h-[28px] rounded-lg ${config.bgColor} ${config.iconColor} shadow-shadow-sm`}>
+			<div className={`inline-flex items-center justify-center w-[24px] h-[24px] rounded-md ${config.bgColor} ${config.iconColor} shadow-shadow-sm`}>
 				{config.icon}
 			</div>
 		);
@@ -173,7 +173,7 @@ export default function OnlineCustomersPage() {
 				<div className='card bg-card-color border border-dashed border-border-color rounded-2xl p-6 md:p-8 shadow-shadow-lg max-w-[1120px] mx-auto'>
 					<div className='mb-4 flex items-end justify-between gap-4'>
 						<div>
-							<div className='text-[18px]/[26px] md:text-[20px]/[28px] font-semibold'>Online Customers</div>
+							<div className='text-[18px]/[26px] md:text-[20px]/[28px] font-semibold'>ONLINE CUSTOMERS</div>
 							<div className='text-font-color-100 text-[14px]/[20px]'>
 								{refreshedAt && (
 									<span>Last updated: {new Date(refreshedAt).toLocaleString()}</span>
@@ -183,8 +183,8 @@ export default function OnlineCustomersPage() {
 					</div>
 
 					<ul
-						className={`${filtered.length === 0 ? 'min-h-[240px] flex items-center justify-center' : filtered.length <= 4 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 items-start gap-4 overflow-auto custom-scrollbar p-3`}
-						style={{ maxHeight: filtered.length <= 4 ? undefined : 'calc(100svh - 140px - 320px)' }}
+						className={`${filtered.length === 0 ? 'min-h-[240px] flex items-center justify-center' : filtered.length === 1 ? 'min-h-0' : 'min-h-[240px]'} grid grid-cols-1 items-start gap-3 overflow-auto custom-scrollbar p-3`}
+						style={{ maxHeight: filtered.length === 0 ? undefined : filtered.length === 1 ? undefined : 'calc(100svh - 140px - 300px)' }}
 					>
 						{filtered.length === 0 ? (
 							<li className='col-span-full text-center text-font-color-100'>
@@ -207,84 +207,83 @@ export default function OnlineCustomersPage() {
 									.split(/[-,]/)
 									.map((t) => t.trim())
 									.filter(Boolean)
-									.slice(0, 3);
+									.slice(0, 2);
 
 								return (
 									<li
 										key={customer.row_id}
 										className='relative group border border-dashed border-border-color rounded-xl bg-card-color transition-all duration-200 hover:shadow-shadow-lg hover:-translate-y-[1px] hover:border-primary-10'
 									>
-										<div className='p-4 md:p-5 flex flex-col gap-3'>
-											{/* Header with avatar and basic info */}
-											<div className='flex items-center gap-3'>
-												<div className='w-[48px] h-[48px] min-w-[48px] rounded-lg flex items-center justify-center font-semibold text-white bg-gradient-to-br from-primary to-secondary shadow-shadow-sm'>
-													{initials}
-												</div>
-												<div className='flex-1 min-w-0'>
+										<div className='p-4 flex items-center gap-4'>
+											{/* Avatar */}
+											<div className='w-[40px] h-[40px] min-w-[40px] rounded-lg flex items-center justify-center font-semibold text-white bg-gradient-to-br from-primary to-secondary shadow-shadow-sm'>
+												{initials}
+											</div>
+											
+											{/* Main Content - Horizontal Layout */}
+											<div className='flex-1 min-w-0 grid grid-cols-12 gap-4 items-center'>
+												{/* Customer Info - Takes 4 columns */}
+												<div className='col-span-4 min-w-0'>
 													<div className='flex items-center gap-2 mb-1'>
-														<span className={`truncate font-semibold ${customer.is_master ? 'text-primary' : 'text-white'}`}>
+														<span className={`truncate font-semibold text-[14px]/[20px] ${customer.is_master ? 'text-primary' : 'text-font-color'}`}>
 															{customer.username}
 														</span>
 														{customer.is_master && (
-															<span className='inline-flex items-center justify-center rounded-sm bg-primary text-white px-2 py-1 text-[10px]/[1.2] font-medium'>
+															<span className='inline-flex items-center justify-center rounded-sm bg-primary text-white px-1.5 py-0.5 text-[9px]/[1.2] font-medium'>
 																MASTER
 															</span>
 														)}
 													</div>
-													<div className='text-font-color-100 text-[12px]/[1] truncate'>
-														#{i + 1} of {filtered.length}
+													<div className='text-font-color-100 text-[12px]/[16px] truncate'>
+														{customer.account_number} - {customer.location}
 													</div>
 												</div>
-											</div>
 
-											{/* Company information */}
-											<div className='space-y-1'>
-												<div className='font-medium text-white text-[14px]/[20px] truncate'>
-													{customer.account_number} - {customer.location}
-												</div>
-												<div className='text-font-color-100 text-[13px]/[18px] truncate'>
-													{customer.company_name}
-													{customer.company_code && (
-														<span className='ml-2 px-2 py-[2px] rounded-md bg-primary-10 text-primary text-[11px]/[1] uppercase font-medium'>
-															{customer.company_code}
-														</span>
-													)}
-												</div>
-											</div>
-
-											{/* Location tags */}
-											{locationTokens.length > 0 && (
-												<div className='flex flex-wrap gap-1'>
-													{locationTokens.map((token, idx) => (
-														<span key={idx} className='px-2 py-[2px] rounded-md bg-secondary text-white text-[10px]/[1] uppercase font-medium'>
-															{token}
-														</span>
-													))}
-												</div>
-											)}
-
-											{/* Browser and actions */}
-											<div className='flex items-center justify-between pt-2 border-t border-dashed border-border-color'>
-												<div className='flex items-center gap-2'>
-													<BrowserIcon short={customer.short_browser} />
-													<div className='flex flex-col'>
-														<span className='text-[12px]/[16px] font-medium text-white'>
-															{customer.short_browser}
-														</span>
-														<span className='text-[10px]/[14px] text-font-color-100 truncate max-w-[120px]'>
-															{customer.long_browser}
-														</span>
+												{/* Company Info - Takes 3 columns */}
+												<div className='col-span-3 min-w-0'>
+													<div className='text-font-color text-[13px]/[18px] font-medium truncate'>
+														{customer.company_name}
+													</div>
+													<div className='flex items-center gap-1 mt-0.5'>
+														{customer.company_code && (
+															<span className='px-1.5 py-0.5 rounded-md bg-primary-10 text-primary text-[10px]/[1] uppercase font-medium'>
+																{customer.company_code}
+															</span>
+														)}
+														{locationTokens.length > 0 && (
+															<span className='px-1.5 py-0.5 rounded-md bg-secondary text-white text-[10px]/[1] uppercase font-medium'>
+																{locationTokens[0]}
+															</span>
+														)}
 													</div>
 												</div>
-												
-												<button 
-													className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-border-color hover:bg-primary-10 hover:border-primary text-[11px]/[1] text-font-color-100 hover:text-primary transition-colors opacity-0 group-hover:opacity-100' 
-													onClick={() => handleMapClick(customer.ip_address)} 
-													disabled={!customer.ip_address || customer.ip_address.startsWith('192.168')}
-												>
-													<IconWorldPin className='w-[12px] h-[12px]' />
-													<span>Map</span>
-												</button>
+
+												{/* Browser Info - Takes 3 columns */}
+												<div className='col-span-3 min-w-0'>
+													<div className='flex items-center gap-2'>
+														<BrowserIcon short={customer.short_browser} />
+														<div className='min-w-0'>
+															<div className='text-font-color text-[12px]/[16px] font-medium truncate'>
+																{customer.short_browser}
+															</div>
+															<div className='text-font-color-100 text-[10px]/[14px] truncate'>
+																{customer.long_browser}
+															</div>
+														</div>
+													</div>
+												</div>
+
+												{/* Actions - Takes 2 columns */}
+												<div className='col-span-2 flex justify-end'>
+													<button 
+														className='inline-flex items-center gap-1 px-2 py-1 rounded-md border border-dashed border-border-color hover:bg-primary-10 hover:border-primary text-[10px]/[1] text-font-color-100 hover:text-primary transition-colors opacity-0 group-hover:opacity-100' 
+														onClick={() => handleMapClick(customer.ip_address)} 
+														disabled={!customer.ip_address || customer.ip_address.startsWith('192.168')}
+													>
+														<IconWorldPin className='w-[10px] h-[10px]' />
+														<span>Map</span>
+													</button>
+												</div>
 											</div>
 										</div>
 									</li>
