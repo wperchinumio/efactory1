@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { postJson } from '@/lib/api/http';
 import { IconBrandChrome, IconBrandFirefox, IconBrandSafari, IconBrandEdge, IconBrandOpera, IconWorldPin, IconSearch, IconArrowsSort } from '@tabler/icons-react';
 
@@ -25,6 +25,7 @@ export default function OnlineCustomersPage() {
 	const [loading, setLoading] = useState(false);
 	const [mapOpen, setMapOpen] = useState(false);
 	const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(null);
+	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	async function load() {
 		setLoading(true);
@@ -38,11 +39,22 @@ export default function OnlineCustomersPage() {
 			setRefreshedAt(res.data.date || '');
 		} finally {
 			setLoading(false);
+			// Refocus the search input after refresh
+			if (searchInputRef.current) {
+				searchInputRef.current.focus();
+			}
 		}
 	}
 
 	useEffect(() => {
 		load();
+	}, []);
+
+	useEffect(() => {
+		// Focus the search input when component mounts
+		if (searchInputRef.current) {
+			searchInputRef.current.focus();
+		}
 	}, []);
 
 	const filtered = useMemo(() => {
@@ -147,6 +159,7 @@ export default function OnlineCustomersPage() {
 						<div className='relative'>
 							<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
 							<input 
+								ref={searchInputRef}
 								className='form-input pl-9 pr-3 py-2 text-[14px] min-w-[250px] border-border-color focus:border-primary focus:ring-2 focus:ring-primary-10 rounded-2xl' 
 								placeholder='Search customers...' 
 								value={filter} 

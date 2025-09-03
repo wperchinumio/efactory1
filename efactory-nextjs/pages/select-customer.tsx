@@ -85,6 +85,7 @@ function SelectCustomerPageInner() {
 						<div className='relative'>
 							<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
 							<input 
+								ref={searchInputRef}
 								className='form-input pl-9 pr-3 py-2 text-[14px] min-w-[250px] border-border-color focus:border-primary focus:ring-2 focus:ring-primary-10 rounded-2xl' 
 								placeholder='Search accounts...' 
 								value={filter} 

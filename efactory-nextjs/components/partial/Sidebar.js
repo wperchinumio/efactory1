@@ -163,7 +163,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
         <>
             <div className='sidebar-header px-3 mb-6 flex items-center justify-between gap-2'>
                 <h4 className='sidebar-title text-[24px]/[30px] font-medium mb-0'>
-                    <span className='sm-txt'>L</span><span>UNO Admin</span>
+                    <span className='sm-txt'>e</span><span>Factory Admin</span>
                 </h4>
                 <div className="sidebar-dropdown relative flex">
                     <button ref={buttonRef} onClick={toggleAdminMenu} className='bg-primary-10 p-[2px] rounded-full text-primary transition-all hover:bg-primary hover:text-white'>
