@@ -1,0 +1,261 @@
+$theme-buttons: (
+  btn-topbar:	(base:#455a64, font: #FFFFFF, outline: #424a55),
+  btn-side-panel:	(base:#607d8b, font: white, outline:rgb(94, 115, 139)),
+  btn-dashboard:	(base:#dde0e2, font: #333, outline: #999)
+);
+
+@each $name, $colors in $theme-buttons {
+  .btn.#{$name}:not(.btn-outline) {
+    @include button-variant(map-get($colors, font), map-get($colors, base), map-get($colors, base));
+  }
+
+  .btn.btn-outline.#{$name} {
+    border-color: map-get($colors, base);
+    color: map-get($colors, outline);
+    background: none;
+
+    &:hover,
+    &:active,
+    &:active:hover,
+    &:active:focus,
+    &:focus,
+    &.active {
+      border-color: map-get($colors, base);
+      color: map-get($colors, font);
+      background-color: map-get($colors, base);
+    }
+  }
+
+  .btn.#{$name}-stripe {
+    border-left: 4px solid map-get($colors, base) !important;
+  }
+
+
+  .btn.#{$name}.btn-no-border:not(.active) {
+    border-color: transparent;
+  }
+}
+
+/**
+  add  theme specific custom styles here
+*/
+.sidebar-section-title {
+  color: #428aba;
+  font-weight: 700;
+}
+
+.table-header-1 {
+  background-color: #3c4e56 !important;
+  color:white;
+  a {
+    color:white !important;
+  }
+}
+.grid-header-title {
+  background-color: #3c4e56 !important;
+  color:white;
+}
+/* Summary table footer */
+table.table-hover > tbody > tr.summary {
+  background-color: #617984
+;
+}
+table.table-hover > tbody > tr:hover.summary td {
+  background-color: #617984 !important;
+}
+.table-header-2 {
+   background-color: #59656d  !important;
+   color:white;
+ }
+.table-header-3 {
+  background-color: #74828b !important;
+  color:white;
+}
+
+.table-header-filter {
+  background-color: #d2d9de !important
+}
+.gridview-header .column-sort .fa {
+  color: #fde255;
+}
+.gridview-header th.sortable:hover .fa {
+  color: #aaac9e;
+}
+
+.gridview-filter-btn {
+  background-color: #c7d0d4;
+  color:black;
+}
+
+.side-panel-title {
+  background-color: #607d8b;
+  color: white !important;
+}
+
+.bg-gridview-detail {
+  background-color: #eceff1;
+}
+ul.page-sidebar-menu  > li ul.sub-menu li:before {
+  border-left: 1px dashed #555555;
+  border-bottom: 1px dashed #555555;
+}
+ul.page-sidebar-menu  > li ul.sub-menu li.separator:before {
+  border-left: 1px dashed #555555;
+  border-bottom: 1px solid #555555;
+}
+.orderpoints-wall {
+  background-color: #E9EDEF;
+  border: 1px solid #ccc;
+  border-left: 4px solid #3FABA4;
+}
+.services-title {
+  color: #ffef00 !important;
+}
+
+/* Notes */
+#note-items {
+  .list-group-item.active {
+    color: #fff;
+    border-color: #6e8d9b !important;
+    background-color: #6e8d9b !important;
+  }
+}
+.note-entry {
+  .note-date {
+    color: #979797;
+  }
+  .note-title {
+    color: #399e96;
+  }
+}
+.list-group-item.active {
+  .note-date {
+    color: #231f20;
+  }
+  .note-title {
+    color: #9bd5cc;
+  }
+}
+/* Table headers */
+.tb-header-1 {
+  background-color: #576f7a;
+  th {
+    color: #dde0e2 !important;
+  }
+}
+.tb-header-2 {
+  background-color: #576f7a;
+  th {
+    color: #dde0e2 !important;
+  }
+}
+.tb-header-3 {
+  background-color: #576f7a;
+  th {
+    color: #dde0e2 !important;
+  }
+}
+.tb-header-4 {
+  background-color: #576f7a;
+  th {
+    color: #dde0e2 !important;
+  }
+}
+.tb-header-5 {
+  background-color: #576f7a;
+  th {
+    color: #dde0e2 !important;
+  }
+}
+.current-view-name {
+  background-color: white;
+  border: 1px dotted #cbc0bd;
+  color: #555;
+}
+/* Summary */
+.table.table-light.table-hover > tbody > tr.summary > td {
+  background: #eee !important;
+}
+.table.table-light.table-hover > tbody > tr.summary:hover > td {
+  background: #eee !important;
+}
+
+.table.table-light > tbody > tr > td {
+  color: #69747b;
+}
+.grid-page-bar {
+  background-color: #f5f6f7 !important;
+}
+.gridview-header th.not-sortable {
+  background-color: #495a6b;
+}
+.grid-header-title.not-sortable {
+  background-color : #495a6b !important;
+  cursor: auto !important;
+}
+.portlet > .portlet-title > .actions .btn-icon-only.btn-dashboard.fullscreen {
+  font-family: FontAwesome;
+  color: #666;
+  padding-top: 4px; }
+.portlet > .portlet-title > .actions .btn-icon-only.btn-dashboard.fullscreen:before {
+  content: "\f065"; }
+.portlet > .portlet-title > .actions .btn-icon-only.btn-dashboard.fullscreen.on:before {
+  content: "\f066"; }
+
+/*body {
+  background-color: #dde0e2;
+}*/
+// Fix also Safari webkit hor. scroll issue
+.table-container table {
+  background-color: transparent;
+}
+
+/* Orderpoints */
+.od-sidepanel {
+  background-color: #eff0f1 !important;
+  border: 1px solid #d0d0d0;
+  .op-sidebar {
+    .op-sb-title {
+      background-color: #516b79;
+      color: white;
+    }
+    .op-table-title {
+      background-color: #3c4e56;
+      color:#fff;
+    }
+  }
+}
+.op-cart-table {
+  border: 1px solid #ddd;
+}
+.op-cart-extra {
+  background-color: #eff0f1 !important;
+  border: 1px solid #c5c5c5 !important;
+}
+.op-review .addr-type {
+  background-color: #c7d0d4;
+}
+.op-review {
+  .input-group-addon > i {
+    color: #949ca9;
+  }
+  label {
+    color: #538298;
+  }
+  .order-type {
+    color: orangered;
+    .order-type-number {
+      color: black;
+    }
+  }
+}
+.nav-tabs {
+  border-bottom: 1px solid #cfdbdc !important;
+}
+
+/* BOOTSTRAP MODAL ************************************************
+*/ 
+  
+.modal.modal-themed {
+  
+}

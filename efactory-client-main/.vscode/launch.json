@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome with sourcemap",
+            "url": "http://localhost:4000/login",
+            "webRoot": "${workspaceRoot}",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                 "webpack:///./src/*": "${workspaceRoot}/src/*"
+            },
+            "timeout": 5000
+        },
+        {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Attach to Chrome",
+            "port": 9222,
+            "webRoot": "${workspaceRoot}",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                 "webpack:///./src/*": "${workspaceRoot}/src/*"
+            }
+        }      
+    ]
+}

@@ -1,0 +1,179 @@
+/* Edit view page style */
+.top-help {
+  background-color:#d3e3ea;
+  color:#555555;
+  margin: 10px 20px;
+  padding: 10px;
+}
+table.move-columns tr td {
+  vertical-align: top;
+}
+table.move-columns tr td.w50 {
+  width:50%
+}
+div.move-columns {
+  padding: 80px 20px 0 20px;
+  max-width: 160px;
+}
+div.move-columns button {
+  width: 120px;
+  margin-bottom: 10px;
+}
+div.move-columns .btn-spacer {
+  height: 50px;
+}
+
+.gridsettings {
+  position: absolute;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  overflow: hidden;
+}
+.gridsettings-table-wrapper {
+  position: absolute;
+  height: calc(100% - 210px);
+  width: 100%;
+  top: 200px;
+  bottom: 0px;
+  overflow: hidden;
+}
+.gridsettings-container-table {
+  width: calc(100% - 40px);
+  margin-left: 20px;
+}
+.gridsettings-container-table .portlet.light.bordered {
+  margin: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0px;
+  width: calc(50% - 100px);
+}
+.w50 .portlet-body {
+  position: relative;
+  height: calc(100% - 60px);
+}
+.w50 .portlet-body .table-responsive {
+  height: 100% !important;
+}
+.w50 .slimScrollDiv {
+  height: 100% !important;
+  overflow: visible !important;
+  -webkit-overflow-scrolling: touch;
+}
+// customize view style starts here
+.move-row-modal {
+  position: absolute;
+  left: 15px;
+  top: 5px;
+  border: 1px solid rgb(230, 230, 230);
+  padding: 10px 7px;
+  display: block;
+  background-color: white;
+  border-radius: 3px;
+  width: 270px;
+}
+.move-modal-desc {
+  padding:10px 0;
+}
+.move-modal-controls {
+  .left-side {
+    width: 100%;
+    .button-top {
+      width: 100%;
+      height: 30px;
+      width: 100%;
+      margin: 0;
+
+      vertical-align: top;
+      border: 1px solid #eeeeee;
+      background-color: white;
+      text-align: center;
+      padding: 0px;
+    }
+  }
+  .move-modal-or {
+    text-align: center;
+    line-height: 30px;
+  }
+  .move-position {
+    font-size: 12px;
+    padding:5px;
+  }
+  .right-side {
+    width: 100%;
+    input {
+      width: 50%;
+      height: 33px;
+    }
+    .arrow-button {
+      width: 50%;
+      height: 32px;
+      margin: 0;
+      vertical-align: top;
+      border: 1px solid #eeeeee;
+      background-color: white;
+      text-align: center;
+      padding: 0px;
+      i {
+        transform: rotate(90deg);
+        transition: 300ms linear all;
+        &.down {
+          transform: rotate(180deg);
+        }
+        &.up {
+          transform: rotate(0deg);
+        }
+      }
+    }
+  }
+}
+// customize view style ends here
+
+
+table.accounts > tbody > tr > td > label.mt-checkbox:hover, table.accounts > tbody > tr > td > label.mt-checkbox {
+  > input:not([disabled]):checked ~ span, > input:checked ~ span {
+    border: 1px solid #333;
+    background-color: white;
+  }
+  > input:not([disabled]) ~ span, > input ~ span {
+    border: 1px solid #ddd;
+    background-color: #ddd;
+  }
+}
+table.accounts > tbody > tr > td.warning {
+  background-color: antiquewhite;
+  color: #D91E18 !important;
+  font-weight: 700;
+}
+
+table.accounts > tbody > tr > td.user-inactive {
+  text-decoration:line-through;
+  color:#888;
+}
+
+div.preview-order-detail {
+  overflow: visible; 
+  white-space: normal !important;
+  max-width: 800px;
+}
+
+div.selectship {
+  font-size: 12px;
+  margin-top: -4px;
+  font-family: monospace;
+  color: teal;
+  opacity: 0.8;
+  font-weight: 200;
+}
+.carrier_summary {
+  font-size: 12px;
+  margin-bottom:0px;
+  display: inline-block;
+  margin-bottom: -2px;
+}
+.tr_summary {
+  display: block;
+  font-size: 11px;
+}

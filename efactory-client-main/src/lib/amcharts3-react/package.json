@@ -1,0 +1,75 @@
+{
+  "_args": [
+    [
+      {
+        "raw": "amcharts3-react@github:amcharts/amcharts3-react",
+        "scope": null,
+        "escapedName": "amcharts3-react",
+        "name": "amcharts3-react",
+        "rawSpec": "github:amcharts/amcharts3-react",
+        "spec": "github:amcharts/amcharts3-react",
+        "type": "hosted",
+        "hosted": {
+          "type": "github",
+          "ssh": "git@github.com:amcharts/amcharts3-react.git",
+          "sshUrl": "git+ssh://git@github.com/amcharts/amcharts3-react.git",
+          "httpsUrl": "git+https://github.com/amcharts/amcharts3-react.git",
+          "gitUrl": "git://github.com/amcharts/amcharts3-react.git",
+          "shortcut": "github:amcharts/amcharts3-react",
+          "directUrl": "https://raw.githubusercontent.com/amcharts/amcharts3-react/master/package.json"
+        }
+      },
+      "/Users/frknrhn/Desktop/dcl/efactory_web"
+    ]
+  ],
+  "_from": "amcharts/amcharts3-react",
+  "_id": "amcharts3-react@1.1.8",
+  "_inCache": true,
+  "_location": "/amcharts3-react",
+  "_phantomChildren": {},
+  "_requested": {
+    "raw": "amcharts3-react@github:amcharts/amcharts3-react",
+    "scope": null,
+    "escapedName": "amcharts3-react",
+    "name": "amcharts3-react",
+    "rawSpec": "github:amcharts/amcharts3-react",
+    "spec": "github:amcharts/amcharts3-react",
+    "type": "hosted",
+    "hosted": {
+      "type": "github",
+      "ssh": "git@github.com:amcharts/amcharts3-react.git",
+      "sshUrl": "git+ssh://git@github.com/amcharts/amcharts3-react.git",
+      "httpsUrl": "git+https://github.com/amcharts/amcharts3-react.git",
+      "gitUrl": "git://github.com/amcharts/amcharts3-react.git",
+      "shortcut": "github:amcharts/amcharts3-react",
+      "directUrl": "https://raw.githubusercontent.com/amcharts/amcharts3-react/master/package.json"
+    }
+  },
+  "_requiredBy": [
+    "/"
+  ],
+  "_resolved": "git://github.com/amcharts/amcharts3-react.git#19244602af8c7075f96fb37847a7d9f43bce6da5",
+  "_shasum": "5e58ec3dab0cdb9ea064b75bc657205870250e30",
+  "_shrinkwrap": null,
+  "_spec": "amcharts3-react@github:amcharts/amcharts3-react",
+  "_where": "/Users/frknrhn/Desktop/dcl/efactory_web",
+  "bugs": {
+    "url": "https://github.com/amcharts/amcharts3-react/issues"
+  },
+  "dependencies": {},
+  "description": "Installation ============",
+  "devDependencies": {},
+  "gitHead": "19244602af8c7075f96fb37847a7d9f43bce6da5",
+  "homepage": "https://github.com/amcharts/amcharts3-react#readme",
+  "license": "SEE LICENSE IN LICENSE",
+  "main": "index.js",
+  "name": "amcharts3-react",
+  "optionalDependencies": {},
+  "readme": "Installation\n============\n\nIf you are using `<script>` tags\n--------------------------------\n\n1. Use `git` to download the `amcharts3-react` plugin:\n\n   ```\n   git clone https://github.com/amcharts/amcharts3-react.git\n   ```\n\n2. Include `react` and `react-dom`:\n\n   ```\n   <script src=\"https://unpkg.com/react@15.3.0/dist/react.min.js\"></script>\n   <script src=\"https://unpkg.com/react-dom@15.3.0/dist/react-dom.min.js\"></script>\n   ```\n\n3. Also include `amcharts`:\n\n   ```\n   <script src=\"https://www.amcharts.com/lib/3/amcharts.js\"></script>\n   <script src=\"https://www.amcharts.com/lib/3/serial.js\"></script>\n   <script src=\"https://www.amcharts.com/lib/3/themes/light.js\"></script>\n   ```\n\n4. Lastly include the `amcharts3-react` plugin:\n\n   ```\n   <script src=\"amcharts3-react/amcharts3-react.js\"></script>\n   ```\n\nIf you are using a bundler like Webpack or Browserify\n-----------------------------------------------------\n\n1. Create a `package.json` which includes `react`, `react-dom`, `amcharts/amcharts3`, and `amcharts/amcharts3-react`:\n\n   ```\n   {\n     \"devDependencies\": {\n       \"react\": \"^15.4.2\",\n       \"react-dom\": \"^15.4.2\",\n       \"amcharts3\": \"amcharts/amcharts3\",\n       \"amcharts3-react\": \"amcharts/amcharts3-react\"\n     }\n   }\n   ```\n\n2. Run `npm install`\n\n3. You can now import the `amcharts3-react` plugin:\n\n   ```\n   var AmCharts = require(\"amcharts3-react\");\n   ```\n\n   And then you can use it:\n\n   ```\n   React.createElement(AmCharts.React, {\n     ...\n   });\n   ```\n\n   Or alternatively if you are using JSX:\n\n   ```\n   <AmCharts.React ... />\n   ```\n\n4. You will probably need to specify the [`path`](https://docs.amcharts.com/3/javascriptcharts/AmSerialChart#path) property, so that AmCharts can find the appropriate images:\n\n   ```\n   React.createElement(AmCharts.React, {\n     \"path\": \"node_modules/amcharts3/amcharts\"\n   })\n   ```\n\n5. If you want to use plugins (like [dataloader](https://github.com/amcharts/dataloader), [export](https://github.com/amcharts/export), [responsive](https://github.com/amcharts/responsive), [animate](https://github.com/amcharts/animate), etc.) you will need to do the following steps:\n\n   1. Include the plugin in your `package.json`:\n\n      ```\n      {\n        \"devDependencies\": {\n          \"amcharts3-export\": \"amcharts/export\"\n        }\n      }\n      ```\n\n   2. When you want to use the plugin, put a `require` at the top of the file:\n\n      ```\n      // This must be at the top of the file:\n      require(\"amcharts3-export\");\n\n      // The rest of the code goes here:\n      var React = require(\"react\");\n      var AmCharts = require(\"amcharts3-react\");\n\n      React.createElement(AmCharts.React, {\n        \"export\": {\n          \"enabled\": true\n        }\n      });\n      ```\n\n   You can see an example program in the `examples/webpack-export` folder.\n\nUsage\n=====\n\nUse the `AmCharts.React` component in your React programs:\n\n```\nReact.createElement(AmCharts.React, {\n  \"type\": \"serial\",\n  \"theme\": \"light\",\n  \"graphs\": [...],\n  \"dataProvider\": [...]\n})\n```\n\nOr alternatively if you are using JSX:\n\n```\n<AmCharts.React\n  type=\"serial\"\n  theme=\"light\"\n  graphs={[...]}\n  dataProvider={[...]} />\n```\n\nThe configuration is exactly the same as the [`AmCharts.makeChart`](https://docs.amcharts.com/3/javascriptcharts/AmCharts#makeChart) method.\n\nChanges to the configuration are automatically detected when rendering (you do not need to call [`validateNow`](https://docs.amcharts.com/3/javascriptcharts/AmSerialChart#validateNow) or [`validateData`](https://docs.amcharts.com/3/javascriptcharts/AmSerialChart#validateData)).\n\nIn addition, this plugin automatically generates an `id`, so you do not need to specify it.\n\nYou can see some example React programs in the `examples` folder. It updates the chart's `dataProvider` every 3 seconds.\n\n## Changelog\n\n### 1.1.8\n* Fixing another bug with updating the chart data\n\n### 1.1.7\n* Fixing a bug where the chart does not zoom out when changing the `dataProvider`\n\n### 1.1.6\n* Fixing a bug where the chart won't show up properly on the first update\n\n### 1.1.5\n* Fixing a bug which caused stock charts to not update correctly\n\n### 1.1.4\n* Deprecating using `AmCharts` with Webpack, instead use `AmCharts.React`\n* Adding in the various global `AmCharts` properties for Webpack\n\n### 1.1.3\n* Fixing a bug that caused the `listeners` to trigger multiple times\n\n### 1.1.2\n* Fixing an [issue when using `amcharts3-react` on the server](https://github.com/amcharts/amcharts3-react/issues/11)\n\n### 1.1.1\n* Fixing an [issue with `peerDependencies`](https://github.com/npm/npm/issues/3218)\n\n### 1.1.0\n* Adding in support for npm / webpack\n\n### 1.0.0\n* Initial release\n",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amcharts/amcharts3-react.git"
+  },
+  "version": "1.1.8"
+}

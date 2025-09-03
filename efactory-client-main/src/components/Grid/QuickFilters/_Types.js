@@ -1,0 +1,5 @@
+export const DATE_RANGE_QF = 'DATE_RANGE_QF'
+export const DROPDOWN_QF = 'DROPDOWN_QF'
+export const BOOLEAN_QF = 'BOOLEAN_QF'
+export const DATE_QF = 'DATE_QF'
+export const INPUT_TEXT_QF = 'INPUT_TEXT_QF'

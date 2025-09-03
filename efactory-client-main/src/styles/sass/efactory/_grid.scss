@@ -1,0 +1,330 @@
+.table-container.table-container-rr.loading-grid:before {
+  content: " ";
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background: rgba(245, 245, 245, 0.07);
+  z-index: 9999;
+  cursor: not-allowed;
+}
+
+.grid-page-bar {
+  border-bottom: 1px solid #c7cece !important;
+  width: 100%;
+  margin: 0 !important;
+}
+.grid-page-bar .page-breadcrumb > .caption > i {
+  margin-right: 5px !important;
+}
+.grid-page-bar span.curren-view-name {
+  color:#444 !important;
+  font-size:0.9em !important;
+  line-height: 30px !important;
+  margin-right:10px !important;
+}
+.grid-page-bar .btn-group-refresh,
+.grid-page-bar .btn-group-save-filter {
+  margin-right: 3px !important;
+}
+.grid-page-bar .btn-toggle-order-summary {
+  padding: 7px 18px !important;
+}
+.gridview-container {
+    width: 100%;
+    height: 100%;
+}
+.gridview-container .gridview-quickfilters {
+    width: 100%;
+    padding: 7px;
+    min-height: 40px;
+}
+ul.filterRR {
+  margin:0;
+  padding: 8px 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  width: 200px;
+}
+li.filterRR {
+  list-style: none;
+  width: 100%;
+  margin: 0;
+  padding: 3px 5px;
+  background-color: #f5f5f5;
+  color: #383838;
+  border-radius: 5px;
+  font-size: 12px;
+  margin-bottom: 8px;
+  cursor:pointer;
+  &:hover {
+    background-color: #4b8df8;
+    color : white;
+  }
+}
+li.filterRR.active {
+  background-color: #4b8df8;
+  color: white;
+}
+.gridview-inner {
+    width: 100%;
+    height: 100%;
+}
+.gridview-inner .gridview-encloser {
+    width:100%;
+    height: 100%;
+    display: inline-block;
+    vertical-align: top;
+    overflow-x: hidden;
+}
+.gridview-inner.detail-active .gridview-encloser {
+    width: calc(100% - 320px);
+    border-right: 4px solid white;
+}
+.gridview-inner .gridview-detail {
+  display: none;
+}
+.gridview-inner .gridview-detail .right-detail-body {
+  height: 100%;
+}
+/* in order to disable inline css coming to slimScrollDiv */
+.gridview-inner .gridview-detail .slimScrollDiv {
+  width: 100% !important;
+  height: calc(100% - 109px) !important;
+  position: relative !important;
+  top: 28px !important;
+}
+.gridview-inner .gridview-detail .scrollable-rr {
+  overflow: hidden !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding-top: 2px;
+}
+.gridview-inner.detail-active .gridview-detail {
+  width: 320px;
+  height: 100%;
+  display: inline-block;
+  border-left: 4px solid #2c3e50 !important;
+  vertical-align: top;
+  position: relative;
+  overflow: hidden;
+}
+.gridview-inner .gridview-encloser .gridview-content {
+    height: 100%;
+    position: relative;
+    margin-left: 4px;
+}
+.gridview-inner .gridview-encloser.pagination-active .gridview-content {
+    /*
+      height of pagination + height of absolute positioned header
+      extracted
+     */
+    height: calc(100% - 143px);
+}
+.gridview-container .selected-filter {
+  	padding-left: 8px;
+}
+.gridview-container .filter-location,
+.gridview-container .filter-account {
+  	height: 25px;
+}
+
+.gridview-container .gridview-content .gridview-header{
+    position: absolute;
+    overflow: visible;
+}
+.gridview-header tr:nth-child(2) th {
+  height : 40px;
+}
+.gridview-header th.sortable {
+  cursor : pointer;
+  background: #2b3e50 !important;
+}
+.gridview-header th.sortable:hover .fa {
+  display: block;
+}
+.column-sort {
+  width: 19px;
+  height: 19px;
+  display: inline-block;
+  vertical-align: bottom;
+}
+.column-sort .fa {
+  font-size: 16px;
+  width: 100%;
+  height: 100%;
+  padding-top: 3px;
+  text-align: center;
+  color: #d05454;
+  display: none;
+}
+.column-sort .fa.active {
+  display: block;
+}
+.column-sort .fa.active.asc {
+  transform: rotate(180deg); /* TODO : browsers */
+}
+.gridview-header {
+  th {
+    position: relative;
+    border:none !important;
+    &:nth-child(1){
+      border-right: 1px solid #e7ecf1 !important;
+    }
+    &:nth-child(2){
+      border-right: 1px solid #e7ecf1 !important;
+    }
+    span.header-resize {
+      width: 4px;
+      height: 100%;
+      background: #d3e0ec;
+      position: absolute;
+      top: 0;
+      right: 0;
+      cursor: col-resize;
+      z-index: 100;
+    }
+  }
+}
+
+.gridview-container .gridview-content .gridview-body {
+	overflow: scroll;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+  /* due to height of header part */
+  top: 67px;
+  height: calc(100% - 67px);
+}
+.gridview-container .gridview-pagination {
+    height: 60px;
+    line-height: 40px;
+    padding: 0px 10px;
+    background: white;
+}
+.gridview-container .gridview-pagination .btn-double-backward {
+	margin-right : 5px;
+}
+.gridview-container .gridview-pagination .btn-double-forward {
+	margin-left : 5px;
+}
+
+.gridview-container .right-detail-title {
+	width: 100% !important;
+  position: absolute;
+}
+.gridview-container .select-order-info {
+  width:80% !important;
+  margin: 80px auto !important;
+  text-align: center !important;
+}
+.gridview-container .portlet-body {
+  padding: 0 10px !important;
+}
+.gridview-container .order-status-rr {
+  margin-top:4px !important;
+}
+/*to be moved to style.css later*/
+
+.table .order-type-wrapper {
+  padding:3px;
+  height: 38px;
+}
+
+.table .order-type-inner {
+  padding-bottom:4px;
+}
+
+span.order-wh {
+  font-size: 12px;
+  padding-top:2px;
+  color: #999;
+}
+
+.table .order-stage-outer {
+  font-size:12px;
+  min-width:170px
+}
+
+.order-stage-inner {
+  white-space: nowrap;
+  display: flex;
+}
+.order-stage-inner-text {
+  width:100%;
+  text-align: right;
+}
+
+.table .ship-to-outer {
+  font-size:12px;
+  min-width:250px
+}
+
+.table .progress {
+  margin:0;
+}
+
+.order-stage {
+  whiteSpace: nowrap;
+  display: flex;
+}
+
+.fulfilment-table-pages {
+  padding:0 !important;
+  position: relative;
+}
+.fulfilment-table-pages .table-container{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+div.right-detail-title {
+  height:28px;
+  padding:5px;
+}
+
+@media screen and (max-width:1200px){
+  .gridview-inner .gridview-encloser {
+    width: 100% !important;
+  }
+  .gridview-detail {
+    display: none !important;
+  }
+}
+@media screen and (min-width:992px) and (max-width:1043px){
+  .gridview-inner .gridview-encloser.pagination-active .gridview-content {
+    height: calc(100% - 185px);
+  }
+  .quick-filters {
+    margin-bottom: -8px;
+  }
+  .quick-filters .btn-group {
+    margin-bottom: 8px;
+  }
+}
+@media screen and (max-width:808px) {
+  .gridview-inner .gridview-encloser.pagination-active .gridview-content {
+    height: calc(100% - 185px);
+  }
+  .quick-filters {
+    margin-bottom: -8px;
+  }
+  .quick-filters .btn-group {
+    margin-bottom: 8px;
+  }
+}
+
+.table-header-filter {
+    input {
+      font-size:14px;
+      padding: 3px 5px;
+    }
+    select {
+      font-size:14px;
+      padding: 3px 5px;
+    }
+}
+.dropdown-menu.text-quick-filter {
+  min-width: 130px;
+}

@@ -1,0 +1,12 @@
+/* here you can put your own css to customize and override the theme */
+$bg-color:                                                      		#262C33 !default;
+$header-bg-color:                                               		#424a55 !default;  
+$header-top-menu-icon-font-color:                               		lighten($bg-color, 30%) !default;   
+$sidebar-menu-devider-border-color:                             		darken($bg-color, 3%) !default;
+$sidebar-menu-link-font-color:                                  		#b0bec5 !default;
+$sidebar-menu-link-icon-font-color:                             		#1c7780 !default;
+$sidebar-menu-link-bg-color-on-hover:                           		darken($bg-color, 5%) !default;
+$sidebar-search-full-border-color:                              		#b0bec5 !default;     
+$sidebar-search-input-font-color:                               		lighten($bg-color, 75%) !default;
+$sidebar-search-input-placeholder-font-color:                   		lighten($bg-color, 25%) !default;
+

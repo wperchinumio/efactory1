@@ -1,0 +1,248 @@
+import React, { useRef } from 'react'
+import PropTypes from 'prop-types'
+import classNames from 'classnames'
+import moment from 'moment'
+import DateRangePicker from '../../../_Shared/Components/daterangepicker'
+import { defaultRanges, defaultLetterRanges, letterMatchesLabel } from './dateDefinitions'
+
+const DateRangeFilter = ({
+  allowClear,
+  endDate,
+  iconClassName,
+  field,
+  onQuickFilterChange,
+  startDate,
+  title,
+}) => {
+  const config = useRef(generateDateRangePickerConfig( allowClear ))
+  function handleApply (event, picker) {
+    let chosenLabel = picker.chosenLabel
+    if( chosenLabel === 'Clear' ){
+      return onQuickFilterChange( { [ field ] : [] } )
+    }
+    let chosenLabelPredefined = checkChosenLabel( chosenLabel )
+    if( chosenLabelPredefined ){
+      onQuickFilterChange({
+        [ field ] : [ { field, oper : '=', value : chosenLabelPredefined } ]
+      })
+    }else{
+      let startDate = picker.startDate.format('YYYY-MM-DD')
+      let endDate =  picker.endDate.format('YYYY-MM-DD')
+
+      onQuickFilterChange({
+        [ field ] : [ {
+            field,
+            oper : '>=',
+            value : startDate
+          },
+          {
+            field,
+            oper : '<=',
+            value : endDate
+          },
+        ]
+      })
+    }
+  }
+
+  function checkChosenLabel (chosenLabel) {
+    switch( chosenLabel ){
+      case 'Today':
+        return '0D'
+      case 'Yesterday':
+        return '-1D'
+      case 'This Week':
+        return '0W'
+      case 'Last Week':
+        return '-1W'
+      case 'Last 10 Days':
+        return '-10D'
+      case 'Last 30 Days':
+        return '-30D'
+      case 'Last 90 Days':
+        return '-90D'
+      case 'This Month':
+        return '0M'
+      case 'Last Month':
+        return '-1M'
+      case 'This Year':
+        return '0Y'
+      default:
+        return false
+    }
+  }
+
+  function determineChosenLabel (startDate, endDate) {
+    let labelText
+    switch( true ){
+      case startDate === defaultRanges['Today'][0].format('YYYY-MM-DD') && endDate === defaultRanges['Today'][1].format('YYYY-MM-DD') :
+        labelText = 'Today'
+        break
+      case startDate === defaultRanges['Yesterday'][0].format('YYYY-MM-DD') && endDate === defaultRanges['Yesterday'][1].format('YYYY-MM-DD'):
+        labelText = 'Yesterday'
+        break
+      case startDate === defaultRanges['This Week'][0].format('YYYY-MM-DD') && endDate === defaultRanges['This Week'][1].format('YYYY-MM-DD'):
+        labelText = 'This Week'
+        break
+      case startDate === defaultRanges['Last Week'][0].format('YYYY-MM-DD') && endDate === defaultRanges['Last Week'][1].format('YYYY-MM-DD'):
+        labelText = 'Last Week'
+        break
+      case startDate === defaultRanges['Last 10 Days'][0].format('YYYY-MM-DD') && endDate === defaultRanges['Last 10 Days'][1].format('YYYY-MM-DD'):
+        labelText = 'Last 10 Days'
+        break
+      case startDate === defaultRanges['Last 30 Days'][0].format('YYYY-MM-DD') && endDate === defaultRanges['Last 30 Days'][1].format('YYYY-MM-DD'):
+        labelText = 'Last 30 Days'
+        break
+      case startDate === defaultRanges['Last 90 Days'][0].format('YYYY-MM-DD') && endDate === defaultRanges['Last 90 Days'][1].format('YYYY-MM-DD'):
+        labelText = 'Last 90 Days'
+        break
+      case startDate === defaultRanges['This Month'][0].format('YYYY-MM-DD') && endDate === defaultRanges['This Month'][1].format('YYYY-MM-DD') :
+        labelText = 'This Month'
+        break
+      case startDate === defaultRanges['Last Month'][0].format('YYYY-MM-DD') && endDate === defaultRanges['Last Month'][1].format('YYYY-MM-DD'):
+        labelText = 'Last Month'
+        break
+      case startDate === defaultRanges['This Year'][0].format('YYYY-MM-DD') && endDate === defaultRanges['This Year'][1].format('YYYY-MM-DD') :
+        labelText = 'This Year'
+        break
+      case startDate === '2019-1-1' :
+        labelText = ''
+        break
+      default:
+        labelText = `${formatTo( startDate, 'user' )} - ${formatTo( endDate, 'user' )}`
+    }
+    return labelText
+  }
+
+  function formatTo (date = 'YYYY-MM-DD', toFormat = 'user') {
+    if( typeof date === 'object' ) date = date.format('YYYY-MM-DD')
+    date = date.split('-')
+    if( toFormat === 'daterange' ) return `${date[1]}-${date[2]}-${date[0]}`
+    if( toFormat === 'user' ) return `${date[1]}/${date[2]}/${date[0]}`
+  }
+
+  function convertLetterToDate (letterFormat) {
+    let indexMatched
+    defaultLetterRanges.some( ( l, index ) => {
+      if( letterFormat === l ) indexMatched = index
+      return letterFormat === l
+    } )
+    if( indexMatched === undefined ){
+      console.error('No letter matched on defaultLetterRanges array')
+      return {}
+    }
+    let label = letterMatchesLabel[ indexMatched ]
+    return {
+      convertedStartDate : defaultRanges[label][0],
+      convertedEndDate : defaultRanges[label][1],
+      label
+    }
+  }
+
+  let labelText
+  if( [ 'Y', 'M', 'W', 'D' ].filter( keyword => startDate.includes(keyword) ).length ){
+    let { convertedStartDate, convertedEndDate, label } = convertLetterToDate( startDate )
+    if( convertedStartDate || convertedEndDate ){
+      startDate = convertedStartDate
+      endDate = convertedEndDate
+      labelText = label
+    }else{
+      console.error( 'convertLetterToDate method returned invalid date values'+
+                     ', for now filter changed to Today not to crash the app. ' )
+      startDate = defaultRanges['Today'][0]
+      endDate = defaultRanges['Today'][1]
+    }
+  }else{
+    labelText = determineChosenLabel( startDate, endDate )
+  }
+
+  return (
+    <div className="btn-group">
+      <DateRangePicker
+      {...config.current}
+      onApply={handleApply}
+      startDate={ formatTo(startDate, 'daterange') }
+      endDate={ formatTo(endDate, 'daterange' ) } >
+        <button 
+          id={`quickfilter-daterange-${field}`}
+          className="btn btn-xs gridview-filter-btn no-animation"
+          onClick={ e => { 
+            let header = global.$('.table-container-header') 
+            setTimeout( () => {
+              header.hide(0).show(0) 
+            }, 1000 )
+          } }
+        >
+          <i className={iconClassName}></i>
+          <span className={ classNames({ "font-red-soft bold" : labelText !== '' }) }>
+            { title }
+          </span>
+          <span className="filter-value">
+            { labelText }
+          </span>
+          <b className="fa fa-angle-down"></b>
+        </button>
+      </DateRangePicker>
+    </div>
+  )
+}
+
+/**
+  helper function to generate date range picker config
+  for more details about config visit http://www.daterangepicker.com/
+
+  it takes allowClear as a param which determines clear is visible
+  within available options like Today, Yesterday etc.
+**/
+
+function generateDateRangePickerConfig (allowClear = true) {
+  let ranges = {}
+
+  if( allowClear ) ranges['Clear'] = ['1-1-2019', moment().add(1, 'days') ]
+
+  ranges = { ...ranges, ...defaultRanges }
+
+  return {
+    opens: (global.App.isRTL() ? 'left' : 'right'),
+    startDate: allowClear ? '1-1-2019' : moment().subtract(30, 'days'),
+    endDate: moment().format('YYYY-MM-DD'),
+    //minDate: '01/01/2010',
+    //maxDate: moment(),//'12/31/2020',
+    showDropdowns: true,
+    showWeekNumbers: true,
+    ranges,
+    buttonClasses: ['btn'],
+    applyClass: 'green',
+    cancelClass: 'default',
+    format: 'MM-DD-YYYY',
+    maxDate : moment().endOf('year'),
+    minDate : '1-1-2010', // Use string, so timezone is ignored
+    linkedCalendars : false,
+    locale: {
+      applyLabel: 'Apply',
+      fromLabel: 'From',
+      toLabel: 'To',
+      customRangeLabel: 'Custom Range',
+      daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+      monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      firstDay: 1
+    }
+  }
+}
+
+DateRangeFilter.defaultProps = {
+  startDate: '2019-1-1',
+  endDate: moment().add(1, 'days').format('YYYY-MM-DD'),
+  allowClear: true,
+  iconClassName: 'fa fa-calendar'
+}
+
+DateRangeFilter.propTypes = {
+  allowClear: PropTypes.bool,
+  field: PropTypes.string.isRequired,
+  iconClassName: PropTypes.string,
+  onQuickFilterChange: PropTypes.func.isRequired,
+  title: PropTypes.string.isRequired,
+}
+
+export default DateRangeFilter
