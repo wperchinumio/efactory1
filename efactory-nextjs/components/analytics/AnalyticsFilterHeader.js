@@ -7,6 +7,7 @@ const AnalyticsFilterHeader = ({
 	onClearAllFilters,
 	showViewModeToggle = true,
 	showClearAllButton = true,
+	showActiveFilters = false,
 	title = "Filters",
 	subtitle = "Configure your report parameters",
 	children
@@ -81,7 +82,10 @@ const AnalyticsFilterHeader = ({
 			{/* Filter Controls */}
 			{children && (
 				<div className='p-6'>
-					{children}
+					{showActiveFilters ? children : (
+						// Only render the first child (filter controls), skip Active Filters Summary
+						Array.isArray(children) ? children[0] : children
+					)}
 				</div>
 			)}
 		</div>
