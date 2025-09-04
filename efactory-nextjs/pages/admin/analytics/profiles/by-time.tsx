@@ -95,10 +95,14 @@ export default function AdminAnalyticsByTime() {
 				],
 				warehouseOptions: [],
 				accountOptions: [],
-				destinationOptions: [],
+				destinationOptions: [
+					{ value: '', label: 'All Destinations' },
+					{ value: '0', label: 'Domestic' },
+					{ value: '1', label: 'International' }
+				],
 				channelOptions: [],
 				countryOptions: [],
-				stateOptions: []
+				stateOptions: [{ value: '', label: 'All States' }]
 			};
 		}
 
@@ -644,9 +648,9 @@ export default function AdminAnalyticsByTime() {
 
 			{/* Filter Controls */}
 			<div className='p-6'>
-				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12 gap-4'>
+				<div className='flex flex-wrap gap-4'>
 					{/* Time Period */}
-					<div className='lg:col-span-1 xl:col-span-1'>
+					<div className='flex-shrink-0 w-32'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider text-red-600`}>
 							<IconCalendar className='w-3 h-3 text-primary' />
 							Time
@@ -661,7 +665,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Shipped Date */}
-					<div className='lg:col-span-1 xl:col-span-2'>
+					<div className='flex-shrink-0 w-48'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider text-red-600`}>
 							<IconCalendar className='w-3 h-3 text-success' />
 							Shipped Date
@@ -676,7 +680,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Warehouse - Multi-select */}
-					<div className='lg:col-span-1 xl:col-span-2'>
+					<div className='flex-shrink-0 w-52'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.warehouse.length > 0 ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -694,7 +698,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Account - Multi-select */}
-					<div className='lg:col-span-1 xl:col-span-2'>
+					<div className='flex-shrink-0 w-52'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.account.length > 0 ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -712,7 +716,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Destination */}
-					<div className='lg:col-span-1 xl:col-span-1'>
+					<div className='flex-shrink-0 w-36'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.destination ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -722,14 +726,18 @@ export default function AdminAnalyticsByTime() {
 						<Combobox
 							value={filters.destination}
 							onValueChange={(value) => updateFilter('destination', value)}
-							options={filterOptions.destinationOptions}
+							options={[
+								{ value: '', label: 'All Destinations' },
+								{ value: '0', label: 'Domestic' },
+								{ value: '1', label: 'International' }
+							]}
 							showSearch={false}
 							placeholder="Destination..."
 						/>
 					</div>
 
 					{/* Channel */}
-					<div className='lg:col-span-1 xl:col-span-1'>
+					<div className='flex-shrink-0 w-48'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.channel.length > 0 ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -746,7 +754,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Country */}
-					<div className='lg:col-span-1 xl:col-span-1'>
+					<div className='flex-shrink-0 w-48'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.country ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -763,7 +771,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* State - Always show, but conditional options */}
-					<div className='lg:col-span-1 xl:col-span-1'>
+					<div className='flex-shrink-0 w-36'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.state ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -773,7 +781,7 @@ export default function AdminAnalyticsByTime() {
 						<Combobox
 							value={filters.state}
 							onValueChange={(value) => updateFilter('state', value)}
-							options={filters.country ? filterOptions.stateOptions : [{ value: '', label: 'Select country first' }]}
+							options={filters.country ? (filterOptions.stateOptions || [{ value: '', label: 'All States' }]) : [{ value: '', label: 'Select country first' }]}
 							showSearch={filters.country ? true : false}
 							placeholder={filters.country ? "State..." : "Select country first"}
 							disabled={!filters.country}
