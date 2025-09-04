@@ -24,6 +24,7 @@ import {
 	CountryFilterCombobox,
 	StateFilterCombobox
 } from '@/components/filters';
+import { AnalyticsFilterHeader } from '@/components/analytics';
 
 interface ChartRow {
 	id?: string;
@@ -461,150 +462,99 @@ export default function AdminAnalyticsByShipService() {
 				</div>
 			</div>
 
-		{/* Filter Bar */}
-		<div className='bg-card-color border border-border-color rounded-xl overflow-hidden mb-6'>
-			{/* Filter Header */}
-			<div className='bg-primary-10 border-b border-border-color px-6 py-4'>
-				<div className='flex items-center justify-between'>
-					<div className='flex items-center gap-3'>
-						<div className='w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center'>
-							<IconFilter className='w-4 h-4' />
-						</div>
-						<div>
-							<h3 className='text-[16px] font-bold text-font-color'>Filters</h3>
-							<p className='text-[12px] text-font-color-100'>Configure your report parameters</p>
-						</div>
-					</div>
-					<div className='flex items-center gap-4'>
-						{/* VIEW MODE Toggle */}
-						<div className='flex items-center gap-3'>
-							<span className='text-[12px] font-semibold text-font-color-100 uppercase tracking-wider'>View Mode:</span>
-							<div className='flex border border-border-color rounded-lg overflow-hidden'>
-								<button
-									onClick={() => setViewMode('chart')}
-									className={`px-3 py-1.5 text-[12px] font-medium flex items-center gap-2 transition-colors ${
-										viewMode === 'chart' 
-											? 'bg-primary text-white' 
-											: 'bg-card-color text-font-color-100 hover:bg-primary-10'
-									}`}
-								>
-									<IconChartBar className='w-3 h-3' />
-									Chart View
-								</button>
-								<div className='w-px h-6 bg-border-color opacity-50'></div>
-								<button
-									onClick={() => setViewMode('table')}
-									className={`px-3 py-1.5 text-[12px] font-medium flex items-center gap-2 transition-colors ${
-										viewMode === 'table' 
-											? 'bg-primary text-white' 
-											: 'bg-card-color text-font-color-100 hover:bg-primary-10'
-									}`}
-								>
-									<IconTable className='w-3 h-3' />
-									Table View
-								</button>
-							</div>
-						</div>
-					</div>
-				</div>
+		<AnalyticsFilterHeader
+			viewMode={viewMode}
+			onViewModeChange={setViewMode}
+			hasActiveFilters={hasActiveFilters()}
+			onClearAllFilters={clearAllFilters}
+		>
+			<div className='flex flex-wrap gap-4'>
+				{/* SHIPPED DATE Filter */}
+				<ShippedDateFilterCombobox
+					value={filters.shippedDate}
+					onValueChange={(value) => updateFilter('shippedDate', value)}
+					className='flex-shrink-0 w-48'
+				/>
+
+				{/* WAREHOUSE Filter */}
+				<WarehouseFilterCombobox
+					value={filters.warehouse}
+					onValueChange={(value) => updateFilter('warehouse', value)}
+					className='flex-shrink-0 w-52'
+				/>
+
+				{/* ACCOUNT Filter */}
+				<AccountFilterCombobox
+					value={filters.account}
+					onValueChange={(value) => updateFilter('account', value)}
+					className='flex-shrink-0 w-52'
+				/>
+
+				{/* COUNTRY Filter */}
+				<CountryFilterCombobox
+					value={filters.country}
+					onValueChange={(value) => updateFilter('country', value)}
+					className='flex-shrink-0 w-48'
+				/>
+
+				{/* STATE Filter - Only show when country is selected */}
+				<StateFilterCombobox
+					value={filters.state}
+					onValueChange={(value) => updateFilter('state', value)}
+					countryValue={filters.country}
+					className='flex-shrink-0 w-36'
+				/>
 			</div>
 
-			{/* Filter Controls */}
-			<div className='p-6'>
-				<div className='flex flex-wrap gap-4'>
-					{/* SHIPPED DATE Filter */}
-					<ShippedDateFilterCombobox
-						value={filters.shippedDate}
-						onValueChange={(value) => updateFilter('shippedDate', value)}
-						className='flex-shrink-0 w-48'
-					/>
-
-					{/* WAREHOUSE Filter */}
-					<WarehouseFilterCombobox
-						value={filters.warehouse}
-						onValueChange={(value) => updateFilter('warehouse', value)}
-						className='flex-shrink-0 w-52'
-					/>
-
-					{/* ACCOUNT Filter */}
-					<AccountFilterCombobox
-						value={filters.account}
-						onValueChange={(value) => updateFilter('account', value)}
-						className='flex-shrink-0 w-52'
-					/>
-
-					{/* COUNTRY Filter */}
-					<CountryFilterCombobox
-						value={filters.country}
-						onValueChange={(value) => updateFilter('country', value)}
-						className='flex-shrink-0 w-48'
-					/>
-
-					{/* STATE Filter - Only show when country is selected */}
-					<StateFilterCombobox
-						value={filters.state}
-						onValueChange={(value) => updateFilter('state', value)}
-						countryValue={filters.country}
-						className='flex-shrink-0 w-36'
-					/>
-				</div>
-
-				{/* Active Filters Summary */}
-				{hasActiveFilters() && (
-					<div className='mt-4 pt-4 border-t border-border-color'>
-						<div className='flex items-center gap-2 flex-wrap'>
-							<span className='text-[11px] font-bold text-font-color-100 uppercase tracking-wider'>Active Filters:</span>
-							{filters.shippedDate !== '-90D' && (
-								<span className='inline-flex items-center gap-1 px-2 py-1 bg-primary-10 text-primary rounded text-[10px] font-medium'>
-									Date: {filters.shippedDate === '-90D' ? 'Last 90 Days' : filters.shippedDate}
-									<button onClick={() => updateFilter('shippedDate', '-90D')} className='hover:bg-primary hover:text-white rounded-full p-0.5'>
-										<IconX className='w-2 h-2' />
-									</button>
-								</span>
-							)}
-							{filters.warehouse.length > 0 && (
-								<span className='inline-flex items-center gap-1 px-2 py-1 bg-warning-10 text-warning rounded text-[10px] font-medium'>
-									Warehouses: {filters.warehouse.length} selected
-									<button onClick={() => updateFilter('warehouse', [])} className='hover:bg-warning hover:text-white rounded-full p-0.5'>
-										<IconX className='w-2 h-2' />
-									</button>
-								</span>
-							)}
-							{filters.account.length > 0 && (
-								<span className='inline-flex items-center gap-1 px-2 py-1 bg-info-10 text-info rounded text-[10px] font-medium'>
-									Accounts: {filters.account.length} selected
-									<button onClick={() => updateFilter('account', [])} className='hover:bg-info hover:text-white rounded-full p-0.5'>
-										<IconX className='w-2 h-2' />
-									</button>
-								</span>
-							)}
-							{filters.country && (
-								<span className='inline-flex items-center gap-1 px-2 py-1 bg-success-10 text-success rounded text-[10px] font-medium'>
-									Country: {filters.country}
-									<button onClick={() => updateFilter('country', '')} className='hover:bg-success hover:text-white rounded-full p-0.5'>
-										<IconX className='w-2 h-2' />
-									</button>
-								</span>
-							)}
-							{filters.state && (
-								<span className='inline-flex items-center gap-1 px-2 py-1 bg-danger-10 text-danger rounded text-[10px] font-medium'>
-									State: {filters.state}
-									<button onClick={() => updateFilter('state', '')} className='hover:bg-danger hover:text-white rounded-full p-0.5'>
-										<IconX className='w-2 h-2' />
-									</button>
-								</span>
-							)}
-							<button
-								onClick={clearAllFilters}
-								className='text-[10px] text-font-color-100 hover:text-danger underline'
-							>
-								Clear All
-							</button>
-						</div>
+			{/* Active Filters Summary */}
+			{hasActiveFilters() && (
+				<div className='mt-4 pt-4 border-t border-border-color'>
+					<div className='flex items-center gap-2 flex-wrap'>
+						<span className='text-[11px] font-bold text-font-color-100 uppercase tracking-wider'>Active Filters:</span>
+						{filters.shippedDate !== '-90D' && (
+							<span className='inline-flex items-center gap-1 px-2 py-1 bg-primary-10 text-primary rounded text-[10px] font-medium'>
+								Date: {filters.shippedDate === '-90D' ? 'Last 90 Days' : filters.shippedDate}
+								<button onClick={() => updateFilter('shippedDate', '-90D')} className='hover:bg-primary hover:text-white rounded-full p-0.5'>
+									<IconX className='w-2 h-2' />
+								</button>
+							</span>
+						)}
+						{filters.warehouse.length > 0 && (
+							<span className='inline-flex items-center gap-1 px-2 py-1 bg-warning-10 text-warning rounded text-[10px] font-medium'>
+								Warehouses: {filters.warehouse.length} selected
+								<button onClick={() => updateFilter('warehouse', [])} className='hover:bg-warning hover:text-white rounded-full p-0.5'>
+									<IconX className='w-2 h-2' />
+								</button>
+							</span>
+						)}
+						{filters.account.length > 0 && (
+							<span className='inline-flex items-center gap-1 px-2 py-1 bg-info-10 text-info rounded text-[10px] font-medium'>
+								Accounts: {filters.account.length} selected
+								<button onClick={() => updateFilter('account', [])} className='hover:bg-info hover:text-white rounded-full p-0.5'>
+									<IconX className='w-2 h-2' />
+								</button>
+							</span>
+						)}
+						{filters.country && (
+							<span className='inline-flex items-center gap-1 px-2 py-1 bg-success-10 text-success rounded text-[10px] font-medium'>
+								Country: {filters.country}
+								<button onClick={() => updateFilter('country', '')} className='hover:bg-success hover:text-white rounded-full p-0.5'>
+									<IconX className='w-2 h-2' />
+								</button>
+							</span>
+						)}
+						{filters.state && (
+							<span className='inline-flex items-center gap-1 px-2 py-1 bg-danger-10 text-danger rounded text-[10px] font-medium'>
+								State: {filters.state}
+								<button onClick={() => updateFilter('state', '')} className='hover:bg-danger hover:text-white rounded-full p-0.5'>
+									<IconX className='w-2 h-2' />
+								</button>
+							</span>
+						)}
 					</div>
-				)}
-			</div>
-		</div>
+				</div>
+			)}
+		</AnalyticsFilterHeader>
 
 			{/* Content Section */}
 			<div className='bg-card-color border border-border-color rounded-xl overflow-hidden'>
