@@ -38,11 +38,6 @@ function getPrevMonthYear(): MonthYear {
 	};
 }
 
-function buildProxyUrl(path: string): string {
-	const useProxy = process.env.NEXT_PUBLIC_USE_API_PROXY === 'true';
-	const base = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-	return useProxy ? `/api/proxy${path}` : `${base}${path}`;
-}
 
 function formatNumber(value: number, fractionDigits = 0): string {
 	return new Intl.NumberFormat(undefined, {
@@ -138,32 +133,96 @@ function LicenseSummaryPage() {
 		return opts;
 	}
 
-	async function onExport() {
-		try {
-			const url = buildProxyUrl('/api/account');
-			const token = getAuthToken()?.api_token || '';
-			const res = await fetch(url, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					Accept: '*/*',
-					'X-Access-Token': token,
-				},
-				body: JSON.stringify({ action: 'export', resource: 'efactory_license_summary', month: period.month, year: period.year }),
-			});
-			if (!res.ok) throw new Error('Export failed');
-			const blob = await res.blob();
-			const href = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = href;
-			a.download = `license-summary-${period.year}-${period.month}.xlsx`;
-			document.body.appendChild(a);
-			a.click();
-			a.remove();
-			URL.revokeObjectURL(href);
-		} catch {
-			// noop for now
-		}
+	function onExport() {
+		// Replicate the exact legacy downloadLicenseSummary function
+		const xhr = new XMLHttpRequest();
+		
+		// Use direct API URL like legacy (no proxy handling in legacy code)
+		const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+		const url = `${apiBaseUrl}/api/account`;
+		
+		console.log('Legacy-style export to:', url);
+		
+		// Open GET request exactly like legacy DownloadSource
+		xhr.open('GET', url, true);
+		
+		// Set X-Access-Token exactly like legacy
+		const token = getAuthToken()?.api_token || '';
+		xhr.setRequestHeader("X-Access-Token", token);
+		
+		// Set X-Download-Params exactly like legacy downloadLicenseSummary
+		const headerParams = JSON.stringify({
+			action: 'export',
+			resource: 'efactory_license_summary',
+			month: period.month,
+			year: period.year
+		});
+		xhr.setRequestHeader("X-Download-Params", headerParams);
+		
+		// Set responseType to arraybuffer exactly like legacy DownloadSource
+		xhr.responseType = 'arraybuffer';
+		
+		xhr.onload = function () {
+			if (this.status === 200) {
+				// Extract filename from Content-Disposition header (legacy pattern)
+				let filename = "";
+				const disposition = xhr.getResponseHeader('Content-Disposition');
+				if (disposition && disposition.indexOf('attachment') !== -1) {
+					const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+					const matches = filenameRegex.exec(disposition);
+					if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
+				}
+				
+				// Get content type from response header
+				const type = xhr.getResponseHeader('Content-Type');
+				
+				// Create blob exactly like legacy DownloadSource
+				const blob = new Blob([this.response], { type: type });
+				
+				// Handle download exactly like legacy DownloadSource
+				if (typeof window.navigator.msSaveBlob !== 'undefined') {
+					// IE workaround for "HTML7007: One or more blob URLs were revoked
+					// by closing the blob for which they were created. These URLs will
+					// no longer resolve as the data backing the URL has been freed."
+					window.navigator.msSaveBlob(blob, filename);
+				} else {
+					const URL = window.URL || window.webkitURL;
+					const downloadUrl = URL.createObjectURL(blob);
+					
+					if (filename) {
+						// use HTML5 a[download] attribute to specify filename
+						const a = document.createElement("a");
+						
+						// safari doesn't support this yet
+						if (typeof a.download === 'undefined') {
+							window.location.href = downloadUrl;
+						} else {
+							a.href = downloadUrl;
+							a.download = filename;
+							document.body.appendChild(a);
+							a.click();
+						}
+					} else {
+						window.location.href = downloadUrl;
+					}
+					setTimeout(() => { URL.revokeObjectURL(downloadUrl); }, 100); // cleanup
+				}
+				
+				console.log('Export successful');
+			} else {
+				console.error('Export failed:', this.status, this.statusText);
+				alert('Export failed. Please try again.');
+			}
+		};
+		
+		xhr.onerror = function() {
+			console.error('Export request error');
+			alert('Export request failed. Please try again.');
+		};
+		
+		// Set Content-type header and send (exactly like legacy DownloadSource)
+		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+		xhr.send();
 	}
 
 	function LicenseSummaryPageInner() {
@@ -178,11 +237,11 @@ function LicenseSummaryPage() {
 						</div>
 						<div className='flex items-center gap-3'>
 							<Combobox
-								value={`${period.year}-${period.month}`}
+									value={`${period.year}-${period.month}`}
 								onValueChange={(value) => {
 									const [y, m] = value.split('-');
-									setPeriod({ month: m, year: y });
-								}}
+										setPeriod({ month: m, year: y });
+									}}
 								options={monthOptions().map((opt) => ({
 									value: `${opt.year}-${opt.month}`,
 									label: `${opt.year} - ${opt.month}`
@@ -268,12 +327,12 @@ function LicenseSummaryPage() {
 						<div className='flex items-center gap-4'>
 							<div className='relative'>
 								<IconSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-font-color-100' />
-								<input
+							<input
 									className='form-control pl-12 min-w-[250px] bg-card-color border border-border-color rounded-lg px-3 py-2 text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors'
 									placeholder='Search customers...'
-									value={filter}
-									onChange={(e) => setFilter(e.target.value)}
-								/>
+								value={filter}
+								onChange={(e) => setFilter(e.target.value)}
+							/>
 							</div>
 							{filter && (
 								<button
