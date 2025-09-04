@@ -1010,7 +1010,7 @@ export default function AdminAnalyticsByTime() {
 										</th>
 										
 										{/* Lines Section */}
-										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'lines' ? 'bg-success-10' : ''}`} colSpan={compareYears ? 3 : 1}>
+										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`} colSpan={compareYears ? 3 : 1}>
 											<div className='flex items-center justify-center gap-2'>
 												<IconList className='w-3 h-3 text-success' />
 												Lines
@@ -1018,7 +1018,7 @@ export default function AdminAnalyticsByTime() {
 										</th>
 										
 										{/* Packages Section */}
-										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'packages' ? 'bg-warning-10' : ''}`} colSpan={compareYears ? 3 : 1}>
+										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`} colSpan={compareYears ? 3 : 1}>
 											<div className='flex items-center justify-center gap-2'>
 												<IconPackage className='w-3 h-3 text-warning' />
 												Packages
@@ -1026,7 +1026,7 @@ export default function AdminAnalyticsByTime() {
 										</th>
 										
 										{/* Units Section */}
-										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'units' ? 'bg-info-10' : ''}`} colSpan={compareYears ? 3 : 1}>
+										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`} colSpan={compareYears ? 3 : 1}>
 											<div className='flex items-center justify-center gap-2'>
 												<IconBox className='w-3 h-3 text-info' />
 												Units
@@ -1046,61 +1046,61 @@ export default function AdminAnalyticsByTime() {
 										
 										{/* Orders Columns */}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px] border-l border-border-color'>
+											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
 												Orders (-2)
 											</th>
 										)}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px]'>
+											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
 												Orders (-1)
 											</th>
 										)}
-										<th className='py-3 px-2 text-right border-l border-border-color'>
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
 											Orders
 										</th>
 										
 										{/* Lines Columns */}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px] border-l border-border-color'>
+											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
 												Lines (-2)
 											</th>
 										)}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px]'>
+											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
 												Lines (-1)
 											</th>
 										)}
-										<th className='py-3 px-2 text-right border-l border-border-color'>
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
 											Lines
 										</th>
 										
 										{/* Packages Columns */}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px] border-l border-border-color'>
+											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
 												Packages (-2)
 											</th>
 										)}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px]'>
+											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
 												Packages (-1)
 											</th>
 										)}
-										<th className='py-3 px-2 text-right border-l border-border-color'>
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
 											Packages
 										</th>
 										
 										{/* Units Columns */}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px] border-l border-border-color'>
+											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
 												Units (-2)
 											</th>
 										)}
 										{compareYears && (
-											<th className='py-3 px-2 text-right text-[11px]'>
+											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
 												Units (-1)
 											</th>
 										)}
-										<th className='py-3 px-2 text-right border-l border-border-color'>
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
 											Units
 										</th>
 									</tr>
