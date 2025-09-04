@@ -3,6 +3,7 @@ import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
 import { IconSearch, IconRefresh, IconDownload, IconCalendar, IconUsers, IconCurrencyDollar, IconTrendingUp, IconChevronUp, IconChevronDown } from '@tabler/icons-react';
 import dynamic from 'next/dynamic';
+import Combobox from '@/components/ui/Combobox';
 
 interface LicenseSummaryRow {
 	row_id?: number;
@@ -176,23 +177,21 @@ function LicenseSummaryPage() {
 							<p className='text-font-color-100'>Monitor license usage and billing across all customers</p>
 						</div>
 						<div className='flex items-center gap-3'>
-							<div className='flex items-center gap-2 bg-card-color border border-border-color rounded-lg px-3 py-2'>
-								<IconCalendar className='w-4 h-4 text-font-color-100' />
-								<select
-									className='bg-transparent border-0 outline-0 text-font-color min-w-[120px] cursor-pointer'
-									value={`${period.year}-${period.month}`}
-									onChange={(e) => {
-										const [y, m] = e.target.value.split('-');
-										setPeriod({ month: m, year: y });
-									}}
-								>
-									{monthOptions().map((opt) => (
-										<option key={`${opt.year}-${opt.month}`} value={`${opt.year}-${opt.month}`}>
-											{opt.year} - {opt.month}
-										</option>
-									))}
-								</select>
-							</div>
+							<Combobox
+								value={`${period.year}-${period.month}`}
+								onValueChange={(value) => {
+									const [y, m] = value.split('-');
+									setPeriod({ month: m, year: y });
+								}}
+								options={monthOptions().map((opt) => ({
+									value: `${opt.year}-${opt.month}`,
+									label: `${opt.year} - ${opt.month}`
+								}))}
+								placeholder="Select period..."
+								icon={IconCalendar}
+								className="min-w-[160px]"
+								showSearch={false}
+							/>
 							<button 
 								className='btn btn-light-secondary' 
 								onClick={load} 
@@ -218,7 +217,7 @@ function LicenseSummaryPage() {
 						<div className='bg-card-color border border-border-color rounded-xl p-4'>
 							<div className='flex items-center justify-between mb-2'>
 								<div className='bg-primary-10 p-3 rounded-lg'>
-									<IconUsers className='w-6 h-6 text-primary' />
+									<IconUsers className='w-6 h-6 text-font-color' />
 								</div>
 								<span className='text-[12px]/[16px] text-font-color-100 font-medium'>CUSTOMERS</span>
 							</div>
@@ -229,7 +228,7 @@ function LicenseSummaryPage() {
 						<div className='bg-card-color border border-border-color rounded-xl p-4'>
 							<div className='flex items-center justify-between mb-2'>
 								<div className='bg-success-10 p-3 rounded-lg'>
-									<IconTrendingUp className='w-6 h-6 text-success' />
+									<IconTrendingUp className='w-6 h-6 text-font-color' />
 								</div>
 								<span className='text-[12px]/[16px] text-font-color-100 font-medium'>NEW CUSTOMERS</span>
 							</div>
@@ -240,7 +239,7 @@ function LicenseSummaryPage() {
 						<div className='bg-card-color border border-border-color rounded-xl p-4'>
 							<div className='flex items-center justify-between mb-2'>
 								<div className='bg-warning-10 p-3 rounded-lg'>
-									<IconCurrencyDollar className='w-6 h-6 text-warning' />
+									<IconCurrencyDollar className='w-6 h-6 text-font-color' />
 								</div>
 								<span className='text-[12px]/[16px] text-font-color-100 font-medium'>TOTAL REVENUE</span>
 							</div>
@@ -251,7 +250,7 @@ function LicenseSummaryPage() {
 						<div className='bg-card-color border border-border-color rounded-xl p-4'>
 							<div className='flex items-center justify-between mb-2'>
 								<div className='bg-info-10 p-3 rounded-lg'>
-									<IconCurrencyDollar className='w-6 h-6 text-info' />
+									<IconCurrencyDollar className='w-6 h-6 text-font-color' />
 								</div>
 								<span className='text-[12px]/[16px] text-font-color-100 font-medium'>AVG PER CUSTOMER</span>
 							</div>
@@ -269,16 +268,16 @@ function LicenseSummaryPage() {
 						<div className='flex items-center gap-4'>
 							<div className='relative'>
 								<IconSearch className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-font-color-100' />
-							<input
-									className='form-input pl-12 min-w-[250px]'
+								<input
+									className='form-control pl-12 min-w-[250px] bg-card-color border border-border-color rounded-lg px-3 py-2 text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors'
 									placeholder='Search customers...'
-								value={filter}
-								onChange={(e) => setFilter(e.target.value)}
-							/>
+									value={filter}
+									onChange={(e) => setFilter(e.target.value)}
+								/>
 							</div>
 							{filter && (
 								<button
-									className='text-[12px]/[16px] text-font-color-100 hover:text-font-color'
+									className='text-[12px]/[16px] text-font-color-100 hover:text-font-color transition-colors'
 									onClick={() => setFilter('')}
 								>
 									Clear filter
@@ -309,9 +308,9 @@ function LicenseSummaryPage() {
 											)}
 										</button>
 									</th>
-									<th rowSpan={2} className='px-3 py-3 text-center border-r border-border-color' style={{backgroundColor: 'rgba(59, 130, 246, 0.1)'}}>
+									<th rowSpan={2} className='px-3 py-3 text-center border-r border-border-color bg-primary-10'>
 										<button
-											className='flex items-center justify-center gap-1 text-[11px]/[14px] font-bold text-info uppercase tracking-wider hover:text-info w-full'
+											className='flex items-center justify-center gap-1 text-[11px]/[14px] font-bold text-font-color uppercase tracking-wider hover:text-font-color w-full'
 											onClick={() => setSort('total_charge')}
 										>
 											Total CHG
@@ -321,16 +320,16 @@ function LicenseSummaryPage() {
 										</button>
 									</th>
 									<th colSpan={3} className='px-4 py-2 text-center bg-primary-5 border-r border-border-color'>
-										<div className='text-[11px]/[14px] font-bold text-primary uppercase tracking-wider'>Basic</div>
+										<div className='text-[11px]/[14px] font-bold text-font-color uppercase tracking-wider'>Basic</div>
 									</th>
 									<th colSpan={3} className='px-4 py-2 text-center bg-success-5 border-r border-border-color'>
-										<div className='text-[11px]/[14px] font-bold text-success uppercase tracking-wider'>Standard</div>
+										<div className='text-[11px]/[14px] font-bold text-font-color uppercase tracking-wider'>Standard</div>
 									</th>
 									<th colSpan={3} className='px-4 py-2 text-center bg-warning-5 border-r border-border-color'>
-										<div className='text-[11px]/[14px] font-bold text-warning uppercase tracking-wider'>ReturnTrak</div>
+										<div className='text-[11px]/[14px] font-bold text-font-color uppercase tracking-wider'>ReturnTrak</div>
 									</th>
 									<th colSpan={3} className='px-4 py-2 text-center bg-info-5'>
-										<div className='text-[11px]/[14px] font-bold text-info uppercase tracking-wider'>Summary Charges</div>
+										<div className='text-[11px]/[14px] font-bold text-font-color uppercase tracking-wider'>Summary Charges</div>
 									</th>
 								</tr>
 								{/* Column Headers Row */}
@@ -440,7 +439,7 @@ function LicenseSummaryPage() {
 									{/* Summary Charge Columns */}
 									<th className='px-3 py-2 text-center'>
 										<button
-											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-primary uppercase tracking-wider hover:text-primary w-full'
+											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-font-color uppercase tracking-wider hover:text-font-color w-full'
 											onClick={() => setSort('basic_charge')}
 										>
 											Basic CHG
@@ -451,7 +450,7 @@ function LicenseSummaryPage() {
 									</th>
 									<th className='px-3 py-2 text-center'>
 										<button
-											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-success uppercase tracking-wider hover:text-success w-full'
+											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-font-color uppercase tracking-wider hover:text-font-color w-full'
 											onClick={() => setSort('standard_charge')}
 										>
 											STD CHG
@@ -462,7 +461,7 @@ function LicenseSummaryPage() {
 									</th>
 									<th className='px-3 py-2 text-center'>
 										<button
-											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-warning uppercase tracking-wider hover:text-warning w-full'
+											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-font-color uppercase tracking-wider hover:text-font-color w-full'
 											onClick={() => setSort('returntrak_charge')}
 										>
 											RT CHG
@@ -502,7 +501,7 @@ function LicenseSummaryPage() {
 												</div>
 											</td>
 											{/* Total CHG Column */}
-											<td className='px-3 py-3 text-center text-[16px]/[22px] font-bold text-font-color border-r border-border-color' style={{backgroundColor: 'rgba(59, 130, 246, 0.1)'}}>${formatNumber(r.total_charge, 2)}</td>
+											<td className='px-3 py-3 text-center text-[16px]/[22px] font-bold text-font-color border-r border-border-color bg-primary-10'>${formatNumber(r.total_charge, 2)}</td>
 											{/* Basic Columns */}
 											<td className='px-2 py-3 text-center text-[13px]/[18px] text-font-color'>{formatNumber(r.basic_nocharge_eom)}</td>
 											<td className='px-2 py-3 text-center text-[13px]/[18px] text-font-color'>{formatNumber(r.basic_now_max)}</td>

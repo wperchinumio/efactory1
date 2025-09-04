@@ -135,7 +135,7 @@ function LoginUserPageInner() {
 		.slice(0, 5);
 
 	return (
-		<div className='md:px-6 sm:px-3 pt-6 md:pt-8 min-h-screen'>
+		<div className='md:px-6 sm:px-3 pt-6 md:pt-8 min-h-screen bg-body-color'>
 			{submitting && <LoadingOverlay text='Switching account...' />}
 			
 			{/* Compact Header */}
@@ -226,7 +226,7 @@ function LoginUserPageInner() {
 									<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
 									<input 
 										ref={searchInputRef}
-										className='form-input pl-9 pr-3 py-2 text-[14px] w-full border-border-color focus:border-primary focus:ring-2 focus:ring-primary-10 rounded-lg' 
+										className='form-control pl-9 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors' 
 										placeholder='Search accounts, companies, locations...' 
 										value={filter} 
 										onChange={(e) => setFilter(e.target.value)} 
