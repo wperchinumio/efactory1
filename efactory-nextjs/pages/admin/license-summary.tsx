@@ -549,7 +549,7 @@ function LicenseSummaryPage() {
 									</tr>
 								) : (
 									filteredSorted.map((r, index) => (
-										<tr key={r.row_id} className={`border-b border-border-color transition-colors ${r.is_new ? 'bg-success-5' : ''}`}>
+										<tr key={r.row_id} className={`border-b border-border-color hover:bg-primary-10 transition-colors ${r.is_new ? 'bg-success-5' : ''}`}>
 											{/* Customer */}
 											<td className='px-4 py-3 border-r border-border-color'>
 												<div className='flex items-center gap-2'>
