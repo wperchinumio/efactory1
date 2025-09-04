@@ -7,8 +7,8 @@ import Footer from '../partial/Footer'
 export default function Layout({ children }) {
   const router = useRouter();
   
-  // Hide footer on select-customer pages
-  const hideFooter = router.pathname.includes('/select-customer');
+  // Hide footer on select-customer and online-customer pages
+  const hideFooter = router.pathname.includes('/select-customer') || router.pathname.includes('/online-customer');
   const [container, setContainer] = useState(() => {
     // Initialize state from localStorage
     return typeof localStorage !== "undefined" && localStorage.getItem('container') === 'true';

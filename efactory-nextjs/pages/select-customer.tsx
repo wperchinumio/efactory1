@@ -60,7 +60,24 @@ function SelectCustomerPageInner() {
 				(acc.is_EDI ? 'edi' : '').includes(q),
 			);
 		}
-		return [...list].sort((a, b) => (a.username < b.username ? -1 : a.username > b.username ? 1 : 0));
+		return [...list].sort((a, b) => {
+			// Extract account numbers from company names
+			const aAccountNum = a.company.match(/^\d+/)?.[0] || a.username;
+			const bAccountNum = b.company.match(/^\d+/)?.[0] || b.username;
+			
+			// Sort by account number (numeric comparison)
+			const aNum = parseInt(aAccountNum, 10) || 0;
+			const bNum = parseInt(bAccountNum, 10) || 0;
+			
+			if (aNum !== bNum) {
+				return aNum - bNum; // Numeric sort for account numbers
+			}
+			
+			// If account numbers are the same, sort by company name
+			const aCompany = a.company.replace(/^\d+\s*-\s*/, '').toLowerCase();
+			const bCompany = b.company.replace(/^\d+\s*-\s*/, '').toLowerCase();
+			return aCompany < bCompany ? -1 : aCompany > bCompany ? 1 : 0;
+		});
 	}, [accounts, filter]);
 
 
@@ -346,6 +363,9 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 						{initials}
 					</div>
 					<div>
+						<div className='text-[16px]/[22px] font-bold text-font-color mb-1'>
+							{account.company.match(/^\d+/)?.[0] || account.username}
+						</div>
 						<div className='text-[14px]/[20px] text-font-color-100 truncate'>
 							{account.company.replace(/^\d+\s*-\s*/, '')}
 						</div>
@@ -441,6 +461,9 @@ function AccountListItem({ account, index, isSelected, onSelect, onProceed, subm
 					{initials}
 				</div>
 				<div className='flex-1 min-w-0'>
+					<div className='text-[16px]/[22px] font-bold text-font-color mb-1'>
+						{account.company.match(/^\d+/)?.[0] || account.username}
+					</div>
 					<div className='text-[14px]/[20px] text-font-color-100 mb-2'>
 						{account.company.replace(/^\d+\s*-\s*/, '')}
 					</div>
