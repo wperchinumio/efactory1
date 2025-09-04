@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
+import { exportAnalyticsReport } from '@/lib/exportUtils';
 import { 
 	IconCalendar, 
 	IconDownload, 
-	IconPrinter, 
 	IconRefresh, 
 	IconChartBar,
 	IconTable,
@@ -179,45 +179,26 @@ export default function AdminAnalyticsByTime() {
 		       filters.shippedDate !== '-90D' || filters.timeWeekly !== 'weekly';
 	};
 
-	const onPrint = () => {
-		window.print();
-	};
 
-	const onDownload = async () => {
+	const onDownload = () => {
+		if (!rows.length) {
+			alert('No data available to export');
+			return;
+		}
+
 		try {
-			// Similar to license summary download logic
-			const xhr = new XMLHttpRequest();
-			const params = new URLSearchParams({
-				stats: 'time_historical',
-				global_analytics: 'true',
-				format: 'excel',
-				...filters
-			});
-
-			xhr.open('GET', `/api/analytics/export?${params.toString()}`);
-			xhr.setRequestHeader('X-Access-Token', getAuthToken() || '');
-			xhr.setRequestHeader('X-Download-Params', params.toString());
-			xhr.responseType = 'arraybuffer';
-
-			xhr.onload = function() {
-				if (xhr.status === 200) {
-					const blob = new Blob([xhr.response], { 
-						type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-					});
-					const url = window.URL.createObjectURL(blob);
-					const a = document.createElement('a');
-					a.href = url;
-					a.download = `analytics-by-time-${new Date().toISOString().split('T')[0]}.xlsx`;
-					document.body.appendChild(a);
-					a.click();
-					document.body.removeChild(a);
-					window.URL.revokeObjectURL(url);
+			exportAnalyticsReport(
+				rows,
+				'Analytics By Time',
+				'by-time',
+				{
+					compareYears,
+					selectedDataset
 				}
-			};
-
-			xhr.send();
+			);
 		} catch (error) {
-			console.error('Download failed:', error);
+			console.error('Export failed:', error);
+			alert(`Failed to export data: ${error.message}`);
 		}
 	};
 
@@ -438,13 +419,6 @@ export default function AdminAnalyticsByTime() {
 						<p className='text-[14px] text-font-color-100'>Track orders, lines, packages, and units over time periods</p>
 					</div>
 					<div className='flex items-center gap-3'>
-						<button
-							onClick={onPrint}
-							className='btn btn-light-secondary'
-							title='Print Report'
-						>
-							<IconPrinter className='w-4 h-4' />
-						</button>
 						<button
 							onClick={onDownload}
 							className='btn btn-light-secondary'

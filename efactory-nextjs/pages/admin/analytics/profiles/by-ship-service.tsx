@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
+import { exportAnalyticsReport } from '@/lib/exportUtils';
 import { 
 	IconCalendar, 
 	IconDownload, 
-	IconPrinter, 
 	IconRefresh, 
 	IconChartBar,
 	IconTable,
@@ -156,56 +156,28 @@ export default function AdminAnalyticsByShipService() {
 		);
 	};
 
-	const onPrint = () => {
-		window.print();
-	};
 
 	const onDownload = () => {
-		const authToken = getAuthToken();
-		if (!authToken?.token) {
-			alert('Authentication required');
+		if (!rows.length) {
+			alert('No data available to export');
 			return;
 		}
-		
-		const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.efactory.com';
-		const xhr = new XMLHttpRequest();
-		
-		const params = new URLSearchParams({
-			token: authToken.token,
-			stats: 'ship_service_historical',
-			format: 'xlsx',
-			filterArray: JSON.stringify([
-				{ field: 'shipped_date', value: '-90D', oper: '=' }
-			])
-		});
-		
-		xhr.open('GET', `${apiBaseUrl}/api/analytics/export?${params.toString()}`);
-		xhr.responseType = 'blob';
-		
-		xhr.onload = function() {
-			if (this.status === 200) {
-				const blob = new Blob([this.response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-				const filename = `analytics-by-ship-service-${new Date().toISOString().split('T')[0]}.xlsx`;
-				
-				if (typeof window.navigator.msSaveBlob !== 'undefined') {
-					window.navigator.msSaveBlob(blob, filename);
-				} else {
-					const URL = window.URL || window.webkitURL;
-					const downloadUrl = URL.createObjectURL(blob);
-					
-					const a = document.createElement("a");
-					a.href = downloadUrl;
-					a.download = filename;
-					document.body.appendChild(a);
-					a.click();
-					document.body.removeChild(a);
-					setTimeout(() => { URL.revokeObjectURL(downloadUrl); }, 100);
+
+		try {
+			// Use the original data (before Top 10 + Others processing) for export
+			exportAnalyticsReport(
+				rows,
+				'Analytics By Ship Service',
+				'by-ship-service',
+				{
+					compareYears,
+					selectedDataset
 				}
-			}
-		};
-		
-		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-		xhr.send();
+			);
+		} catch (error) {
+			console.error('Export failed:', error);
+			alert(`Failed to export data: ${error.message}`);
+		}
 	};
 
 	const stats = useMemo(() => {
@@ -453,13 +425,6 @@ export default function AdminAnalyticsByShipService() {
 						<p className='text-[14px] text-font-color-100'>A summary of shipment distributed by ship service.</p>
 					</div>
 					<div className='flex items-center gap-3'>
-						<button
-							onClick={onPrint}
-							className='btn btn-light-secondary'
-							title='Print Report'
-						>
-							<IconPrinter className='w-4 h-4' />
-						</button>
 						<button
 							onClick={onDownload}
 							className='btn btn-light-secondary'

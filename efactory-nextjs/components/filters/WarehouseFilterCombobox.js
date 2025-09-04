@@ -14,9 +14,6 @@ const WarehouseFilterCombobox = ({
 	// Get warehouse options from global data using the getFilterOptions function
 	const warehouseOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.warehouseOptions || [];
 	
-	// Debug logging
-	console.log('🏭 WarehouseFilterCombobox - globalData.loading:', globalData?.loading);
-	console.log('🏭 WarehouseFilterCombobox - warehouseOptions:', warehouseOptions);
 	
 	const hasActiveSelection = Array.isArray(value) && value.length > 0;
 

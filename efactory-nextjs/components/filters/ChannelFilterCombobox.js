@@ -14,9 +14,6 @@ const ChannelFilterCombobox = ({
 	// Get channel options from global data using the getFilterOptions function
 	const channelOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.channelOptions || [];
 	
-	// Debug logging
-	console.log('🛒 ChannelFilterCombobox - globalData.loading:', globalData?.loading);
-	console.log('🛒 ChannelFilterCombobox - channelOptions:', channelOptions);
 	
 	const hasActiveSelection = Array.isArray(value) && value.length > 0;
 

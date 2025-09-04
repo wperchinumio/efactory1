@@ -14,9 +14,6 @@ const AccountFilterCombobox = ({
 	// Get account options from global data using the getFilterOptions function
 	const accountOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.getAccountOptions?.([]) || [];
 	
-	// Debug logging
-	console.log('👤 AccountFilterCombobox - globalData.loading:', globalData?.loading);
-	console.log('👤 AccountFilterCombobox - accountOptions:', accountOptions);
 	
 	const hasActiveSelection = Array.isArray(value) && value.length > 0;
 
