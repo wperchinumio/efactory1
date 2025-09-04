@@ -63,7 +63,7 @@ const Combobox = ({
 	};
 
 	return (
-		<div className={`relative ${className}`} ref={containerRef}>
+		<div className={`relative ${className}`} ref={containerRef} style={{ zIndex: isOpen ? 99999 : 'auto' }}>
 			{/* Trigger Button */}
 			<button
 				type="button"
@@ -94,10 +94,16 @@ const Combobox = ({
 				/>
 			</button>
 
-			{/* Dropdown Content */}
+			{/* Dropdown Content - Using fixed positioning to escape stacking context */}
 			{isOpen && (
-				<div className="absolute top-full left-0 right-0 mt-1 z-[9999]">
-					<div className="bg-card-color border border-border-color rounded-lg shadow-lg overflow-hidden">
+				<div 
+					className="fixed mt-1 z-[99999] bg-card-color border border-border-color rounded-lg shadow-xl overflow-hidden min-w-[200px]"
+					style={{
+						top: containerRef.current?.getBoundingClientRect().bottom + window.scrollY + 4,
+						left: containerRef.current?.getBoundingClientRect().left + window.scrollX,
+						width: containerRef.current?.getBoundingClientRect().width
+					}}
+				>
 						{/* Search Input - Only show if showSearch is true */}
 						{showSearch && (
 							<div className="p-2 border-b border-border-color">
@@ -141,7 +147,6 @@ const Combobox = ({
 								))
 							)}
 						</div>
-					</div>
 				</div>
 			)}
 		</div>
