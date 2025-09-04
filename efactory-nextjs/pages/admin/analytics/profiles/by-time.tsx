@@ -565,9 +565,9 @@ export default function AdminAnalyticsByTime() {
 			)}
 
 					{/* Advanced Filter Toolbar */}
-		<div className='bg-gradient-to-r from-primary-5 to-primary-10 border border-primary-20 rounded-xl overflow-hidden mb-6'>
+		<div className='bg-gradient-to-r from-primary-5 to-primary-10 border border-border-color rounded-xl overflow-hidden mb-6'>
 			{/* Toolbar Header */}
-			<div className='bg-primary-10 border-b border-primary-20 px-6 py-3'>
+			<div className='bg-primary-10 border-b border-border-color px-6 py-3'>
 				<div className='flex items-center justify-between'>
 					<div className='flex items-center gap-3'>
 						<div className='w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center'>
@@ -581,14 +581,14 @@ export default function AdminAnalyticsByTime() {
 					<div className='flex items-center gap-3'>
 						{/* View Mode Toggle */}
 						<div className='flex items-center gap-2'>
-							<span className='text-xs font-medium text-primary-300 uppercase tracking-wider'>VIEW MODE</span>
-							<div className='flex bg-primary-5 border border-primary-20 rounded-lg p-1'>
+							<span className='text-xs font-medium text-font-color-100 uppercase tracking-wider'>VIEW MODE</span>
+							<div className='flex bg-card-bg border border-border-color rounded-lg p-1'>
 								<button
 									onClick={() => setViewMode('chart')}
 									className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
 										viewMode === 'chart'
 											? 'bg-primary text-white shadow-sm'
-											: 'text-primary-200 hover:text-primary hover:bg-primary-10'
+											: 'text-font-color-100 hover:text-font-color hover:bg-primary-10'
 									}`}
 								>
 									<IconChartBar className='w-3 h-3' />
@@ -599,7 +599,7 @@ export default function AdminAnalyticsByTime() {
 									className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
 										viewMode === 'table'
 											? 'bg-primary text-white shadow-sm'
-											: 'text-primary-200 hover:text-primary hover:bg-primary-10'
+											: 'text-font-color-100 hover:text-font-color hover:bg-primary-10'
 									}`}
 								>
 									<IconTable className='w-3 h-3' />
@@ -609,7 +609,7 @@ export default function AdminAnalyticsByTime() {
 						</div>
 
 						{/* Vertical Separator */}
-						<div className='w-px h-6 bg-primary-20'></div>
+						<div className='w-px h-6 bg-border-color opacity-50'></div>
 
 						{/* Action Buttons */}
 						<div className='flex items-center gap-2'>
@@ -798,7 +798,7 @@ export default function AdminAnalyticsByTime() {
 
 				{/* Active Filters Summary */}
 				{hasActiveFilters() && (
-					<div className='mt-4 pt-4 border-t border-primary-20'>
+					<div className='mt-4 pt-4 border-t border-border-color'>
 						<div className='flex items-center gap-2 flex-wrap'>
 							<span className='text-[11px] font-bold text-font-color-100 uppercase tracking-wider'>Active Filters:</span>
 							{filters.timeWeekly !== 'weekly' && (
@@ -917,7 +917,7 @@ export default function AdminAnalyticsByTime() {
 								</div>
 						</div>
 							<table className='w-full min-w-[800px]'>
-								<thead className='bg-gray-50 dark:bg-gray-800 border-b border-border-color'>
+								<thead className='bg-primary-5 border-b border-border-color'>
 									<tr className='text-left text-font-color text-[12px] font-bold uppercase tracking-wider'>
 										<th className='py-3 px-4 w-[60px] text-center'>#</th>
 										<th className='py-3 px-4'>
