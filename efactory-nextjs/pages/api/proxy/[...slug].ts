@@ -12,9 +12,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		return res.status(500).json({ error_message: 'Missing NEXT_PUBLIC_API_BASE_URL' });
 	}
 	const slug = Array.isArray(req.query.slug) ? req.query.slug.join('/') : req.query.slug || '';
-	const target = `${base}/${slug}`;
+	
+	// Build query parameters (excluding 'slug' which is the path)
+	const queryParams = new URLSearchParams();
+	for (const [key, value] of Object.entries(req.query)) {
+		if (key !== 'slug' && value) {
+			if (Array.isArray(value)) {
+				value.forEach(v => queryParams.append(key, v));
+			} else {
+				queryParams.append(key, String(value));
+			}
+		}
+	}
+	
+	const queryString = queryParams.toString();
+	const target = `${base}/${slug}${queryString ? `?${queryString}` : ''}`;
 
 	const { method = 'GET' } = req;
+
+	// Log the target URL for debugging
+	console.log(`🔗 Proxy forwarding: ${method} ${target}`);
 
 	const headers: Record<string, string> = {};
 	for (const [key, value] of Object.entries(req.headers)) {

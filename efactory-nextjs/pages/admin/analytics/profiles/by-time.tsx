@@ -19,6 +19,7 @@ import {
 } from '@tabler/icons-react';
 import Combobox from '@/components/ui/Combobox';
 import MultiSelectCombobox from '@/components/ui/MultiSelectCombobox';
+import DateRangeCombobox from '@/components/ui/DateRangeCombobox';
 import { useGlobalFilterData } from '@/hooks/useGlobalFilterData';
 
 interface ChartRow {
@@ -38,7 +39,7 @@ interface FilterState {
 	warehouse: string[];  // Multi-select array
 	account: string[];    // Multi-select array  
 	destination: string;
-	channel: string;
+	channel: string[];    // Multi-select array for channels
 	country: string;
 	state: string;
 }
@@ -53,17 +54,20 @@ export default function AdminAnalyticsByTime() {
 	
 	const [filters, setFilters] = useState<FilterState>({
 		timeWeekly: 'weekly',
-		shippedDate: 'LAST 90 DAYS',
+		shippedDate: '-90D', // Default to Last 90 Days
 		warehouse: [],
 		account: [],
 		destination: '',
-		channel: '',
+		channel: [],
 		country: '',
 		state: ''
 	});
 
 	// Load global filter data
 	const globalData = useGlobalFilterData();
+	
+	// Debug logging
+	console.log('🎯 Analytics page - globalData:', globalData);
 
 	// Get filter options from global data
 	const filterOptions = useMemo(() => {
@@ -129,7 +133,11 @@ export default function AdminAnalyticsByTime() {
 			],
 			warehouseOptions,
 			accountOptions: getAccountOptions(filters.warehouse),
-			destinationOptions: countryOptions, // Use countries as destinations
+			destinationOptions: [
+				{ value: '', label: 'All Destinations' },
+				{ value: '0', label: 'Domestic' },        // value: 0, oper: '='
+				{ value: '1', label: 'International' }    // value: 0, oper: '<>' (not equals 0)
+			],
 			channelOptions,
 			countryOptions,
 			stateOptions: getStateOptions(filters.country)
@@ -149,23 +157,17 @@ export default function AdminAnalyticsByTime() {
 				{ field: 'time_dimension', value: filters.timeWeekly, oper: '=' }
 			];
 
-			// Add shipped date filter
+			// Add shipped date filter (using legacy format)
 			if (filters.shippedDate) {
-				let dateValue = '-90D'; // default
-				switch (filters.shippedDate) {
-					case 'LAST 30 DAYS': dateValue = '-30D'; break;
-					case 'LAST 60 DAYS': dateValue = '-60D'; break;
-					case 'LAST 90 DAYS': dateValue = '-90D'; break;
-					case 'LAST 180 DAYS': dateValue = '-180D'; break;
-					case 'LAST 365 DAYS': dateValue = '-365D'; break;
-					case 'CURRENT_MONTH': dateValue = 'CURRENT_MONTH'; break;
-					case 'LAST_MONTH': dateValue = 'LAST_MONTH'; break;
-					case 'CURRENT_QUARTER': dateValue = 'CURRENT_QUARTER'; break;
-					case 'LAST_QUARTER': dateValue = 'LAST_QUARTER'; break;
-					case 'CURRENT_YEAR': dateValue = 'CURRENT_YEAR'; break;
-					case 'LAST_YEAR': dateValue = 'LAST_YEAR'; break;
+				if (filters.shippedDate.includes('|')) {
+					// Custom date range: "2024-01-01|2024-01-31"
+					const [startDate, endDate] = filters.shippedDate.split('|');
+					filterArray.push({ field: 'shipped_date', value: startDate, oper: '>=' });
+					filterArray.push({ field: 'shipped_date', value: endDate, oper: '<=' });
+				} else {
+					// Predefined range: "-90D", "0D", etc.
+					filterArray.push({ field: 'shipped_date', value: filters.shippedDate, oper: '=' });
 				}
-				filterArray.push({ field: 'shipped_date', value: dateValue, oper: '=' });
 			}
 
 			// Add other filters if they have values
@@ -176,10 +178,17 @@ export default function AdminAnalyticsByTime() {
 				filterArray.push({ field: 'account_number', value: filters.account.join(','), oper: '=' });
 			}
 			if (filters.destination) {
-				filterArray.push({ field: 'destination_country', value: filters.destination, oper: '=' });
+				// Legacy uses international_code field with specific operators
+				if (filters.destination === '0') {
+					// Domestic: international_code = 0
+					filterArray.push({ field: 'international_code', value: '0', oper: '=' });
+				} else if (filters.destination === '1') {
+					// International: international_code <> 0 (not equals 0)
+					filterArray.push({ field: 'international_code', value: '0', oper: '<>' });
+				}
 			}
-			if (filters.channel) {
-				filterArray.push({ field: 'channel', value: filters.channel, oper: '=' });
+			if (filters.channel.length > 0) {
+				filterArray.push({ field: 'order_type', value: filters.channel.join(','), oper: '=' });
 			}
 			if (filters.country) {
 				filterArray.push({ field: 'country', value: filters.country, oper: '=' });
@@ -221,11 +230,11 @@ export default function AdminAnalyticsByTime() {
 	const clearAllFilters = () => {
 		setFilters({
 			timeWeekly: 'weekly',
-			shippedDate: 'LAST 90 DAYS',
+			shippedDate: '-90D', // Reset to default Last 90 Days
 			warehouse: [],
 			account: [],
 			destination: '',
-			channel: '',
+			channel: [],
 			country: '',
 			state: ''
 		});
@@ -233,8 +242,8 @@ export default function AdminAnalyticsByTime() {
 
 	const hasActiveFilters = () => {
 		return filters.warehouse.length > 0 || filters.account.length > 0 || filters.destination || 
-		       filters.channel || filters.country || filters.state ||
-		       filters.shippedDate !== 'LAST 90 DAYS' || filters.timeWeekly !== 'weekly';
+		       filters.channel.length > 0 || filters.country || filters.state ||
+		       filters.shippedDate !== '-90D' || filters.timeWeekly !== 'weekly';
 	};
 
 	const onPrint = () => {
@@ -413,7 +422,7 @@ export default function AdminAnalyticsByTime() {
 			warehouse: '',
 			account: '',
 			destination: '',
-			channel: '',
+			channel: [],
 			country: '',
 			state: ''
 		});
@@ -635,12 +644,10 @@ export default function AdminAnalyticsByTime() {
 
 			{/* Filter Controls */}
 			<div className='p-6'>
-				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4'>
+				<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 xl:grid-cols-12 gap-4'>
 					{/* Time Period */}
-					<div className='lg:col-span-1'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.timeWeekly !== 'weekly' ? 'text-red-600' : 'text-font-color'
-						}`}>
+					<div className='lg:col-span-1 xl:col-span-1'>
+						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider text-red-600`}>
 							<IconCalendar className='w-3 h-3 text-primary' />
 							Time
 						</label>
@@ -654,24 +661,22 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Shipped Date */}
-					<div className='lg:col-span-2'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.shippedDate !== 'LAST 90 DAYS' ? 'text-red-600' : 'text-font-color'
-						}`}>
+					<div className='lg:col-span-1 xl:col-span-2'>
+						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider text-red-600`}>
 							<IconCalendar className='w-3 h-3 text-success' />
 							Shipped Date
 						</label>
-						<Combobox
+						<DateRangeCombobox
 							value={filters.shippedDate}
 							onValueChange={(value) => updateFilter('shippedDate', value)}
-							options={filterOptions.shippedDateOptions}
-							showSearch={false}
-							placeholder="Date range..."
+							placeholder="Select date range..."
+							title="SHIPPED DATE"
+							allowClear={false}
 						/>
 					</div>
 
 					{/* Warehouse - Multi-select */}
-					<div className='lg:col-span-1'>
+					<div className='lg:col-span-1 xl:col-span-2'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.warehouse.length > 0 ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -689,7 +694,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Account - Multi-select */}
-					<div className='lg:col-span-1'>
+					<div className='lg:col-span-1 xl:col-span-2'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.account.length > 0 ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -707,7 +712,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Destination */}
-					<div className='lg:col-span-1'>
+					<div className='lg:col-span-1 xl:col-span-1'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.destination ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -724,24 +729,24 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* Channel */}
-					<div className='lg:col-span-1'>
+					<div className='lg:col-span-1 xl:col-span-1'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.channel ? 'text-red-600' : 'text-font-color'
+							filters.channel.length > 0 ? 'text-red-600' : 'text-font-color'
 						}`}>
 							<IconList className='w-3 h-3 text-success' />
 							Channel
 						</label>
-						<Combobox
+						<MultiSelectCombobox
 							value={filters.channel}
 							onValueChange={(value) => updateFilter('channel', value)}
 							options={filterOptions.channelOptions}
-							showSearch={false}
-							placeholder="Channel..."
+							placeholder="Select channels..."
+							title="Channel"
 						/>
 					</div>
 
 					{/* Country */}
-					<div className='lg:col-span-1'>
+					<div className='lg:col-span-1 xl:col-span-1'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.country ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -758,7 +763,7 @@ export default function AdminAnalyticsByTime() {
 					</div>
 
 					{/* State - Always show, but conditional options */}
-					<div className='lg:col-span-1'>
+					<div className='lg:col-span-1 xl:col-span-1'>
 						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
 							filters.state ? 'text-red-600' : 'text-font-color'
 						}`}>
@@ -789,10 +794,19 @@ export default function AdminAnalyticsByTime() {
 									</button>
 								</span>
 							)}
-							{filters.shippedDate !== 'LAST 90 DAYS' && (
+							{filters.shippedDate !== '-90D' && (
 								<span className='inline-flex items-center gap-1 px-2 py-1 bg-success-10 text-success rounded text-[10px] font-medium'>
-									Date: {filterOptions.shippedDateOptions.find(o => o.value === filters.shippedDate)?.label}
-									<button onClick={() => updateFilter('shippedDate', 'LAST 90 DAYS')} className='hover:bg-success hover:text-white rounded-full p-0.5'>
+									Date: {filters.shippedDate.includes('|') ? 'Custom Range' : 
+										   filters.shippedDate === '0D' ? 'Today' :
+										   filters.shippedDate === '-1D' ? 'Yesterday' :
+										   filters.shippedDate === '0W' ? 'This Week' :
+										   filters.shippedDate === '-1W' ? 'Last Week' :
+										   filters.shippedDate === '-10D' ? 'Last 10 Days' :
+										   filters.shippedDate === '-30D' ? 'Last 30 Days' :
+										   filters.shippedDate === '0M' ? 'This Month' :
+										   filters.shippedDate === '-1M' ? 'Last Month' :
+										   filters.shippedDate === '0Y' ? 'This Year' : filters.shippedDate}
+									<button onClick={() => updateFilter('shippedDate', '-90D')} className='hover:bg-success hover:text-white rounded-full p-0.5'>
 										<IconX className='w-2 h-2' />
 									</button>
 								</span>
@@ -809,6 +823,14 @@ export default function AdminAnalyticsByTime() {
 								<span className='inline-flex items-center gap-1 px-2 py-1 bg-info-10 text-info rounded text-[10px] font-medium'>
 									Account: {filters.account.length} selected
 									<button onClick={() => updateFilter('account', [])} className='hover:bg-info hover:text-white rounded-full p-0.5'>
+										<IconX className='w-2 h-2' />
+									</button>
+								</span>
+							)}
+							{filters.channel.length > 0 && (
+								<span className='inline-flex items-center gap-1 px-2 py-1 bg-success-10 text-success rounded text-[10px] font-medium'>
+									Channel: {filters.channel.length} selected
+									<button onClick={() => updateFilter('channel', [])} className='hover:bg-success hover:text-white rounded-full p-0.5'>
 										<IconX className='w-2 h-2' />
 									</button>
 								</span>

@@ -129,21 +129,30 @@ const Combobox = ({
 								</div>
 							) : (
 								filteredOptions.map((option) => (
-									<button
-										key={option.value}
-										type="button"
-										className={`
-											w-full px-3 py-2 text-left text-[14px] hover:bg-primary-10 
-											transition-colors duration-150 flex items-center justify-between gap-2
-											${value === option.value ? 'bg-primary-10 text-primary' : 'text-font-color'}
-										`}
-										onClick={() => handleSelect(option.value)}
-									>
-										<span className="truncate">{option.label}</span>
-										{value === option.value && (
-											<IconCheck className="w-4 h-4 text-primary flex-shrink-0" />
-										)}
-									</button>
+									option.disabled ? (
+										<div
+											key={option.value}
+											className="w-full py-2 cursor-default"
+										>
+											<div className="w-full h-px bg-border-color mx-0"></div>
+										</div>
+									) : (
+										<button
+											key={option.value}
+											type="button"
+											className={`
+												w-full px-3 py-2 text-left text-[14px] hover:bg-primary-10 
+												transition-colors duration-150 flex items-center justify-between gap-2
+												${value === option.value ? 'bg-primary-10 text-primary' : 'text-font-color'}
+											`}
+											onClick={() => handleSelect(option.value)}
+										>
+											<span className="truncate">{option.label}</span>
+											{value === option.value && (
+												<IconCheck className="w-4 h-4 text-primary flex-shrink-0" />
+											)}
+										</button>
+									)
 								))
 							)}
 						</div>

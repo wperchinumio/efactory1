@@ -47,6 +47,19 @@ export default function Signin() {
             });
             const isAdmin = Array.isArray(res.data.user_data?.roles) && res.data.user_data.roles.includes('ADM');
             if (isAdmin && Array.isArray(res.data.available_accounts) && res.data.available_accounts.length) {
+                // For admin users, call global API BEFORE customer selection (like legacy)
+                console.log('🔧 Admin user detected - calling global API before customer selection');
+                try {
+                    const { getJson } = await import('@/lib/api/http');
+                    const globalResponse = await getJson('/api/global?admin=1');
+                    if (globalResponse && globalResponse.data) {
+                        console.log('✅ Admin global API data loaded:', globalResponse.data);
+                        console.log('📊 Admin sub_warehouses loaded:', Object.keys(globalResponse.data.sub_warehouses || {}).length, 'warehouses');
+                        window.localStorage.setItem('globalApiData', JSON.stringify(globalResponse.data));
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to load admin global API data:', error);
+                }
                 router.replace('/select-customer');
             } else {
                 router.replace('/');
