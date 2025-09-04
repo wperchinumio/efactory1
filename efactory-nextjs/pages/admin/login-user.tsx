@@ -27,7 +27,7 @@ function getInitials(username: string) {
 		.slice(0, 3);
 }
 
-function SelectCustomerPageInner() {
+function LoginUserPageInner() {
 	const router = useRouter();
 	const [filter, setFilter] = useState('');
 	const [selectedUsername, setSelectedUsername] = useState<string>('');
@@ -516,8 +516,8 @@ function AccountListItem({ account, index, isSelected, onSelect, onProceed, subm
 	);
 }
 
-function SelectCustomerPage() {
-	return <SelectCustomerPageInner />;
+function LoginUserPage() {
+	return <LoginUserPageInner />;
 }
 
-export default dynamic(() => Promise.resolve(SelectCustomerPage), { ssr: false });
+export default dynamic(() => Promise.resolve(LoginUserPage), { ssr: false });

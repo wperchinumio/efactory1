@@ -108,7 +108,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
 
     const adminData = [
         { devider: 'ADMIN' },
-        { icon: IconLogin2, link: 'Login to eFactory', url: '/select-customer' },
+        { icon: IconLogin2, link: 'Login to eFactory', url: '/admin/login-user' },
         { icon: IconUsers, link: 'Online Customers', url: '/admin/online-customers' },
         { icon: IconLicense, link: 'License Summary', url: '/admin/license-summary' },
         { icon: IconUserCircle, link: 'eFactory Users', url: '/admin/users' },
