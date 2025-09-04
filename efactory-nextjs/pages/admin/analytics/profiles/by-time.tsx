@@ -512,34 +512,6 @@ export default function AdminAnalyticsByTime() {
 					</div>
 					<p className='text-font-color-100 text-[14px]'>Track orders, lines, packages, and units over time periods</p>
 				</div>
-				<div className='flex items-center gap-3'>
-					<button 
-						className='btn btn-light-secondary' 
-						onClick={onPrint}
-						title='Print Report'
-					>
-						<IconPrinter className='w-4 h-4 me-2' />
-						Print
-					</button>
-					<button 
-						className='btn btn-light-secondary' 
-						onClick={onDownload}
-						disabled={!loaded}
-						title='Download Excel'
-					>
-						<IconDownload className='w-4 h-4 me-2' />
-						Download
-					</button>
-					<button 
-						className='btn btn-primary' 
-						onClick={runReport} 
-						disabled={loading}
-						title='Run Report'
-					>
-						<IconRefresh className={`w-4 h-4 me-2 ${loading ? 'animate-spin' : ''}`} />
-						Run Report
-					</button>
-				</div>
 			</div>
 
 			{/* Stats Cards */}
@@ -606,42 +578,77 @@ export default function AdminAnalyticsByTime() {
 							<p className='text-[11px] text-font-color-100'>Configure your report parameters</p>
 						</div>
 					</div>
-					<div className='flex items-center gap-2'>
-						{hasActiveFilters() && (
+					<div className='flex items-center gap-3'>
+						{/* View Mode Toggle */}
+						<div className='flex items-center gap-2'>
+							<span className='text-xs font-medium text-primary-300 uppercase tracking-wider'>VIEW MODE</span>
+							<div className='flex bg-primary-5 border border-primary-20 rounded-lg p-1'>
+								<button
+									onClick={() => setViewMode('chart')}
+									className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+										viewMode === 'chart'
+											? 'bg-primary text-white shadow-sm'
+											: 'text-primary-200 hover:text-primary hover:bg-primary-10'
+									}`}
+								>
+									<IconChartBar className='w-3 h-3' />
+									Chart View
+								</button>
+								<button
+									onClick={() => setViewMode('table')}
+									className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+										viewMode === 'table'
+											? 'bg-primary text-white shadow-sm'
+											: 'text-primary-200 hover:text-primary hover:bg-primary-10'
+									}`}
+								>
+									<IconTable className='w-3 h-3' />
+									Table View
+								</button>
+							</div>
+						</div>
+
+						{/* Vertical Separator */}
+						<div className='w-px h-6 bg-primary-20'></div>
+
+						{/* Action Buttons */}
+						<div className='flex items-center gap-2'>
+							{hasActiveFilters() && (
+								<button 
+									className='btn btn-light-secondary btn-sm' 
+									onClick={clearAllFilters}
+									title='Clear All Filters'
+								>
+									<IconX className='w-3 h-3 me-1' />
+									Clear
+								</button>
+							)}
+							<button 
+								className='btn btn-primary btn-sm' 
+								onClick={runReport} 
+								disabled={loading}
+								title='Run Report'
+							>
+								<IconRefresh className={`w-3 h-3 me-1 ${loading ? 'animate-spin' : ''}`} />
+								Run Report
+							</button>
 							<button 
 								className='btn btn-light-secondary btn-sm' 
-								onClick={clearAllFilters}
-								title='Clear All Filters'
+								onClick={onPrint}
+								title='Print Report'
 							>
-								<IconX className='w-3 h-3 me-1' />
-								Clear
+								<IconPrinter className='w-3 h-3 me-1' />
+								Print
 							</button>
-						)}
-						<button 
-							className='btn btn-primary btn-sm' 
-							onClick={runReport} 
-							disabled={loading}
-							title='Run Report'
-						>
-							<IconRefresh className={`w-3 h-3 me-1 ${loading ? 'animate-spin' : ''}`} />
-							Run Report
-						</button>
-						<button 
-							className='btn btn-light-secondary btn-sm' 
-							onClick={onPrint}
-							title='Print Report'
-						>
-							<IconPrinter className='w-3 h-3 me-1' />
-							Print
-						</button>
-						<button 
-							className='btn btn-success btn-sm' 
-							onClick={onDownload}
-							title='Download Excel'
-						>
-							<IconDownload className='w-3 h-3 me-1' />
-							Download
-						</button>
+							<button 
+								className='btn btn-success btn-sm' 
+								onClick={onDownload}
+								title='Download Excel'
+							>
+								<IconDownload className='w-3 h-3 me-1' />
+								Download
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -847,36 +854,6 @@ export default function AdminAnalyticsByTime() {
 					</div>
 				)}
 
-				{/* View Toggle */}
-				<div className='mt-4 pt-4 border-t border-primary-20'>
-					<div className='flex items-center justify-between'>
-						<div className='flex items-center gap-2'>
-							<span className='text-[11px] font-bold text-font-color-100 uppercase tracking-wider'>View Mode:</span>
-							<button
-								className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
-									viewMode === 'chart'
-										? 'bg-primary text-white'
-										: 'bg-primary-10 text-primary hover:bg-primary hover:text-white'
-								}`}
-								onClick={() => setViewMode('chart')}
-							>
-								<IconChartBar className='w-3 h-3 me-1' />
-								Chart View
-							</button>
-							<button
-								className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
-									viewMode === 'table'
-										? 'bg-primary text-white'
-										: 'bg-primary-10 text-primary hover:bg-primary hover:text-white'
-								}`}
-								onClick={() => setViewMode('table')}
-							>
-								<IconTable className='w-3 h-3 me-1' />
-								Table View
-							</button>
-						</div>
-					</div>
-				</div>
 			</div>
 		</div>
 
