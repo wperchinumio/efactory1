@@ -713,18 +713,6 @@ export default function AdminAnalyticsByShipService() {
 													Compare to previous 2 years
 												</label>
 											</div>
-											<div className='form-check'>
-												<input
-													type='checkbox'
-													id='showTrendLine'
-													className='form-check-input'
-													checked={showTrendLine}
-													onChange={(e) => setShowTrendLine(e.target.checked)}
-												/>
-												<label htmlFor='showTrendLine' className='form-check-label text-[12px]'>
-													Show Trend Line
-												</label>
-											</div>
 										</div>
 
 										{/* Active Filters Display */}
