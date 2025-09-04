@@ -623,7 +623,7 @@ export default function AdminAnalyticsByTime() {
 									<IconChartBar className='w-5 h-5 text-primary' />
 									<h3 className='text-[16px] font-semibold text-font-color'>Analytics Chart</h3>
 									<div className='flex items-center gap-2 ml-auto'>
-										<span className='text-[12px] text-font-color-100'>Total {selectedDataset}:</span>
+										<span className='text-[12px] text-font-color-100'>Total:</span>
 										<span className='text-[14px] font-bold text-primary'>
 											{selectedDataset === 'orders' && stats.totalOrders.toLocaleString()}
 											{selectedDataset === 'lines' && stats.totalLines.toLocaleString()}
@@ -720,7 +720,7 @@ export default function AdminAnalyticsByTime() {
 									<IconTable className='w-5 h-5 text-font-color-100' />
 									<h3 className='text-[14px] font-semibold text-font-color'>Data Grid</h3>
 									<div className='ml-auto text-[12px] text-font-color-100'>
-										{rows.length} {filters.timeWeekly === 'weekly' ? 'weeks' : 'months'} • {stats.totalOrders.toLocaleString()} total orders
+										{rows.length} {filters.timeWeekly === 'weekly' ? 'weeks' : 'months'} • Total: {stats.totalOrders.toLocaleString()}
 						</div>
 					</div>
 						</div>

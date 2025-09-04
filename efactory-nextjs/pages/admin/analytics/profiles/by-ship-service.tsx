@@ -322,7 +322,13 @@ export default function AdminAnalyticsByShipService() {
 				type: 'bar',
 				toolbar: { show: false }, 
 				stacked: false,
-				height: 450
+				height: 450,
+				offsetX: 0,
+				offsetY: 0,
+				parentHeightOffset: 0,
+				sparkline: {
+					enabled: false
+				}
 			},
 			plotOptions: { 
 				bar: { 
@@ -359,15 +365,26 @@ export default function AdminAnalyticsByShipService() {
 			fill: { opacity: 0.9 },
 			grid: { 
 				borderColor: 'var(--border-color)',
-				strokeDashArray: 1
+				strokeDashArray: 1,
+				padding: {
+					top: 0,
+					right: 80,
+					bottom: 0,
+					left: 0
+				}
 			},
 			dataLabels: { 
 				enabled: true,
 				formatter: (val: number) => val.toLocaleString(),
 				style: {
-					fontSize: '10px',
-					colors: ['#fff']
-				}
+					fontSize: '11px',
+					colors: ['#fff'],
+					fontWeight: 'bold'
+				},
+				offsetX: -10,
+				offsetY: 0,
+				textAnchor: 'end',
+				distributed: false
 			},
 			tooltip: {
 				y: {
@@ -579,7 +596,7 @@ export default function AdminAnalyticsByShipService() {
 								<div className='mb-6'>
 									<div className='flex items-center justify-between mb-4'>
 										<div>
-											<span className='text-[12px] text-font-color-100'>Total {selectedDataset}:</span>
+											<span className='text-[12px] text-font-color-100'>Total:</span>
 											<span className='text-[16px] font-bold text-font-color ml-2'>
 												{selectedDataset === 'orders' && stats.totalOrders.toLocaleString()}
 												{selectedDataset === 'lines' && stats.totalLines.toLocaleString()}
@@ -686,7 +703,7 @@ export default function AdminAnalyticsByShipService() {
 									<div className='flex items-center justify-between'>
 										<h3 className='text-[16px] font-bold text-font-color'>Ship Service Data</h3>
 										<div className='text-[12px] text-font-color-100'>
-											{processedData.length} services • {stats.totalOrders.toLocaleString()} total orders
+											{processedData.length} services • Total: {stats.totalOrders.toLocaleString()}
 										</div>
 									</div>
 								</div>
