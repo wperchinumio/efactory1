@@ -428,104 +428,79 @@ export default function AdminAnalyticsByTime() {
 	}
 
 	return (
-		<div className='md:px-6 sm:px-3 pt-6 md:pt-8 min-h-screen bg-body-color'>
-			{/* Header Section */}
-			<div className='flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6'>
-				<div>
-					<div className='flex items-center gap-3 mb-2'>
-						<IconChartBar className='w-8 h-8 text-primary' />
-						<h1 className='text-[28px]/[36px] font-bold text-font-color'>Analytics by Time</h1>
+		<div className='p-6'>
+			{/* Page Header */}
+			<div className='mb-6'>
+				<div className='flex items-center justify-between'>
+					<div>
+						<h1 className='text-[24px] font-bold text-font-color mb-2'>Analytics - By Time</h1>
+						<p className='text-[14px] text-font-color-100'>Track orders, lines, packages, and units over time periods</p>
 					</div>
-					<p className='text-font-color-100 text-[14px]'>Track orders, lines, packages, and units over time periods</p>
+					<div className='flex items-center gap-3'>
+						<button
+							onClick={onPrint}
+							className='btn btn-light-secondary'
+							title='Print Report'
+						>
+							<IconPrinter className='w-4 h-4' />
+						</button>
+						<button
+							onClick={onDownload}
+							className='btn btn-light-secondary'
+							title='Download Report'
+						>
+							<IconDownload className='w-4 h-4' />
+						</button>
+						<button
+							onClick={runReport}
+							disabled={loading}
+							className='btn btn-primary'
+						>
+							<IconRefresh className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+							{loading ? 'Loading...' : 'Run Report'}
+						</button>
+					</div>
 				</div>
 			</div>
 
-			{/* Stats Cards */}
-			{loaded && (
-				<div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-6'>
-					<div className='bg-card-color border border-border-color rounded-xl p-4'>
-						<div className='flex items-center gap-3'>
-							<div className='w-12 h-12 bg-primary-10 rounded-lg flex items-center justify-center'>
-								<IconShoppingCart className='w-6 h-6 text-primary' />
-							</div>
-							<div>
-								<div className='text-[20px] font-bold text-font-color'>{stats.totalOrders.toLocaleString()}</div>
-								<div className='text-[12px] text-font-color-100 uppercase tracking-wide'>Total Orders</div>
-							</div>
-						</div>
-					</div>
-					<div className='bg-card-color border border-border-color rounded-xl p-4'>
-						<div className='flex items-center gap-3'>
-							<div className='w-12 h-12 bg-success-10 rounded-lg flex items-center justify-center'>
-								<IconList className='w-6 h-6 text-success' />
-							</div>
-							<div>
-								<div className='text-[20px] font-bold text-font-color'>{stats.totalLines.toLocaleString()}</div>
-								<div className='text-[12px] text-font-color-100 uppercase tracking-wide'>Total Lines</div>
-							</div>
-						</div>
-					</div>
-					<div className='bg-card-color border border-border-color rounded-xl p-4'>
-						<div className='flex items-center gap-3'>
-							<div className='w-12 h-12 bg-warning-10 rounded-lg flex items-center justify-center'>
-								<IconPackage className='w-6 h-6 text-warning' />
-							</div>
-							<div>
-								<div className='text-[20px] font-bold text-font-color'>{stats.totalPackages.toLocaleString()}</div>
-								<div className='text-[12px] text-font-color-100 uppercase tracking-wide'>Total Packages</div>
-							</div>
-						</div>
-					</div>
-					<div className='bg-card-color border border-border-color rounded-xl p-4'>
-						<div className='flex items-center gap-3'>
-							<div className='w-12 h-12 bg-info-10 rounded-lg flex items-center justify-center'>
-								<IconBox className='w-6 h-6 text-info' />
-							</div>
-							<div>
-								<div className='text-[20px] font-bold text-font-color'>{stats.totalUnits.toLocaleString()}</div>
-								<div className='text-[12px] text-font-color-100 uppercase tracking-wide'>Total Units</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			)}
 
-					{/* Advanced Filter Toolbar */}
-		<div className='bg-gradient-to-r from-primary-5 to-primary-10 border border-border-color rounded-xl overflow-hidden mb-6'>
-			{/* Toolbar Header */}
-			<div className='bg-primary-10 border-b border-border-color px-6 py-3'>
+		{/* Filter Bar */}
+		<div className='bg-card-color border border-border-color rounded-xl overflow-hidden mb-6'>
+			{/* Filter Header */}
+			<div className='bg-primary-10 border-b border-border-color px-6 py-4'>
 				<div className='flex items-center justify-between'>
 					<div className='flex items-center gap-3'>
 						<div className='w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center'>
 							<IconFilter className='w-4 h-4' />
 						</div>
 						<div>
-							<h3 className='text-[14px] font-bold text-font-color'>Analytics Filters</h3>
-							<p className='text-[11px] text-font-color-100'>Configure your report parameters</p>
+							<h3 className='text-[16px] font-bold text-font-color'>Filters</h3>
+							<p className='text-[12px] text-font-color-100'>Configure your report parameters</p>
 						</div>
 					</div>
-					<div className='flex items-center gap-3'>
-						{/* View Mode Toggle */}
-						<div className='flex items-center gap-2'>
-							<span className='text-xs font-medium text-font-color-100 uppercase tracking-wider'>VIEW MODE</span>
-							<div className='flex bg-card-bg border border-border-color rounded-lg p-1'>
+					<div className='flex items-center gap-4'>
+						{/* VIEW MODE Toggle */}
+						<div className='flex items-center gap-3'>
+							<span className='text-[12px] font-semibold text-font-color-100 uppercase tracking-wider'>View Mode:</span>
+							<div className='flex border border-border-color rounded-lg overflow-hidden'>
 								<button
 									onClick={() => setViewMode('chart')}
-									className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-										viewMode === 'chart'
-											? 'bg-primary text-white shadow-sm'
-											: 'text-font-color-100 hover:text-font-color hover:bg-primary-10'
+									className={`px-3 py-1.5 text-[12px] font-medium flex items-center gap-2 transition-colors ${
+										viewMode === 'chart' 
+											? 'bg-primary text-white' 
+											: 'bg-card-color text-font-color-100 hover:bg-primary-10'
 									}`}
 								>
 									<IconChartBar className='w-3 h-3' />
 									Chart View
 								</button>
+								<div className='w-px h-6 bg-border-color opacity-50'></div>
 								<button
 									onClick={() => setViewMode('table')}
-									className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
-										viewMode === 'table'
-											? 'bg-primary text-white shadow-sm'
-											: 'text-font-color-100 hover:text-font-color hover:bg-primary-10'
+									className={`px-3 py-1.5 text-[12px] font-medium flex items-center gap-2 transition-colors ${
+										viewMode === 'table' 
+											? 'bg-primary text-white' 
+											: 'bg-card-color text-font-color-100 hover:bg-primary-10'
 									}`}
 								>
 									<IconTable className='w-3 h-3' />
@@ -537,44 +512,17 @@ export default function AdminAnalyticsByTime() {
 						{/* Vertical Separator */}
 						<div className='w-px h-6 bg-border-color opacity-50'></div>
 
-						{/* Action Buttons */}
-						<div className='flex items-center gap-2'>
-							{hasActiveFilters() && (
-								<button 
-									className='btn btn-light-secondary btn-sm' 
-									onClick={clearAllFilters}
-									title='Clear All Filters'
-								>
-									<IconX className='w-3 h-3 me-1' />
-									Clear
-								</button>
-							)}
-							<button 
-								className='btn btn-primary btn-sm' 
-								onClick={runReport} 
-								disabled={loading}
-								title='Run Report'
-							>
-								<IconRefresh className={`w-3 h-3 me-1 ${loading ? 'animate-spin' : ''}`} />
-								Run Report
-							</button>
+						{/* Clear All Filters Button */}
+						{hasActiveFilters() && (
 							<button 
 								className='btn btn-light-secondary btn-sm' 
-								onClick={onPrint}
-								title='Print Report'
+								onClick={clearAllFilters}
+								title='Clear All Filters'
 							>
-								<IconPrinter className='w-3 h-3 me-1' />
-								Print
+								<IconX className='w-3 h-3 me-1' />
+								Clear All
 							</button>
-							<button 
-								className='btn btn-success btn-sm' 
-								onClick={onDownload}
-								title='Download Excel'
-							>
-								<IconDownload className='w-3 h-3 me-1' />
-								Download
-							</button>
-						</div>
+						)}
 					</div>
 				</div>
 			</div>
@@ -824,16 +772,17 @@ export default function AdminAnalyticsByTime() {
 							</div>
 						)}
 
-						{/* Data Grid Section - Always Show (Like Legacy) */}
-						<div className='overflow-x-auto'>
+						{/* Data Grid Section - Show Only in Table Mode */}
+						{viewMode === 'table' && (
+							<div className='overflow-x-auto'>
 							<div className='p-4 bg-primary-5 border-b border-border-color'>
 								<div className='flex items-center gap-3'>
 									<IconTable className='w-5 h-5 text-font-color-100' />
 									<h3 className='text-[14px] font-semibold text-font-color'>Data Grid</h3>
 									<div className='ml-auto text-[12px] text-font-color-100'>
 										{rows.length} {filters.timeWeekly === 'weekly' ? 'weeks' : 'months'} • {stats.totalOrders.toLocaleString()} total orders
-									</div>
-								</div>
+						</div>
+					</div>
 						</div>
 							<table className='w-full min-w-[800px]'>
 								<thead className='bg-primary-5 border-b border-border-color'>
@@ -1149,6 +1098,7 @@ export default function AdminAnalyticsByTime() {
 								</tfoot>
 							</table>
 						</div>
+						)}
 					</>
 				)}
 
