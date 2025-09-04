@@ -6,6 +6,9 @@ import Footer from '../partial/Footer'
 
 export default function Layout({ children }) {
   const router = useRouter();
+  
+  // Hide footer on select-customer pages
+  const hideFooter = router.pathname.includes('/select-customer');
   const [container, setContainer] = useState(() => {
     // Initialize state from localStorage
     return typeof localStorage !== "undefined" && localStorage.getItem('container') === 'true';
@@ -48,7 +51,7 @@ export default function Layout({ children }) {
         <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
           <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} containerToggle={containerToggle} container={container} />
           {children}
-          <Footer />
+          {!hideFooter && <Footer />}
         </div>
       </div>
     </div>
