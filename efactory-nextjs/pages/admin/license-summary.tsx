@@ -309,6 +309,17 @@ function LicenseSummaryPage() {
 											)}
 										</button>
 									</th>
+									<th rowSpan={2} className='px-3 py-3 text-center border-r border-border-color' style={{backgroundColor: 'rgba(59, 130, 246, 0.1)'}}>
+										<button
+											className='flex items-center justify-center gap-1 text-[11px]/[14px] font-bold text-info uppercase tracking-wider hover:text-info w-full'
+											onClick={() => setSort('total_charge')}
+										>
+											Total CHG
+											{sortField === 'total_charge' && (
+												direction === 'asc' ? <IconChevronUp className='w-3 h-3' /> : <IconChevronDown className='w-3 h-3' />
+											)}
+										</button>
+									</th>
 									<th colSpan={3} className='px-4 py-2 text-center bg-primary-5 border-r border-border-color'>
 										<div className='text-[11px]/[14px] font-bold text-primary uppercase tracking-wider'>Basic</div>
 									</th>
@@ -318,7 +329,7 @@ function LicenseSummaryPage() {
 									<th colSpan={3} className='px-4 py-2 text-center bg-warning-5 border-r border-border-color'>
 										<div className='text-[11px]/[14px] font-bold text-warning uppercase tracking-wider'>ReturnTrak</div>
 									</th>
-									<th colSpan={4} className='px-4 py-2 text-center bg-info-5'>
+									<th colSpan={3} className='px-4 py-2 text-center bg-info-5'>
 										<div className='text-[11px]/[14px] font-bold text-info uppercase tracking-wider'>Summary Charges</div>
 									</th>
 								</tr>
@@ -427,7 +438,7 @@ function LicenseSummaryPage() {
 										</button>
 									</th>
 									{/* Summary Charge Columns */}
-									<th className='px-3 py-2 text-center bg-primary-10 !bg-primary-10'>
+									<th className='px-3 py-2 text-center'>
 										<button
 											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-primary uppercase tracking-wider hover:text-primary w-full'
 											onClick={() => setSort('basic_charge')}
@@ -438,7 +449,7 @@ function LicenseSummaryPage() {
 											)}
 										</button>
 									</th>
-									<th className='px-3 py-2 text-center bg-success-10 !bg-success-10'>
+									<th className='px-3 py-2 text-center'>
 										<button
 											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-success uppercase tracking-wider hover:text-success w-full'
 											onClick={() => setSort('standard_charge')}
@@ -449,24 +460,13 @@ function LicenseSummaryPage() {
 											)}
 										</button>
 									</th>
-									<th className='px-3 py-2 text-center bg-warning-10 !bg-warning-10'>
+									<th className='px-3 py-2 text-center'>
 										<button
 											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-warning uppercase tracking-wider hover:text-warning w-full'
 											onClick={() => setSort('returntrak_charge')}
 										>
 											RT CHG
 											{sortField === 'returntrak_charge' && (
-												direction === 'asc' ? <IconChevronUp className='w-3 h-3' /> : <IconChevronDown className='w-3 h-3' />
-											)}
-										</button>
-									</th>
-									<th className='px-3 py-2 text-center bg-info-10 !bg-info-10'>
-										<button
-											className='flex items-center justify-center gap-1 text-[10px]/[12px] font-bold text-info uppercase tracking-wider hover:text-info w-full'
-											onClick={() => setSort('total_charge')}
-										>
-											Total CHG
-											{sortField === 'total_charge' && (
 												direction === 'asc' ? <IconChevronUp className='w-3 h-3' /> : <IconChevronDown className='w-3 h-3' />
 											)}
 										</button>
@@ -491,7 +491,7 @@ function LicenseSummaryPage() {
 									</tr>
 								) : (
 									filteredSorted.map((r, index) => (
-										<tr key={r.row_id} className={`border-b border-border-color hover:bg-primary-5 transition-colors ${r.is_new ? 'bg-success-5' : ''}`}>
+										<tr key={r.row_id} className={`border-b border-border-color transition-colors ${r.is_new ? 'bg-success-5' : ''}`}>
 											{/* Customer */}
 											<td className='px-4 py-3 border-r border-border-color'>
 												<div className='flex items-center gap-2'>
@@ -501,6 +501,8 @@ function LicenseSummaryPage() {
 													)}
 												</div>
 											</td>
+											{/* Total CHG Column */}
+											<td className='px-3 py-3 text-center text-[16px]/[22px] font-bold text-font-color border-r border-border-color' style={{backgroundColor: 'rgba(59, 130, 246, 0.1)'}}>${formatNumber(r.total_charge, 2)}</td>
 											{/* Basic Columns */}
 											<td className='px-2 py-3 text-center text-[13px]/[18px] text-font-color'>{formatNumber(r.basic_nocharge_eom)}</td>
 											<td className='px-2 py-3 text-center text-[13px]/[18px] text-font-color'>{formatNumber(r.basic_now_max)}</td>
@@ -514,10 +516,9 @@ function LicenseSummaryPage() {
 											<td className='px-2 py-3 text-center text-[13px]/[18px] text-font-color'>{formatNumber(r.returntrak_now_max)}</td>
 											<td className='px-2 py-3 text-center text-[13px]/[18px] text-font-color border-r border-border-color'>{formatNumber(r.returntrak_rate_eom, 2)}</td>
 											{/* Summary Charge Columns */}
-											<td className='px-3 py-3 text-center text-[14px]/[20px] font-bold text-font-color bg-primary-10 !bg-primary-10'>${formatNumber(r.basic_charge, 2)}</td>
-											<td className='px-3 py-3 text-center text-[14px]/[20px] font-bold text-font-color bg-success-10 !bg-success-10'>${formatNumber(r.standard_charge, 2)}</td>
-											<td className='px-3 py-3 text-center text-[14px]/[20px] font-bold text-font-color bg-warning-10 !bg-warning-10'>${formatNumber(r.returntrak_charge, 2)}</td>
-											<td className='px-3 py-3 text-center text-[16px]/[22px] font-bold text-font-color bg-info-10 !bg-info-10'>${formatNumber(r.total_charge, 2)}</td>
+											<td className='px-3 py-3 text-center text-[14px]/[20px] font-bold text-font-color'>${formatNumber(r.basic_charge, 2)}</td>
+											<td className='px-3 py-3 text-center text-[14px]/[20px] font-bold text-font-color'>${formatNumber(r.standard_charge, 2)}</td>
+											<td className='px-3 py-3 text-center text-[14px]/[20px] font-bold text-font-color'>${formatNumber(r.returntrak_charge, 2)}</td>
 										</tr>
 									))
 								)}
@@ -527,7 +528,7 @@ function LicenseSummaryPage() {
 			</div>
 		</div>
 	);
-	}
+}
 
 	return <LicenseSummaryPageInner />;
 }
