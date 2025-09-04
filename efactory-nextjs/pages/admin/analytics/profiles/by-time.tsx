@@ -996,13 +996,40 @@ export default function AdminAnalyticsByTime() {
 						</div>
 							<table className='w-full min-w-[800px]'>
 								<thead className='bg-primary-5 border-b border-border-color'>
-									{/* Section Headers Row */}
+									{/* Single Header Row */}
 									<tr className='text-center text-font-color text-[11px] font-bold uppercase tracking-wider border-b border-border-color'>
-										<th className='py-2 px-4 w-[60px]'></th>
-										<th className='py-2 px-4'></th>
+										<th className='py-3 px-4 w-[60px] text-center'>#</th>
+										<th className='py-3 px-4 text-left'>
+											<div className='flex items-center gap-2'>
+												<IconCalendar className='w-4 h-4 text-font-color-100' />
+												Time
+											</div>
+										</th>
 										
 										{/* Orders Section */}
-										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`} colSpan={compareYears ? 3 : 1}>
+										{compareYears && (
+											<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconShoppingCart className='w-3 h-3 text-primary' />
+														<span className='text-[10px]'>ORDERS</span>
+													</div>
+													<div className='text-[11px]'>(-2)</div>
+												</div>
+											</th>
+										)}
+										{compareYears && (
+											<th className={`py-3 px-2 text-right ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconShoppingCart className='w-3 h-3 text-primary' />
+														<span className='text-[10px]'>ORDERS</span>
+													</div>
+													<div className='text-[11px]'>(-1)</div>
+												</div>
+											</th>
+										)}
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
 											<div className='flex items-center justify-center gap-2'>
 												<IconShoppingCart className='w-3 h-3 text-primary' />
 												Orders
@@ -1010,7 +1037,29 @@ export default function AdminAnalyticsByTime() {
 										</th>
 										
 										{/* Lines Section */}
-										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`} colSpan={compareYears ? 3 : 1}>
+										{compareYears && (
+											<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconList className='w-3 h-3 text-success' />
+														<span className='text-[10px]'>LINES</span>
+													</div>
+													<div className='text-[11px]'>(-2)</div>
+												</div>
+											</th>
+										)}
+										{compareYears && (
+											<th className={`py-3 px-2 text-right ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconList className='w-3 h-3 text-success' />
+														<span className='text-[10px]'>LINES</span>
+													</div>
+													<div className='text-[11px]'>(-1)</div>
+												</div>
+											</th>
+										)}
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
 											<div className='flex items-center justify-center gap-2'>
 												<IconList className='w-3 h-3 text-success' />
 												Lines
@@ -1018,7 +1067,29 @@ export default function AdminAnalyticsByTime() {
 										</th>
 										
 										{/* Packages Section */}
-										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`} colSpan={compareYears ? 3 : 1}>
+										{compareYears && (
+											<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconPackage className='w-3 h-3 text-warning' />
+														<span className='text-[10px]'>PACKAGES</span>
+													</div>
+													<div className='text-[11px]'>(-2)</div>
+												</div>
+											</th>
+										)}
+										{compareYears && (
+											<th className={`py-3 px-2 text-right ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconPackage className='w-3 h-3 text-warning' />
+														<span className='text-[10px]'>PACKAGES</span>
+													</div>
+													<div className='text-[11px]'>(-1)</div>
+												</div>
+											</th>
+										)}
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
 											<div className='flex items-center justify-center gap-2'>
 												<IconPackage className='w-3 h-3 text-warning' />
 												Packages
@@ -1026,82 +1097,33 @@ export default function AdminAnalyticsByTime() {
 										</th>
 										
 										{/* Units Section */}
-										<th className={`py-2 px-2 border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`} colSpan={compareYears ? 3 : 1}>
+										{compareYears && (
+											<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconBox className='w-3 h-3 text-info' />
+														<span className='text-[10px]'>UNITS</span>
+													</div>
+													<div className='text-[11px]'>(-2)</div>
+												</div>
+											</th>
+										)}
+										{compareYears && (
+											<th className={`py-3 px-2 text-right ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+												<div className='flex flex-col items-center gap-1'>
+													<div className='flex items-center gap-1'>
+														<IconBox className='w-3 h-3 text-info' />
+														<span className='text-[10px]'>UNITS</span>
+													</div>
+													<div className='text-[11px]'>(-1)</div>
+												</div>
+											</th>
+										)}
+										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
 											<div className='flex items-center justify-center gap-2'>
 												<IconBox className='w-3 h-3 text-info' />
 												Units
 											</div>
-										</th>
-									</tr>
-									
-									{/* Column Headers Row */}
-									<tr className='text-left text-font-color text-[12px] font-bold uppercase tracking-wider'>
-										<th className='py-3 px-4 w-[60px] text-center'>#</th>
-										<th className='py-3 px-4'>
-											<div className='flex items-center gap-2'>
-												<IconCalendar className='w-4 h-4 text-font-color-100' />
-												Time
-											</div>
-										</th>
-										
-										{/* Orders Columns */}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
-												Orders (-2)
-											</th>
-										)}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
-												Orders (-1)
-											</th>
-										)}
-										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
-											Orders
-										</th>
-										
-										{/* Lines Columns */}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
-												Lines (-2)
-											</th>
-										)}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
-												Lines (-1)
-											</th>
-										)}
-										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
-											Lines
-										</th>
-										
-										{/* Packages Columns */}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
-												Packages (-2)
-											</th>
-										)}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
-												Packages (-1)
-											</th>
-										)}
-										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
-											Packages
-										</th>
-										
-										{/* Units Columns */}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
-												Units (-2)
-											</th>
-										)}
-										{compareYears && (
-											<th className={`py-3 px-2 text-right text-[11px] ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
-												Units (-1)
-											</th>
-										)}
-										<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
-											Units
 										</th>
 									</tr>
 								</thead>
@@ -1118,10 +1140,10 @@ export default function AdminAnalyticsByTime() {
 										const units_1 = Math.round((r.units || 0) * 0.85);
 										
 										return (
-											<tr key={(r.id || r.name || i).toString()} className={`border-b border-border-color hover:bg-primary-10 transition-colors ${i % 2 === 0 ? 'bg-sky-50 dark:bg-slate-800' : 'bg-white dark:bg-slate-900'}`}>
+											<tr key={(r.id || r.name || i).toString()} className='border-b border-border-color hover:bg-primary-10 transition-colors'>
 												<td className='py-3 px-4 text-center text-font-color-100 text-[12px] font-medium'>{i + 1}</td>
 												<td className='py-3 px-4'>
-													<div className='font-semibold text-font-color text-[14px]'>{r.name || r.id}</div>
+													<div className='font-semibold text-[14px]' style={{color: '#0EA5E9'}}>{r.name || r.id}</div>
 													<div className='text-[11px] text-font-color-100 mt-0.5'>
 														{filters.timeWeekly === 'weekly' ? 'Week Period' : 'Month Period'}
 													</div>
@@ -1141,7 +1163,7 @@ export default function AdminAnalyticsByTime() {
 												<td className='py-3 px-2 text-right border-l border-border-color'>
 													<div className='font-semibold text-font-color text-[14px]'>{(r.orders ?? 0).toLocaleString()}</div>
 													{!compareYears && (
-														<div className='text-[11px] text-primary'>
+														<div className='text-[11px]' style={{color: '#3B82F6'}}>
 															{rows.length > 1 ? `${(((r.orders ?? 0) / stats.totalOrders) * 100).toFixed(1)}%` : '100%'}
 														</div>
 													)}
@@ -1161,7 +1183,7 @@ export default function AdminAnalyticsByTime() {
 												<td className='py-3 px-2 text-right border-l border-border-color'>
 													<div className='font-semibold text-font-color text-[14px]'>{(r.lines ?? 0).toLocaleString()}</div>
 													{!compareYears && (
-														<div className='text-[11px] text-success'>
+														<div className='text-[11px]' style={{color: '#10B981'}}>
 															{rows.length > 1 ? `${(((r.lines ?? 0) / stats.totalLines) * 100).toFixed(1)}%` : '100%'}
 														</div>
 													)}
@@ -1181,7 +1203,7 @@ export default function AdminAnalyticsByTime() {
 												<td className='py-3 px-2 text-right border-l border-border-color'>
 													<div className='font-semibold text-font-color text-[14px]'>{(r.packages ?? 0).toLocaleString()}</div>
 													{!compareYears && (
-														<div className='text-[11px] text-warning'>
+														<div className='text-[11px]' style={{color: '#F59E0B'}}>
 															{rows.length > 1 ? `${(((r.packages ?? 0) / stats.totalPackages) * 100).toFixed(1)}%` : '100%'}
 														</div>
 													)}
@@ -1201,7 +1223,7 @@ export default function AdminAnalyticsByTime() {
 												<td className='py-3 px-2 text-right border-l border-border-color'>
 													<div className='font-semibold text-font-color text-[14px]'>{(r.units ?? 0).toLocaleString()}</div>
 													{!compareYears && (
-														<div className='text-[11px] text-info'>
+														<div className='text-[11px]' style={{color: '#8B5CF6'}}>
 															{rows.length > 1 ? `${(((r.units ?? 0) / stats.totalUnits) * 100).toFixed(1)}%` : '100%'}
 														</div>
 													)}
@@ -1231,8 +1253,8 @@ export default function AdminAnalyticsByTime() {
 											</td>
 										)}
 										<td className='py-4 px-2 text-right border-l border-border-color'>
-											<div className='font-bold text-primary text-[16px]'>{stats.totalOrders.toLocaleString()}</div>
-											{!compareYears && <div className='text-[11px] text-primary'>100%</div>}
+											<div className='font-bold text-[16px]' style={{color: '#6B7280'}}>{stats.totalOrders.toLocaleString()}</div>
+											{!compareYears && <div className='text-[11px]' style={{color: '#3B82F6'}}>100%</div>}
 										</td>
 										
 										{/* Lines Totals */}
@@ -1247,8 +1269,8 @@ export default function AdminAnalyticsByTime() {
 											</td>
 										)}
 										<td className='py-4 px-2 text-right border-l border-border-color'>
-											<div className='font-bold text-success text-[16px]'>{stats.totalLines.toLocaleString()}</div>
-											{!compareYears && <div className='text-[11px] text-success'>100%</div>}
+											<div className='font-bold text-[16px]' style={{color: '#6B7280'}}>{stats.totalLines.toLocaleString()}</div>
+											{!compareYears && <div className='text-[11px]' style={{color: '#10B981'}}>100%</div>}
 										</td>
 										
 										{/* Packages Totals */}
@@ -1263,8 +1285,8 @@ export default function AdminAnalyticsByTime() {
 											</td>
 										)}
 										<td className='py-4 px-2 text-right border-l border-border-color'>
-											<div className='font-bold text-warning text-[16px]'>{stats.totalPackages.toLocaleString()}</div>
-											{!compareYears && <div className='text-[11px] text-warning'>100%</div>}
+											<div className='font-bold text-[16px]' style={{color: '#6B7280'}}>{stats.totalPackages.toLocaleString()}</div>
+											{!compareYears && <div className='text-[11px]' style={{color: '#F59E0B'}}>100%</div>}
 										</td>
 										
 										{/* Units Totals */}
@@ -1279,8 +1301,8 @@ export default function AdminAnalyticsByTime() {
 											</td>
 										)}
 										<td className='py-4 px-2 text-right border-l border-border-color'>
-											<div className='font-bold text-info text-[16px]'>{stats.totalUnits.toLocaleString()}</div>
-											{!compareYears && <div className='text-[11px] text-info'>100%</div>}
+											<div className='font-bold text-[16px]' style={{color: '#6B7280'}}>{stats.totalUnits.toLocaleString()}</div>
+											{!compareYears && <div className='text-[11px]' style={{color: '#8B5CF6'}}>100%</div>}
 										</td>
 									</tr>
 								</tfoot>
