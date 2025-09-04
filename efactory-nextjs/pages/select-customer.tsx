@@ -63,9 +63,6 @@ function SelectCustomerPageInner() {
 		return [...list].sort((a, b) => (a.username < b.username ? -1 : a.username > b.username ? 1 : 0));
 	}, [accounts, filter]);
 
-	useEffect(() => {
-		if (filtered.length === 1) setSelectedUsername(filtered[0].username);
-	}, [filtered.length]);
 
 	async function handleProceed() {
 		if (!selectedUsername || submitting) return;
