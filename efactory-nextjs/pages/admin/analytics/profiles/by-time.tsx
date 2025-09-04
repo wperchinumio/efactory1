@@ -17,10 +17,16 @@ import {
 	IconList,
 	IconBox
 } from '@tabler/icons-react';
-import Combobox from '@/components/ui/Combobox';
-import MultiSelectCombobox from '@/components/ui/MultiSelectCombobox';
-import DateRangeCombobox from '@/components/ui/DateRangeCombobox';
-import { useGlobalFilterData } from '@/hooks/useGlobalFilterData';
+import { 
+	TimeFilterCombobox,
+	ShippedDateFilterCombobox,
+	WarehouseFilterCombobox,
+	AccountFilterCombobox,
+	DestinationFilterCombobox,
+	ChannelFilterCombobox,
+	CountryFilterCombobox,
+	StateFilterCombobox
+} from '@/components/filters';
 
 interface ChartRow {
 	id?: string;
@@ -68,90 +74,7 @@ export default function AdminAnalyticsByTime() {
 		state: ''
 	});
 
-	// Load global filter data
-	const globalData = useGlobalFilterData();
-	
-	// Debug logging
-	console.log('🎯 Analytics page - globalData:', globalData);
-
-	// Get filter options from global data
-	const filterOptions = useMemo(() => {
-		if (globalData.loading) {
-			return {
-				timeOptions: [
-					{ value: 'daily', label: 'Daily' },
-					{ value: 'weekly', label: 'Weekly' },
-					{ value: 'monthly', label: 'Monthly' },
-					{ value: 'quarterly', label: 'Quarterly' },
-					{ value: 'yearly', label: 'Yearly' }
-				],
-				shippedDateOptions: [
-					{ value: 'LAST 30 DAYS', label: 'Last 30 Days' },
-					{ value: 'LAST 60 DAYS', label: 'Last 60 Days' },
-					{ value: 'LAST 90 DAYS', label: 'Last 90 Days' },
-					{ value: 'LAST 180 DAYS', label: 'Last 180 Days' },
-					{ value: 'LAST 365 DAYS', label: 'Last 365 Days' },
-					{ value: 'CURRENT_MONTH', label: 'Current Month' },
-					{ value: 'LAST_MONTH', label: 'Last Month' },
-					{ value: 'CURRENT_QUARTER', label: 'Current Quarter' },
-					{ value: 'LAST_QUARTER', label: 'Last Quarter' },
-					{ value: 'CURRENT_YEAR', label: 'Current Year' },
-					{ value: 'LAST_YEAR', label: 'Last Year' }
-				],
-				warehouseOptions: [],
-				accountOptions: [],
-				destinationOptions: [
-					{ value: '', label: 'All Destinations' },
-					{ value: '0', label: 'Domestic' },
-					{ value: '1', label: 'International' }
-				],
-				channelOptions: [],
-				countryOptions: [],
-				stateOptions: [{ value: '', label: 'All States' }]
-			};
-		}
-
-		const { 
-			warehouseOptions, 
-			countryOptions, 
-			getStateOptions, 
-			channelOptions, 
-			getAccountOptions 
-		} = globalData.getFilterOptions();
-
-		return {
-			timeOptions: [
-				{ value: 'daily', label: 'Daily' },
-				{ value: 'weekly', label: 'Weekly' },
-				{ value: 'monthly', label: 'Monthly' },
-				{ value: 'quarterly', label: 'Quarterly' },
-				{ value: 'yearly', label: 'Yearly' }
-			],
-			shippedDateOptions: [
-				{ value: 'LAST 30 DAYS', label: 'Last 30 Days' },
-				{ value: 'LAST 60 DAYS', label: 'Last 60 Days' },
-				{ value: 'LAST 90 DAYS', label: 'Last 90 Days' },
-				{ value: 'LAST 180 DAYS', label: 'Last 180 Days' },
-				{ value: 'LAST 365 DAYS', label: 'Last 365 Days' },
-				{ value: 'CURRENT_MONTH', label: 'Current Month' },
-				{ value: 'LAST_MONTH', label: 'Last Month' },
-				{ value: 'CURRENT_QUARTER', label: 'Current Quarter' },
-				{ value: 'LAST_QUARTER', label: 'Last Quarter' },
-				{ value: 'CURRENT_YEAR', label: 'Current Year' },
-				{ value: 'LAST_YEAR', label: 'Last Year' }
-			],
-			warehouseOptions,
-			accountOptions: getAccountOptions(filters.warehouse),
-			destinationOptions: [
-				{ value: '', label: 'All Destinations' },
-				{ value: '0', label: 'Domestic' },        // value: 0, oper: '='
-				{ value: '1', label: 'International' }    // value: 0, oper: '<>' (not equals 0)
-			],
-			channelOptions,
-			countryOptions,
-			stateOptions: getStateOptions(filters.country)
-		};
-	}, [globalData, filters.warehouse, filters.country]);
+	// Filter options are now handled by individual filter components
 
 	useEffect(() => {
 		setMounted(true);
@@ -660,143 +583,61 @@ export default function AdminAnalyticsByTime() {
 			<div className='p-6'>
 				<div className='flex flex-wrap gap-4'>
 					{/* Time Period */}
-					<div className='flex-shrink-0 w-32'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider text-red-600`}>
-							<IconCalendar className='w-3 h-3 text-primary' />
-							Time
-						</label>
-						<Combobox
-							value={filters.timeWeekly}
-							onValueChange={(value) => updateFilter('timeWeekly', value as any)}
-							options={filterOptions.timeOptions}
-							showSearch={false}
-							placeholder="Period..."
-						/>
-					</div>
+					<TimeFilterCombobox
+						value={filters.timeWeekly}
+						onValueChange={(value) => updateFilter('timeWeekly', value as any)}
+						className='flex-shrink-0 w-32'
+					/>
 
 					{/* Shipped Date */}
-					<div className='flex-shrink-0 w-48'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider text-red-600`}>
-							<IconCalendar className='w-3 h-3 text-success' />
-							Shipped Date
-						</label>
-						<DateRangeCombobox
-							value={filters.shippedDate}
-							onValueChange={(value) => updateFilter('shippedDate', value)}
-							placeholder="Select date range..."
-							title="SHIPPED DATE"
-							allowClear={false}
-						/>
-					</div>
+					<ShippedDateFilterCombobox
+						value={filters.shippedDate}
+						onValueChange={(value) => updateFilter('shippedDate', value)}
+						className='flex-shrink-0 w-48'
+					/>
 
 					{/* Warehouse - Multi-select */}
-					<div className='flex-shrink-0 w-52'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.warehouse.length > 0 ? 'text-red-600' : 'text-font-color'
-						}`}>
-							<IconBox className='w-3 h-3 text-warning' />
-							Warehouse
-						</label>
-						<MultiSelectCombobox
-							value={filters.warehouse}
-							onValueChange={(value) => updateFilter('warehouse', value)}
-							options={filterOptions.warehouseOptions.filter(opt => opt.value !== '')} // Remove "All" option for multi-select
-							showSearch={true}
-							placeholder="Select warehouses..."
-							title="WAREHOUSE"
-						/>
-					</div>
+					<WarehouseFilterCombobox
+						value={filters.warehouse}
+						onValueChange={(value) => updateFilter('warehouse', value)}
+						className='flex-shrink-0 w-52'
+					/>
 
 					{/* Account - Multi-select */}
-					<div className='flex-shrink-0 w-52'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.account.length > 0 ? 'text-red-600' : 'text-font-color'
-						}`}>
-							<IconShoppingCart className='w-3 h-3 text-info' />
-							Account
-						</label>
-						<MultiSelectCombobox
-							value={filters.account}
-							onValueChange={(value) => updateFilter('account', value)}
-							options={filterOptions.accountOptions.filter(opt => opt.value !== '')} // Remove "All" option for multi-select
-							showSearch={true}
-							placeholder="Select accounts..."
-							title="ACCOUNT"
-						/>
-					</div>
+					<AccountFilterCombobox
+						value={filters.account}
+						onValueChange={(value) => updateFilter('account', value)}
+						className='flex-shrink-0 w-52'
+					/>
 
 					{/* Destination */}
-					<div className='flex-shrink-0 w-36'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.destination ? 'text-red-600' : 'text-font-color'
-						}`}>
-							<IconTrendingUp className='w-3 h-3 text-primary' />
-							Destination
-						</label>
-						<Combobox
-							value={filters.destination}
-							onValueChange={(value) => updateFilter('destination', value)}
-							options={[
-								{ value: '', label: 'All Destinations' },
-								{ value: '0', label: 'Domestic' },
-								{ value: '1', label: 'International' }
-							]}
-							showSearch={false}
-							placeholder="Destination..."
-						/>
-					</div>
+					<DestinationFilterCombobox
+						value={filters.destination}
+						onValueChange={(value) => updateFilter('destination', value)}
+						className='flex-shrink-0 w-36'
+					/>
 
 					{/* Channel */}
-					<div className='flex-shrink-0 w-48'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.channel.length > 0 ? 'text-red-600' : 'text-font-color'
-						}`}>
-							<IconList className='w-3 h-3 text-success' />
-							Channel
-						</label>
-						<MultiSelectCombobox
-							value={filters.channel}
-							onValueChange={(value) => updateFilter('channel', value)}
-							options={filterOptions.channelOptions}
-							placeholder="Select channels..."
-							title="Channel"
-						/>
-					</div>
+					<ChannelFilterCombobox
+						value={filters.channel}
+						onValueChange={(value) => updateFilter('channel', value)}
+						className='flex-shrink-0 w-48'
+					/>
 
 					{/* Country */}
-					<div className='flex-shrink-0 w-48'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.country ? 'text-red-600' : 'text-font-color'
-						}`}>
-							<IconTrendingUp className='w-3 h-3 text-warning' />
-							Country
-						</label>
-						<Combobox
-							value={filters.country}
-							onValueChange={(value) => updateFilter('country', value)}
-							options={filterOptions.countryOptions}
-							showSearch={true}
-							placeholder="Country..."
-						/>
-					</div>
+					<CountryFilterCombobox
+						value={filters.country}
+						onValueChange={(value) => updateFilter('country', value)}
+						className='flex-shrink-0 w-48'
+					/>
 
-					{/* State - Always show, but conditional options */}
-					<div className='flex-shrink-0 w-36'>
-						<label className={`flex items-center gap-2 text-[11px] font-bold mb-2 uppercase tracking-wider ${
-							filters.state ? 'text-red-600' : 'text-font-color'
-						}`}>
-							<IconTrendingUp className='w-3 h-3 text-info' />
-							State
-						</label>
-						<Combobox
-							value={filters.state}
-							onValueChange={(value) => updateFilter('state', value)}
-							options={filters.country ? (filterOptions.stateOptions || [{ value: '', label: 'All States' }]) : [{ value: '', label: 'Select country first' }]}
-							showSearch={filters.country ? true : false}
-							placeholder={filters.country ? "State..." : "Select country first"}
-							disabled={!filters.country}
-						/>
-					</div>
+					{/* State - Only show when country is selected */}
+					<StateFilterCombobox
+						value={filters.state}
+						onValueChange={(value) => updateFilter('state', value)}
+						countryValue={filters.country}
+						className='flex-shrink-0 w-36'
+					/>
 				</div>
 
 				{/* Active Filters Summary */}
@@ -806,7 +647,7 @@ export default function AdminAnalyticsByTime() {
 							<span className='text-[11px] font-bold text-font-color-100 uppercase tracking-wider'>Active Filters:</span>
 							{filters.timeWeekly !== 'weekly' && (
 								<span className='inline-flex items-center gap-1 px-2 py-1 bg-primary-10 text-primary rounded text-[10px] font-medium'>
-									Time: {filterOptions.timeOptions.find(o => o.value === filters.timeWeekly)?.label}
+									Time: {filters.timeWeekly.charAt(0).toUpperCase() + filters.timeWeekly.slice(1)}
 									<button onClick={() => updateFilter('timeWeekly', 'weekly')} className='hover:bg-primary hover:text-white rounded-full p-0.5'>
 										<IconX className='w-2 h-2' />
 									</button>
@@ -969,14 +810,14 @@ export default function AdminAnalyticsByTime() {
 									<div className='flex-1'>
 										<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Active Filters</label>
 										<div className='space-y-1 text-xs text-font-color-100'>
-											<div>Time: {filterOptions.timeOptions.find(o => o.value === filters.timeWeekly)?.label || 'Weekly'}</div>
+											<div>Time: {filters.timeWeekly.charAt(0).toUpperCase() + filters.timeWeekly.slice(1)}</div>
 											<div>Date: {filters.shippedDate === '-90D' ? 'Last 90 Days' : filters.shippedDate}</div>
 											{filters.warehouse.length > 0 && <div>Warehouses: {filters.warehouse.length} selected</div>}
 											{filters.account.length > 0 && <div>Accounts: {filters.account.length} selected</div>}
 											{filters.destination && <div>Destination: {filters.destination === '0' ? 'Domestic' : filters.destination === '1' ? 'International' : 'All'}</div>}
 											{filters.channel.length > 0 && <div>Channels: {filters.channel.length} selected</div>}
-											{filters.country && <div>Country: {filterOptions.countryOptions.find(o => o.value === filters.country)?.label || filters.country}</div>}
-											{filters.state && <div>State: {filterOptions.getStateOptions(filters.country).find(o => o.value === filters.state)?.label || filters.state}</div>}
+											{filters.country && <div>Country: {filters.country}</div>}
+											{filters.state && <div>State: {filters.state}</div>}
 										</div>
 									</div>
 								</div>
