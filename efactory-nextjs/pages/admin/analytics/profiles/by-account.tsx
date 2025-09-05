@@ -68,6 +68,7 @@ export default function AdminAnalyticsByAccount() {
 	const [mounted, setMounted] = useState(false);
 	const [sortField, setSortField] = useState<'name' | 'company_code' | 'company_name' | null>(null);
 	const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+	const [dataJustLoaded, setDataJustLoaded] = useState(false);
 	
 	// Chart dataset and comparison options
 	const [selectedDataset, setSelectedDataset] = useState<'orders' | 'lines' | 'packages' | 'units'>('orders');
@@ -183,6 +184,9 @@ export default function AdminAnalyticsByAccount() {
 			setRows(chartRows);
 			setTimeHeaders(timeHeaders);
 			setLoaded(true);
+			setDataJustLoaded(true);
+			// Reset the flag after a short delay to allow animation
+			setTimeout(() => setDataJustLoaded(false), 1500);
 		} catch (e: any) {
 			setError(e?.message || 'Failed to load report');
 		} finally {
@@ -199,6 +203,12 @@ export default function AdminAnalyticsByAccount() {
 	// Helper functions
 	const updateFilter = (key: keyof FilterState, value: string | string[]) => {
 		setFilters(prev => ({ ...prev, [key]: value }));
+	};
+
+	const handleDatasetChange = (dataset: 'orders' | 'lines' | 'packages' | 'units') => {
+		setSelectedDataset(dataset);
+		setDataJustLoaded(true);
+		setTimeout(() => setDataJustLoaded(false), 1000);
 	};
 
 	const clearAllFilters = () => {
@@ -564,8 +574,8 @@ export default function AdminAnalyticsByAccount() {
 		}
 
 		return {
-			animation: true,
-			animationDuration: 1000,
+			animation: dataJustLoaded,
+			animationDuration: dataJustLoaded ? 1000 : 0,
 			animationEasing: 'cubicOut',
 			grid: {
 				left: '3%',
@@ -889,7 +899,7 @@ export default function AdminAnalyticsByAccount() {
 								
 								<ChartControls
 									selectedDataset={selectedDataset}
-									onDatasetChange={setSelectedDataset}
+									onDatasetChange={handleDatasetChange}
 									compareYears={compareYears}
 									onCompareYearsChange={setCompareYears}
 									showTrendLine={showTrendLine}
@@ -918,7 +928,7 @@ export default function AdminAnalyticsByAccount() {
 										<IconTable className='w-5 h-5 text-font-color-100' />
 										<h3 className='text-[14px] font-semibold text-font-color'>Data Grid</h3>
 										<div className='flex items-center gap-4 ml-auto'>
-											<div className='flex items-center gap-2'>
+						<div className='flex items-center gap-2'>
 												<span className='text-[12px] text-font-color-100'>Showing:</span>
 												<span className='text-[14px] font-bold text-primary bg-primary-10 px-2 py-1 rounded'>
 													{selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)}
@@ -927,9 +937,9 @@ export default function AdminAnalyticsByAccount() {
 											<div className='text-[12px] text-font-color-100'>
 												{rows.length} accounts • Total: {stats.totalOrders.toLocaleString()}
 											</div>
-										</div>
-									</div>
-								</div>
+						</div>
+					</div>
+						</div>
 								<table className='w-full min-w-[1800px]'>
 									<thead className='bg-primary-5 border-b border-border-color'>
 										<tr className='text-center text-font-color text-[11px] font-bold uppercase tracking-wider border-b border-border-color'>
@@ -979,9 +989,9 @@ export default function AdminAnalyticsByAccount() {
 													<div className='text-[10px]'>{header.name}</div>
 												</th>
 											))}
-										</tr>
-									</thead>
-									<tbody>
+									</tr>
+								</thead>
+								<tbody>
 										{sortedRows.map((account, i) => (
 											<tr key={(account.id || account.name || i).toString()} className='border-b border-border-color hover:bg-primary-10 transition-colors'>
 												<td className='py-2 px-3 text-center text-font-color-100 text-[12px] font-medium'>{i + 1}</td>
@@ -1002,11 +1012,11 @@ export default function AdminAnalyticsByAccount() {
 														</div>
 													</td>
 												))}
-											</tr>
-										))}
-									</tbody>
-								</table>
-							</div>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
 						)}
 					</>
 				)}

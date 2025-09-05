@@ -59,6 +59,7 @@ export default function AdminAnalyticsByTime() {
 	const [error, setError] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 	const [mounted, setMounted] = useState(false);
+	const [dataJustLoaded, setDataJustLoaded] = useState(false);
 	
 	// Chart dataset and comparison options
 	const [selectedDataset, setSelectedDataset] = useState<'orders' | 'lines' | 'packages' | 'units'>('orders');
@@ -143,6 +144,9 @@ export default function AdminAnalyticsByTime() {
 			);
 			setRows(res.data?.chart || []);
 			setLoaded(true);
+			setDataJustLoaded(true);
+			// Reset the flag after a short delay to allow animation
+			setTimeout(() => setDataJustLoaded(false), 1500);
 		} catch (e: any) {
 			setError(e?.message || 'Failed to load report');
 		} finally {
@@ -159,6 +163,12 @@ export default function AdminAnalyticsByTime() {
 	// Helper functions
 	const updateFilter = (key: keyof FilterState, value: string | string[]) => {
 		setFilters(prev => ({ ...prev, [key]: value }));
+	};
+
+	const handleDatasetChange = (dataset: 'orders' | 'lines' | 'packages' | 'units') => {
+		setSelectedDataset(dataset);
+		setDataJustLoaded(true);
+		setTimeout(() => setDataJustLoaded(false), 1000);
 	};
 
 	const clearAllFilters = () => {
@@ -495,8 +505,8 @@ export default function AdminAnalyticsByTime() {
 		}
 
 		return {
-			animation: true, // Enable smooth animations
-			animationDuration: 1000,
+			animation: dataJustLoaded, // Only animate when new data is loaded
+			animationDuration: dataJustLoaded ? 1000 : 0,
 			animationEasing: 'cubicOut',
 			grid: {
 				left: '3%',
@@ -833,7 +843,7 @@ export default function AdminAnalyticsByTime() {
 								
 								<ChartControls
 									selectedDataset={selectedDataset}
-									onDatasetChange={setSelectedDataset}
+									onDatasetChange={handleDatasetChange}
 									compareYears={compareYears}
 									onCompareYearsChange={setCompareYears}
 									showTrendLine={showTrendLine}

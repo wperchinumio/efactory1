@@ -53,6 +53,7 @@ export default function AdminAnalyticsByShipService() {
 	const [error, setError] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 	const [mounted, setMounted] = useState(false);
+	const [dataJustLoaded, setDataJustLoaded] = useState(false);
 	
 	// Chart dataset and comparison options
 	const [selectedDataset, setSelectedDataset] = useState<'orders' | 'lines' | 'packages' | 'units'>('orders');
@@ -74,8 +75,8 @@ export default function AdminAnalyticsByShipService() {
 
 	const runReport = async () => {
 		try {
-			setLoading(true);
-			setError(null);
+		setLoading(true);
+		setError(null);
 			
 			const filterArray = [];
 			
@@ -118,6 +119,9 @@ export default function AdminAnalyticsByShipService() {
 			
 			setRows(res.data?.chart || []);
 			setLoaded(true);
+			setDataJustLoaded(true);
+			// Reset the flag after a short delay to allow animation
+			setTimeout(() => setDataJustLoaded(false), 1500);
 		} catch (e: any) {
 			setError(e.message || 'Failed to load data');
 		} finally {
@@ -133,6 +137,12 @@ export default function AdminAnalyticsByShipService() {
 
 	const updateFilter = (key: keyof FilterState, value: any) => {
 		setFilters(prev => ({ ...prev, [key]: value }));
+	};
+
+	const handleDatasetChange = (dataset: 'orders' | 'lines' | 'packages' | 'units') => {
+		setSelectedDataset(dataset);
+		setDataJustLoaded(true);
+		setTimeout(() => setDataJustLoaded(false), 1000);
 	};
 
 	const clearAllFilters = () => {
@@ -464,8 +474,8 @@ export default function AdminAnalyticsByShipService() {
 		});
 
 		return {
-			animation: true,
-			animationDuration: 1000,
+			animation: dataJustLoaded,
+			animationDuration: dataJustLoaded ? 1000 : 0,
 			animationEasing: 'cubicOut',
 			grid: {
 				left: '15%',
@@ -511,8 +521,8 @@ export default function AdminAnalyticsByShipService() {
 	// ECharts pie chart options (donut chart like legacy)
 	const getPieChartOption = () => {
 		return {
-			animation: true,
-			animationDuration: 1000,
+			animation: dataJustLoaded,
+			animationDuration: dataJustLoaded ? 1000 : 0,
 			animationEasing: 'cubicOut',
 			tooltip: {
 				trigger: 'item',
@@ -762,7 +772,7 @@ export default function AdminAnalyticsByShipService() {
 
 									<ChartControls
 										selectedDataset={selectedDataset}
-										onDatasetChange={setSelectedDataset}
+										onDatasetChange={handleDatasetChange}
 										compareYears={compareYears}
 										onCompareYearsChange={setCompareYears}
 										activeFilters={
@@ -787,9 +797,9 @@ export default function AdminAnalyticsByShipService() {
 										<h3 className='text-[16px] font-bold text-font-color'>Ship Service Data</h3>
 										<div className='text-[12px] text-font-color-100'>
 											{processedData.length} services • Total: {stats.totalOrders.toLocaleString()}
-										</div>
-									</div>
-								</div>
+						</div>
+					</div>
+						</div>
 
 								<div className='overflow-x-auto'>
 									<table className='w-full'>
@@ -859,9 +869,9 @@ export default function AdminAnalyticsByShipService() {
 												<th className={`py-3 px-2 text-right border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
 													<div className='text-[10px] font-bold text-font-color uppercase tracking-wider'>Units</div>
 												</th>
-											</tr>
-										</thead>
-										<tbody>
+									</tr>
+								</thead>
+								<tbody>
 											{processedData.map((row, index) => (
 												<tr key={row.id || index} className='border-b border-border-color hover:bg-primary-5'>
 													<td className='py-2 px-4 text-[12px] font-medium text-font-color border-r border-border-color'>
@@ -927,9 +937,9 @@ export default function AdminAnalyticsByShipService() {
 													<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 														{(row.units || 0).toLocaleString()}
 													</td>
-												</tr>
-											))}
-										</tbody>
+										</tr>
+									))}
+								</tbody>
 										<tfoot className='bg-primary-5 border-t-2 border-border-color'>
 											<tr>
 												<td className='py-3 px-4 text-[12px] font-bold text-font-color border-r border-border-color'>
@@ -1021,8 +1031,8 @@ export default function AdminAnalyticsByShipService() {
 												</td>
 											</tr>
 										</tfoot>
-									</table>
-								</div>
+							</table>
+						</div>
 							</div>
 						)}
 					</>
@@ -1031,7 +1041,7 @@ export default function AdminAnalyticsByShipService() {
 				{loaded && rows.length === 0 && (
 					<div className='p-8 text-center'>
 						<div className='text-[14px] text-font-color-100'>No data found for the selected filters.</div>
-					</div>
+				</div>
 				)}
 			</div>
 		</div>

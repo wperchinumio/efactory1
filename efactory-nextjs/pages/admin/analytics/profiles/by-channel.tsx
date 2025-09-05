@@ -51,6 +51,7 @@ export default function AdminAnalyticsByChannel() {
 	const [error, setError] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 	const [mounted, setMounted] = useState(false);
+	const [dataJustLoaded, setDataJustLoaded] = useState(false);
 	
 	// Chart dataset and comparison options
 	const [selectedDataset, setSelectedDataset] = useState<'orders' | 'lines' | 'packages' | 'units'>('orders');
@@ -114,6 +115,9 @@ export default function AdminAnalyticsByChannel() {
 
 			setRows(res.data?.chart || []);
 			setLoaded(true);
+			setDataJustLoaded(true);
+			// Reset the flag after a short delay to allow animation
+			setTimeout(() => setDataJustLoaded(false), 1500);
 		} catch (e: any) {
 			setError(e?.message || 'Failed to load report');
 		} finally {
@@ -124,6 +128,12 @@ export default function AdminAnalyticsByChannel() {
 	// Helper functions
 	const updateFilter = (key: keyof FilterState, value: string | string[]) => {
 		setFilters(prev => ({ ...prev, [key]: value }));
+	};
+
+	const handleDatasetChange = (dataset: 'orders' | 'lines' | 'packages' | 'units') => {
+		setSelectedDataset(dataset);
+		setDataJustLoaded(true);
+		setTimeout(() => setDataJustLoaded(false), 1000);
 	};
 
 	const clearAllFilters = () => {
@@ -443,8 +453,8 @@ export default function AdminAnalyticsByChannel() {
 		});
 
 		return {
-			animation: true,
-			animationDuration: 1000,
+			animation: dataJustLoaded,
+			animationDuration: dataJustLoaded ? 1000 : 0,
 			animationEasing: 'cubicOut',
 			grid: {
 				left: '15%',
@@ -490,8 +500,8 @@ export default function AdminAnalyticsByChannel() {
 	// ECharts pie chart options (donut chart like legacy)
 	const getPieChartOption = () => {
 		return {
-			animation: true,
-			animationDuration: 1000,
+			animation: dataJustLoaded,
+			animationDuration: dataJustLoaded ? 1000 : 0,
 			animationEasing: 'cubicOut',
 			tooltip: {
 				trigger: 'item',
@@ -745,7 +755,7 @@ export default function AdminAnalyticsByChannel() {
 
 									<ChartControls
 										selectedDataset={selectedDataset}
-										onDatasetChange={setSelectedDataset}
+										onDatasetChange={handleDatasetChange}
 										compareYears={compareYears}
 										onCompareYearsChange={setCompareYears}
 										activeFilters={
