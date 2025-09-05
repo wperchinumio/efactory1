@@ -11,6 +11,10 @@ import {
   IconPlus,
   IconHome,
   IconPencil,
+  IconClipboardList,
+  IconPackage,
+  IconShip,
+  IconFileText,
 } from '@tabler/icons-react';
 
 interface SidebarMenuProps {
@@ -24,13 +28,29 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
 
   // Helper function to render icons (Tabler components or CSS classes)
   const renderIcon = (item: MenuItem) => {
+    console.log('RENDERING ICON FOR:', item.title, 'iconComponent:', !!item.iconComponent, 'iconClassName:', !!item.iconClassName);
+    
+    // FORCE show icons for debugging
+    if (item.title === 'Order Lines') {
+      return <IconClipboardList className="stroke-[1.5] w-[22px] h-[22px] text-red-500" />;
+    }
+    if (item.title === 'Order Items') {
+      return <IconPackage className="stroke-[1.5] w-[22px] h-[22px] text-blue-500" />;
+    }
+    if (item.title === 'Ship Detail') {
+      return <IconShip className="stroke-[1.5] w-[22px] h-[22px] text-green-500" />;
+    }
+    if (item.title === 'Customer Docs.') {
+      return <IconFileText className="stroke-[1.5] w-[22px] h-[22px] text-purple-500" />;
+    }
+    
     if (item.iconComponent) {
       const IconComponent = item.iconComponent;
       return <IconComponent className="stroke-[1.5] w-[22px] h-[22px]" />;
     } else if (item.iconClassName) {
       return <i className={`${item.iconClassName} w-[22px] h-[22px]`} />;
     }
-    return null;
+    return <div className="w-[22px] h-[22px] bg-yellow-500 text-white text-xs">?</div>;
   };
   
   // Use exact Luno state management pattern
@@ -66,6 +86,9 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
 
   // Get visible menus
   const visibleMenus = activeTopMenu ? getVisibleSidebarMenus(activeTopMenu, userApps) : [];
+  console.log('USER APPS:', userApps);
+  console.log('ACTIVE TOP MENU:', activeTopMenu);
+  console.log('VISIBLE MENUS:', visibleMenus.map(m => m.title));
 
   // Auto-expand menus that contain the current route - exact Luno pattern
   useEffect(() => {
@@ -87,7 +110,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       {/* Sidebar header - exact Luno structure */}
       <div className='sidebar-header px-3 mb-6 flex items-center justify-between gap-2'>
         <h4 className='sidebar-title text-[24px]/[30px] font-medium mb-0'>
-          <span className='sm-txt'>e</span><span>Factory Admin</span>
+          <span className='sm-txt'>e</span><span>Factory</span>
         </h4>
         <div className="sidebar-dropdown relative flex">
           <button 
@@ -169,6 +192,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         ) : (
           // Dynamic menu items - exact Luno pattern
           visibleMenus.map((item, key) => {
+            console.log('RENDERING MENU ITEM:', key, item.title, 'hasDropdown:', !!(item.dropdownMenus && item.dropdownMenus.length > 0));
             // Handle section dividers first
             if (item.sectionTitleBefore) {
               const menuItems = [];
@@ -235,7 +259,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   onClick={() => menuToggle(key)}
                   className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${menuActive === key ? 'text-secondary' : ''}`}
                 >
-                  <i className={`${item.iconClassName} w-[22px] h-[22px]`} />
+                  {renderIcon(item)}
                   <span className='link'>{item.title}</span>
                   {menuActive === key ? 
                     <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : 
@@ -263,7 +287,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
                   className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.route ? 'text-secondary' : ''}`}
                 >
-                  <i className={`${item.iconClassName} w-[22px] h-[22px]`} />
+                  {renderIcon(item)}
                   <span className='link'>{item.title}</span>
                 </Link>
               </li>
