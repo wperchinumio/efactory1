@@ -38,17 +38,17 @@
   /* DCL brand defaults */
   --brand-primary: #2FA4D7; /* DCL blue */
   --brand-secondary: #0B5E8E;
-  /* Professional Chart Colors - Work well in both light and dark modes */
-  --chart-color-1: #7C3AED;  /* Purple - Primary brand color */
-  --chart-color-2: #DC2626;  /* Red */
-  --chart-color-3: #059669;  /* Green */
-  --chart-color-4: #D97706;  /* Orange */
-  --chart-color-5: #2563EB;  /* Blue */
-  --chart-color-6: #DB2777;  /* Pink */
-  --chart-color-7: #0891B2;  /* Cyan */
-  --chart-color-8: #65A30D;  /* Lime */
-  --chart-color-9: #EA580C;  /* Orange Red */
-  --chart-color-10: #7C2D12; /* Brown */
+  /* Default Chart Colors - Work well in both light and dark modes */
+  --chart-color1: #7C3AED;  /* Purple - Primary brand color */
+  --chart-color2: #DC2626;  /* Red */
+  --chart-color3: #059669;  /* Green */
+  --chart-color4: #D97706;  /* Orange */
+  --chart-color5: #2563EB;  /* Blue */
+  --chart-color6: #DB2777;  /* Pink */
+  --chart-color7: #0891B2;  /* Cyan */
+  --chart-color8: #65A30D;  /* Lime */
+  --chart-color9: #EA580C;  /* Orange Red */
+  --chart-color10: #7C2D12; /* Brown */
 }
 .brand-dcl {
   --secondary: var(--brand-primary);
@@ -77,81 +77,100 @@
   --scrollbar-thumb: #696969;
 }
 
-[data-luno-theme="indigo"] {
-  --primary: #4C3575;
-  --primary-10: #4c35751a;
-  --secondary: #e05170;
-  --chart-color1: #b9b3a8;
-  --chart-color2: #4C3575;
-  --chart-color3: #98427e;
-  --chart-color4: #d55a75;
-  --chart-color5: #fb8665;
+html[data-luno-theme="indigo"],
+body[data-luno-theme="indigo"] {
+  --primary: #4C3575 !important;
+  --primary-10: #4c35751a !important;
+  --secondary: #e05170 !important;
+  --chart-color1: #b9b3a8 !important;
+  --chart-color2: #4C3575 !important;
+  --chart-color3: #98427e !important;
+  --chart-color4: #d55a75 !important;
+  --chart-color5: #fb8665 !important;
 }
 
-[data-luno-theme="blue"] {
-  --primary: #2794eb;
-  --primary-10: #4c35751a;
-  --secondary: #00AC9A;
-  --chart-color1: #2794eb;
-  --chart-color2: #6382D8;
-  --chart-color3: #8D61A5;
-  --chart-color4: #90476F;
-  --chart-color5: #00AC9A;
+html[data-luno-theme="blue"],
+body[data-luno-theme="blue"] {
+  --primary: #2794eb !important;
+  --primary-10: #4c35751a !important;
+  --secondary: #00AC9A !important;
+  --chart-color1: #2794eb !important;
+  --chart-color2: #6382D8 !important;
+  --chart-color3: #8D61A5 !important;
+  --chart-color4: #90476F !important;
+  --chart-color5: #00AC9A !important;
 }
 
-[data-luno-theme="cyan"] {
-  --primary: #219F94;
-  --primary-10: #219F941a;
-  --secondary: #655D8A;
-  --chart-color1: #219F94;
-  --chart-color2: #655D8A;
-  --chart-color3: #C1DEAE;
-  --chart-color4: #FDCEB9;
-  --chart-color5: #D885A3;
+html[data-luno-theme="cyan"],
+body[data-luno-theme="cyan"] {
+  --primary: #219F94 !important;
+  --primary-10: #219F941a !important;
+  --secondary: #655D8A !important;
+  --chart-color1: #219F94 !important;
+  --chart-color2: #655D8A !important;
+  --chart-color3: #C1DEAE !important;
+  --chart-color4: #FDCEB9 !important;
+  --chart-color5: #D885A3 !important;
 }
 
-[data-luno-theme="green"] {
-  --primary: #8CBA51;
-  --primary-10: #8CBA511a;
-  --secondary: #A1DD70;
-  --chart-color1: #79B989;
-  --chart-color2: #7E8954;
-  --chart-color3: #91A7FB;
-  --chart-color4: #3FBCB8;
-  --chart-color5: #ecbc7c;
+html[data-luno-theme="green"],
+body[data-luno-theme="green"] {
+  --primary: #8CBA51 !important;
+  --primary-10: #8CBA511a !important;
+  --secondary: #A1DD70 !important;
+  --chart-color1: #79B989 !important;
+  --chart-color2: #7E8954 !important;
+  --chart-color3: #91A7FB !important;
+  --chart-color4: #3FBCB8 !important;
+  --chart-color5: #ecbc7c !important;
 }
 
-[data-luno-theme="orange"] {
-  --primary: #FF9234;
-  --primary-10: #FF92341a;
-  --secondary: #D8C962;
-  --chart-color1: #FFA600;
-  --chart-color2: #FF8982;
-  --chart-color3: #FFC0B7;
-  --chart-color4: #CF7F00;
-  --chart-color5: #00B4B7;
+html[data-luno-theme="orange"],
+body[data-luno-theme="orange"] {
+  --primary: #FF9234 !important;
+  --primary-10: #FF92341a !important;
+  --secondary: #D8C962 !important;
+  --chart-color1: #FFA600 !important;
+  --chart-color2: #FF8982 !important;
+  --chart-color3: #FFC0B7 !important;
+  --chart-color4: #CF7F00 !important;
+  --chart-color5: #00B4B7 !important;
 }
 
-[data-luno-theme="blush"] {
-  --primary: #dd5e89;
-  --primary-10: #dd5e891a;
-  --secondary: #f7bb97;
-  --chart-color1: #dd5e89;
-  --chart-color2: #b45d98;
-  --chart-color3: #865e99;
-  --chart-color4: #5b5b8b;
-  --chart-color5: #f7bb97;
+html[data-luno-theme="blush"],
+body[data-luno-theme="blush"] {
+  --primary: #dd5e89 !important;
+  --primary-10: #dd5e891a !important;
+  --secondary: #f7bb97 !important;
+  --chart-color1: #dd5e89 !important;
+  --chart-color2: #b45d98 !important;
+  --chart-color3: #865e99 !important;
+  --chart-color4: #5b5b8b !important;
+  --chart-color5: #f7bb97 !important;
 }
 
-[data-luno-theme="red"] {
-  --primary: #f73859;
-  --primary-10: #f738591a;
-  --secondary: #7e52b9;
-  --chart-color1: #FF7171;
-  --chart-color2: #FFAA71;
-  --chart-color3: #6E6D6D;
-  --chart-color4: #D9C6A5;
-  --chart-color5: #99B898;
+html[data-luno-theme="red"],
+body[data-luno-theme="red"] {
+  --primary: #f73859 !important;
+  --primary-10: #f738591a !important;
+  --secondary: #7e52b9 !important;
+  --chart-color1: #FF7171 !important;
+  --chart-color2: #FFAA71 !important;
+  --chart-color3: #6E6D6D !important;
+  --chart-color4: #D9C6A5 !important;
+  --chart-color5: #99B898 !important;
+}
+
+html[data-luno-theme="dynamic"],
+body[data-luno-theme="dynamic"] {
+  --primary: var(--primary) !important;
+  --primary-10: var(--primary-10) !important;
+  --secondary: var(--secondary) !important;
+  --chart-color1: #7C3AED !important;  /* Purple - Primary brand color */
+  --chart-color2: #DC2626 !important;  /* Red */
+  --chart-color3: #059669 !important;  /* Green */
+  --chart-color4: #D97706 !important;  /* Orange */
+  --chart-color5: #2563EB !important;  /* Blue */
 }
 
 @layer utilities {
@@ -229,7 +248,8 @@ input[type=number] {
   display: none;
 }
 
-[data-luno-theme="dynamic"] .dynamic-color-setting {
+html[data-luno-theme="dynamic"] .dynamic-color-setting,
+body[data-luno-theme="dynamic"] .dynamic-color-setting {
   display: block;
 }
 
@@ -1146,4 +1166,87 @@ body .apexcharts-legend-marker {
 @keyframes dash-move {
   from { stroke-dashoffset: 0; }
   to   { stroke-dashoffset: -200; }
+}
+
+/* ========================================
+   Chart Color Overrides - Highest Specificity
+   ======================================== */
+html[data-luno-theme="indigo"],
+body[data-luno-theme="indigo"],
+html:has(body[data-luno-theme="indigo"]) {
+  --chart-color1: #b9b3a8 !important;
+  --chart-color2: #4C3575 !important;
+  --chart-color3: #98427e !important;
+  --chart-color4: #d55a75 !important;
+  --chart-color5: #fb8665 !important;
+}
+
+html[data-luno-theme="blue"],
+body[data-luno-theme="blue"],
+html:has(body[data-luno-theme="blue"]) {
+  --chart-color1: #2794eb !important;
+  --chart-color2: #6382D8 !important;
+  --chart-color3: #8D61A5 !important;
+  --chart-color4: #90476F !important;
+  --chart-color5: #00AC9A !important;
+}
+
+html[data-luno-theme="cyan"],
+body[data-luno-theme="cyan"],
+html:has(body[data-luno-theme="cyan"]) {
+  --chart-color1: #219F94 !important;
+  --chart-color2: #655D8A !important;
+  --chart-color3: #C1DEAE !important;
+  --chart-color4: #FDCEB9 !important;
+  --chart-color5: #D885A3 !important;
+}
+
+html[data-luno-theme="green"],
+body[data-luno-theme="green"],
+html:has(body[data-luno-theme="green"]) {
+  --chart-color1: #79B989 !important;
+  --chart-color2: #7E8954 !important;
+  --chart-color3: #91A7FB !important;
+  --chart-color4: #3FBCB8 !important;
+  --chart-color5: #ecbc7c !important;
+}
+
+html[data-luno-theme="orange"],
+body[data-luno-theme="orange"],
+html:has(body[data-luno-theme="orange"]) {
+  --chart-color1: #FFA600 !important;
+  --chart-color2: #FF8982 !important;
+  --chart-color3: #FFC0B7 !important;
+  --chart-color4: #CF7F00 !important;
+  --chart-color5: #00B4B7 !important;
+}
+
+html[data-luno-theme="blush"],
+body[data-luno-theme="blush"],
+html:has(body[data-luno-theme="blush"]) {
+  --chart-color1: #dd5e89 !important;
+  --chart-color2: #b45d98 !important;
+  --chart-color3: #865e99 !important;
+  --chart-color4: #5b5b8b !important;
+  --chart-color5: #f7bb97 !important;
+}
+
+html[data-luno-theme="red"],
+body[data-luno-theme="red"],
+html:has(body[data-luno-theme="red"]) {
+  --chart-color1: #FF7171 !important;
+  --chart-color2: #FFAA71 !important;
+  --chart-color3: #6E6D6D !important;
+  --chart-color4: #D9C6A5 !important;
+  --chart-color5: #99B898 !important;
+}
+
+html[data-luno-theme="dynamic"],
+body[data-luno-theme="dynamic"],
+html:has(body[data-luno-theme="dynamic"]) {
+  --chart-color1: #7C3AED !important;
+  --chart-color2: #DC2626 !important;
+  --chart-color3: #059669 !important;
+  --chart-color4: #D97706 !important;
+  --chart-color5: #2563EB !important;
 }

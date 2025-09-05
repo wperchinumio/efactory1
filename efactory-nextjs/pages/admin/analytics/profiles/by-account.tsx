@@ -4,6 +4,7 @@ import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
 import { exportAnalyticsReport } from '@/lib/exportUtils';
 import { useChartAnimation } from '@/hooks/useChartAnimation';
+import { useChartTheme } from '@/hooks/useChartTheme';
 import * as echarts from 'echarts';
 import { 
 	IconCalendar, 
@@ -293,173 +294,8 @@ export default function AdminAnalyticsByAccount() {
 	// ECharts component - dynamically imported for SSR compatibility
 	const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
-	// Detect current theme and register custom themes
-	const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
-
-	useEffect(() => {
-		// Detect system preference and current theme
-		const detectTheme = () => {
-			const htmlElement = document.documentElement;
-			const dataTheme = htmlElement.getAttribute('data-theme');
-			
-			if (dataTheme === 'dark') {
-				setCurrentTheme('dark');
-			} else {
-				setCurrentTheme('light');
-			}
-		};
-
-		// Register wonderland light theme
-		echarts.registerTheme('wonderland-light', {
-			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
-			"backgroundColor": "rgba(252,252,252,0)",
-			"textStyle": {
-				"color": "#333333"
-			},
-			"title": {
-				"textStyle": {
-					"color": "#666666"
-				},
-				"subtextStyle": {
-					"color": "#999999"
-				}
-			},
-			"legend": {
-				"textStyle": {
-					"color": "#333333"
-				}
-			},
-			"categoryAxis": {
-				"axisLine": {
-					"lineStyle": {
-						"color": "#cccccc"
-					}
-				},
-				"axisTick": {
-					"lineStyle": {
-						"color": "#cccccc"
-					}
-				},
-				"axisLabel": {
-					"textStyle": {
-						"color": "#999999"
-					}
-				},
-				"splitLine": {
-					"lineStyle": {
-						"color": ["#f0f0f0"]
-					}
-				}
-			},
-			"valueAxis": {
-				"axisLine": {
-					"lineStyle": {
-						"color": "#cccccc"
-					}
-				},
-				"axisTick": {
-					"lineStyle": {
-						"color": "#cccccc"
-					}
-				},
-				"axisLabel": {
-					"textStyle": {
-						"color": "#999999"
-					}
-				},
-				"splitLine": {
-					"lineStyle": {
-						"color": ["#f0f0f0"]
-					}
-				}
-			}
-		});
-
-		// Register wonderland dark theme
-		echarts.registerTheme('wonderland-dark', {
-			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
-			"backgroundColor": "rgba(0,0,0,0)",
-			"textStyle": {
-				"color": "#ffffff"
-			},
-			"title": {
-				"textStyle": {
-					"color": "#ffffff"
-				},
-				"subtextStyle": {
-					"color": "#cccccc"
-				}
-			},
-			"legend": {
-				"textStyle": {
-					"color": "#ffffff"
-				}
-			},
-			"categoryAxis": {
-				"axisLine": {
-					"lineStyle": {
-						"color": "#666666"
-					}
-				},
-				"axisTick": {
-					"lineStyle": {
-						"color": "#666666"
-					}
-				},
-				"axisLabel": {
-					"textStyle": {
-						"color": "#cccccc"
-					}
-				},
-				"splitLine": {
-					"lineStyle": {
-						"color": ["#333333"]
-					}
-				}
-			},
-			"valueAxis": {
-				"axisLine": {
-					"lineStyle": {
-						"color": "#666666"
-					}
-				},
-				"axisTick": {
-					"lineStyle": {
-						"color": "#666666"
-					}
-				},
-				"axisLabel": {
-					"textStyle": {
-						"color": "#cccccc"
-					}
-				},
-				"splitLine": {
-					"lineStyle": {
-						"color": ["#333333"]
-					}
-				}
-			}
-		});
-
-		// Initial theme detection
-		detectTheme();
-
-		// Watch for theme changes
-		const observer = new MutationObserver((mutations) => {
-			mutations.forEach((mutation) => {
-				if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-					detectTheme();
-				}
-			});
-		});
-
-		observer.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ['data-theme']
-		});
-
-		return () => observer.disconnect();
-	}, []);
+	// Use the new chart theme system
+	const { echartsThemeName, currentTheme, currentLunoTheme } = useChartTheme();
 
 	// Generate ECharts options - using theme system
 	const getEChartsOption = () => {
@@ -888,8 +724,8 @@ export default function AdminAnalyticsByAccount() {
 								<div className="chart-container">
 									<ReactECharts 
 										option={getEChartsOption()} 
-										theme={currentTheme === 'dark' ? 'wonderland-dark' : 'wonderland-light'}
-										key={`account-chart-${selectedDataset}-${compareYears}-${showTrendLine}-${currentTheme}`}
+										theme={echartsThemeName}
+										key={`account-chart-${selectedDataset}-${compareYears}-${showTrendLine}-${echartsThemeName}`}
 										style={{ width: '100%', height: '400px' }}
 										opts={{ renderer: 'canvas' }}
 									/>
