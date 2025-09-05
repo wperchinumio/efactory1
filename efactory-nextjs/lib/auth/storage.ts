@@ -5,6 +5,7 @@ export interface AuthToken {
 	user_data?: Record<string, unknown> & {
 		roles?: string[];
 		warehouses?: Record<string, unknown>;
+		apps?: number[]; // User's app permissions - located in user_data like legacy
 	};
 }
 

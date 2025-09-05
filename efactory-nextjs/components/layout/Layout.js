@@ -3,8 +3,11 @@ import { useRouter } from 'next/router'
 import Header from '../partial/Header'
 import Sidebar from '../partial/Sidebar'
 import Footer from '../partial/Footer'
+import { NavigationProvider } from '../../src/contexts/NavigationContext'
+import SidebarMenu from '../../src/components/layout/SidebarMenu'
+import { getAuthToken } from '@/lib/auth/storage'
 
-export default function Layout({ children }) {
+export default function Layout({ children, userApps = [] }) {
   const router = useRouter();
   
   // Hide footer on login-user, online-customer, users, analytics, and license-summary pages
@@ -42,18 +45,67 @@ export default function Layout({ children }) {
   const [chat, setChat] = useState(false);
   const toggleChat = () => setChat(prev => !prev);
 
-  return (
-    <div className='admin-wrapper overflow-hidden'>
-      <div className='flex h-svh relative'>
-        <div className={`sidebar sm:w-[280px] sm:min-w-[280px] w-full px-2 py-4 overflow-y-scroll flex flex-col custom-scrollbar xl:static fixed xl:h-screen md:h-[calc(100vh-74px)] h-[calc(100vh-64px)] md:top-[74px] top-[64px] z-[3] bg-body-color xl:shadow-none transition-all duration-300 ${mobileNav ? 'shadow-shadow-lg left-0' : '-left-full'}`}>
-          <Sidebar setMobileNav={setMobileNav} note={note} toggleNote={toggleNote} chat={chat} toggleChat={toggleChat} />
-        </div>
-        <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
-          <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} containerToggle={containerToggle} container={container} />
-          {children}
-          {!hideFooter && <Footer />}
+  // Determine which navigation system to show - use state to avoid hydration mismatch
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  useEffect(() => {
+    // Only run on client side after hydration
+    setIsHydrated(true);
+    const auth = getAuthToken();
+    const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+    setIsAdmin(roles.includes('ADM'));
+  }, []);
+  
+  // Check if we're in a customer context (after selecting a customer or regular user login)
+  const isInCustomerPages = router.pathname.startsWith('/demo-navigation') || 
+                           router.pathname === '/' ||
+                           router.pathname.startsWith('/overview') ||
+                           router.pathname.startsWith('/orders') ||
+                           router.pathname.startsWith('/items');
+  
+  // Show new navigation ONLY if:
+  // 1. Not an admin user (regular customer login)
+  // 2. OR admin is in specific customer pages (after selecting a customer)
+  // 3. OR on demo page or root page (always show new navigation)
+  const isCustomerContext = (!isAdmin) || 
+                           (isAdmin && isInCustomerPages) || 
+                           router.pathname === '/demo-navigation' ||
+                           router.pathname === '/';
+  
+  // Don't render navigation until hydrated to avoid mismatch
+  if (!isHydrated) {
+    return (
+      <div className='admin-wrapper overflow-hidden'>
+        <div className='flex h-svh relative'>
+          <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
+            <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} containerToggle={containerToggle} container={container} userApps={[]} />
+            {children}
+            {!hideFooter && <Footer />}
+          </div>
         </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <NavigationProvider userApps={userApps}>
+      <div className='admin-wrapper overflow-hidden'>
+        <div className='flex h-svh relative'>
+          <div className={`sidebar sm:w-[280px] sm:min-w-[280px] w-full px-2 py-4 overflow-y-scroll flex flex-col custom-scrollbar xl:static fixed xl:h-screen md:h-[calc(100vh-74px)] h-[calc(100vh-64px)] md:top-[74px] top-[64px] z-[3] bg-body-color xl:shadow-none transition-all duration-300 ${mobileNav ? 'shadow-shadow-lg left-0' : '-left-full'}`}>
+            {isCustomerContext ? (
+              <SidebarMenu setMobileNav={setMobileNav} />
+            ) : (
+              <Sidebar setMobileNav={setMobileNav} note={note} toggleNote={toggleNote} chat={chat} toggleChat={toggleChat} />
+            )}
+          </div>
+          <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
+            <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} containerToggle={containerToggle} container={container} userApps={userApps} />
+            {children}
+            {!hideFooter && <Footer />}
+          </div>
+        </div>
+      </div>
+    </NavigationProvider>
   )
 }

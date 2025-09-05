@@ -50,7 +50,7 @@ export default function Signin() {
                 api_token: res.data.api_token,
                 available_accounts: res.data.available_accounts,
                 admin_roles: res.data.admin_roles,
-                user_data: res.data.user_data,
+                user_data: res.data.user_data, // Apps are already in user_data from API response
             });
             const isAdmin = Array.isArray(res.data.user_data?.roles) && res.data.user_data.roles.includes('ADM');
             if (isAdmin && Array.isArray(res.data.available_accounts) && res.data.available_accounts.length) {

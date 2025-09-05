@@ -58,8 +58,30 @@ import {
     applyThemePreferences, 
     initializeThemeFromStorage 
 } from '@/lib/themeStorage';
+import TopMenu from '../../src/components/layout/TopMenu';
 
-export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleChat, containerToggle, container }) {
+export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleChat, containerToggle, container, userApps = [] }) {
+    
+    // Determine if we should show the new navigation - use state to avoid hydration mismatch
+    const [showNewNavigation, setShowNewNavigation] = useState(false);
+    
+    useEffect(() => {
+        const auth = getAuthToken();
+        const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+        const hasAdminRole = roles.includes('ADM');
+        
+        // Check if we're on demo page or root page
+        const isOnDemoPage = typeof window !== 'undefined' && (window.location.pathname === '/demo-navigation' || window.location.pathname === '/');
+        
+        // Show new navigation ONLY if:
+        // 1. Not an admin user (regular customer login)
+        // 2. OR admin has selected a customer (userApps provided)
+        // 3. OR on demo page (always show for demo)
+        const shouldShow = (!hasAdminRole) || 
+                          (hasAdminRole && userApps.length > 0) ||
+                          isOnDemoPage;
+        setShowNewNavigation(shouldShow);
+    }, [userApps]);
 
     // mini sidebar
     const [miniSidebar, setMiniSidebar] = useState(false)
@@ -458,6 +480,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         <Link href="/">
                             <CompanyLogo />
                         </Link>
+                        
+                        {/* Top Navigation Menu - Only show for customer context */}
+                        {showNewNavigation && (
+                            <div className='hidden lg:flex items-center ml-6'>
+                                <TopMenu />
+                            </div>
+                        )}
                     </div>
 
                     <div className='flex items-center ms-auto'>

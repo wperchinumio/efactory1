@@ -2,12 +2,14 @@ import Head from 'next/head';
 import Layout from "@/components/layout/Layout";
 import AuthLayout from "@/components/layout/AuthLayout";
 import "../styles/globals.css";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import { getAuthToken } from '@/lib/auth/storage';
 
 export default function App({ Component, pageProps }) {
 
   const { isAuthRoute } = pageProps;
+  const [userApps, setUserApps] = useState([]);
 
   const router = useRouter();
   const pageUrl = router.pathname;
@@ -27,12 +29,35 @@ export default function App({ Component, pageProps }) {
         const hasToken = raw ? Boolean(JSON.parse(raw)?.api_token) : false;
         if (!hasToken) {
           router.replace('/auth/sign-in');
+        } else {
+          // Get user apps from auth token
+          const auth = getAuthToken();
+          const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+          const isAdmin = roles.includes('ADM');
+          
+          // Only set userApps for non-admin users (regular customers)
+          // Admin users get userApps only when they select a customer
+          if (!isAdmin) {
+            // Apps are in user_data like legacy system
+            const apps = auth?.user_data?.apps || [];
+            setUserApps(apps);
+          }
         }
       } catch {
         router.replace('/auth/sign-in');
       }
     }
   }, [isAuthRoute, router]);
+
+  // For demo page and root page, provide the real user apps from auth token
+  useEffect(() => {
+    if (!isAuthRoute && (router.pathname === '/demo-navigation' || router.pathname === '/')) {
+      const auth = getAuthToken();
+      if (auth && auth.user_data && auth.user_data.apps) {
+        setUserApps(auth.user_data.apps);
+      }
+    }
+  }, [isAuthRoute, router.pathname]);
 
   return (
     <>
@@ -46,7 +71,7 @@ export default function App({ Component, pageProps }) {
             <Component {...pageProps} />
           </AuthLayout>
         ) : (
-          <Layout>
+          <Layout userApps={userApps}>
             <Component {...pageProps} />
           </Layout>
         )
