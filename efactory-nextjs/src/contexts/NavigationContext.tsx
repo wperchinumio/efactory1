@@ -14,8 +14,6 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   children, 
   userApps 
 }) => {
-  console.log('🚀 NAVIGATION PROVIDER RENDERED!');
-  console.log('🔍 NAVIGATION PROVIDER - Received userApps:', userApps);
   const router = useRouter();
   const [activeTopMenu, setActiveTopMenu] = useState<string | null>(null);
 
@@ -32,22 +30,17 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
 
   // Update active top menu when route changes
   useEffect(() => {
-    console.log('🚀 NAVIGATION CONTEXT USEEFFECT TRIGGERED!');
     // Strip query strings for proper route matching
     const pathname = router.asPath.split('?')[0];
-    console.log('🔄 Navigation context - pathname changed:', pathname, 'userApps:', userApps);
     
     // Skip admin routes - they don't use dynamic navigation
     if (pathname.startsWith('/admin')) {
-      console.log('🔧 Admin route detected, skipping dynamic navigation');
       return;
     }
     
     const newActiveTopMenu = getActiveTopMenu(pathname, userApps);
-    console.log('🎯 New active top menu:', newActiveTopMenu);
     
     if (newActiveTopMenu && newActiveTopMenu !== activeTopMenu) {
-      console.log('🔄 Setting active top menu:', newActiveTopMenu);
       setActiveTopMenu(newActiveTopMenu);
     }
   }, [router.asPath, userApps]);
@@ -57,8 +50,6 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
     activeTopMenu,
     setActiveTopMenu
   };
-
-  console.log('🔍 NAVIGATION CONTEXT VALUE:', { activeTopMenu });
 
   return (
     <NavigationContext.Provider value={value}>

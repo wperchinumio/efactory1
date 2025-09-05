@@ -63,12 +63,6 @@ export default function Layout({ children, userApps = [] }) {
   const isAdminRoute = router.pathname.startsWith('/admin');
   const isCustomerContext = !isAdminRoute; // Everything except /admin routes
 
-  console.log('🔍 LAYOUT DEBUG:');
-  console.log('  router.pathname:', router.pathname);
-  console.log('  isAdminRoute:', isAdminRoute);
-  console.log('  isCustomerContext:', isCustomerContext);
-  console.log('  userApps:', userApps);
-  console.log('  WILL RENDER SIDEBAR:', isCustomerContext ? 'SidebarMenu (DYNAMIC)' : 'Sidebar (ADMIN)');
   
   // Don't render navigation until hydrated to avoid mismatch
   if (!isHydrated) {
@@ -85,8 +79,6 @@ export default function Layout({ children, userApps = [] }) {
     );
   }
 
-  console.log('🚀 LAYOUT RENDERED!');
-  console.log('🔍 LAYOUT - Providing userApps to NavigationProvider:', userApps);
   
   return (
     <NavigationProvider userApps={userApps}>

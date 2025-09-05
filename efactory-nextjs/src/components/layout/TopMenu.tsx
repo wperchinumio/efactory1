@@ -90,7 +90,6 @@ const TopMenu: React.FC = () => {
   }, []);
 
   const handleMenuClick = (menuKeyword: string) => {
-    console.log('🚀 TOP MENU CLICKED:', menuKeyword);
     setActiveTopMenu(menuKeyword);
     setShowOverflowMenu(false);
     
@@ -110,19 +109,8 @@ const TopMenu: React.FC = () => {
       }
       
       if (firstSubRoute) {
-        console.log('🚀 Navigating to first sub-route:', firstSubRoute);
-        console.log('🚀 Current URL before navigation:', router.asPath);
-        
-        router.push(firstSubRoute).then(() => {
-          console.log('✅ Navigation completed to:', firstSubRoute);
-        }).catch((error) => {
-          console.error('❌ Navigation failed:', error);
-        });
-      } else {
-        console.error('❌ No sub-routes found for top menu:', menuKeyword);
+        router.push(firstSubRoute);
       }
-    } else {
-      console.error('❌ No sidebar config found for top menu:', menuKeyword);
     }
   };
 
@@ -140,10 +128,7 @@ const TopMenu: React.FC = () => {
       {visibleMenus.map((menu) => (
         <button
           key={menu.keyword}
-          onClick={() => {
-            console.log('🖱️ TOP MENU BUTTON CLICKED:', menu.keyword);
-            handleMenuClick(menu.keyword);
-          }}
+          onClick={() => handleMenuClick(menu.keyword)}
           className={`
             flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
             ${activeTopMenu === menu.keyword

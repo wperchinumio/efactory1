@@ -43,11 +43,6 @@ import {
     flag_de,
     flag_in,
     flag_sa,
-    sidebarImg1,
-    sidebarImg5,
-    sidebarImg4,
-    sidebarImg3,
-    sidebarImg2,
 } from '/public/images';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -123,9 +118,25 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         // Save to localStorage
         saveThemePreferences({ lunoTheme: name });
     };
+
+    // sidebar auto-collapse setting
+    const [sidebarAutoCollapse, setSidebarAutoCollapse] = useState(true);
+    const handleSidebarToggle = (checked) => {
+        setSidebarAutoCollapse(checked);
+        // Save immediately to localStorage (like color settings)
+        saveThemePreferences({ sidebarAutoCollapse: checked });
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('themePreferencesChanged'));
+    };
     useEffect(() => {
         document.body.setAttribute("data-luno-theme", selectedTheme);
     }, [selectedTheme]);
+
+    // Load sidebar setting from localStorage
+    useEffect(() => {
+        const themePrefs = getThemePreferences();
+        setSidebarAutoCollapse(themePrefs.sidebarAutoCollapse);
+    }, []);
 
     // dynamic color setting
     const handleChangeDynamicColor = (newColor, index) => {
@@ -210,55 +221,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         setFontUrl('');
     };
 
-    // page header setting
-    const [headerFix, setHeaderFix] = useState(true);
-    const headerFixToggle = () => {
-        setHeaderFix(!headerFix);
-    }
 
-    // border radius setting
-    const [showRadius, setShowRadius] = useState(true);
-    const radiusToggle = () => {
-        setShowRadius(!showRadius);
-        document.body.classList.toggle("radius-0")
-    }
-
-    // sidebar background image setting
-    const [sidebarBg, setSidebarBg] = useState(false);
-    const [activeBgImage, setActiveBgImage] = useState(sidebarImg1);
-    const sidebarBgItem = [
-        {
-            image: sidebarImg1,
-        },
-        {
-            image: sidebarImg2,
-        },
-        {
-            image: sidebarImg3,
-        },
-        {
-            image: sidebarImg4,
-        },
-        {
-            image: sidebarImg5,
-        },
-    ]
-    const sidebarBgToggle = () => {
-        setSidebarBg(!sidebarBg);
-        const sidebar = document.getElementsByClassName('sidebar')[0];
-        if (sidebar) {
-            sidebar.classList.toggle('sidebar-image');
-            // Set the CSS variable for the sidebar background
-            document.documentElement.style.setProperty('--sidebar-bg-image', `url('${activeBgImage.src}')`);
-        }
-    };
-    const handleImageClick = (image) => {
-        setActiveBgImage(image); // Set the clicked image as the active one
-        const sidebar = document.getElementsByClassName('sidebar')[0];
-        if (sidebar) {
-            document.documentElement.style.setProperty('--sidebar-bg-image', `url('${image.src}')`);
-        }
-    };
 
     // box shadow setting
     const [showShadow, setShowShadow] = useState(false);
@@ -471,7 +434,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
 
     return (
         <>
-            <div className={`md:py-4 md:px-6 sm:p-3 py-3 border-b-4 border-card-color bg-body-color ${headerFix ? 'sticky top-0 z-[2] xl:shadow-none shadow-lg' : ''}`}>
+            <div className="md:py-4 md:px-6 sm:p-3 py-3 border-b-4 border-card-color bg-body-color sticky top-0 z-[2] xl:shadow-none shadow-lg">
                 <div className='container-fluid flex items-center'>
                 <div className='flex items-center gap-3 sm:pe-4 pe-2'>
                         <button onClick={toggleMiniSidebar} className='xl:flex hidden items-center justify-center w-[36px] h-[36px] min-w-[36px] text-primary bg-primary-10 rounded-full'>
@@ -712,49 +675,6 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                 <div className="form-check form-switch">
                                     <input
                                         type="checkbox"
-                                        id="header_fix"
-                                        onChange={headerFixToggle}
-                                        checked={headerFix}
-                                        className="form-check-input"
-                                    />
-                                    <label className="form-check-label" htmlFor="header_fix">Page Header Fix</label>
-                                </div>
-                            </li>
-                            <li className='py-3 px-4 border-b border-dashed border-border-color hover:bg-primary-10'>
-                                <div className="form-check form-switch">
-                                    <input
-                                        type="checkbox"
-                                        id="radius_checkbox"
-                                        onChange={radiusToggle}
-                                        checked={showRadius}
-                                        className="form-check-input"
-                                    />
-                                    <label className="form-check-label" htmlFor="radius_checkbox">Border Radius</label>
-                                </div>
-                            </li>
-                            <li className='py-3 px-4 border-b border-dashed border-border-color hover:bg-primary-10'>
-                                <div className="form-check form-switch">
-                                    <input
-                                        type="checkbox"
-                                        id="sidebar_background"
-                                        onChange={sidebarBgToggle}
-                                        checked={sidebarBg}
-                                        className="form-check-input"
-                                    />
-                                    <label className="form-check-label" htmlFor="sidebar_background">Background Image {'(Sidebar)'}</label>
-                                </div>
-                                {sidebarBg && <div className='flex flex-wrap gap-1 mt-2'>
-                                    {sidebarBgItem.map((item, key) => (
-                                        <button key={key} onClick={() => handleImageClick(item.image)}>
-                                            <Image src={item.image} width="40" height="100" alt="Sidebar BG" className={`w-50 h-100 rounded-md object-cover border-2 ${activeBgImage === item.image ? 'grayscale-0 border-primary' : 'grayscale border-transparent'}`} />
-                                        </button>
-                                    ))}
-                                </div>}
-                            </li>
-                            <li className='py-3 px-4 border-b border-dashed border-border-color hover:bg-primary-10'>
-                                <div className="form-check form-switch">
-                                    <input
-                                        type="checkbox"
                                         id="container_checkbox"
                                         onChange={containerToggle}
                                         checked={container}
@@ -775,13 +695,22 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                     <label className="form-check-label" htmlFor="shadow_checkbox">Card Box-Shadow</label>
                                 </div>
                             </li>
+                            <li className='py-3 px-4 hover:bg-primary-10'>
+                                <div className="form-check form-switch">
+                                    <input
+                                        type="checkbox"
+                                        id="sidebar_auto_collapse_checkbox"
+                                        onChange={(e) => handleSidebarToggle(e.target.checked)}
+                                        checked={sidebarAutoCollapse}
+                                        className="form-check-input"
+                                    />
+                                    <label className="form-check-label" htmlFor="sidebar_auto_collapse_checkbox">Auto-collapse sidebar menus</label>
+                                </div>
+                            </li>
                         </ul>
                     </div>
                 </div>
                 <div className='md:px-6 px-4 md:py-4 py-3 flex items-center gap-10 border-t border-border-color'>
-                    <button className='btn btn-primary w-full'>
-                        Save Changes
-                    </button>
                     <button className='btn btn-white !border-border-color w-full' onClick={toggleThemeSetting}>
                         Close
                     </button>

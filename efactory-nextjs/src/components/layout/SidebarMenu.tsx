@@ -5,6 +5,7 @@ import { useNavigation } from '../../contexts/NavigationContext';
 import { getVisibleSidebarMenus, sidebarConfigs } from '../../config/navigation';
 import { MenuItem, DropdownMenuItem } from '../../types/api/auth';
 import { getAuthToken } from '../../../lib/auth/storage';
+import { getThemePreferences } from '../../../lib/themeStorage';
 import {
   IconChevronRight,
   IconChevronsDown,
@@ -98,25 +99,21 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   // Calculate active sidebar menu directly from URL - much simpler and more reliable
   const getActiveSidebarMenu = () => {
     const pathSegments = pageUrl.split('/').filter(Boolean);
-    console.log('🔍 CALCULATING SIDEBAR MENU - pathSegments:', pathSegments, 'pageUrl:', pageUrl);
     
     if (pathSegments.length === 1) {
       // Only /[topmenu] - return first available sidebar menu
       const visibleMenus = getVisibleSidebarMenus(activeTopMenu, userApps);
       if (visibleMenus.length > 0) {
         const firstMenu = visibleMenus[0].keyword;
-        console.log('🔧 Auto-selecting first sidebar menu:', firstMenu);
         return firstMenu;
       }
     } else if (pathSegments.length >= 2) {
       // Find the sidebar menu that contains the current route
       const visibleMenus = getVisibleSidebarMenus(activeTopMenu, userApps);
-      console.log('🔍 Searching for route in visible menus:', visibleMenus.map(m => ({ keyword: m.keyword, title: m.title })));
       
       for (const menu of visibleMenus) {
         // Check if this menu has the current route
         if (menu.route === pageUrl) {
-          console.log('🔧 Found direct route match:', menu.keyword);
           return menu.keyword;
         }
         
@@ -124,13 +121,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         if (menu.dropdownMenus) {
           const matchingDropdown = menu.dropdownMenus.find(dropdown => dropdown.route === pageUrl);
           if (matchingDropdown) {
-            console.log('🔧 Found dropdown route match:', menu.keyword, 'for route:', pageUrl);
             return menu.keyword;
           }
         }
       }
       
-      console.log('⚠️ No sidebar menu found for route:', pageUrl, 'falling back to first menu');
       return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
     }
     
@@ -138,7 +133,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   };
   
   const calculatedActiveSidebarMenu = getActiveSidebarMenu();
-  console.log('✅ Final active sidebar menu calculated:', calculatedActiveSidebarMenu);
 
   // Helper function to check if a parent menu should be highlighted
   // Only highlight if one of its children is actually selected
@@ -174,10 +168,42 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const menuRef = useRef<HTMLUListElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [menuActive, setMenuActive] = useState<number | null>(null);
+  const [activeMenus, setActiveMenus] = useState<Set<number>>(new Set());
+  const [sidebarAutoCollapse, setSidebarAutoCollapse] = useState(true);
 
   const toggleAdminMenu = () => {
     setAdminMenu(!adminMenu);
   };
+
+  // Load theme preferences on component mount and listen for changes
+  useEffect(() => {
+    const themePrefs = getThemePreferences();
+    setSidebarAutoCollapse(themePrefs.sidebarAutoCollapse);
+
+    // Listen for theme changes (when user toggles setting in Theme Setting modal)
+    const handleStorageChange = (e) => {
+      if (e.key === 'efactory-theme-preferences') {
+        const newThemePrefs = getThemePreferences();
+        setSidebarAutoCollapse(newThemePrefs.sidebarAutoCollapse);
+      }
+    };
+
+    // Listen for both storage events (cross-tab) and custom events (same-tab)
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event for same-tab changes (when Theme Setting modal saves)
+    const handleThemeChange = () => {
+      const newThemePrefs = getThemePreferences();
+      setSidebarAutoCollapse(newThemePrefs.sidebarAutoCollapse);
+    };
+    
+    window.addEventListener('themePreferencesChanged', handleThemeChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('themePreferencesChanged', handleThemeChange);
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -197,10 +223,21 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   }, [menuRef]);
 
   const menuToggle = (key: number) => {
-    console.log('🖱️ MENU TOGGLE CLICKED:', key, 'current menuActive:', menuActive);
-    const newMenuActive = menuActive === key ? null : key;
-    console.log('🔄 Setting menuActive to:', newMenuActive);
-    setMenuActive(newMenuActive);
+    if (sidebarAutoCollapse) {
+      // Auto-collapse mode: only one menu can be open at a time
+      setMenuActive(menuActive === key ? null : key);
+    } else {
+      // Multi-expand mode: multiple menus can be open simultaneously
+      setActiveMenus(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(key)) {
+          newSet.delete(key);
+        } else {
+          newSet.add(key);
+        }
+        return newSet;
+      });
+    }
   };
 
   // If no userApps yet, try to get them from auth token directly
@@ -218,20 +255,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   
   // Special case: if we're on overview page and no visible menus, show overview menu anyway
   if (pageUrl === '/overview' && visibleMenus.length === 0) {
-    console.log('🔧 OVERVIEW FALLBACK: Showing overview menu for /overview page');
     visibleMenus = getVisibleSidebarMenus('overview', effectiveUserApps);
   }
-  console.log('🔍 SIDEBAR DEBUG:');
-  console.log('  USER APPS (from props):', userApps);
-  console.log('  EFFECTIVE USER APPS:', effectiveUserApps);
-  console.log('  ACTIVE TOP MENU:', activeTopMenu);
-  console.log('  CALCULATED ACTIVE SIDEBAR MENU:', calculatedActiveSidebarMenu);
-  console.log('  VISIBLE MENUS:', visibleMenus.map(m => ({ keyword: m.keyword, title: m.title })));
-  console.log('  PAGE URL:', pageUrl);
-  console.log('  SHOULD SHOW DYNAMIC MENU:', !!(activeTopMenu && visibleMenus.length > 0));
-  console.log('  CONDITION CHECK: !activeTopMenu =', !activeTopMenu, 'visibleMenus.length === 0 =', visibleMenus.length === 0);
-  console.log('  WILL HIGHLIGHT OVERVIEW:', calculatedActiveSidebarMenu === 'overview');
-  console.log('  WILL HIGHLIGHT NOTES:', calculatedActiveSidebarMenu === 'notes');
 
   // Show loading if still no userApps and no activeTopMenu, but only for a short time
   if (effectiveUserApps.length === 0 && !activeTopMenu && pageUrl !== '/overview') {
@@ -254,23 +279,58 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   }
 
 
-  // Auto-expand menus that contain the current route - only on initial load
+  // Initialize active menus based on current route - only run when route or mode changes
+  const prevPageUrl = useRef(pageUrl);
+  const prevSidebarAutoCollapse = useRef(sidebarAutoCollapse);
+  
   useEffect(() => {
-    // Only auto-expand if no menu is currently active (initial load)
-    if (menuActive === null) {
-      visibleMenus.forEach((item, index) => {
-        if (item.dropdownMenus) {
-          item.dropdownMenus.forEach((child) => {
-            if (child.route === pageUrl) {
-              setMenuActive(index);
+    const routeChanged = prevPageUrl.current !== pageUrl;
+    const modeChanged = prevSidebarAutoCollapse.current !== sidebarAutoCollapse;
+    
+    if (routeChanged || modeChanged) {
+      if (sidebarAutoCollapse) {
+        // Auto-collapse mode: find first matching menu
+        let foundIndex = null;
+        for (let i = 0; i < visibleMenus.length; i++) {
+          const item = visibleMenus[i];
+          if (item.dropdownMenus) {
+            for (const child of item.dropdownMenus) {
+              if (child.route === pageUrl) {
+                foundIndex = i;
+                break;
+              }
             }
-          });
-        } else if (item.route === pageUrl) {
-          setMenuActive(index);
+          } else if (item.route === pageUrl) {
+            foundIndex = i;
+            break;
+          }
+          if (foundIndex !== null) break;
         }
-      });
+        setMenuActive(foundIndex);
+      } else {
+        // Multi-expand mode: find all matching menus
+        const newActiveMenus = new Set<number>();
+        for (let i = 0; i < visibleMenus.length; i++) {
+          const item = visibleMenus[i];
+          if (item.dropdownMenus) {
+            for (const child of item.dropdownMenus) {
+              if (child.route === pageUrl) {
+                newActiveMenus.add(i);
+                break;
+              }
+            }
+          } else if (item.route === pageUrl) {
+            newActiveMenus.add(i);
+          }
+        }
+        setActiveMenus(newActiveMenus);
+      }
+      
+      // Update refs
+      prevPageUrl.current = pageUrl;
+      prevSidebarAutoCollapse.current = sidebarAutoCollapse;
     }
-  }, [pageUrl, visibleMenus, menuActive]);
+  }, [pageUrl, sidebarAutoCollapse, visibleMenus]);
 
   return (
     <>
@@ -359,7 +419,6 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         ) : (
           // Dynamic menu items - exact Luno pattern
           visibleMenus.map((item, key) => {
-            console.log('RENDERING MENU ITEM:', key, item.title, 'hasDropdown:', !!(item.dropdownMenus && item.dropdownMenus.length > 0));
             // Handle section dividers first
             if (item.sectionTitleBefore) {
               const menuItems = [];
@@ -377,17 +436,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   <li key={key} className='sidebar-listitem'>
                     <button
                       onClick={() => menuToggle(key)}
-                      className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || shouldHighlightParent(item)) ? 'text-secondary' : ''}`}
+                      className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
                       <span className='link'>{item.title}</span>
-                      {menuActive === key ? 
+                      {(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 
                         <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : 
                         <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />
                       }
                     </button>
-                    <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${menuActive === key ? 'block' : 'hidden'}`}>
-                      {console.log('🔍 DROPDOWN RENDER - key:', key, 'menuActive:', menuActive, 'should show:', menuActive === key)}
+                    <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
                       {item.dropdownMenus.map((sub, subKey) => (
                         <li key={subKey}>
                           <Link 
@@ -425,16 +483,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               <li key={key} className='sidebar-listitem'>
                 <button
                   onClick={() => menuToggle(key)}
-                  className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || shouldHighlightParent(item)) ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>
-                  {menuActive === key ? 
+                  {(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 
                     <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : 
                     <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />
                   }
                 </button>
-                <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${menuActive === key ? 'block' : 'hidden'}`}>
+                <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
                   {item.dropdownMenus.map((sub, subKey) => (
                     <li key={subKey}>
                       <Link 

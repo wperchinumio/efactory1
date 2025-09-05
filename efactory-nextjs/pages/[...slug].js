@@ -15,49 +15,37 @@ const DynamicRoutePage = () => {
 
     // Reconstruct the pathname from slug array
     const pathname = '/' + slug.join('/');
-    console.log('🔍 Dynamic route accessed:', pathname);
 
     // Get user apps from auth token
     const auth = getAuthToken();
     const userApps = auth?.user_data?.apps || [];
 
     if (userApps.length === 0) {
-      console.log('❌ No user apps, redirecting to no-apps');
       router.replace('/no-apps');
       return;
     }
 
     // Check if user has access to this pathname
-    console.log('🔍 Checking access for pathname:', pathname, 'user apps:', userApps);
     const hasAccess = hasAccessToPathname(pathname, userApps);
-    console.log('🔍 Has access result:', hasAccess);
     
     if (!hasAccess) {
-      console.log('❌ No access to pathname:', pathname, 'user apps:', userApps);
       // Redirect to first available route
       const { getDefaultRoute } = require('../src/utils/navigation');
       const defaultRoute = getDefaultRoute(userApps);
-      console.log('🔄 Redirecting to default route:', defaultRoute);
       router.replace(defaultRoute);
       return;
     }
 
     // Check if this is a valid route that should show a page
-    console.log('🔍 Getting app ID for pathname:', pathname);
     const appId = getAppIdForPathname(pathname);
-    console.log('🔍 App ID result:', appId);
     
     if (!appId) {
-      console.log('❌ No app ID found for pathname:', pathname);
       // Redirect to first available route
       const { getDefaultRoute } = require('../src/utils/navigation');
       const defaultRoute = getDefaultRoute(userApps);
-      console.log('🔄 Redirecting to default route:', defaultRoute);
       router.replace(defaultRoute);
       return;
     }
-
-    console.log('✅ Valid route, showing page for:', pathname, 'app ID:', appId);
     setIsValid(true);
     setIsLoading(false);
 

@@ -11,6 +11,7 @@ export interface ThemePreferences {
   lunoTheme: LunoTheme;
   rtlMode: boolean;
   fontFamily: string;
+  sidebarAutoCollapse: boolean;
   dynamicColors?: Array<{
     variable: string;
     colorValue: { r: number; g: number; b: number; a: number };
@@ -41,6 +42,7 @@ export function getThemePreferences(): ThemePreferences {
         lunoTheme: parsed.lunoTheme || 'indigo',
         rtlMode: parsed.rtlMode || false,
         fontFamily: parsed.fontFamily || 'Mulish, sans-serif',
+        sidebarAutoCollapse: parsed.sidebarAutoCollapse !== undefined ? parsed.sidebarAutoCollapse : true,
         dynamicColors: parsed.dynamicColors || []
       };
     }
@@ -53,7 +55,8 @@ export function getThemePreferences(): ThemePreferences {
     mode: 'light',
     lunoTheme: 'indigo',
     rtlMode: false,
-    fontFamily: 'Mulish, sans-serif'
+    fontFamily: 'Mulish, sans-serif',
+    sidebarAutoCollapse: true
   };
 }
 

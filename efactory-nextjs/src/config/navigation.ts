@@ -1290,27 +1290,19 @@ export const getVisibleTopMenus = (userApps: number[]): TopMenuConfig[] => {
 export const getVisibleSidebarMenus = (sidebarKey: string, userApps: number[]): MenuItem[] => {
   const config = sidebarConfigs[sidebarKey];
   if (!config) {
-    console.log('❌ No sidebar config found for key:', sidebarKey);
     return [];
   }
-
-  console.log('🔍 Getting visible sidebar menus for:', sidebarKey, 'userApps:', userApps);
-  console.log('📋 Available menus:', config.menus.map(m => ({ title: m.title, appIds: m.appIds })));
 
   const filteredMenus = config.menus.filter(menu => {
     // If no appIds, always show (like legacy system)
     if (!menu.appIds || menu.appIds.length === 0) {
-      console.log(`🔍 Menu "${menu.title}" - no appIds, always visible`);
       return true;
     }
     
     // Check if menu has direct app IDs
     const hasAccess = menu.appIds.some(appId => userApps.includes(appId));
-    console.log(`🔍 Menu "${menu.title}" (appIds: ${menu.appIds}) - hasAccess: ${hasAccess}`);
     return hasAccess;
   });
-
-  console.log('✅ Filtered menus:', filteredMenus.map(m => m.title));
 
   return filteredMenus.map(menu => ({
     ...menu,

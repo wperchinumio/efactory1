@@ -2,6 +2,7 @@ import { IconDots } from '@tabler/icons-react'
 import React from 'react'
 
 export default function Settings() {
+
     return (
         <>
             <div className='text-[24px]/[30px] font-medium my-2'>
