@@ -1,0 +1,56 @@
+﻿---
+description: Legacy eFactory source is reference-only; generate types, map pages, and proxy API
+globs:
+  - "efactory-client-main/**/*"
+alwaysApply: true
+---
+
+# Purpose
+- This is the **canonical reference** for rebuilding the new app.
+- **Do not modify** files here. Use only to analyze endpoints, data shapes, and page flows.
+
+# Required Actions (for work done in `efactory-nextjs/**`)
+1) **TypeScript interfaces for every API call**
+   - Inventory all API calls visible in `efactory-client-main` (services, utils, fetch/axios, sagas, thunks, etc.).
+   - For each call, define **request/response interfaces** (and enums) in `efactory-nextjs/src/types/api/**.ts`.
+   - Prefer strong names: `GetOrdersRequest`, `GetOrdersResponse`, `OrderDto`, etc.
+   - If a shape varies by query flags, model as discriminated unions.
+
+2) **API client (no mocks)**
+   - Base URL: `https://efactory.dclcorp.com`.
+   - Create a typed client in `efactory-nextjs/src/services/api.ts` using the interfaces above.
+   - Handle auth (tokens/cookies) consistently; centralize interceptors/retry.
+
+3) **Dev proxy (if CORS/cookies require it)**
+   - Configure a Next.js rewrite-based proxy so local calls route to the legacy host.
+   - Example `efactory-nextjs/next.config.mjs`:
+     ```js
+     /** @type {import('next').NextConfig} */
+     const nextConfig = {
+       async rewrites() {
+         return [
+           { source: "/api/:path*", destination: "https://efactory.dclcorp.com/:path*" }
+         ];
+       }
+     };
+     export default nextConfig;
+     ```
+   - Ensure cookies/headers are forwarded as needed; set `NEXT_PUBLIC_API_BASE=/api` in `.env.local`.
+
+4) **Pages & route map**
+   - Treat `efactory-client-main` as the **complete list of pages/features** to rebuild (with improved UI/UX).
+   - Produce a **route map** (legacy route → new route) and implement each page in `efactory-nextjs` using **Luno components**.
+   - Tables:
+     - **Complex** (two-call pattern: columns + data) → **AG Grid** with **API-driven column defs**.
+     - **Simple** → **Luno table**.
+
+5) **Parity-first**
+   - Recreate functionality and flows before cleanup/refactors.
+   - After parity, remove unused theme pieces and dead code.
+
+# Deliverables (produced in `efactory-nextjs/**`)
+- `src/types/api/**.ts` with interfaces for **every** endpoint used by legacy.
+- `src/services/api.ts` (typed client) using `NEXT_PUBLIC_API_BASE`.
+- Working proxy (when required) via `next.config.mjs` rewrites.
+- Route map doc and implemented pages with **Luno-only controls**.
+- Complex grids on **AG Grid**; simple grids on **Luno**.

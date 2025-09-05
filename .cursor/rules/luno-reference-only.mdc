@@ -1,0 +1,10 @@
+---
+description: Luno theme is a vendor reference; do not edit in-place
+globs:
+  - "luno-nextjs-tailwind-admin/**/*"
+alwaysApply: true
+---
+
+- Do not modify this folder.
+- Copy needed components/layouts/patterns into `efactory-nextjs/*` and use them there.
+- Maintain Luno styling and behavior exactly; no re-skinning.

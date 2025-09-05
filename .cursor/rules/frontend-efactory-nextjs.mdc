@@ -1,0 +1,30 @@
+---
+description: Enforce Luno UI + AG Grid for the NEW app
+globs:
+  - "efactory-nextjs/app/**/*"
+  - "efactory-nextjs/src/**/*"
+  - "efactory-nextjs/components/**/*"
+  - "efactory-nextjs/**/**.ts"
+  - "efactory-nextjs/**/**.tsx"
+alwaysApply: true
+---
+
+# Theme & Controls (MANDATORY)
+- Use **Luno Next.js Tailwind Admin** components for ALL UI controls: inputs, selects, radios, checkboxes, buttons, tabs, dialogs, toasts, pagination, date/time pickers, etc.
+- Use Luno layout, sidebar, top menu, and light/dark mode as-is.
+- Do NOT introduce other UI kits or custom-styled controls.
+
+# Tables
+- **Complex tables → AG Grid**.
+- **Simple tables → Luno table**.
+- Complex grid heuristic (legacy): two API calls — (1) column structure (title/type/position), (2) data.
+  - In AG Grid, fetch column defs and data separately and apply server-provided layout dynamically.
+
+# Architecture & Tooling
+- Next.js + TypeScript + TailwindCSS. Strict TS, ESLint + Prettier.
+- Base API URL: `https://efactory.dclcorp.com`.
+- Infer request/response shapes from the legacy code and create **TypeScript interfaces**.
+- Implement **real authentication**; protect routes; no mock data.
+- Recreate all legacy pages/workflows with live APIs.
+
+- Give priority to create reusable components so when we fix/update a component the whole site will benefit.
