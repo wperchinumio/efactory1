@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconMapPin } from '@tabler/icons-react';
+import { IconMapPin, IconX } from '@tabler/icons-react';
 import Combobox from '@/components/ui/Combobox';
 import { useGlobalFilterData } from '@/hooks/useGlobalFilterData';
 
@@ -30,17 +30,29 @@ const StateFilterCombobox = ({
 			<label className={`block text-[12px] font-semibold mb-1 ${hasActiveSelection ? 'text-red-500' : 'text-font-color-100'}`}>
 				STATE
 			</label>
-			<Combobox
-				value={value}
-				onValueChange={onValueChange}
-				options={stateOptions}
-				placeholder={countryValue ? "Select state..." : "Select country first"}
-				searchPlaceholder="Search states..."
-				icon={IconMapPin}
-				disabled={isDisabled}
-				emptyMessage="No states found."
-				showSearch={countryValue ? true : false}
-			/>
+			<div className="relative">
+				<Combobox
+					value={value}
+					onValueChange={onValueChange}
+					options={stateOptions}
+					placeholder={countryValue ? "Select state..." : "Select country first"}
+					searchPlaceholder="Search states..."
+					icon={IconMapPin}
+					disabled={isDisabled}
+					emptyMessage="No states found."
+					showSearch={countryValue ? true : false}
+				/>
+				{hasActiveSelection && (
+					<button
+						type="button"
+						onClick={() => onValueChange('')}
+						className="absolute right-8 top-1/2 -translate-y-1/2 p-1 hover:bg-border-color rounded transition-colors duration-200 z-10"
+						title="Clear state"
+					>
+						<IconX className="w-3 h-3 text-font-color-100" />
+					</button>
+				)}
+			</div>
 		</div>
 	);
 };

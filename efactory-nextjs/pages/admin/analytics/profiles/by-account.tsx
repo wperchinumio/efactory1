@@ -756,7 +756,13 @@ export default function AdminAnalyticsByAccount() {
 				{/* Country */}
 				<CountryFilterCombobox
 					value={filters.country}
-					onValueChange={(value) => updateFilter('country', value)}
+					onValueChange={(value) => {
+						updateFilter('country', value);
+						// Clear state when country is cleared or changed
+						if (!value || value !== filters.country) {
+							updateFilter('state', '');
+						}
+					}}
 					className='flex-shrink-0 w-48'
 				/>
 
