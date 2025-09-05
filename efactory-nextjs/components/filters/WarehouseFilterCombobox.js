@@ -12,7 +12,7 @@ const WarehouseFilterCombobox = ({
 	const globalData = useGlobalFilterData();
 	
 	// Get warehouse options from global data using the getFilterOptions function
-	const warehouseOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.warehouseOptions || [];
+	const warehouseOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.getWarehouseOptions?.() || [];
 	
 	
 	const hasActiveSelection = Array.isArray(value) && value.length > 0;

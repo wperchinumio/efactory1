@@ -12,7 +12,7 @@ const CountryFilterCombobox = ({
 	const globalData = useGlobalFilterData();
 	
 	// Get country options from global data using the getFilterOptions function
-	const countryOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.countryOptions || [];
+	const countryOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.getCountryOptions?.() || [];
 	
 	const hasActiveSelection = value && value !== '';
 

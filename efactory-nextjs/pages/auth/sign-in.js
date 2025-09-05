@@ -60,7 +60,7 @@ export default function Signin() {
                 } catch (error) {
                     console.error('❌ Failed to load admin global API data:', error);
                 }
-                router.replace('/select-customer');
+                router.replace('/admin/login-user');
             } else {
                 router.replace('/');
             }
@@ -84,60 +84,88 @@ export default function Signin() {
                     </span>
                 ) : null}
             </div>
-            <form onSubmit={handleSubmit}>
-                <div className='form-control mb-15'>
-                    <label htmlFor='email' className='form-label'>
-                        Email
-                    </label>
-                    <input value={email} onChange={(e)=>setEmail(e.target.value)} type='text' id='email' placeholder='username' className='form-input' />
-                </div>
-                <div className='form-control mb-15'>
-                    <label htmlFor='password' className='form-label'>
-                        Password
-                    </label>
-                    <div className='relative'>
-                        <input
-                            value={password}
-                            onChange={(e)=>setPassword(e.target.value)}
-                            type={showPassword ? 'text' : 'password'}
-                            id='password'
-                            placeholder='Enter the password'
-                            className='form-input !pr-12'
+            <form onSubmit={handleSubmit} className={`relative ${submitting ? 'pointer-events-none' : ''}`}>
+                <div className={`transition-opacity duration-300 ${submitting ? 'opacity-50' : 'opacity-100'}`}>
+                    <div className='form-control mb-15'>
+                        <label htmlFor='email' className='form-label'>
+                            Username
+                        </label>
+                        <input 
+                            value={email} 
+                            onChange={(e)=>setEmail(e.target.value)} 
+                            type='text' 
+                            id='email' 
+                            placeholder='username' 
+                            className='form-input'
+                            disabled={submitting}
                         />
-                        <button type="button" onClick={togglePasswordVisibility} className='absolute top-[50%] translate-y-[-50%] right-3 text-font-color-100'>
-                            {showPassword ? <IconEyeOff /> : <IconEye />}
-                        </button>
                     </div>
+                    <div className='form-control mb-15'>
+                        <label htmlFor='password' className='form-label'>
+                            Password
+                        </label>
+                        <div className='relative'>
+                            <input
+                                value={password}
+                                onChange={(e)=>setPassword(e.target.value)}
+                                type={showPassword ? 'text' : 'password'}
+                                id='password'
+                                placeholder='Enter the password'
+                                className='form-input !pr-12'
+                                disabled={submitting}
+                            />
+                            <button 
+                                type="button" 
+                                onClick={togglePasswordVisibility} 
+                                className='absolute top-[50%] translate-y-[-50%] right-3 text-font-color-100 disabled:opacity-50'
+                                disabled={submitting}
+                            >
+                                {showPassword ? <IconEyeOff /> : <IconEye />}
+                            </button>
+                        </div>
+                    </div>
+                    <div className='flex flex-wrap items-center justify-between gap-10 sm:mb-30 mb-6'>
+                        <div className="form-check">
+                            <input
+                                type="checkbox"
+                                id="remember"
+                                checked={remember}
+                                onChange={(e)=>setRemember(e.target.checked)}
+                                className="form-check-input"
+                                disabled={submitting}
+                            />
+                            <label className="form-check-label" htmlFor="remember">Remember me</label>
+                        </div>
+                        <div className="form-check">
+                            <input
+                                type="checkbox"
+                                id="dcl_user"
+                                checked={dclUser}
+                                onChange={(e)=>setDclUser(e.target.checked)}
+                                className="form-check-input"
+                                disabled={submitting}
+                            />
+                            <label className="form-check-label" htmlFor="dcl_user">DCL User</label>
+                        </div>
+                        <Link 
+                            href="/auth/forgot-password" 
+                            className={`text-primary sm:text-[16px]/[24px] text-[14px]/[20px] transition-opacity ${submitting ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                            Forgot Password?
+                        </Link>
+                    </div>
+                    {error ? <div className='text-danger mb-4'>{error}</div> : null}
+                    <button 
+                        disabled={submitting} 
+                        type='submit' 
+                        className='btn btn-secondary large w-full uppercase disabled:opacity-75 transition-all duration-200 flex items-center justify-center gap-2'
+                    >
+                        {submitting && (
+                            <div className="w-4 h-4 border-2 border-white/30 rounded-full animate-spin border-t-white"></div>
+                        )}
+                        {submitting ? 'Authenticating...' : 'Sign In'}
+                    </button>
                 </div>
-                <div className='flex flex-wrap items-center justify-between gap-10 sm:mb-30 mb-6'>
-                    <div className="form-check">
-                        <input
-                            type="checkbox"
-                            id="remember"
-                            checked={remember}
-                            onChange={(e)=>setRemember(e.target.checked)}
-                            className="form-check-input"
-                        />
-                        <label className="form-check-label" htmlFor="remember">Remember me</label>
-                    </div>
-                    <div className="form-check">
-                        <input
-                            type="checkbox"
-                            id="dcl_user"
-                            checked={dclUser}
-                            onChange={(e)=>setDclUser(e.target.checked)}
-                            className="form-check-input"
-                        />
-                        <label className="form-check-label" htmlFor="dcl_user">DCL User</label>
-                    </div>
-                    <Link href="/auth/forgot-password" className='text-primary sm:text-[16px]/[24px] text-[14px]/[20px]'>
-                        Forgot Password?
-                    </Link>
-                </div>
-                {error ? <div className='text-danger mb-4'>{error}</div> : null}
-                <button disabled={submitting} type='submit' className='btn btn-secondary large w-full uppercase'>
-                    {submitting ? 'Signing In...' : 'Sign In'}
-                </button>
             </form>
         </>
     )

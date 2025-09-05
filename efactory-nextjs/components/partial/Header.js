@@ -434,7 +434,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                         My Profile
                                     </Link>
                                     {isAdmin ? (
-                                        <Link href="/select-customer" className='py-2 px-4 flex items-center gap-3'>
+                                        <Link href="/admin/login-user" className='py-2 px-4 flex items-center gap-3'>
                                             Switch Account
                                         </Link>
                                     ) : null}

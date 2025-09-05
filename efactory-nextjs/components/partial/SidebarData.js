@@ -31,7 +31,7 @@ export const menuList = [
         link: "Admin",
         // visibility: roles includes 'ADM'
         children: [
-            { link: "Login to eFactory", url: "/select-customer" },
+            { link: "Login to eFactory", url: "/admin/login-user" },
             { link: "Online Customers", url: "/admin/online-customers" },
             { link: "License Summary", url: "/admin/license-summary" },
             { link: "eFactory Users", url: "/admin/users" },

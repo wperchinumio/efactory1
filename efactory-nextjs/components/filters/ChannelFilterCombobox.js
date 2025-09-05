@@ -12,7 +12,7 @@ const ChannelFilterCombobox = ({
 	const globalData = useGlobalFilterData();
 	
 	// Get channel options from global data using the getFilterOptions function
-	const channelOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.channelOptions || [];
+	const channelOptions = globalData?.loading ? [] : globalData?.getFilterOptions?.()?.getChannelOptions?.() || [];
 	
 	
 	const hasActiveSelection = Array.isArray(value) && value.length > 0;

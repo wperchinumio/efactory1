@@ -369,66 +369,77 @@ export function useGlobalFilterData() {
 
 		// Get country options
 		const getCountryOptions = () => {
-			const countries = data.countries || {
-				'US': 'United States',
-				'CA': 'Canada',
-				'MX': 'Mexico',
-				'GB': 'United Kingdom',
-				'DE': 'Germany',
-				'FR': 'France',
-				'IT': 'Italy',
-				'ES': 'Spain',
-				'AU': 'Australia',
-				'JP': 'Japan'
-			};
+			const countries = data.countries || {};
 
-			// Create options with US and CA first
-			const priorityCountries = [
-				{ value: 'US', label: 'United States' },
-				{ value: 'CA', label: 'Canada' }
-			];
+			// Create options with US and CA first, with ISO2 prefix
+			const priorityCountries = [];
+			if (countries['US']) {
+				priorityCountries.push({ value: 'US', label: `US - ${countries['US']}` });
+			}
+			if (countries['CA']) {
+				priorityCountries.push({ value: 'CA', label: `CA - ${countries['CA']}` });
+			}
 
-			// Get remaining countries alphabetically
+			// Get remaining countries alphabetically with ISO2 prefix
 			const otherCountries = Object.keys(countries)
 				.filter(code => code !== 'US' && code !== 'CA')
 				.sort((a, b) => countries[a].localeCompare(countries[b]))
 				.map(code => ({
 					value: code,
-					label: countries[code]
+					label: `${code} - ${countries[code]}`
 				}));
 
 			return [
 				...priorityCountries,
-				{ value: 'separator', label: '──────────────', disabled: true },
+				...(priorityCountries.length > 0 && otherCountries.length > 0 ? [{ value: 'separator', label: '──────────────', disabled: true }] : []),
 				...otherCountries
 			];
 		};
 
 		// Get state options
 		const getStateOptions = (selectedCountry = '') => {
-			if (selectedCountry !== 'US') {
-				return [];
+			// Use API data for states
+			const states = data.states || {};
+			
+			// Try multiple approaches to find states for the selected country
+			
+			// Approach 1: Array-like structure with key/value objects
+			const countryEntry = Object.values(states).find(entry => 
+				entry && typeof entry === 'object' && entry.key === selectedCountry
+			);
+			
+			if (countryEntry && countryEntry.value) {
+				const countryStates = countryEntry.value;
+				return Object.keys(countryStates)
+					.sort((a, b) => countryStates[a].localeCompare(countryStates[b]))
+					.map(code => ({
+						value: code,
+						label: `${code} - ${countryStates[code]}`
+					}));
 			}
-
-			const states = data.states || {
-				'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
-				'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
-				'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
-				'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
-				'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
-				'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
-				'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
-				'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
-				'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
-				'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'
-			};
-
-			return Object.keys(states)
-				.sort((a, b) => states[a].localeCompare(states[b]))
-				.map(code => ({
-					value: code,
-					label: states[code]
-				}));
+			
+			// Approach 2: Direct country key access
+			if (states[selectedCountry]) {
+				const countryStates = states[selectedCountry];
+				if (typeof countryStates === 'object') {
+					return Object.keys(countryStates)
+						.sort((a, b) => {
+							const nameA = typeof countryStates[a] === 'object' ? countryStates[a].name || countryStates[a] : countryStates[a];
+							const nameB = typeof countryStates[b] === 'object' ? countryStates[b].name || countryStates[b] : countryStates[b];
+							return String(nameA).localeCompare(String(nameB));
+						})
+						.map(code => {
+							const state = countryStates[code];
+							const stateName = typeof state === 'object' ? (state.name || state.label || String(state)) : String(state);
+							return {
+								value: code,
+								label: `${code} - ${stateName}`
+							};
+						});
+				}
+			}
+			
+			return [];
 		};
 
 		// Get channel options
