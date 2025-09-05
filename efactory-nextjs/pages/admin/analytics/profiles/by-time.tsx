@@ -29,7 +29,7 @@ import {
 	CountryFilterCombobox,
 	StateFilterCombobox
 } from '@/components/filters';
-import { AnalyticsFilterHeader, ChartControls } from '@/components/analytics';
+import { AnalyticsFilterHeader, ChartControls, LoadingState } from '@/components/analytics';
 
 interface ChartRow {
 	id?: string;
@@ -804,11 +804,11 @@ export default function AdminAnalyticsByTime() {
 				)}
 
 				{loading && (
-					<div className='p-8 text-center'>
-						<IconRefresh className='w-8 h-8 text-primary mx-auto mb-4 animate-spin' />
-						<div className='text-font-color font-medium'>Generating Report...</div>
-						<div className='text-font-color-100 text-[13px] mt-1'>Please wait while we process your data</div>
-					</div>
+					<LoadingState 
+						message="Generating Report..." 
+						submessage="Please wait while we process your data"
+						type="generating"
+					/>
 				)}
 
 				{loaded && rows.length > 0 && (

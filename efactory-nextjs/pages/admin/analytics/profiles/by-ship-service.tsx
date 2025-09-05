@@ -26,7 +26,7 @@ import {
 	CountryFilterCombobox,
 	StateFilterCombobox
 } from '@/components/filters';
-import { AnalyticsFilterHeader, ChartControls } from '@/components/analytics';
+import { AnalyticsFilterHeader, ChartControls, LoadingState } from '@/components/analytics';
 
 interface ChartRow {
 	id?: string;
@@ -706,9 +706,11 @@ export default function AdminAnalyticsByShipService() {
 				)}
 
 				{loading && (
-					<div className='p-8 text-center'>
-						<div className='text-[14px] text-font-color-100'>Loading analytics data...</div>
-					</div>
+					<LoadingState 
+						message="Loading analytics data..." 
+						submessage="Analyzing ship service performance"
+						type="loading"
+					/>
 				)}
 
 				{!loading && !error && loaded && rows.length > 0 && (

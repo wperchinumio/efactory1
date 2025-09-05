@@ -24,7 +24,7 @@ import {
 	CountryFilterCombobox,
 	StateFilterCombobox
 } from '@/components/filters';
-import { AnalyticsFilterHeader, ChartControls } from '@/components/analytics';
+import { AnalyticsFilterHeader, ChartControls, LoadingState } from '@/components/analytics';
 
 interface ChartRow {
 	id?: string;
@@ -685,12 +685,11 @@ export default function AdminAnalyticsByChannel() {
 				)}
 
 				{loading && (
-					<div className='p-8 text-center'>
-						<div className='inline-flex items-center gap-3'>
-							<IconRefresh className='w-5 h-5 text-primary animate-spin' />
-							<span className='text-font-color'>Loading analytics data...</span>
-						</div>
-					</div>
+					<LoadingState 
+						message="Loading analytics data..." 
+						submessage="Analyzing channel performance"
+						type="loading"
+					/>
 				)}
 
 				{loaded && rows.length > 0 && (
