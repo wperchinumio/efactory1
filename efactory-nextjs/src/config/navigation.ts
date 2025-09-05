@@ -1,74 +1,151 @@
 import { TopMenuConfig, SidebarConfig } from '../types/api/auth';
+import {
+  IconHome,
+  IconBook,
+  IconTag,
+  IconShoppingCart,
+  IconTruck,
+  IconArrowsExchange,
+  IconChartBar,
+  IconCloud,
+  IconFiles,
+  IconSettings,
+  IconList,
+  IconShare,
+  IconArrowDown,
+  IconPencil,
+  IconCubes,
+  IconMapPin,
+  IconFileSpreadsheet,
+  IconCalendar,
+  IconCalculator,
+  IconInfoCircle,
+  IconUsers,
+  IconEnvelope,
+  IconCloudUpload,
+  IconBriefcase,
+  IconUserPlus,
+  IconGear,
+  IconBuilding,
+  IconClock,
+  IconBolt,
+  IconCalendarCheck,
+  IconChartBarOff,
+  IconReportAnalytics,
+  IconFactory,
+  IconPackage,
+  IconClipboardList,
+  IconShip,
+  IconFileText,
+  IconBoxSeam,
+  IconBarcode,
+  IconSearch,
+  IconEdit,
+  IconEye,
+  IconDownload,
+  IconUpload,
+  IconRefresh,
+  IconAlertTriangle,
+  IconCheckCircle,
+  IconX,
+  IconPlus,
+  IconMinus,
+  IconFilter,
+  IconSortAscending,
+  IconDatabase,
+  IconServer,
+  IconNetwork,
+  IconMail,
+  IconBell,
+  IconKey,
+  IconLock,
+  IconShield,
+  IconUserCheck,
+  IconCreditCard,
+  IconReceipt,
+  IconCurrency,
+  IconPercentage,
+  IconTarget,
+  IconTrendingUp,
+  IconPieChart,
+  IconActivity,
+  IconZap,
+  IconGlobe,
+  IconLink,
+  IconExternalLink,
+  IconDownload as IconImport,
+  IconUpload as IconExport,
+} from '@tabler/icons-react';
 
 // Top menu configuration - maps to app IDs from header.js
 export const topMenuConfig: TopMenuConfig[] = [
   {
     keyword: 'overview',
     title: 'Overview',
-    iconClassName: 'icon-home',
+    iconComponent: IconHome,
     appIds: [1, 2, 3],
     sidebarConfig: 'overview'
   },
   {
     keyword: 'orders',
     title: 'Orders',
-    iconClassName: 'icon-book-open',
+    iconComponent: IconBook,
     appIds: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 61, 21, 22, 23, 72, 25],
     sidebarConfig: 'orders'
   },
   {
     keyword: 'items',
     title: 'Items',
-    iconClassName: 'icon-tag',
+    iconComponent: IconTag,
     appIds: [26, 27, 28, 29, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 41, 73, 206],
     sidebarConfig: 'items'
   },
   {
     keyword: 'orderpoints',
     title: 'OrderPoints',
-    iconClassName: 'fa fa-opencart',
+    iconComponent: IconShoppingCart,
     appIds: [47, 48, 49, 50, 76, 74, 53, 51],
     sidebarConfig: 'orderpoints'
   },
   {
     keyword: 'transportation',
     title: 'Transportation',
-    iconClassName: 'fa fa-truck',
+    iconComponent: IconTruck,
     appIds: [209, 210, 207, 212, 213],
     sidebarConfig: 'transportation'
   },
   {
     keyword: 'returntrak',
     title: 'ReturnTrak',
-    iconClassName: 'fa fa-exchange',
+    iconComponent: IconArrowsExchange,
     appIds: [55, 56, 54, 57, 58, 59, 75],
     sidebarConfig: 'returntrak'
   },
   {
     keyword: 'analytics',
     title: 'Analytics',
-    iconClassName: 'fa fa-bar-chart',
+    iconComponent: IconChartBar,
     appIds: [42, 43, 201, 202, 203, 204, 205, 208, 46, 63, 70, 44, 45, 64, 35, 71, 211],
     sidebarConfig: 'analytics'
   },
   {
     keyword: 'edi',
     title: 'EDI Central',
-    iconClassName: 'fa fa-cloud',
+    iconComponent: IconCloud,
     appIds: [52, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
     sidebarConfig: 'edi'
   },
   {
     keyword: 'documents',
     title: 'Documents',
-    iconClassName: 'fa fa-th-large',
+    iconComponent: IconFiles,
     appIds: [62],
     sidebarConfig: 'documents'
   },
   {
     keyword: 'services',
     title: 'Services',
-    iconClassName: 'fa fa-cog',
+    iconComponent: IconSettings,
     appIds: [67, 65, 66, 99992, 77, 78, 79, 80, 81, 68, 69, 214],
     sidebarConfig: 'administration_tasks'
   }
@@ -81,14 +158,14 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'overview',
-        iconClassName: 'icon-home',
+        iconComponent: IconHome,
         title: 'Overview',
         route: '/overview',
         appIds: [1]
       },
       {
         keyword: 'notes',
-        iconClassName: 'icon-pencil',
+        iconComponent: IconPencil,
         title: 'Personal notes',
         route: '/overview/notes',
         appIds: [3]
@@ -100,7 +177,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'orders',
-        iconClassName: 'icon-book-open',
+        iconComponent: IconBook,
         title: 'Orders',
         isDropdownOpenDefault: true,
         sectionTitleBefore: 'FULFILLMENT',
@@ -159,7 +236,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'order_items',
-        iconClassName: 'icon-list',
+        iconComponent: IconClipboardList,
         title: 'Order Lines',
         dropdownMenus: [
           {
@@ -208,7 +285,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'order_items_2',
-        iconClassName: 'icon-tag',
+        iconComponent: IconPackage,
         title: 'Order Items',
         dropdownMenus: [
           {
@@ -233,7 +310,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'ship_detail',
-        iconClassName: 'icon-share',
+        iconComponent: IconShip,
         title: 'Ship Detail',
         dropdownMenus: [
           {
@@ -258,7 +335,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'customer_docs',
-        iconClassName: 'fa fa-th-large',
+        iconComponent: IconFileText,
         title: 'Customer Docs.',
         isDropdownOpenDefault: false,
         dropdownMenus: [
@@ -289,7 +366,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'items',
-        iconClassName: 'icon-tag',
+        iconComponent: IconTag,
         title: 'Items',
         isDropdownOpenDefault: true,
         sectionTitleBefore: 'INVENTORY',
@@ -358,7 +435,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'receipts',
-        iconClassName: 'icon-arrow-down',
+        iconComponent: IconArrowDown,
         title: 'Receipts',
         dropdownMenus: [
           {
@@ -383,21 +460,21 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'assembly',
-        iconClassName: 'fa fa-cubes',
+        iconComponent: IconCubes,
         title: 'Assembly',
         route: '/inventory/assembly',
         appIds: [40]
       },
       {
         keyword: 'returns',
-        iconClassName: 'fa fa-exchange',
+        iconComponent: IconArrowsExchange,
         title: 'Returns',
         route: '/inventory/returns',
         appIds: [41]
       },
       {
         keyword: 'customer_docs',
-        iconClassName: 'fa fa-th-large',
+        iconComponent: IconFileText,
         title: 'Customer Docs.',
         dropdownMenus: [
           {
@@ -445,7 +522,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'order_entry',
-        iconClassName: 'fa fa-opencart',
+        iconComponent: IconShoppingCart,
         sectionTitleBefore: 'ORDERPOINTS',
         title: 'Order Entry',
         route: '/orderpoints',
@@ -453,7 +530,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'drafts',
-        iconClassName: 'fa fa-cubes',
+        iconComponent: IconCubes,
         badge: '/orderpoints/drafts',
         badgeClassName: 'badge badge-info badge-margin-fix',
         title: 'Drafts',
@@ -462,28 +539,28 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'address_book',
-        iconClassName: 'fa fa-location-arrow',
+        iconComponent: IconMapPin,
         title: 'Address Book',
         route: '/orderpoints/addressbook',
         appIds: [49]
       },
       {
         keyword: 'mass_upload',
-        iconClassName: 'fa fa-file-excel-o',
+        iconComponent: IconFileSpreadsheet,
         title: 'Mass Upload',
         route: '/orderpoints/massupload',
         appIds: [50]
       },
       {
         keyword: 'ftp_batches',
-        iconClassName: 'fa fa-calendar',
+        iconComponent: IconCalendar,
         title: 'FTP Batches',
         route: '/orderpoints/ftp-batches',
         appIds: [76]
       },
       {
         keyword: 'ship_cost',
-        iconClassName: 'fa fa-calculator',
+        iconComponent: IconCalculator,
         sectionTitleBefore: 'OTHERS',
         title: 'Shipping Cost Estimator',
         route: '/orderpoints/shippingcost',
@@ -491,7 +568,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'customer_docs',
-        iconClassName: 'fa fa-th-large',
+        iconComponent: IconFileText,
         title: 'Customer Docs.',
         dropdownMenus: [
           {
@@ -510,7 +587,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'help',
-        iconClassName: 'icon-info',
+        iconComponent: IconInfoCircle,
         sectionTitleBefore: 'HELP',
         title: 'Help and FAQ',
         dropdownMenus: [
@@ -553,28 +630,28 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'by-time',
         sectionTitleBefore: 'TRANSPORTATION',
-        iconClassName: 'fa fa-calendar bold',
+        iconComponent: IconCalendar,
         title: 'By Time',
         route: '/transportation/time',
         appIds: [209]
       },
       {
         keyword: 'by-ship-service',
-        iconClassName: 'fa fa-truck bold',
+        iconComponent: IconTruck,
         title: 'By Service',
         route: '/transportation/service',
         appIds: [210]
       },
       {
         keyword: 'freight-analyzer',
-        iconClassName: 'fa fa-truck bold',
+        iconComponent: IconTruck,
         title: 'Analyzer',
         route: '/transportation/analyzer',
         appIds: [207]
       },
       {
         keyword: 'shipping_detail',
-        iconClassName: 'fa fa-truck',
+        iconComponent: IconTruck,
         sectionTitleBefore: 'PACKAGES',
         title: 'Shipping Detail',
         route: '/transportation/packages/shipping-detail',
@@ -582,7 +659,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'ship_cost',
-        iconClassName: 'fa fa-calculator',
+        iconComponent: IconCalculator,
         title: 'Cost Estimator',
         route: '/transportation/packages/cost-estimator',
         appIds: [213]
@@ -594,7 +671,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'rma_entry',
-        iconClassName: 'fa fa-opencart',
+        iconComponent: IconShoppingCart,
         title: 'RMA Entry',
         sectionTitleBefore: 'RETURNTRAK',
         route: '/returntrak',
@@ -602,7 +679,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'draft',
-        iconClassName: 'fa fa-cubes',
+        iconComponent: IconCubes,
         badge: '/returntrak/drafts',
         badgeClassName: 'badge badge-info',
         title: 'Drafts',
@@ -611,7 +688,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'rmas',
-        iconClassName: 'fa fa-exchange',
+        iconComponent: IconArrowsExchange,
         title: 'RMAs',
         isDropdownOpenDefault: true,
         dropdownMenus: [
@@ -639,14 +716,14 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'shipped_orders',
-        iconClassName: 'icon-book-open',
+        iconComponent: IconBook,
         title: 'Shipped Orders',
         route: '/returntrak/shipped-orders',
         appIds: [54]
       },
       {
         keyword: 'customer_docs',
-        iconClassName: 'fa fa-th-large',
+        iconComponent: IconFileText,
         title: 'Customer Docs.',
         dropdownMenus: [
           {
@@ -665,49 +742,49 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'analytics-domestic',
         sectionTitleBefore: 'PROFILES',
-        iconClassName: 'fa fa-map-marker bold',
+        iconComponent: IconMapPin,
         title: 'Domestic',
         route: '/analytics/profiles/domestic',
         appIds: [42]
       },
       {
         keyword: 'analytics-international',
-        iconClassName: 'fa fa-globe bold',
+        iconComponent: IconGlobe,
         title: 'International',
         route: '/analytics/profiles/international',
         appIds: [43]
       },
       {
         keyword: 'analytics-time',
-        iconClassName: 'fa fa-calendar bold',
+        iconComponent: IconCalendar,
         title: 'By Time',
         route: '/analytics/profiles/time',
         appIds: [201]
       },
       {
         keyword: 'analytics-item',
-        iconClassName: 'fa fa-tag bold',
+        iconComponent: IconTag,
         title: 'By Item',
         route: '/analytics/profiles/item',
         appIds: [203]
       },
       {
         keyword: 'analytics-customer',
-        iconClassName: 'fa fa-building bold',
+        iconComponent: IconBuilding,
         title: 'By Customer',
         route: '/analytics/profiles/customer',
         appIds: [202]
       },
       {
         keyword: 'analytics-shipservice',
-        iconClassName: 'fa fa-truck bold',
+        iconComponent: IconTruck,
         title: 'By Ship Service',
         route: '/analytics/profiles/shipservice',
         appIds: [204]
       },
       {
         keyword: 'analytics-channel',
-        iconClassName: 'fa fa-cloud bold',
+        iconComponent: IconCloud,
         title: 'By Channel',
         route: '/analytics/profiles/channel',
         appIds: [205]
@@ -715,7 +792,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'analytics-incident-reports',
         sectionTitleBefore: 'Quality',
-        iconClassName: 'fa fa-bolt bold',
+        iconComponent: IconBolt,
         title: 'Incident Reports',
         route: '/analytics/slas/incident-reports',
         appIds: [208]
@@ -723,28 +800,28 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'analytics-shipment-times',
         sectionTitleBefore: 'SLAs',
-        iconClassName: 'fa fa-clock-o bold',
+        iconComponent: IconClock,
         title: 'Shipment Times',
         route: '/analytics/slas/shipment-times',
         appIds: [46]
       },
       {
         keyword: 'analytics-rma-times',
-        iconClassName: 'fa fa-clock-o bold',
+        iconComponent: IconClock,
         title: 'RMA Receive Times',
         route: '/analytics/slas/rma-receive-times',
         appIds: [63]
       },
       {
         keyword: 'by-delivery-times',
-        iconClassName: 'fa fa-calendar-check-o bold',
+        iconComponent: IconCalendarCheck,
         title: 'Delivery Times',
         route: '/analytics/deliverytimes',
         appIds: [211]
       },
       {
         keyword: 'analytics-cycle',
-        iconClassName: 'fa fa-bar-chart-o bold',
+        iconComponent: IconChartBar,
         title: 'Cycle Count',
         route: '/analytics/slas/cyclecount',
         appIds: [70]
@@ -752,21 +829,21 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'planning-replenishment',
         sectionTitleBefore: 'PLANNING',
-        iconClassName: 'icon-calendar',
+        iconComponent: IconCalendar,
         title: 'Replenishment',
         route: '/analytics/planning/replenishment',
         appIds: [44]
       },
       {
         keyword: 'planning-slow-moving',
-        iconClassName: 'icon-calendar',
+        iconComponent: IconCalendar,
         title: 'Slow Moving',
         route: '/analytics/planning/slowmoving',
         appIds: [45]
       },
       {
         keyword: 'scheduled_reports',
-        iconClassName: 'fa fa-calendar',
+        iconComponent: IconCalendar,
         sectionTitleBefore: 'REPORTS',
         title: 'Scheduled Reports',
         route: '/analytics/scheduler',
@@ -774,14 +851,14 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'standard_reports',
-        iconClassName: 'fa fa-th-large',
+        iconComponent: IconFiles,
         title: 'Standard Reports',
         route: '/analytics/scheduler/reports',
         appIds: [35]
       },
       {
         keyword: 'custom_reports',
-        iconClassName: 'fa fa-th',
+        iconComponent: IconFiles,
         title: 'Custom Reports',
         route: '/analytics/scheduler/customreports',
         appIds: [71]
@@ -793,7 +870,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'edi_overview',
-        iconClassName: 'icon-home',
+        iconComponent: IconHome,
         title: 'Overview',
         route: '/edi/overview',
         appIds: [52]
@@ -801,7 +878,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'ediDocuments',
         sectionTitleBefore: 'DOCUMENTS',
-        iconClassName: 'fa fa-th-large',
+        iconComponent: IconFiles,
         title: 'EDI Documents',
         isDropdownOpenDefault: true,
         dropdownMenus: [
@@ -870,7 +947,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'tradingPartners',
         sectionTitleBefore: 'TRADING PARTNERS',
-        iconClassName: 'fa fa-industry',
+        iconComponent: IconFactory,
         title: 'Trading Partners',
         isDropdownOpenDefault: false,
         dropdownMenus: [
@@ -927,7 +1004,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'extShipments',
         sectionTitleBefore: 'EXT. SHIPMENTS',
-        iconClassName: 'fa fa-truck',
+        iconComponent: IconTruck,
         title: 'Ext. Shipments',
         isDropdownOpenDefault: false,
         dropdownMenus: [
@@ -951,7 +1028,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'document_submission',
-        iconClassName: 'fa fa-cloud-upload',
+        iconComponent: IconCloudUpload,
         sectionTitleBefore: 'DOCUMENTS',
         title: 'Document Submission',
         route: '/documents',
@@ -959,7 +1036,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'customer_docs',
-        iconClassName: 'fa fa-th-large',
+        iconComponent: IconFileText,
         title: 'Customer Docs.',
         isDropdownOpenDefault: true,
         dropdownMenus: [
@@ -1039,7 +1116,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'special_docs',
-        iconClassName: 'fa fa-briefcase',
+        iconComponent: IconBriefcase,
         title: 'Special Docs.',
         isDropdownOpenDefault: true,
         dropdownMenus: [
@@ -1077,7 +1154,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'ftp_folders',
-        iconClassName: 'fa fa-cloud',
+        iconComponent: IconCloud,
         title: 'FTP Folders',
         isDropdownOpenDefault: true,
         dropdownMenus: [
@@ -1101,7 +1178,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     menus: [
       {
         keyword: 'accounts',
-        iconClassName: 'fa fa-user-plus',
+        iconComponent: IconUserPlus,
         sectionTitleBefore: 'SETTINGS',
         title: 'Users',
         route: '/services/administration-tasks/accounts',
@@ -1109,28 +1186,28 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'orderpoints_settings',
-        iconClassName: 'fa fa-gear',
+        iconComponent: IconGear,
         title: 'OrderPoints Settings',
         route: '/services/administration-tasks/orderpoints-settings',
         appIds: [65]
       },
       {
         keyword: 'returntrak_settings',
-        iconClassName: 'fa fa-gear',
+        iconComponent: IconGear,
         title: 'ReturnTrak Settings',
         route: '/services/administration-tasks/returntrak-settings',
         appIds: [66]
       },
       {
         keyword: 'special_settings',
-        iconClassName: 'fa fa-gear',
+        iconComponent: IconGear,
         title: 'Special Settings',
         route: '/services/administration-tasks/special-settings',
         appIds: [99992]
       },
       {
         keyword: 'email_notif',
-        iconClassName: 'fa fa-envelope',
+        iconComponent: IconEnvelope,
         title: 'Email Notifications',
         isDropdownOpenDefault: true,
         dropdownMenus: [
@@ -1168,7 +1245,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'invoices',
-        iconClassName: 'icon-share',
+        iconComponent: IconShare,
         title: 'Invoices',
         sectionTitleBefore: 'INVOICES',
         dropdownMenus: [

@@ -11,14 +11,7 @@ export default function Document() {
           href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500&family=Mulish:wght@400;500&family=Quicksand:wght@400;500&display=swap"
           rel="stylesheet"
         />
-        {/* Font Awesome */}
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
-          crossOrigin="anonymous"
-          referrerPolicy="no-referrer"
-        />
+        {/* Using Tabler Icons (React components) - same as Luno theme */}
       </Head>
       <body>
         <Main />

@@ -9,6 +9,8 @@ import {
   IconChevronsDown,
   IconDots,
   IconPlus,
+  IconHome,
+  IconPencil,
 } from '@tabler/icons-react';
 
 interface SidebarMenuProps {
@@ -19,6 +21,17 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const { userApps, activeTopMenu } = useNavigation();
   const router = useRouter();
   const pageUrl = router.pathname;
+
+  // Helper function to render icons (Tabler components or CSS classes)
+  const renderIcon = (item: MenuItem) => {
+    if (item.iconComponent) {
+      const IconComponent = item.iconComponent;
+      return <IconComponent className="stroke-[1.5] w-[22px] h-[22px]" />;
+    } else if (item.iconClassName) {
+      return <i className={`${item.iconClassName} w-[22px] h-[22px]`} />;
+    }
+    return null;
+  };
   
   // Use exact Luno state management pattern
   const [adminMenu, setAdminMenu] = useState(false);
@@ -138,7 +151,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                 onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }} 
                 className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === '/' ? 'text-secondary' : ''}`}
               >
-                <i className="fa fa-home stroke-[1.5] w-[22px] h-[22px] rtl:rotate-180" />
+                <IconHome className="stroke-[1.5] w-[22px] h-[22px]" />
                 <span className='link'>Overview</span>
               </Link>
             </li>
@@ -148,7 +161,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                 onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }} 
                 className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === '/personal-notes' ? 'text-secondary' : ''}`}
               >
-                <i className="fa fa-sticky-note stroke-[1.5] w-[22px] h-[22px] rtl:rotate-180" />
+                <IconPencil className="stroke-[1.5] w-[22px] h-[22px]" />
                 <span className='link'>Personal notes</span>
               </Link>
             </li>
@@ -175,7 +188,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                       onClick={() => menuToggle(key)}
                       className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${menuActive === key ? 'text-secondary' : ''}`}
                     >
-                      <i className={`${item.iconClassName} stroke-[1.5] w-[22px] h-[22px]`} />
+                      {renderIcon(item)}
                       <span className='link'>{item.title}</span>
                       {menuActive === key ? 
                         <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : 
@@ -205,7 +218,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                       onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
                       className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.route ? 'text-secondary' : ''}`}
                     >
-                      <i className={`${item.iconClassName} stroke-[1.5] w-[22px] h-[22px] rtl:rotate-180`} />
+                      {renderIcon(item)}
                       <span className='link'>{item.title}</span>
                     </Link>
                   </li>
@@ -222,7 +235,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   onClick={() => menuToggle(key)}
                   className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${menuActive === key ? 'text-secondary' : ''}`}
                 >
-                  <i className={`${item.iconClassName} stroke-[1.5] w-[22px] h-[22px]`} />
+                  <i className={`${item.iconClassName} w-[22px] h-[22px]`} />
                   <span className='link'>{item.title}</span>
                   {menuActive === key ? 
                     <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : 
@@ -250,7 +263,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
                   className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.route ? 'text-secondary' : ''}`}
                 >
-                  <i className={`${item.iconClassName} stroke-[1.5] w-[22px] h-[22px] rtl:rotate-180`} />
+                  <i className={`${item.iconClassName} w-[22px] h-[22px]`} />
                   <span className='link'>{item.title}</span>
                 </Link>
               </li>

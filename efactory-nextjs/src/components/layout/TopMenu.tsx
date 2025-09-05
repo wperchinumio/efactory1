@@ -11,6 +11,17 @@ import {
 const TopMenu: React.FC = () => {
   const router = useRouter();
   const { userApps, activeTopMenu, setActiveTopMenu } = useNavigation();
+
+  // Helper function to render icons (Tabler components or CSS classes)
+  const renderIcon = (menu: TopMenuConfig) => {
+    if (menu.iconComponent) {
+      const IconComponent = menu.iconComponent;
+      return <IconComponent className="w-[18px] h-[18px]" />;
+    } else if (menu.iconClassName) {
+      return <i className={`${menu.iconClassName} w-[18px] h-[18px]`} />;
+    }
+    return null;
+  };
   const [visibleMenus, setVisibleMenus] = useState<TopMenuConfig[]>([]);
   const [overflowMenus, setOverflowMenus] = useState<TopMenuConfig[]>([]);
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
@@ -104,7 +115,7 @@ const TopMenu: React.FC = () => {
             }
           `}
         >
-          <i className={`${menu.iconClassName} w-[18px] h-[18px]`} />
+          {renderIcon(menu)}
           {menu.title}
         </button>
       ))}
@@ -141,7 +152,7 @@ const TopMenu: React.FC = () => {
                     }
                   `}
                 >
-                  <i className={`${menu.iconClassName} mr-3 flex-shrink-0 w-[18px] h-[18px]`} />
+                  <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>
                   {menu.title}
                 </button>
               </li>
