@@ -1,4 +1,5 @@
 import React from 'react';
+import { DatasetSelector } from './DatasetSelector';
 
 interface ChartControlsProps {
 	// Dataset selection
@@ -28,25 +29,11 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
 }) => {
 	return (
 		<div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mt-6 p-4 bg-primary-5 border border-border-color rounded-lg'>
-			{/* Dataset Selection Buttons */}
-			<div className='flex-1'>
-				<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Dataset</label>
-				<div className='flex flex-wrap gap-2'>
-					{(['orders', 'lines', 'packages', 'units'] as const).map((dataset) => (
-						<button
-							key={dataset}
-							onClick={() => onDatasetChange(dataset)}
-							className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-								selectedDataset === dataset
-									? 'bg-primary text-white shadow-sm'
-									: 'bg-card-bg border border-border-color text-font-color hover:bg-primary-10'
-							}`}
-						>
-							{dataset.charAt(0).toUpperCase() + dataset.slice(1)}
-						</button>
-					))}
-				</div>
-			</div>
+			{/* Dataset Selection */}
+			<DatasetSelector
+				selectedDataset={selectedDataset}
+				onDatasetChange={onDatasetChange}
+			/>
 			
 			{/* Comparison Options */}
 			<div className='flex-1'>

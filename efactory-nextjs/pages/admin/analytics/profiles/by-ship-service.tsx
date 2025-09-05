@@ -641,11 +641,30 @@ export default function AdminAnalyticsByShipService() {
 								<div className='mb-4'>
 									<div className='flex items-center justify-between'>
 										<h3 className='text-[16px] font-bold text-font-color'>Ship Service Data</h3>
-										<div className='text-[12px] text-font-color-100'>
-											{processedData.length} services • Total: {stats.totalOrders.toLocaleString()}
-						</div>
-					</div>
-						</div>
+										<div className='flex items-center gap-4'>
+											<div className="form-check">
+												<input
+													type="checkbox"
+													id="compareYearsTable"
+													checked={compareYears}
+													onChange={(e) => setCompareYears(e.target.checked)}
+													className="form-check-input"
+												/>
+												<label className="form-check-label text-xs text-font-color-100" htmlFor="compareYearsTable">
+													Compare to previous 2 years
+												</label>
+											</div>
+											<div className='text-[12px] text-font-color-100'>
+												{processedData.length} services • Total: {
+													selectedDataset === 'orders' && stats.totalOrders.toLocaleString()
+													|| selectedDataset === 'lines' && stats.totalLines.toLocaleString()
+													|| selectedDataset === 'packages' && stats.totalPackages.toLocaleString()
+													|| selectedDataset === 'units' && stats.totalUnits.toLocaleString()
+												}
+											</div>
+										</div>
+									</div>
+								</div>
 
 								<div className='overflow-x-auto'>
 									<table className='w-full'>

@@ -74,10 +74,8 @@ export default function AdminAnalyticsByAccount() {
 	// Chart animation hook
 	const { triggerDataLoadAnimation, triggerDatasetChangeAnimation, getAnimationSettings } = useChartAnimation();
 	
-	// Chart dataset and comparison options
+	// Chart dataset options
 	const [selectedDataset, setSelectedDataset] = useState<'orders' | 'lines' | 'packages' | 'units'>('orders');
-	const [compareYears, setCompareYears] = useState(false);
-	const [showTrendLine, setShowTrendLine] = useState(false);
 	
 	const [filters, setFilters] = useState<FilterState>({
 		timeWeekly: 'weekly',
@@ -265,15 +263,14 @@ export default function AdminAnalyticsByAccount() {
 		}
 
 		try {
-			exportAnalyticsReport(
-				rows,
-				'Analytics By Account',
-				'by-account',
-				{
-					compareYears,
-					selectedDataset
-				}
-			);
+					exportAnalyticsReport(
+			rows,
+			'Analytics By Account',
+			'by-account',
+			{
+				selectedDataset
+			}
+		);
 		} catch (error) {
 			console.error('Export failed:', error);
 			alert(`Failed to export data: ${error.message}`);
@@ -304,110 +301,25 @@ export default function AdminAnalyticsByAccount() {
 		const categories = rows.map((r) => r.name || r.id || '');
 		let series = [];
 
-		if (showTrendLine || compareYears) {
-			// Simple series for trend/comparison
-			series.push({
-				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
-				type: showTrendLine ? 'line' : 'bar',
-				data: rows.map((r) => r[selectedDataset] ?? 0),
-				smooth: showTrendLine,
-				animationDelay: 0,
-				label: {
-					show: !showTrendLine,
-					position: 'top',
-					fontSize: 11,
-					fontWeight: 'bold',
-					color: '#ffffff',
-					borderWidth: 0,
-					backgroundColor: 'transparent',
-					formatter: function(params: any) {
-						return params.value.toLocaleString();
-					}
+		// Simple series for the selected dataset
+		series.push({
+			name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+			type: 'bar',
+			data: rows.map((r) => r[selectedDataset] ?? 0),
+			animationDelay: 0,
+			label: {
+				show: false,
+				position: 'top',
+				fontSize: 11,
+				fontWeight: 'bold',
+				color: '#ffffff',
+				borderWidth: 0,
+				backgroundColor: 'transparent',
+				formatter: function(params: any) {
+					return params.value.toLocaleString();
 				}
-			});
-
-			if (compareYears) {
-				series.push({
-					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
-					type: showTrendLine ? 'line' : 'bar',
-					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)),
-					smooth: showTrendLine,
-					animationDelay: 200,
-					label: {
-						show: false,
-						position: 'top',
-						fontSize: 11,
-						fontWeight: 'bold',
-						color: '#000000',
-						borderWidth: 1,
-						borderColor: '#ffffff',
-						backgroundColor: 'rgba(255, 255, 255, 0.8)',
-						padding: [2, 4],
-						borderRadius: 3,
-						formatter: function(params: any) {
-							return params.value.toLocaleString();
-						}
-					}
-				});
-
-				series.push({
-					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
-					type: showTrendLine ? 'line' : 'bar',
-					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)),
-					smooth: showTrendLine,
-					animationDelay: 400,
-					label: {
-						show: false,
-						position: 'top',
-						fontSize: 11,
-						fontWeight: 'bold',
-						color: '#000000',
-						borderWidth: 1,
-						borderColor: '#ffffff',
-						backgroundColor: 'rgba(255, 255, 255, 0.8)',
-						padding: [2, 4],
-						borderRadius: 3,
-						formatter: function(params: any) {
-							return params.value.toLocaleString();
-						}
-					}
-				});
 			}
-		} else {
-			// Stacked columns
-			const maxTimePeriods = Math.min(6, timeHeaders.length);
-			
-			for (let timeIndex = 0; timeIndex < maxTimePeriods; timeIndex++) {
-				const timeHeader = timeHeaders[timeIndex];
-				if (!timeHeader) continue;
-
-				series.push({
-					name: timeHeader.name || `Period ${timeIndex + 1}`,
-					type: 'bar',
-					stack: 'total',
-					data: rows.map((account) => {
-						const timeData = account.timeData?.[timeIndex];
-						return timeData?.[selectedDataset] ?? 0;
-					}),
-					animationDelay: timeIndex * 100,
-					label: {
-						show: false,
-						position: 'inside',
-						fontSize: 10,
-						fontWeight: 'bold',
-						color: '#000000',
-						borderWidth: 1,
-						borderColor: '#ffffff',
-						backgroundColor: 'rgba(255, 255, 255, 0.8)',
-						padding: [2, 4],
-						borderRadius: 3,
-						formatter: function(params: any) {
-							return params.value > 0 ? params.value.toLocaleString() : '';
-						}
-					}
-				});
-			}
-		}
+		});
 
 		return {
 			...getAnimationSettings(),
@@ -455,7 +367,7 @@ export default function AdminAnalyticsByAccount() {
 						${account.company_code || account.name || ''} - ${account.company_name || ''}
 					</div>`;
 					
-					if (!showTrendLine && !compareYears && params.length > 0) {
+					if (params.length > 0) {
 						const seriesIndex = params[0].seriesIndex;
 						const timeHeader = timeHeaders[seriesIndex];
 						if (timeHeader) {
@@ -725,7 +637,7 @@ export default function AdminAnalyticsByAccount() {
 									<ReactECharts 
 										option={getEChartsOption()} 
 										theme={echartsThemeName}
-										key={`account-chart-${selectedDataset}-${compareYears}-${showTrendLine}-${echartsThemeName}`}
+										key={`account-chart-${selectedDataset}-${echartsThemeName}`}
 										style={{ width: '100%', height: '400px' }}
 										opts={{ renderer: 'canvas' }}
 									/>
@@ -734,10 +646,8 @@ export default function AdminAnalyticsByAccount() {
 								<ChartControls
 									selectedDataset={selectedDataset}
 									onDatasetChange={handleDatasetChange}
-									compareYears={compareYears}
-									onCompareYearsChange={setCompareYears}
-									showTrendLine={showTrendLine}
-									onShowTrendLineChange={setShowTrendLine}
+									compareYears={false}
+									onCompareYearsChange={() => {}}
 									activeFilters={
 										<>
 											<div>Time: {filters.timeWeekly.charAt(0).toUpperCase() + filters.timeWeekly.slice(1)}</div>
@@ -762,18 +672,17 @@ export default function AdminAnalyticsByAccount() {
 										<IconTable className='w-5 h-5 text-font-color-100' />
 										<h3 className='text-[14px] font-semibold text-font-color'>Data Grid</h3>
 										<div className='flex items-center gap-4 ml-auto'>
-						<div className='flex items-center gap-2'>
-												<span className='text-[12px] text-font-color-100'>Showing:</span>
-												<span className='text-[14px] font-bold text-primary bg-primary-10 px-2 py-1 rounded'>
-													{selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)}
-												</span>
-											</div>
 											<div className='text-[12px] text-font-color-100'>
-												{rows.length} accounts • Total: {stats.totalOrders.toLocaleString()}
+												{rows.length} accounts • Total: {
+													selectedDataset === 'orders' && stats.totalOrders.toLocaleString()
+													|| selectedDataset === 'lines' && stats.totalLines.toLocaleString()
+													|| selectedDataset === 'packages' && stats.totalPackages.toLocaleString()
+													|| selectedDataset === 'units' && stats.totalUnits.toLocaleString()
+												}
 											</div>
-						</div>
-					</div>
-						</div>
+										</div>
+									</div>
+								</div>
 								<table className='w-full min-w-[1800px]'>
 									<thead className='bg-primary-5 border-b border-border-color'>
 										<tr className='text-center text-font-color text-[11px] font-bold uppercase tracking-wider border-b border-border-color'>

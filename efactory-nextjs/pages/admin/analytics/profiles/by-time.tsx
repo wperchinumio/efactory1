@@ -667,11 +667,30 @@ export default function AdminAnalyticsByTime() {
 								<div className='flex items-center gap-3'>
 									<IconTable className='w-5 h-5 text-font-color-100' />
 									<h3 className='text-[14px] font-semibold text-font-color'>Data Grid</h3>
-									<div className='ml-auto text-[12px] text-font-color-100'>
-										{rows.length} {filters.timeWeekly === 'weekly' ? 'weeks' : 'months'} • Total: {stats.totalOrders.toLocaleString()}
-						</div>
-					</div>
-						</div>
+									<div className='flex items-center gap-4 ml-auto'>
+										<div className="form-check">
+											<input
+												type="checkbox"
+												id="compareYearsTable"
+												checked={compareYears}
+												onChange={(e) => setCompareYears(e.target.checked)}
+												className="form-check-input"
+											/>
+											<label className="form-check-label text-xs text-font-color-100" htmlFor="compareYearsTable">
+												Compare to previous 2 years
+											</label>
+										</div>
+										<div className='text-[12px] text-font-color-100'>
+											{rows.length} {filters.timeWeekly === 'weekly' ? 'weeks' : 'months'} • Total: {
+												selectedDataset === 'orders' && stats.totalOrders.toLocaleString()
+												|| selectedDataset === 'lines' && stats.totalLines.toLocaleString()
+												|| selectedDataset === 'packages' && stats.totalPackages.toLocaleString()
+												|| selectedDataset === 'units' && stats.totalUnits.toLocaleString()
+											}
+										</div>
+									</div>
+								</div>
+							</div>
 							<table className='w-full min-w-[800px]'>
 								<thead className='bg-primary-5 border-b border-border-color'>
 									{/* Single Header Row */}
