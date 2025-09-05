@@ -115,8 +115,6 @@ export default function AdminAnalyticsByShipService() {
 				},
 			);
 			
-			console.log('API Response:', res);
-			console.log('Chart data:', res.data?.chart);
 			
 			setRows(res.data?.chart || []);
 			setLoaded(true);
@@ -716,9 +714,6 @@ export default function AdminAnalyticsByShipService() {
 												{selectedDataset === 'packages' && stats.totalPackages.toLocaleString()}
 												{selectedDataset === 'units' && stats.totalUnits.toLocaleString()}
 											</span>
-										</div>
-										<div className='text-[10px] text-gray-500'>
-											Raw data: {rows.length} rows | Processed: {processedData.length} items | Pie data: {pieChartData.length} points
 										</div>
 									</div>
 

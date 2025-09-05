@@ -425,7 +425,6 @@ export default function AdminAnalyticsByTime() {
 
 	// Generate ECharts options - using theme system with smooth animations
 	const getEChartsOption = () => {
-		console.log('getEChartsOption - currentTheme:', currentTheme);
 		if (!rows?.length) return {};
 
 		const categories = rows.map((r) => r.name || r.id || '');
@@ -1100,7 +1099,7 @@ export default function AdminAnalyticsByTime() {
 									})}
 								</tbody>
 								{/* Totals Row */}
-								<tfoot className='bg-primary-10 border-t-2 border-primary'>
+								<tfoot className='border-t-2 border-primary'>
 									<tr className='text-font-color font-bold'>
 										<td className='py-4 px-4 text-center text-font-color-100 text-[12px]'>∑</td>
 										<td className='py-4 px-4'>

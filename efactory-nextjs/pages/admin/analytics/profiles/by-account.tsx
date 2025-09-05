@@ -152,8 +152,6 @@ export default function AdminAnalyticsByAccount() {
 				},
 			);
 			
-			// console.log('API Response:', res);
-			// console.log('Grid data:', res.data?.grid);
 			
 			// Store the raw grid data and time headers
 			const gridData = res.data?.grid || [];
