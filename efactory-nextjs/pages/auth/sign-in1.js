@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { IconEye, IconEyeOff } from '@tabler/icons-react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -22,8 +22,15 @@ export default function SignInProfessional() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const usernameRef = useRef(null)
 
   const togglePasswordVisibility = () => setShowPassword(!showPassword)
+
+  useEffect(() => {
+    if (usernameRef.current) {
+      try { usernameRef.current.focus() } catch {}
+    }
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -111,6 +118,7 @@ export default function SignInProfessional() {
               placeholder='username'
               className='form-input'
               disabled={submitting}
+              ref={usernameRef}
             />
           </div>
 

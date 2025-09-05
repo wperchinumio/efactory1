@@ -7,8 +7,8 @@ export default function AuthLayout({ children }) {
     return (
         <div className='admin-wrapper min-h-svh py-6 px-4 flex items-center justify-center bg-body-color after:fixed after:w-full after:h-full after:start-0 after:top-0 after:opacity-90 after:bg-[url("/images/auth.png")]'>
             <div className='container-fluid'>
-                <div className='flex gap-15 w-full relative z-[1]'>
-                    <div className='items-center justify-center w-full lg:flex hidden'>
+                <div className='flex gap-8 lg:gap-24 xl:gap-40 2xl:gap-56 w-full relative z-[1] justify-center'>
+                    <div className='items-center justify-center lg:w-auto lg:flex hidden'>
                         <div className='max-w-[460px]'>
                             <div className='mb-6'>
                                 <CompanyLogo className="text-primary w-[116px] h-auto" />
@@ -49,13 +49,10 @@ export default function AuthLayout({ children }) {
                                     </div>
                                 </li>
                             </ul>
-                            <div className='text-[13px] text-font-color-100'>
-                                Source: DCL eFactory overview – Modern fulfillment for high‑growth brands. See “Our Technology Platform”.
-                                <Link href="https://dclcorp.com/why-dcl/efactory-platform/" target="_blank" rel="noreferrer" className='text-primary ms-1 underline'>Learn more</Link>.
-                            </div>
+                            {/* Removed citation per request */}
                         </div>
                     </div>
-                    <div className='flex items-center justify-center w-full'>
+                    <div className='flex items-center justify-center lg:w-auto w-full'>
                         <div className='bg-card-color rounded-xl sm:p-4 p-2 max-w-[500px] w-full shadow-shadow-sm border border-dashed border-border-color'>
                             <div className='sm:max-h-[calc(100svh-48px-32px)] max-h-[calc(100svh-48px-16px)] sm:p-4 p-3 overflow-auto custom-scrollbar'>
                                 {children}
