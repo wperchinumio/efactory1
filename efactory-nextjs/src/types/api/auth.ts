@@ -70,7 +70,5 @@ export interface SidebarConfig {
 export interface NavigationContextType {
   userApps: number[];
   activeTopMenu: string | null;
-  activeSidebarMenu: string | null;
   setActiveTopMenu: (menu: string | null) => void;
-  setActiveSidebarMenu: (menu: string | null) => void;
 }

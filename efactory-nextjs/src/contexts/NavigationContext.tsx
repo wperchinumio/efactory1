@@ -14,9 +14,10 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   children, 
   userApps 
 }) => {
+  console.log('🚀 NAVIGATION PROVIDER RENDERED!');
+  console.log('🔍 NAVIGATION PROVIDER - Received userApps:', userApps);
   const router = useRouter();
   const [activeTopMenu, setActiveTopMenu] = useState<string | null>(null);
-  const [activeSidebarMenu, setActiveSidebarMenu] = useState<string | null>(null);
 
   // Initialize with first available menu if no active menu
   useEffect(() => {
@@ -29,27 +30,34 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
     }
   }, [userApps, activeTopMenu]);
 
-  // Update active menus when route changes
+  // Update active top menu when route changes
   useEffect(() => {
+    console.log('🚀 NAVIGATION CONTEXT USEEFFECT TRIGGERED!');
     const pathname = router.pathname;
-    const newActiveTopMenu = getActiveTopMenu(pathname, userApps);
-    if (newActiveTopMenu) {
-      setActiveTopMenu(newActiveTopMenu);
+    console.log('🔄 Navigation context - pathname changed:', pathname, 'userApps:', userApps);
+    
+    // Skip admin routes - they don't use dynamic navigation
+    if (pathname.startsWith('/admin')) {
+      console.log('🔧 Admin route detected, skipping dynamic navigation');
+      return;
     }
     
-    // Reset sidebar menu when top menu changes
-    if (newActiveTopMenu !== activeTopMenu) {
-      setActiveSidebarMenu(null);
+    const newActiveTopMenu = getActiveTopMenu(pathname, userApps);
+    console.log('🎯 New active top menu:', newActiveTopMenu);
+    
+    if (newActiveTopMenu && newActiveTopMenu !== activeTopMenu) {
+      console.log('🔄 Setting active top menu:', newActiveTopMenu);
+      setActiveTopMenu(newActiveTopMenu);
     }
-  }, [router.pathname, userApps, activeTopMenu]);
+  }, [router.pathname, userApps]);
 
   const value: NavigationContextType = {
     userApps,
     activeTopMenu,
-    activeSidebarMenu,
-    setActiveTopMenu,
-    setActiveSidebarMenu
+    setActiveTopMenu
   };
+
+  console.log('🔍 NAVIGATION CONTEXT VALUE:', { activeTopMenu });
 
   return (
     <NavigationContext.Provider value={value}>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { getVisibleSidebarMenus, sidebarConfigs } from '../../config/navigation';
 import { MenuItem, DropdownMenuItem } from '../../types/api/auth';
+import { getAuthToken } from '../../../lib/auth/storage';
 import {
   IconChevronRight,
   IconChevronsDown,
@@ -24,33 +25,54 @@ interface SidebarMenuProps {
 const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const { userApps, activeTopMenu } = useNavigation();
   const router = useRouter();
-  const pageUrl = router.pathname;
+  const pageUrl = router.asPath; // Use asPath to get the actual URL, not the route pattern
+  
+  // Calculate active sidebar menu directly from URL - much simpler and more reliable
+  const getActiveSidebarMenu = () => {
+    const pathSegments = pageUrl.split('/').filter(Boolean);
+    console.log('🔍 CALCULATING SIDEBAR MENU - pathSegments:', pathSegments, 'pageUrl:', pageUrl);
+    
+    if (pathSegments.length === 1) {
+      // Only /[topmenu] - return first available sidebar menu
+      const visibleMenus = getVisibleSidebarMenus(activeTopMenu, userApps);
+      if (visibleMenus.length > 0) {
+        const firstMenu = visibleMenus[0].keyword;
+        console.log('🔧 Auto-selecting first sidebar menu:', firstMenu);
+        return firstMenu;
+      }
+    } else if (pathSegments.length >= 2) {
+      // /[topmenu]/[sidemenu] - return the sidemenu
+      const sidebarMenu = pathSegments[1];
+      console.log('🔧 Using sidebar menu from URL:', sidebarMenu, 'for path:', pageUrl);
+      
+      // Verify this sidebar menu exists in the visible menus
+      const visibleMenus = getVisibleSidebarMenus(activeTopMenu, userApps);
+      const menuExists = visibleMenus.some(menu => menu.keyword === sidebarMenu);
+      console.log('🔍 Menu exists check:', menuExists, 'available menus:', visibleMenus.map(m => m.keyword));
+      
+      if (menuExists) {
+        return sidebarMenu;
+      } else {
+        console.log('⚠️ Sidebar menu not found, falling back to first menu');
+        return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
+      }
+    }
+    
+    return null;
+  };
+  
+  const calculatedActiveSidebarMenu = getActiveSidebarMenu();
+  console.log('✅ Final active sidebar menu calculated:', calculatedActiveSidebarMenu);
 
   // Helper function to render icons (Tabler components or CSS classes)
   const renderIcon = (item: MenuItem) => {
-    console.log('RENDERING ICON FOR:', item.title, 'iconComponent:', !!item.iconComponent, 'iconClassName:', !!item.iconClassName);
-    
-    // FORCE show icons for debugging
-    if (item.title === 'Order Lines') {
-      return <IconClipboardList className="stroke-[1.5] w-[22px] h-[22px] text-red-500" />;
-    }
-    if (item.title === 'Order Items') {
-      return <IconPackage className="stroke-[1.5] w-[22px] h-[22px] text-blue-500" />;
-    }
-    if (item.title === 'Ship Detail') {
-      return <IconShip className="stroke-[1.5] w-[22px] h-[22px] text-green-500" />;
-    }
-    if (item.title === 'Customer Docs.') {
-      return <IconFileText className="stroke-[1.5] w-[22px] h-[22px] text-purple-500" />;
-    }
-    
     if (item.iconComponent) {
       const IconComponent = item.iconComponent;
       return <IconComponent className="stroke-[1.5] w-[22px] h-[22px]" />;
     } else if (item.iconClassName) {
       return <i className={`${item.iconClassName} w-[22px] h-[22px]`} />;
     }
-    return <div className="w-[22px] h-[22px] bg-yellow-500 text-white text-xs">?</div>;
+    return null;
   };
   
   // Use exact Luno state management pattern
@@ -81,29 +103,80 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   }, [menuRef]);
 
   const menuToggle = (key: number) => {
-    setMenuActive(menuActive === key ? null : key);
+    console.log('🖱️ MENU TOGGLE CLICKED:', key, 'current menuActive:', menuActive);
+    const newMenuActive = menuActive === key ? null : key;
+    console.log('🔄 Setting menuActive to:', newMenuActive);
+    setMenuActive(newMenuActive);
   };
 
-  // Get visible menus
-  const visibleMenus = activeTopMenu ? getVisibleSidebarMenus(activeTopMenu, userApps) : [];
-  console.log('USER APPS:', userApps);
-  console.log('ACTIVE TOP MENU:', activeTopMenu);
-  console.log('VISIBLE MENUS:', visibleMenus.map(m => m.title));
+  // If no userApps yet, try to get them from auth token directly
+  const effectiveUserApps = userApps.length > 0 ? userApps : (() => {
+    try {
+      const auth = getAuthToken();
+      return auth?.user_data?.apps || [];
+    } catch {
+      return [];
+    }
+  })();
 
-  // Auto-expand menus that contain the current route - exact Luno pattern
+  // Get visible menus using effective user apps
+  let visibleMenus = activeTopMenu ? getVisibleSidebarMenus(activeTopMenu, effectiveUserApps) : [];
+  
+  // Special case: if we're on overview page and no visible menus, show overview menu anyway
+  if (pageUrl === '/overview' && visibleMenus.length === 0) {
+    console.log('🔧 OVERVIEW FALLBACK: Showing overview menu for /overview page');
+    visibleMenus = getVisibleSidebarMenus('overview', effectiveUserApps);
+  }
+  console.log('🔍 SIDEBAR DEBUG:');
+  console.log('  USER APPS (from props):', userApps);
+  console.log('  EFFECTIVE USER APPS:', effectiveUserApps);
+  console.log('  ACTIVE TOP MENU:', activeTopMenu);
+  console.log('  CALCULATED ACTIVE SIDEBAR MENU:', calculatedActiveSidebarMenu);
+  console.log('  VISIBLE MENUS:', visibleMenus.map(m => ({ keyword: m.keyword, title: m.title })));
+  console.log('  PAGE URL:', pageUrl);
+  console.log('  SHOULD SHOW DYNAMIC MENU:', !!(activeTopMenu && visibleMenus.length > 0));
+  console.log('  CONDITION CHECK: !activeTopMenu =', !activeTopMenu, 'visibleMenus.length === 0 =', visibleMenus.length === 0);
+  console.log('  WILL HIGHLIGHT OVERVIEW:', calculatedActiveSidebarMenu === 'overview');
+  console.log('  WILL HIGHLIGHT NOTES:', calculatedActiveSidebarMenu === 'notes');
+
+  // Show loading if still no userApps and no activeTopMenu, but only for a short time
+  if (effectiveUserApps.length === 0 && !activeTopMenu && pageUrl !== '/overview') {
+    return (
+      <>
+        {/* Sidebar header - exact Luno structure */}
+        <div className='sidebar-header px-3 mb-6 flex items-center justify-between gap-2'>
+          <h4 className='sidebar-title text-[24px]/[30px] font-medium mb-0'>
+            <span className='sm-txt'>e</span><span>Factory</span>
+          </h4>
+        </div>
+        <div className='px-3'>
+          <div className='text-center py-8'>
+            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2'></div>
+            <p className='text-sm text-font-color-100'>Loading...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+
+  // Auto-expand menus that contain the current route - only on initial load
   useEffect(() => {
-    visibleMenus.forEach((item, index) => {
-      if (item.dropdownMenus) {
-        item.dropdownMenus.forEach((child) => {
-          if (child.route === pageUrl) {
-            setMenuActive(index);
-          }
-        });
-      } else if (item.route === pageUrl) {
-        setMenuActive(index);
-      }
-    });
-  }, [pageUrl, visibleMenus]);
+    // Only auto-expand if no menu is currently active (initial load)
+    if (menuActive === null) {
+      visibleMenus.forEach((item, index) => {
+        if (item.dropdownMenus) {
+          item.dropdownMenus.forEach((child) => {
+            if (child.route === pageUrl) {
+              setMenuActive(index);
+            }
+          });
+        } else if (item.route === pageUrl) {
+          setMenuActive(index);
+        }
+      });
+    }
+  }, [pageUrl, visibleMenus, menuActive]);
 
   return (
     <>
@@ -166,13 +239,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
           // Default customer menu when no top menu selected - exact Luno pattern
           <>
             <li className='devider py-3 menu-devider uppercase text-[12px]/[15px]'>
-              MAIN
+              {activeTopMenu ? activeTopMenu.toUpperCase() : 'MAIN'}
             </li>
             <li className='sidebar-listitem'>
               <Link 
-                href="/" 
+                href="/overview" 
                 onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }} 
-                className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === '/' ? 'text-secondary' : ''}`}
+                className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview' || calculatedActiveSidebarMenu === 'overview') ? 'text-secondary' : ''}`}
               >
                 <IconHome className="stroke-[1.5] w-[22px] h-[22px]" />
                 <span className='link'>Overview</span>
@@ -180,9 +253,9 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
             </li>
             <li className='sidebar-listitem'>
               <Link 
-                href="/personal-notes" 
+                href="/overview/notes" 
                 onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }} 
-                className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === '/personal-notes' ? 'text-secondary' : ''}`}
+                className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview/notes' || calculatedActiveSidebarMenu === 'notes') ? 'text-secondary' : ''}`}
               >
                 <IconPencil className="stroke-[1.5] w-[22px] h-[22px]" />
                 <span className='link'>Personal notes</span>
@@ -210,7 +283,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   <li key={key} className='sidebar-listitem'>
                     <button
                       onClick={() => menuToggle(key)}
-                      className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${menuActive === key ? 'text-secondary' : ''}`}
+                      className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || calculatedActiveSidebarMenu === item.keyword) ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
                       <span className='link'>{item.title}</span>
@@ -220,6 +293,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                       }
                     </button>
                     <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${menuActive === key ? 'block' : 'hidden'}`}>
+                      {console.log('🔍 DROPDOWN RENDER - key:', key, 'menuActive:', menuActive, 'should show:', menuActive === key)}
                       {item.dropdownMenus.map((sub, subKey) => (
                         <li key={subKey}>
                           <Link 
@@ -257,7 +331,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               <li key={key} className='sidebar-listitem'>
                 <button
                   onClick={() => menuToggle(key)}
-                  className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${menuActive === key ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || calculatedActiveSidebarMenu === item.keyword) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>
@@ -285,7 +359,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                 <Link 
                   href={item.route || '#'} 
                   onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
-                  className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.route ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${(pageUrl === item.route || calculatedActiveSidebarMenu === item.keyword) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>

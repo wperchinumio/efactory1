@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import { useNavigation } from '../../contexts/NavigationContext';
-import { topMenuConfig } from '../../config/navigation';
+import { topMenuConfig, sidebarConfigs } from '../../config/navigation';
 import { TopMenuConfig } from '../../types/api/auth';
 import {
   IconDots,
@@ -29,11 +29,13 @@ const TopMenu: React.FC = () => {
   const overflowRef = useRef<HTMLUListElement>(null);
   const overflowButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Filter menus based on user permissions
-  const allMenus = topMenuConfig.filter(menu => {
-    if (!menu.appIds || menu.appIds.length === 0) return true;
-    return menu.appIds.some(appId => userApps.includes(appId));
-  });
+  // Filter menus based on user permissions - memoized to prevent infinite re-renders
+  const allMenus = useMemo(() => {
+    return topMenuConfig.filter(menu => {
+      if (!menu.appIds || menu.appIds.length === 0) return true;
+      return menu.appIds.some(appId => userApps.includes(appId));
+    });
+  }, [userApps]);
 
   // Handle responsive menu overflow with debouncing
   useEffect(() => {
@@ -88,8 +90,40 @@ const TopMenu: React.FC = () => {
   }, []);
 
   const handleMenuClick = (menuKeyword: string) => {
+    console.log('🚀 TOP MENU CLICKED:', menuKeyword);
     setActiveTopMenu(menuKeyword);
     setShowOverflowMenu(false);
+    
+    // Get the first available sub-route for this top menu
+    const sidebarConfig = sidebarConfigs[menuKeyword];
+    if (sidebarConfig && sidebarConfig.menus && sidebarConfig.menus.length > 0) {
+      const firstMenu = sidebarConfig.menus[0];
+      let firstSubRoute = null;
+      
+      // Check if first menu has a direct route
+      if (firstMenu.route) {
+        firstSubRoute = firstMenu.route;
+      } 
+      // Check if first menu has dropdown menus
+      else if (firstMenu.dropdownMenus && firstMenu.dropdownMenus.length > 0) {
+        firstSubRoute = firstMenu.dropdownMenus[0].route;
+      }
+      
+      if (firstSubRoute) {
+        console.log('🚀 Navigating to first sub-route:', firstSubRoute);
+        console.log('🚀 Current URL before navigation:', router.asPath);
+        
+        router.push(firstSubRoute).then(() => {
+          console.log('✅ Navigation completed to:', firstSubRoute);
+        }).catch((error) => {
+          console.error('❌ Navigation failed:', error);
+        });
+      } else {
+        console.error('❌ No sub-routes found for top menu:', menuKeyword);
+      }
+    } else {
+      console.error('❌ No sidebar config found for top menu:', menuKeyword);
+    }
   };
 
   const toggleOverflowMenu = () => {
@@ -106,7 +140,10 @@ const TopMenu: React.FC = () => {
       {visibleMenus.map((menu) => (
         <button
           key={menu.keyword}
-          onClick={() => handleMenuClick(menu.keyword)}
+          onClick={() => {
+            console.log('🖱️ TOP MENU BUTTON CLICKED:', menu.keyword);
+            handleMenuClick(menu.keyword);
+          }}
           className={`
             flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
             ${activeTopMenu === menu.keyword

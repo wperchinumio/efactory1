@@ -160,15 +160,15 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
         keyword: 'overview',
         iconComponent: IconHome,
         title: 'Overview',
-        route: '/overview',
-        appIds: [1]
+        route: '/overview'
+        // No appIds - always visible like legacy system
       },
       {
         keyword: 'notes',
         iconComponent: IconPencil,
         title: 'Personal notes',
-        route: '/overview/notes',
-        appIds: [3]
+        route: '/overview/notes'
+        // No appIds - always visible like legacy system
       }
     ]
   },
@@ -1289,24 +1289,30 @@ export const getVisibleTopMenus = (userApps: number[]): TopMenuConfig[] => {
 // Helper function to get visible sidebar menus based on user apps
 export const getVisibleSidebarMenus = (sidebarKey: string, userApps: number[]): MenuItem[] => {
   const config = sidebarConfigs[sidebarKey];
-  if (!config) return [];
+  if (!config) {
+    console.log('❌ No sidebar config found for key:', sidebarKey);
+    return [];
+  }
 
-  return config.menus.filter(menu => {
+  console.log('🔍 Getting visible sidebar menus for:', sidebarKey, 'userApps:', userApps);
+  console.log('📋 Available menus:', config.menus.map(m => ({ title: m.title, appIds: m.appIds })));
+
+  const filteredMenus = config.menus.filter(menu => {
+    // If no appIds, always show (like legacy system)
+    if (!menu.appIds || menu.appIds.length === 0) {
+      console.log(`🔍 Menu "${menu.title}" - no appIds, always visible`);
+      return true;
+    }
+    
     // Check if menu has direct app IDs
-    if (menu.appIds && menu.appIds.length > 0) {
-      return menu.appIds.some(appId => userApps.includes(appId));
-    }
-    
-    // Check dropdown menus
-    if (menu.dropdownMenus && menu.dropdownMenus.length > 0) {
-      const visibleDropdownMenus = menu.dropdownMenus.filter(dropdown => 
-        dropdown.appId ? userApps.includes(dropdown.appId) : false
-      );
-      return visibleDropdownMenus.length > 0;
-    }
-    
-    return false;
-  }).map(menu => ({
+    const hasAccess = menu.appIds.some(appId => userApps.includes(appId));
+    console.log(`🔍 Menu "${menu.title}" (appIds: ${menu.appIds}) - hasAccess: ${hasAccess}`);
+    return hasAccess;
+  });
+
+  console.log('✅ Filtered menus:', filteredMenus.map(m => m.title));
+
+  return filteredMenus.map(menu => ({
     ...menu,
     dropdownMenus: menu.dropdownMenus?.filter(dropdown => 
       dropdown.appId ? userApps.includes(dropdown.appId) : false
@@ -1317,6 +1323,11 @@ export const getVisibleSidebarMenus = (sidebarKey: string, userApps: number[]): 
 // Helper function to determine which top menu should be active based on pathname
 export const getActiveTopMenu = (pathname: string, userApps: number[]): string | null => {
   const visibleMenus = getVisibleTopMenus(userApps);
+  
+  // Handle root path - return first available menu
+  if (pathname === '/') {
+    return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
+  }
   
   for (const menu of visibleMenus) {
     const sidebarConfig = sidebarConfigs[menu.sidebarConfig];
@@ -1333,6 +1344,16 @@ export const getActiveTopMenu = (pathname: string, userApps: number[]): string |
       if (hasMatchingRoute) {
         return menu.keyword;
       }
+    }
+  }
+  
+  // If no exact match, try to match by URL structure /(topmenu)/(sidemenu)
+  const pathSegments = pathname.split('/').filter(Boolean);
+  if (pathSegments.length >= 1) {
+    const topMenuKeyword = pathSegments[0];
+    const matchingMenu = visibleMenus.find(menu => menu.keyword === topMenuKeyword);
+    if (matchingMenu) {
+      return matchingMenu.keyword;
     }
   }
   

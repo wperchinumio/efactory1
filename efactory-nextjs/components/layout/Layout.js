@@ -57,21 +57,18 @@ export default function Layout({ children, userApps = [] }) {
     setIsAdmin(roles.includes('ADM'));
   }, []);
   
-  // Check if we're in a customer context (after selecting a customer or regular user login)
-  const isInCustomerPages = router.pathname.startsWith('/demo-navigation') || 
-                           router.pathname === '/' ||
-                           router.pathname.startsWith('/overview') ||
-                           router.pathname.startsWith('/orders') ||
-                           router.pathname.startsWith('/items');
-  
-  // Show new navigation ONLY if:
-  // 1. Not an admin user (regular customer login)
-  // 2. OR admin is in specific customer pages (after selecting a customer)
-  // 3. OR on demo page or root page (always show new navigation)
-  const isCustomerContext = (!isAdmin) || 
-                           (isAdmin && isInCustomerPages) || 
-                           router.pathname === '/demo-navigation' ||
-                           router.pathname === '/';
+  // Clear navigation logic:
+  // 1. If user is on /admin routes → show admin sidebar
+  // 2. Otherwise → show dynamic sidebar following /[topmenu]/[sidemenu] pattern
+  const isAdminRoute = router.pathname.startsWith('/admin');
+  const isCustomerContext = !isAdminRoute; // Everything except /admin routes
+
+  console.log('🔍 LAYOUT DEBUG:');
+  console.log('  router.pathname:', router.pathname);
+  console.log('  isAdminRoute:', isAdminRoute);
+  console.log('  isCustomerContext:', isCustomerContext);
+  console.log('  userApps:', userApps);
+  console.log('  WILL RENDER SIDEBAR:', isCustomerContext ? 'SidebarMenu (DYNAMIC)' : 'Sidebar (ADMIN)');
   
   // Don't render navigation until hydrated to avoid mismatch
   if (!isHydrated) {
@@ -88,6 +85,9 @@ export default function Layout({ children, userApps = [] }) {
     );
   }
 
+  console.log('🚀 LAYOUT RENDERED!');
+  console.log('🔍 LAYOUT - Providing userApps to NavigationProvider:', userApps);
+  
   return (
     <NavigationProvider userApps={userApps}>
       <div className='admin-wrapper overflow-hidden'>

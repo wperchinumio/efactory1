@@ -49,9 +49,9 @@ export default function App({ Component, pageProps }) {
     }
   }, [isAuthRoute, router]);
 
-  // For demo page and root page, provide the real user apps from auth token
+  // For all non-auth routes, provide the real user apps from auth token
   useEffect(() => {
-    if (!isAuthRoute && (router.pathname === '/demo-navigation' || router.pathname === '/')) {
+    if (!isAuthRoute) {
       const auth = getAuthToken();
       if (auth && auth.user_data && auth.user_data.apps) {
         setUserApps(auth.user_data.apps);
