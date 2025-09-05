@@ -419,7 +419,7 @@ export default function AdminAnalyticsByShipService() {
 
 	// ECharts bar chart options (horizontal bars like legacy)
 	const getBarChartOption = () => {
-		const categories = processedData.map((r) => r.name || r.id || '');
+		const categories = processedData.map((r) => r.name || r.id || '').reverse();
 		const series = [];
 		const dataKey = selectedDataset;
 		
@@ -428,7 +428,7 @@ export default function AdminAnalyticsByShipService() {
 			series.push({
 				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
 				type: 'bar',
-				data: processedData.map((r) => r.year_2?.[dataKey] ?? 0),
+				data: processedData.map((r) => r.year_2?.[dataKey] ?? 0).reverse(),
 				label: {
 					show: true,
 					position: 'right',
@@ -443,7 +443,7 @@ export default function AdminAnalyticsByShipService() {
 			series.push({
 				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
 				type: 'bar',
-				data: processedData.map((r) => r.year_1?.[dataKey] ?? 0),
+				data: processedData.map((r) => r.year_1?.[dataKey] ?? 0).reverse(),
 				label: {
 					show: true,
 					position: 'right',
@@ -461,7 +461,7 @@ export default function AdminAnalyticsByShipService() {
 		series.push({
 			name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
 			type: 'bar',
-			data: processedData.map((r) => r[dataKey] ?? 0),
+			data: processedData.map((r) => r[dataKey] ?? 0).reverse(),
 			label: {
 				show: true,
 				position: 'right',
@@ -912,61 +912,61 @@ export default function AdminAnalyticsByShipService() {
 
 													{/* Orders */}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 															{(row.year_2?.orders || 0).toLocaleString()}
 														</td>
 													)}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color">
 															{(row.year_1?.orders || 0).toLocaleString()}
 														</td>
 													)}
-													<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+													<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 														{(row.orders || 0).toLocaleString()}
 													</td>
 
 													{/* Lines */}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 															{(row.year_2?.lines || 0).toLocaleString()}
 														</td>
 													)}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color">
 															{(row.year_1?.lines || 0).toLocaleString()}
 														</td>
 													)}
-													<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+													<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 														{(row.lines || 0).toLocaleString()}
 													</td>
 
 													{/* Packages */}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 															{(row.year_2?.packages || 0).toLocaleString()}
 														</td>
 													)}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color">
 															{(row.year_1?.packages || 0).toLocaleString()}
 														</td>
 													)}
-													<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+													<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 														{(row.packages || 0).toLocaleString()}
 													</td>
 
 													{/* Units */}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 															{(row.year_2?.units || 0).toLocaleString()}
 														</td>
 													)}
 													{compareYears && (
-														<td className={`py-2 px-2 text-right text-[11px] text-font-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+														<td className="py-2 px-2 text-right text-[11px] text-font-color">
 															{(row.year_1?.units || 0).toLocaleString()}
 														</td>
 													)}
-													<td className={`py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+													<td className="py-2 px-2 text-right text-[11px] text-font-color border-l border-border-color">
 														{(row.units || 0).toLocaleString()}
 													</td>
 												</tr>
@@ -980,20 +980,20 @@ export default function AdminAnalyticsByShipService() {
 
 												{/* Orders Totals */}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_2?.orders || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_1?.orders || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
-												<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'orders' ? 'bg-primary-10' : ''}`}>
+												<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 													<span style={{color: '#6B7280'}}>
 														{processedData.reduce((sum, row) => sum + (row.orders || 0), 0).toLocaleString()}
 													</span>
@@ -1001,20 +1001,20 @@ export default function AdminAnalyticsByShipService() {
 
 												{/* Lines Totals */}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_2?.lines || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_1?.lines || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
-												<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'lines' ? 'bg-primary-10' : ''}`}>
+												<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 													<span style={{color: '#6B7280'}}>
 														{processedData.reduce((sum, row) => sum + (row.lines || 0), 0).toLocaleString()}
 													</span>
@@ -1022,20 +1022,20 @@ export default function AdminAnalyticsByShipService() {
 
 												{/* Packages Totals */}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_2?.packages || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_1?.packages || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
-												<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'packages' ? 'bg-primary-10' : ''}`}>
+												<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 													<span style={{color: '#6B7280'}}>
 														{processedData.reduce((sum, row) => sum + (row.packages || 0), 0).toLocaleString()}
 													</span>
@@ -1043,20 +1043,20 @@ export default function AdminAnalyticsByShipService() {
 
 												{/* Units Totals */}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_2?.units || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
 												{compareYears && (
-													<td className={`py-3 px-2 text-right text-[11px] font-bold ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+													<td className="py-3 px-2 text-right text-[11px] font-bold">
 														<span style={{color: '#6B7280'}}>
 															{processedData.reduce((sum, row) => sum + (row.year_1?.units || 0), 0).toLocaleString()}
 														</span>
 													</td>
 												)}
-												<td className={`py-3 px-2 text-right text-[11px] font-bold border-l border-border-color ${selectedDataset === 'units' ? 'bg-primary-10' : ''}`}>
+												<td className="py-3 px-2 text-right text-[11px] font-bold border-l border-border-color">
 													<span style={{color: '#6B7280'}}>
 														{processedData.reduce((sum, row) => sum + (row.units || 0), 0).toLocaleString()}
 													</span>
