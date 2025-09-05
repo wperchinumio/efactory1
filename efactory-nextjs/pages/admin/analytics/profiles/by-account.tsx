@@ -348,32 +348,68 @@ export default function AdminAnalyticsByAccount() {
 	// Use the new chart theme system
 	const { echartsThemeName, currentTheme, currentLunoTheme } = useChartTheme();
 
-	// Generate ECharts options - using theme system
+	// Generate ECharts options - using theme system with stacked columns
 	const getEChartsOption = () => {
 		if (!rows?.length || !timeHeaders?.length) return {};
 
 		const categories = rows.map((r) => r.name || r.id || '');
 		let series = [];
 
-		// Simple series for the selected dataset
-		series.push({
-			name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
-			type: 'bar',
-			data: rows.map((r) => r[selectedDataset] ?? 0),
-			animationDelay: 0,
-			label: {
-				show: false,
-				position: 'top',
-				fontSize: 11,
-				fontWeight: 'bold',
-				color: '#ffffff',
-				borderWidth: 0,
-				backgroundColor: 'transparent',
-				formatter: function(params: any) {
-					return params.value.toLocaleString();
+		// Create stacked columns for top 6 time periods + others
+		const topTimeHeaders = timeHeaders.slice(0, 6);
+		const hasOthers = timeHeaders.length > 6;
+
+		// Add top 6 time periods
+		topTimeHeaders.forEach((timeHeader, index) => {
+			series.push({
+				name: timeHeader.name || `Period ${index + 1}`,
+				type: 'bar',
+				stack: 'total',
+				data: rows.map((r) => {
+					// Get the data for this time period from the account's timeData
+					const timeData = r.timeData?.[index];
+					return timeData ? (timeData[selectedDataset] || 0) : 0;
+				}),
+				animationDelay: index * 100, // Stagger animation
+				label: {
+					show: false,
+					position: 'inside',
+					fontSize: 10,
+					fontWeight: 'bold',
+					color: '#ffffff',
+					formatter: function(params: any) {
+						return params.value > 0 ? params.value.toLocaleString() : '';
+					}
 				}
-			}
+			});
 		});
+
+		// Add "Others" series if there are more than 6 time periods
+		if (hasOthers) {
+			series.push({
+				name: 'Others',
+				type: 'bar',
+				stack: 'total',
+				data: rows.map((r) => {
+					// Sum up all time periods beyond the first 6
+					const othersData = r.timeData?.slice(6).reduce((acc: any, timeEntry: any) => {
+						return acc + (timeEntry[selectedDataset] || 0);
+					}, 0) || 0;
+					return othersData;
+				}),
+				animationDelay: 6 * 100, // Stagger animation
+				label: {
+					show: false,
+					position: 'inside',
+					fontSize: 10,
+					fontWeight: 'bold',
+					color: '#ffffff',
+					formatter: function(params: any) {
+						return params.value > 0 ? params.value.toLocaleString() : '';
+					}
+				}
+			});
+		}
 
 		return {
 			...getAnimationSettings(),
@@ -421,29 +457,28 @@ export default function AdminAnalyticsByAccount() {
 						${account.company_code || account.name || ''} - ${account.company_name || ''}
 					</div>`;
 					
-					if (params.length > 0) {
-						const seriesIndex = params[0].seriesIndex;
-						const timeHeader = timeHeaders[seriesIndex];
-						if (timeHeader) {
-							tooltip += `<div style="margin-bottom: 8px; padding: 8px; background-color: rgba(124, 58, 237, 0.1); border-radius: 4px;">
-								<div style="font-weight: 600;">Time: ${timeHeader.name || ''}</div>
-								<div style="font-size: 11px; opacity: 0.8;">From: ${timeHeader.from || ''}</div>
-								<div style="font-size: 11px; opacity: 0.8;">To: ${timeHeader.to || ''}</div>
-							</div>`;
-						}
-					}
-					
 					tooltip += `<div style="margin-bottom: 8px;">
 						<strong>Account #: ${account.name || account.id || ''}</strong>
 					</div>`;
 					
+					// Calculate total for this account
+					let total = 0;
 					params.forEach((param: any) => {
-						const datasetName = selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1);
-						tooltip += `<div style="margin-bottom: 4px; display: flex; align-items: center;">
-							<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; margin-right: 8px; border-radius: 2px;"></span>
-							<span>${datasetName}: </span>
-							<strong style="margin-left: 4px;">${param.value.toLocaleString()}</strong>
-						</div>`;
+						total += param.value || 0;
+					});
+					
+					tooltip += `<div style="margin-bottom: 8px; padding: 8px; background-color: rgba(124, 58, 237, 0.1); border-radius: 4px;">
+						<div style="font-weight: 600;">Total ${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)}: ${total.toLocaleString()}</div>
+					</div>`;
+					
+					params.forEach((param: any) => {
+						if (param.value > 0) {
+							tooltip += `<div style="margin-bottom: 4px; display: flex; align-items: center;">
+								<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; margin-right: 8px; border-radius: 2px;"></span>
+								<span>${param.seriesName}: </span>
+								<strong style="margin-left: 4px;">${param.value.toLocaleString()}</strong>
+							</div>`;
+						}
 					});
 
 					return tooltip;
@@ -451,7 +486,11 @@ export default function AdminAnalyticsByAccount() {
 			},
 			legend: {
 				type: 'scroll',
-				top: 0
+				top: 0,
+				left: 'center',
+				textStyle: {
+					fontSize: 11
+				}
 			},
 			xAxis: {
 				type: 'category',
@@ -862,7 +901,7 @@ export default function AdminAnalyticsByAccount() {
 									<thead className='bg-primary-5 border-b border-border-color'>
 										<tr className='text-center text-font-color text-[11px] font-bold uppercase tracking-wider border-b border-border-color'>
 											<th className='py-3 px-3 w-[60px] text-center'>#</th>
-											<th className='py-3 px-4 text-left w-[120px]'>
+											<th className='py-3 px-4 text-left w-[120px] whitespace-nowrap'>
 												<button
 													onClick={() => handleSort('name')}
 													className='flex items-center gap-1 hover:text-primary transition-colors'
@@ -875,7 +914,7 @@ export default function AdminAnalyticsByAccount() {
 													)}
 												</button>
 											</th>
-											<th className='py-3 px-4 text-left w-[120px]'>
+											<th className='py-3 px-4 text-left w-[120px] whitespace-nowrap'>
 												<button
 													onClick={() => handleSort('company_code')}
 													className='flex items-center gap-1 hover:text-primary transition-colors'
@@ -888,7 +927,7 @@ export default function AdminAnalyticsByAccount() {
 													)}
 												</button>
 											</th>
-											<th className='py-3 px-4 text-left w-[200px]'>
+											<th className='py-3 px-4 text-left min-w-[300px] whitespace-nowrap'>
 												<button
 													onClick={() => handleSort('company_name')}
 													className='flex items-center gap-1 hover:text-primary transition-colors'
@@ -901,15 +940,15 @@ export default function AdminAnalyticsByAccount() {
 													)}
 												</button>
 											</th>
-											{/* Dynamic time period columns */}
+											{/* Dynamic time period columns - All periods */}
 											{timeHeaders.map((header, index) => (
-												<th key={index} className='py-3 px-3 text-right w-[120px] border-l border-border-color'>
+												<th key={index} className='py-3 px-3 text-right w-[120px] border-l border-border-color whitespace-nowrap'>
 													<div className='text-[10px]'>{header.name}</div>
 												</th>
 											))}
-									</tr>
-								</thead>
-								<tbody>
+										</tr>
+									</thead>
+									<tbody>
 										{sortedRows.map((account, i) => (
 											<tr key={(account.id || account.name || i).toString()} className='border-b border-border-color hover:bg-primary-10 transition-colors'>
 												<td className='py-2 px-3 text-center text-font-color-100 text-[12px] font-medium'>{i + 1}</td>
@@ -922,7 +961,7 @@ export default function AdminAnalyticsByAccount() {
 												<td className='py-2 px-4'>
 													<div className='font-medium text-[13px] text-font-color'>{account.company_name}</div>
 												</td>
-												{/* Dynamic time period data columns */}
+												{/* All time period data columns */}
 												{account.timeData && account.timeData.map((timeEntry: any, timeIndex: number) => (
 													<td key={timeIndex} className='py-2 px-3 text-right border-l border-border-color'>
 														<div className='font-medium text-[13px] text-font-color'>
@@ -930,11 +969,11 @@ export default function AdminAnalyticsByAccount() {
 														</div>
 													</td>
 												))}
-										</tr>
-									))}
-								</tbody>
-							</table>
-						</div>
+											</tr>
+										))}
+									</tbody>
+								</table>
+							</div>
 						)}
 					</>
 				)}

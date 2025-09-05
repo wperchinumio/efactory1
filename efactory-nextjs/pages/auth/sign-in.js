@@ -171,12 +171,6 @@ export default function Signin() {
                             />
                             <label className="form-check-label" htmlFor="dcl_user">DCL User</label>
                         </div>
-                        <Link 
-                            href="/auth/forgot-password" 
-                            className={`text-primary sm:text-[16px]/[24px] text-[14px]/[20px] transition-opacity ${submitting ? 'opacity-50 pointer-events-none' : ''}`}
-                        >
-                            Forgot Password?
-                        </Link>
                     </div>
                     {error ? <div className='text-danger mb-4'>{error}</div> : null}
                     <button 
