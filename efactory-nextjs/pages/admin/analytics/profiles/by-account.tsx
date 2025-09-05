@@ -21,7 +21,12 @@ import {
 	IconBox,
 	IconChevronUp,
 	IconChevronDown,
-	IconSelector
+	IconSelector,
+	IconUsers,
+	IconBuilding,
+	IconArrowUp,
+	IconArrowDown,
+	IconMinus
 } from '@tabler/icons-react';
 import { 
 	TimeFilterCombobox,
@@ -278,15 +283,64 @@ export default function AdminAnalyticsByAccount() {
 	};
 
 	const stats = useMemo(() => {
-		if (!rows.length) return { totalOrders: 0, totalLines: 0, totalPackages: 0, totalUnits: 0 };
+		if (!rows.length) return { 
+			totalOrders: 0, 
+			totalLines: 0, 
+			totalPackages: 0, 
+			totalUnits: 0,
+			totalAccounts: 0,
+			uniqueCompanies: 0,
+			avgOrdersPerAccount: 0,
+			avgLinesPerAccount: 0
+		};
+		
+		const totalOrders = rows.reduce((sum, r) => sum + (r.orders || 0), 0);
+		const totalLines = rows.reduce((sum, r) => sum + (r.lines || 0), 0);
+		const totalPackages = rows.reduce((sum, r) => sum + (r.packages || 0), 0);
+		const totalUnits = rows.reduce((sum, r) => sum + (r.units || 0), 0);
+		const totalAccounts = rows.length;
+		const uniqueCompanies = new Set(rows.map(r => r.company_code).filter(Boolean)).size;
 		
 		return {
-			totalOrders: rows.reduce((sum, r) => sum + (r.orders || 0), 0),
-			totalLines: rows.reduce((sum, r) => sum + (r.lines || 0), 0),
-			totalPackages: rows.reduce((sum, r) => sum + (r.packages || 0), 0),
-			totalUnits: rows.reduce((sum, r) => sum + (r.units || 0), 0)
+			totalOrders,
+			totalLines,
+			totalPackages,
+			totalUnits,
+			totalAccounts,
+			uniqueCompanies,
+			avgOrdersPerAccount: totalAccounts > 0 ? totalOrders / totalAccounts : 0,
+			avgLinesPerAccount: totalAccounts > 0 ? totalLines / totalAccounts : 0
 		};
 	}, [rows]);
+
+	// Calculate growth metrics (comparing top half vs bottom half by selected dataset)
+	const growthMetrics = useMemo(() => {
+		if (rows.length < 4) return { ordersGrowth: 0, linesGrowth: 0, packagesGrowth: 0, unitsGrowth: 0 };
+		
+		// Sort by selected dataset to compare top performers vs bottom performers
+		const sortedByDataset = [...rows].sort((a, b) => (b[selectedDataset] || 0) - (a[selectedDataset] || 0));
+		const midPoint = Math.floor(sortedByDataset.length / 2);
+		const topHalf = sortedByDataset.slice(0, midPoint);
+		const bottomHalf = sortedByDataset.slice(midPoint);
+		
+		const topHalfOrders = topHalf.reduce((sum, r) => sum + (r.orders || 0), 0);
+		const bottomHalfOrders = bottomHalf.reduce((sum, r) => sum + (r.orders || 0), 0);
+		const ordersGrowth = bottomHalfOrders > 0 ? ((topHalfOrders - bottomHalfOrders) / bottomHalfOrders) * 100 : 0;
+		
+		const topHalfLines = topHalf.reduce((sum, r) => sum + (r.lines || 0), 0);
+		const bottomHalfLines = bottomHalf.reduce((sum, r) => sum + (r.lines || 0), 0);
+		const linesGrowth = bottomHalfLines > 0 ? ((topHalfLines - bottomHalfLines) / bottomHalfLines) * 100 : 0;
+		
+		const topHalfPackages = topHalf.reduce((sum, r) => sum + (r.packages || 0), 0);
+		const bottomHalfPackages = bottomHalf.reduce((sum, r) => sum + (r.packages || 0), 0);
+		const packagesGrowth = bottomHalfPackages > 0 ? ((topHalfPackages - bottomHalfPackages) / bottomHalfPackages) * 100 : 0;
+		
+		const topHalfUnits = topHalf.reduce((sum, r) => sum + (r.units || 0), 0);
+		const bottomHalfUnits = bottomHalf.reduce((sum, r) => sum + (r.units || 0), 0);
+		const unitsGrowth = bottomHalfUnits > 0 ? ((topHalfUnits - bottomHalfUnits) / bottomHalfUnits) * 100 : 0;
+		
+		return { ordersGrowth, linesGrowth, packagesGrowth, unitsGrowth };
+	}, [rows, selectedDataset]);
 
 	// ECharts component - dynamically imported for SSR compatibility
 	const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -459,6 +513,126 @@ export default function AdminAnalyticsByAccount() {
 				</div>
 			</div>
 
+			{/* Combined Metrics Grid - Single Row */}
+			{loaded && rows.length > 0 && (
+				<div className='mb-6'>
+					<div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3'>
+						{/* Total Orders with Growth */}
+						<div className='card bg-gradient-to-br from-primary to-primary-10 rounded-xl p-3 border border-primary'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalOrders.toLocaleString()}</div>
+									<div className='text-[10px]/[12px] text-white/80'>Total Orders</div>
+								</div>
+								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconShoppingCart className='w-[12px] h-[12px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[9px]/[11px] text-white/60'>
+									{stats.avgOrdersPerAccount.toFixed(0)} avg/account
+								</div>
+							</div>
+						</div>
+
+						{/* Total Lines with Growth */}
+						<div className='card bg-gradient-to-br from-success to-success-10 rounded-xl p-3 border border-success'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalLines.toLocaleString()}</div>
+									<div className='text-[10px]/[12px] text-white/80'>Total Lines</div>
+								</div>
+								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconList className='w-[12px] h-[12px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[9px]/[11px] text-white/60'>
+									{stats.avgLinesPerAccount.toFixed(0)} avg/account
+								</div>
+							</div>
+						</div>
+
+						{/* Total Packages with Growth */}
+						<div className='card bg-gradient-to-br from-warning to-warning-10 rounded-xl p-3 border border-warning'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalPackages.toLocaleString()}</div>
+									<div className='text-[10px]/[12px] text-white/80'>Total Packages</div>
+								</div>
+								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconPackage className='w-[12px] h-[12px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[9px]/[11px] text-white/60'>
+									{stats.totalPackages > 0 ? (stats.totalPackages / stats.totalAccounts).toFixed(0) : 0} avg/account
+								</div>
+							</div>
+						</div>
+
+						{/* Total Units with Growth */}
+						<div className='card bg-gradient-to-br from-info to-info-10 rounded-xl p-3 border border-info'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalUnits.toLocaleString()}</div>
+									<div className='text-[10px]/[12px] text-white/80'>Total Units</div>
+								</div>
+								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconBox className='w-[12px] h-[12px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[9px]/[11px] text-white/60'>
+									{stats.totalUnits > 0 ? (stats.totalUnits / stats.totalAccounts).toFixed(0) : 0} avg/account
+								</div>
+							</div>
+						</div>
+
+						{/* Total Accounts */}
+						<div className='card bg-gradient-to-br from-secondary to-secondary-10 rounded-xl p-3 border border-secondary'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalAccounts.toLocaleString()}</div>
+									<div className='text-[10px]/[12px] text-white/80'>Total Accounts</div>
+								</div>
+								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconUsers className='w-[12px] h-[12px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[9px]/[11px] text-white/60'>
+									Active accounts
+								</div>
+								<div className='text-[9px]/[11px] text-white/80 font-medium'>
+									100% active
+								</div>
+							</div>
+						</div>
+
+						{/* Unique Companies */}
+						<div className='card bg-gradient-to-br from-danger to-danger-10 rounded-xl p-3 border border-danger'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[16px]/[20px] font-bold text-white'>{stats.uniqueCompanies.toLocaleString()}</div>
+									<div className='text-[10px]/[12px] text-white/80'>Unique Companies</div>
+								</div>
+								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconBuilding className='w-[12px] h-[12px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[9px]/[11px] text-white/60'>
+									{stats.totalAccounts > 0 ? (stats.totalAccounts / stats.uniqueCompanies).toFixed(1) : 0} accounts/company
+								</div>
+								<div className='text-[9px]/[11px] text-white/80 font-medium'>
+									{stats.uniqueCompanies > 0 ? ((stats.uniqueCompanies / stats.totalAccounts) * 100).toFixed(1) : 0}% diversity
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 
 		<AnalyticsFilterHeader
 			viewMode={viewMode}
