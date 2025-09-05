@@ -21,10 +21,18 @@ alwaysApply: true
   - In AG Grid, fetch column defs and data separately and apply server-provided layout dynamically.
 
 # Architecture & Tooling
-- Next.js + TypeScript + TailwindCSS. Strict TS, ESLint + Prettier.
+- Next.js + TypeScript + TailwindCSS.
+- Strict TS, ESLint + Prettier.
 - Base API URL: `https://efactory.dclcorp.com`.
 - Infer request/response shapes from the legacy code and create **TypeScript interfaces**.
 - Implement **real authentication**; protect routes; no mock data.
 - Recreate all legacy pages/workflows with live APIs.
 
-- Give priority to create reusable components so when we fix/update a component the whole site will benefit.
+# Package Manager
+- Use **pnpm** for all installs, scripts, and lockfiles.
+- Do not use npm or yarn. Replace any instructions with `pnpm add`, `pnpm install`, etc.
+
+# Code Quality & Reuse
+- Give priority to creating **reusable components**.  
+- Shared UI elements (tables, forms, modals, buttons, etc.) should be abstracted into `components/` so that fixing/updating a component benefits the **entire site**.  
+- Avoid duplicating UI logic across pages; favor composition and reuse.
