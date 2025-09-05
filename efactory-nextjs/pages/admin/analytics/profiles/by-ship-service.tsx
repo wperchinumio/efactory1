@@ -18,7 +18,10 @@ import {
 	IconPackage,
 	IconShoppingCart,
 	IconList,
-	IconBox
+	IconBox,
+	IconArrowUp,
+	IconArrowDown,
+	IconMinus
 } from '@tabler/icons-react';
 import { 
 	ShippedDateFilterCombobox,
@@ -198,6 +201,39 @@ export default function AdminAnalyticsByShipService() {
 			totalPackages: acc.totalPackages + (row.packages || 0),
 			totalUnits: acc.totalUnits + (row.units || 0)
 		}), { totalOrders: 0, totalLines: 0, totalPackages: 0, totalUnits: 0 });
+	}, [rows]);
+
+	// Calculate additional metrics
+	const avgOrdersPerPeriod = rows.length > 0 ? stats.totalOrders / rows.length : 0;
+	const avgLinesPerPeriod = rows.length > 0 ? stats.totalLines / rows.length : 0;
+	const avgPackagesPerPeriod = rows.length > 0 ? stats.totalPackages / rows.length : 0;
+	const avgUnitsPerPeriod = rows.length > 0 ? stats.totalUnits / rows.length : 0;
+
+	// Calculate growth metrics (comparing first half vs second half)
+	const growthMetrics = useMemo(() => {
+		if (rows.length < 4) return { ordersGrowth: 0, linesGrowth: 0, packagesGrowth: 0, unitsGrowth: 0 };
+		
+		const midPoint = Math.floor(rows.length / 2);
+		const firstHalf = rows.slice(0, midPoint);
+		const secondHalf = rows.slice(midPoint);
+		
+		const firstHalfOrders = firstHalf.reduce((sum, r) => sum + (r.orders || 0), 0);
+		const secondHalfOrders = secondHalf.reduce((sum, r) => sum + (r.orders || 0), 0);
+		const ordersGrowth = firstHalfOrders > 0 ? ((secondHalfOrders - firstHalfOrders) / firstHalfOrders) * 100 : 0;
+		
+		const firstHalfLines = firstHalf.reduce((sum, r) => sum + (r.lines || 0), 0);
+		const secondHalfLines = secondHalf.reduce((sum, r) => sum + (r.lines || 0), 0);
+		const linesGrowth = firstHalfLines > 0 ? ((secondHalfLines - firstHalfLines) / firstHalfLines) * 100 : 0;
+		
+		const firstHalfPackages = firstHalf.reduce((sum, r) => sum + (r.packages || 0), 0);
+		const secondHalfPackages = secondHalf.reduce((sum, r) => sum + (r.packages || 0), 0);
+		const packagesGrowth = firstHalfPackages > 0 ? ((secondHalfPackages - firstHalfPackages) / firstHalfPackages) * 100 : 0;
+		
+		const firstHalfUnits = firstHalf.reduce((sum, r) => sum + (r.units || 0), 0);
+		const secondHalfUnits = secondHalf.reduce((sum, r) => sum + (r.units || 0), 0);
+		const unitsGrowth = firstHalfUnits > 0 ? ((secondHalfUnits - firstHalfUnits) / firstHalfUnits) * 100 : 0;
+		
+		return { ordersGrowth, linesGrowth, packagesGrowth, unitsGrowth };
 	}, [rows]);
 
 	// ECharts component - dynamically imported for SSR compatibility
@@ -443,6 +479,133 @@ export default function AdminAnalyticsByShipService() {
 					</div>
 				</div>
 			</div>
+
+			{/* Combined Metrics Grid */}
+			{loaded && rows.length > 0 && (
+				<div className='mb-6'>
+					<div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+						{/* Total Orders with Growth */}
+						<div className='card bg-gradient-to-br from-primary to-primary-10 rounded-xl p-4 border border-primary'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[20px]/[24px] font-bold text-white'>{stats.totalOrders.toLocaleString()}</div>
+									<div className='text-[11px]/[14px] text-white/80'>Total Orders</div>
+								</div>
+								<div className='w-[28px] h-[28px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconShoppingCart className='w-[14px] h-[14px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[10px]/[12px] text-white/60'>
+									{avgOrdersPerPeriod.toFixed(0)} avg/service
+								</div>
+								<div className='flex items-center gap-1'>
+									{growthMetrics.ordersGrowth > 0 ? (
+										<IconArrowUp className='w-[10px] h-[10px] text-white/80' />
+									) : growthMetrics.ordersGrowth < 0 ? (
+										<IconArrowDown className='w-[10px] h-[10px] text-white/80' />
+									) : (
+										<IconMinus className='w-[10px] h-[10px] text-white/80' />
+									)}
+									<span className='text-[10px]/[12px] text-white/80 font-medium'>
+										{growthMetrics.ordersGrowth > 0 ? '+' : ''}{growthMetrics.ordersGrowth.toFixed(1)}%
+									</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Total Lines with Growth */}
+						<div className='card bg-gradient-to-br from-success to-success-10 rounded-xl p-4 border border-success'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[20px]/[24px] font-bold text-white'>{stats.totalLines.toLocaleString()}</div>
+									<div className='text-[11px]/[14px] text-white/80'>Total Lines</div>
+								</div>
+								<div className='w-[28px] h-[28px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconList className='w-[14px] h-[14px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[10px]/[12px] text-white/60'>
+									{avgLinesPerPeriod.toFixed(0)} avg/service
+								</div>
+								<div className='flex items-center gap-1'>
+									{growthMetrics.linesGrowth > 0 ? (
+										<IconArrowUp className='w-[10px] h-[10px] text-white/80' />
+									) : growthMetrics.linesGrowth < 0 ? (
+										<IconArrowDown className='w-[10px] h-[10px] text-white/80' />
+									) : (
+										<IconMinus className='w-[10px] h-[10px] text-white/80' />
+									)}
+									<span className='text-[10px]/[12px] text-white/80 font-medium'>
+										{growthMetrics.linesGrowth > 0 ? '+' : ''}{growthMetrics.linesGrowth.toFixed(1)}%
+									</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Total Packages with Growth */}
+						<div className='card bg-gradient-to-br from-warning to-warning-10 rounded-xl p-4 border border-warning'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[20px]/[24px] font-bold text-white'>{stats.totalPackages.toLocaleString()}</div>
+									<div className='text-[11px]/[14px] text-white/80'>Total Packages</div>
+								</div>
+								<div className='w-[28px] h-[28px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconPackage className='w-[14px] h-[14px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[10px]/[12px] text-white/60'>
+									{avgPackagesPerPeriod.toFixed(0)} avg/service
+								</div>
+								<div className='flex items-center gap-1'>
+									{growthMetrics.packagesGrowth > 0 ? (
+										<IconArrowUp className='w-[10px] h-[10px] text-white/80' />
+									) : growthMetrics.packagesGrowth < 0 ? (
+										<IconArrowDown className='w-[10px] h-[10px] text-white/80' />
+									) : (
+										<IconMinus className='w-[10px] h-[10px] text-white/80' />
+									)}
+									<span className='text-[10px]/[12px] text-white/80 font-medium'>
+										{growthMetrics.packagesGrowth > 0 ? '+' : ''}{growthMetrics.packagesGrowth.toFixed(1)}%
+									</span>
+								</div>
+							</div>
+						</div>
+
+						{/* Total Units with Growth */}
+						<div className='card bg-gradient-to-br from-info to-info-10 rounded-xl p-4 border border-info'>
+							<div className='flex items-center justify-between mb-2'>
+								<div>
+									<div className='text-[20px]/[24px] font-bold text-white'>{stats.totalUnits.toLocaleString()}</div>
+									<div className='text-[11px]/[14px] text-white/80'>Total Units</div>
+								</div>
+								<div className='w-[28px] h-[28px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconBox className='w-[14px] h-[14px] text-white' />
+								</div>
+							</div>
+							<div className='flex items-center justify-between'>
+								<div className='text-[10px]/[12px] text-white/60'>
+									{avgUnitsPerPeriod.toFixed(0)} avg/service
+								</div>
+								<div className='flex items-center gap-1'>
+									{growthMetrics.unitsGrowth > 0 ? (
+										<IconArrowUp className='w-[10px] h-[10px] text-white/80' />
+									) : growthMetrics.unitsGrowth < 0 ? (
+										<IconArrowDown className='w-[10px] h-[10px] text-white/80' />
+									) : (
+										<IconMinus className='w-[10px] h-[10px] text-white/80' />
+									)}
+									<span className='text-[10px]/[12px] text-white/80 font-medium'>
+										{growthMetrics.unitsGrowth > 0 ? '+' : ''}{growthMetrics.unitsGrowth.toFixed(1)}%
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
 
 		<AnalyticsFilterHeader
 			viewMode={viewMode}
