@@ -28,7 +28,7 @@ import {
 	CountryFilterCombobox,
 	StateFilterCombobox
 } from '@/components/filters';
-import { AnalyticsFilterHeader } from '@/components/analytics';
+import { AnalyticsFilterHeader, ChartControls } from '@/components/analytics';
 
 interface ChartRow {
 	id?: string;
@@ -248,6 +248,7 @@ export default function AdminAnalyticsByTime() {
 			}
 		});
 
+		// Back to wonderland theme with textOutline fix
 		// Register light theme
 		echarts.registerTheme('wonderland-light', {
 			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
@@ -319,19 +320,29 @@ export default function AdminAnalyticsByTime() {
 			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
 			"backgroundColor": "rgba(0,0,0,0)",
 			"textStyle": {
-				"color": "#ffffff"
+				"color": "#ffffff",
+				"textBorderWidth": 0,
+				"textBorderColor": "transparent",
+				"textShadowBlur": 0,
+				"textShadowColor": "transparent"
 			},
 			"title": {
 				"textStyle": {
-					"color": "#ffffff"
+					"color": "#ffffff",
+					"textBorderWidth": 0,
+					"textBorderColor": "transparent"
 				},
 				"subtextStyle": {
-					"color": "#cccccc"
+					"color": "#cccccc",
+					"textBorderWidth": 0,
+					"textBorderColor": "transparent"
 				}
 			},
 			"legend": {
 				"textStyle": {
-					"color": "#ffffff"
+					"color": "#ffffff",
+					"textBorderWidth": 0,
+					"textBorderColor": "transparent"
 				}
 			},
 			"categoryAxis": {
@@ -347,7 +358,9 @@ export default function AdminAnalyticsByTime() {
 				},
 				"axisLabel": {
 					"textStyle": {
-						"color": "#cccccc"
+						"color": "#cccccc",
+						"textBorderWidth": 0,
+						"textBorderColor": "transparent"
 					}
 				},
 				"splitLine": {
@@ -369,7 +382,9 @@ export default function AdminAnalyticsByTime() {
 				},
 				"axisLabel": {
 					"textStyle": {
-						"color": "#cccccc"
+						"color": "#cccccc",
+						"textBorderWidth": 0,
+						"textBorderColor": "transparent"
 					}
 				},
 				"splitLine": {
@@ -377,7 +392,15 @@ export default function AdminAnalyticsByTime() {
 						"color": ["#333333"]
 					}
 				}
-			}
+			},
+			"series": [{
+				"label": {
+					"textBorderWidth": 0,
+					"textShadowBlur": 0,
+					"textBorderColor": "transparent",
+					"textShadowColor": "transparent"
+				}
+			}]
 		});
 
 		// Initial theme detection
@@ -402,6 +425,7 @@ export default function AdminAnalyticsByTime() {
 
 	// Generate ECharts options - using theme system with smooth animations
 	const getEChartsOption = () => {
+		console.log('getEChartsOption - currentTheme:', currentTheme);
 		if (!rows?.length) return {};
 
 		const categories = rows.map((r) => r.name || r.id || '');
@@ -415,13 +439,13 @@ export default function AdminAnalyticsByTime() {
 			smooth: showTrendLine,
 			animationDelay: (idx: number) => idx * 50, // Stagger animation
 			label: {
-				show: !showTrendLine, // Show labels only for bar charts
+				show: true,
 				position: 'top',
 				fontSize: 11,
 				fontWeight: 'bold',
-				color: currentTheme === 'dark' ? '#F3F4F6' : '#374151', // Theme-aware single color
-				borderWidth: 0,
-				backgroundColor: 'transparent',
+				...(currentTheme === 'dark' && {
+					textOutline: 'none'
+				}),
 				formatter: function(params: any) {
 					return params.value.toLocaleString();
 				}
@@ -437,13 +461,13 @@ export default function AdminAnalyticsByTime() {
 				smooth: showTrendLine,
 				animationDelay: (idx: number) => idx * 50 + 200,
 				label: {
-					show: !showTrendLine,
+					show: true,
 					position: 'top',
 					fontSize: 11,
 					fontWeight: 'bold',
-					color: currentTheme === 'dark' ? '#F3F4F6' : '#374151', // Theme-aware single color
-					borderWidth: 0,
-					backgroundColor: 'transparent',
+					...(currentTheme === 'dark' && {
+						textOutline: 'none'
+					}),
 					formatter: function(params: any) {
 						return params.value.toLocaleString();
 					}
@@ -457,13 +481,13 @@ export default function AdminAnalyticsByTime() {
 				smooth: showTrendLine,
 				animationDelay: (idx: number) => idx * 50 + 400,
 				label: {
-					show: !showTrendLine,
+					show: true,
 					position: 'top',
 					fontSize: 11,
 					fontWeight: 'bold',
-					color: currentTheme === 'dark' ? '#F3F4F6' : '#374151', // Theme-aware single color
-					borderWidth: 0,
-					backgroundColor: 'transparent',
+					...(currentTheme === 'dark' && {
+						textOutline: 'none'
+					}),
 					formatter: function(params: any) {
 						return params.value.toLocaleString();
 					}
@@ -802,63 +826,15 @@ export default function AdminAnalyticsByTime() {
 									/>
 								</div>
 								
-								{/* Chart Controls */}
-								<div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mt-6 p-4 bg-primary-5 border border-border-color rounded-lg'>
-									{/* Dataset Selection Buttons */}
-									<div className='flex-1'>
-										<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Dataset</label>
-										<div className='flex flex-wrap gap-2'>
-											{(['orders', 'lines', 'packages', 'units'] as const).map((dataset) => (
-												<button
-													key={dataset}
-													onClick={() => setSelectedDataset(dataset)}
-													className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-														selectedDataset === dataset
-															? 'bg-primary text-white shadow-sm'
-															: 'bg-card-bg border border-border-color text-font-color hover:bg-primary-10'
-													}`}
-												>
-													{dataset.charAt(0).toUpperCase() + dataset.slice(1)}
-												</button>
-											))}
-										</div>
-									</div>
-									
-									{/* Comparison Options */}
-									<div className='flex-1'>
-										<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Options</label>
-										<div className='space-y-3'>
-											<div className="form-check">
-												<input
-													type="checkbox"
-													id="compareYears"
-													checked={compareYears}
-													onChange={(e) => setCompareYears(e.target.checked)}
-													className="form-check-input"
-												/>
-												<label className="form-check-label" htmlFor="compareYears">
-													Compare to previous 2 years
-												</label>
-											</div>
-											<div className="form-check">
-												<input
-													type="checkbox"
-													id="showTrendLine"
-													checked={showTrendLine}
-													onChange={(e) => setShowTrendLine(e.target.checked)}
-													className="form-check-input"
-												/>
-												<label className="form-check-label" htmlFor="showTrendLine">
-													Show Trend Line
-												</label>
-											</div>
-										</div>
-									</div>
-									
-									{/* Active Filters Display */}
-									<div className='flex-1'>
-										<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Active Filters</label>
-										<div className='space-y-1 text-xs text-font-color-100'>
+								<ChartControls
+									selectedDataset={selectedDataset}
+									onDatasetChange={setSelectedDataset}
+									compareYears={compareYears}
+									onCompareYearsChange={setCompareYears}
+									showTrendLine={showTrendLine}
+									onShowTrendLineChange={setShowTrendLine}
+									activeFilters={
+										<>
 											<div>Time: {filters.timeWeekly.charAt(0).toUpperCase() + filters.timeWeekly.slice(1)}</div>
 											<div>Date: {filters.shippedDate === '-90D' ? 'Last 90 Days' : filters.shippedDate}</div>
 											{filters.warehouse.length > 0 && <div>Warehouses: {filters.warehouse.length} selected</div>}
@@ -867,9 +843,9 @@ export default function AdminAnalyticsByTime() {
 											{filters.channel.length > 0 && <div>Channels: {filters.channel.length} selected</div>}
 											{filters.country && <div>Country: {filters.country}</div>}
 											{filters.state && <div>State: {filters.state}</div>}
-										</div>
-									</div>
-								</div>
+										</>
+									}
+								/>
 							</div>
 						)}
 

@@ -31,7 +31,7 @@ import {
 	CountryFilterCombobox,
 	StateFilterCombobox
 } from '@/components/filters';
-import { AnalyticsFilterHeader } from '@/components/analytics';
+import { AnalyticsFilterHeader, ChartControls } from '@/components/analytics';
 
 interface ChartRow {
 	id?: string;
@@ -467,7 +467,19 @@ export default function AdminAnalyticsByAccount() {
 				type: showTrendLine ? 'line' : 'bar',
 				data: rows.map((r) => r[selectedDataset] ?? 0),
 				smooth: showTrendLine,
-				animationDelay: 0
+				animationDelay: 0,
+				label: {
+					show: !showTrendLine,
+					position: 'top',
+					fontSize: 11,
+					fontWeight: 'bold',
+					color: '#ffffff',
+					borderWidth: 0,
+					backgroundColor: 'transparent',
+					formatter: function(params: any) {
+						return params.value.toLocaleString();
+					}
+				}
 			});
 
 			if (compareYears) {
@@ -476,7 +488,22 @@ export default function AdminAnalyticsByAccount() {
 					type: showTrendLine ? 'line' : 'bar',
 					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)),
 					smooth: showTrendLine,
-					animationDelay: 200
+					animationDelay: 200,
+					label: {
+						show: false,
+						position: 'top',
+						fontSize: 11,
+						fontWeight: 'bold',
+						color: '#000000',
+						borderWidth: 1,
+						borderColor: '#ffffff',
+						backgroundColor: 'rgba(255, 255, 255, 0.8)',
+						padding: [2, 4],
+						borderRadius: 3,
+						formatter: function(params: any) {
+							return params.value.toLocaleString();
+						}
+					}
 				});
 
 				series.push({
@@ -484,7 +511,22 @@ export default function AdminAnalyticsByAccount() {
 					type: showTrendLine ? 'line' : 'bar',
 					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)),
 					smooth: showTrendLine,
-					animationDelay: 400
+					animationDelay: 400,
+					label: {
+						show: false,
+						position: 'top',
+						fontSize: 11,
+						fontWeight: 'bold',
+						color: '#000000',
+						borderWidth: 1,
+						borderColor: '#ffffff',
+						backgroundColor: 'rgba(255, 255, 255, 0.8)',
+						padding: [2, 4],
+						borderRadius: 3,
+						formatter: function(params: any) {
+							return params.value.toLocaleString();
+						}
+					}
 				});
 			}
 		} else {
@@ -503,7 +545,22 @@ export default function AdminAnalyticsByAccount() {
 						const timeData = account.timeData?.[timeIndex];
 						return timeData?.[selectedDataset] ?? 0;
 					}),
-					animationDelay: timeIndex * 100
+					animationDelay: timeIndex * 100,
+					label: {
+						show: false,
+						position: 'inside',
+						fontSize: 10,
+						fontWeight: 'bold',
+						color: '#000000',
+						borderWidth: 1,
+						borderColor: '#ffffff',
+						backgroundColor: 'rgba(255, 255, 255, 0.8)',
+						padding: [2, 4],
+						borderRadius: 3,
+						formatter: function(params: any) {
+							return params.value > 0 ? params.value.toLocaleString() : '';
+						}
+					}
 				});
 			}
 		}
@@ -826,63 +883,15 @@ export default function AdminAnalyticsByAccount() {
 									/>
 								</div>
 								
-								{/* Chart Controls */}
-								<div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mt-6 p-4 bg-primary-5 border border-border-color rounded-lg'>
-									{/* Dataset Selection Buttons */}
-									<div className='flex-1'>
-										<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Dataset</label>
-										<div className='flex flex-wrap gap-2'>
-											{(['orders', 'lines', 'packages', 'units'] as const).map((dataset) => (
-												<button
-													key={dataset}
-													onClick={() => setSelectedDataset(dataset)}
-													className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-														selectedDataset === dataset
-															? 'bg-primary text-white shadow-sm'
-															: 'bg-card-bg border border-border-color text-font-color hover:bg-primary-10'
-													}`}
-												>
-													{dataset.charAt(0).toUpperCase() + dataset.slice(1)}
-												</button>
-											))}
-										</div>
-									</div>
-									
-									{/* Comparison Options */}
-									<div className='flex-1'>
-										<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Options</label>
-										<div className='space-y-3'>
-											<div className="form-check">
-												<input
-													type="checkbox"
-													id="compareYears"
-													checked={compareYears}
-													onChange={(e) => setCompareYears(e.target.checked)}
-													className="form-check-input"
-												/>
-												<label className="form-check-label" htmlFor="compareYears">
-													Compare to previous 2 years
-												</label>
-											</div>
-											<div className="form-check">
-												<input
-													type="checkbox"
-													id="showTrendLine"
-													checked={showTrendLine}
-													onChange={(e) => setShowTrendLine(e.target.checked)}
-													className="form-check-input"
-												/>
-												<label className="form-check-label" htmlFor="showTrendLine">
-													Show Trend Line
-												</label>
-											</div>
-										</div>
-									</div>
-									
-									{/* Active Filters Display */}
-									<div className='flex-1'>
-										<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Active Filters</label>
-										<div className='space-y-1 text-xs text-font-color-100'>
+								<ChartControls
+									selectedDataset={selectedDataset}
+									onDatasetChange={setSelectedDataset}
+									compareYears={compareYears}
+									onCompareYearsChange={setCompareYears}
+									showTrendLine={showTrendLine}
+									onShowTrendLineChange={setShowTrendLine}
+									activeFilters={
+										<>
 											<div>Time: {filters.timeWeekly.charAt(0).toUpperCase() + filters.timeWeekly.slice(1)}</div>
 											<div>Date: {filters.shippedDate === '-90D' ? 'Last 90 Days' : filters.shippedDate}</div>
 											{filters.warehouse.length > 0 && <div>Warehouses: {filters.warehouse.length} selected</div>}
@@ -891,9 +900,9 @@ export default function AdminAnalyticsByAccount() {
 											{filters.channel.length > 0 && <div>Channels: {filters.channel.length} selected</div>}
 											{filters.country && <div>Country: {filters.country}</div>}
 											{filters.state && <div>State: {filters.state}</div>}
-										</div>
-									</div>
-								</div>
+										</>
+									}
+								/>
 							</div>
 						)}
 

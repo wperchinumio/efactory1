@@ -23,7 +23,7 @@ import {
 	CountryFilterCombobox,
 	StateFilterCombobox
 } from '@/components/filters';
-import { AnalyticsFilterHeader } from '@/components/analytics';
+import { AnalyticsFilterHeader, ChartControls } from '@/components/analytics';
 
 interface ChartRow {
 	id?: string;
@@ -412,9 +412,6 @@ export default function AdminAnalyticsByChannel() {
 					fontSize: 11,
 					fontWeight: 'bold',
 					formatter: (params: any) => params.value.toLocaleString(),
-					color: '#ffffff',
-					borderWidth: 0,
-					backgroundColor: 'transparent'
 				}
 			});
 			series.push({
@@ -427,9 +424,6 @@ export default function AdminAnalyticsByChannel() {
 					fontSize: 11,
 					fontWeight: 'bold',
 					formatter: (params: any) => params.value.toLocaleString(),
-					color: '#ffffff',
-					borderWidth: 0,
-					backgroundColor: 'transparent'
 				}
 			});
 		}
@@ -445,9 +439,6 @@ export default function AdminAnalyticsByChannel() {
 				fontSize: 11,
 				fontWeight: 'bold',
 				formatter: (params: any) => params.value.toLocaleString(),
-				color: '#ffffff',
-				borderWidth: 0,
-				backgroundColor: 'transparent'
 			}
 		});
 
@@ -532,9 +523,6 @@ export default function AdminAnalyticsByChannel() {
 						formatter: '{d}%',
 						fontSize: 10,
 						fontWeight: 'bold',
-						color: '#ffffff',
-						borderWidth: 0,
-						backgroundColor: 'transparent'
 					},
 					labelLine: {
 						show: true
@@ -749,54 +737,21 @@ export default function AdminAnalyticsByChannel() {
 										</div>
 									</div>
 
-									{/* Chart Controls */}
-									<div className='flex flex-wrap items-center gap-4 p-4 bg-primary-5 rounded-lg'>
-										{/* Dataset Selection Buttons */}
-										<div className='flex items-center gap-2'>
-											<span className='text-[12px] font-medium text-font-color-100'>Dataset:</span>
-											{(['orders', 'lines', 'packages', 'units'] as const).map((dataset) => (
-												<button
-													key={dataset}
-													onClick={() => setSelectedDataset(dataset)}
-													className={`px-3 py-1.5 text-[11px] font-medium rounded transition-colors ${
-														selectedDataset === dataset
-															? 'bg-primary text-white'
-															: 'bg-card-color text-font-color-100 hover:bg-primary-10'
-													}`}
-												>
-													{dataset.charAt(0).toUpperCase() + dataset.slice(1)}
-												</button>
-											))}
-										</div>
-
-										{/* Comparison Options */}
-										<div className='flex items-center gap-4'>
-											<div className='form-check'>
-												<input
-													type='checkbox'
-													id='compareYears'
-													className='form-check-input'
-													checked={compareYears}
-													onChange={(e) => setCompareYears(e.target.checked)}
-												/>
-												<label htmlFor='compareYears' className='form-check-label text-[12px] text-font-color'>
-													Compare to previous 2 years
-												</label>
-											</div>
-										</div>
-
-										{/* Active Filters Display */}
-										<div className='ml-auto'>
-											<div className='text-[10px] text-font-color-100 mb-1'>Active Filters:</div>
-											<div className='text-[11px] text-font-color'>
+									<ChartControls
+										selectedDataset={selectedDataset}
+										onDatasetChange={setSelectedDataset}
+										compareYears={compareYears}
+										onCompareYearsChange={setCompareYears}
+										activeFilters={
+											<>
 												<div>Date: {filters.shippedDate === '-90D' ? 'Last 90 Days' : filters.shippedDate}</div>
 												{filters.warehouse.length > 0 && <div>Warehouses: {filters.warehouse.length} selected</div>}
 												{filters.account.length > 0 && <div>Accounts: {filters.account.length} selected</div>}
 												{filters.country && <div>Country: {filters.country}</div>}
 												{filters.state && <div>State: {filters.state}</div>}
-											</div>
-										</div>
-									</div>
+											</>
+										}
+									/>
 								</div>
 							</div>
 						)}
