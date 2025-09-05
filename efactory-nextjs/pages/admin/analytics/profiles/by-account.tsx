@@ -942,7 +942,7 @@ export default function AdminAnalyticsByAccount() {
 											</th>
 											{/* Dynamic time period columns - All periods */}
 											{timeHeaders.map((header, index) => (
-												<th key={index} className='py-3 px-3 text-right w-[120px] border-l border-border-color whitespace-nowrap'>
+												<th key={index} className='py-3 px-3 text-right w-[120px] whitespace-nowrap'>
 													<div className='text-[10px]'>{header.name}</div>
 												</th>
 											))}
@@ -963,7 +963,7 @@ export default function AdminAnalyticsByAccount() {
 												</td>
 												{/* All time period data columns */}
 												{account.timeData && account.timeData.map((timeEntry: any, timeIndex: number) => (
-													<td key={timeIndex} className='py-2 px-3 text-right border-l border-border-color'>
+													<td key={timeIndex} className='py-2 px-3 text-right'>
 														<div className='font-medium text-[13px] text-font-color'>
 															{(timeEntry[selectedDataset] || 0).toLocaleString()}
 														</div>
