@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
 import { 
@@ -76,6 +76,7 @@ function LicenseSummaryPageInner() {
 	const [sortField, setSortField] = useState<keyof LicenseSummaryRow>('policy_code');
 	const [direction, setDirection] = useState<SortDirection>('asc');
 	const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	async function load() {
 		setLoading(true);
@@ -95,6 +96,13 @@ function LicenseSummaryPageInner() {
 	useEffect(() => {
 		load();
 	}, [period.month, period.year]);
+
+	// Auto-focus search input on page load and data refresh
+	useEffect(() => {
+		if (loaded && searchInputRef.current) {
+			searchInputRef.current.focus();
+		}
+	}, [loaded]);
 
 	const filteredSorted = useMemo(() => {
 		const q = filter.trim().toLowerCase();
@@ -452,6 +460,7 @@ function LicenseSummaryPageInner() {
 								<div className='relative flex-1 max-w-md'>
 									<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
 									<input 
+										ref={searchInputRef}
 										className='form-control pl-9 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors' 
 										placeholder='Search customers...' 
 										value={filter} 
