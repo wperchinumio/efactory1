@@ -46,6 +46,7 @@ function LoginUserPageInner() {
 	const [sortField, setSortField] = useState<'company' | 'location' | 'edi'>('company');
 	const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 	const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+	const [analyticsView, setAnalyticsView] = useState<'edi' | 'complexity' | 'activity'>('complexity');
 	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
@@ -140,15 +141,53 @@ function LoginUserPageInner() {
 		.sort(([,a], [,b]) => b - a)
 		.slice(0, 5);
 
-	// Company distribution
-	const companyDistribution = accounts.reduce((acc, account) => {
+	// EDI vs Standard distribution by company
+	const companyEDIDistribution = accounts.reduce((acc, account) => {
 		const company = account.company.replace(/^\d+\s*-\s*/, '');
-		acc[company] = (acc[company] || 0) + 1;
+		if (!acc[company]) {
+			acc[company] = { total: 0, edi: 0, standard: 0 };
+		}
+		acc[company].total += 1;
+		if (account.is_EDI) {
+			acc[company].edi += 1;
+		} else {
+			acc[company].standard += 1;
+		}
 		return acc;
-	}, {} as Record<string, number>);
+	}, {} as Record<string, { total: number; edi: number; standard: number }>);
 
-	const topCompanies = Object.entries(companyDistribution)
-		.sort(([,a], [,b]) => b - a)
+	// Most EDI-enabled companies (companies with highest EDI percentage)
+	const ediEnabledCompanies = Object.entries(companyEDIDistribution)
+		.map(([company, data]) => ({
+			company,
+			...data,
+			ediPercentage: (data.edi / data.total) * 100
+		}))
+		.filter(item => item.total >= 2) // Only companies with 2+ accounts
+		.sort((a, b) => b.ediPercentage - a.ediPercentage)
+		.slice(0, 5);
+
+	// Account complexity analysis (accounts with most locations)
+	const accountComplexity = accounts
+		.map(account => ({
+			username: account.username,
+			company: account.company.replace(/^\d+\s*-\s*/, ''),
+			locationCount: account.location ? account.location.split(',').filter(l => l.trim()).length : 0,
+			isEDI: account.is_EDI
+		}))
+		.sort((a, b) => b.locationCount - a.locationCount)
+		.slice(0, 5);
+
+	// Recent activity simulation (based on account characteristics)
+	const recentActivity = accounts
+		.map(account => ({
+			username: account.username,
+			company: account.company.replace(/^\d+\s*-\s*/, ''),
+			activityScore: (account.is_EDI ? 85 : 60) + (account.location ? account.location.split(',').length * 5 : 0),
+			lastActivity: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random within last week
+			isEDI: account.is_EDI
+		}))
+		.sort((a, b) => b.activityScore - a.activityScore)
 		.slice(0, 5);
 
 	return (
@@ -227,9 +266,6 @@ function LoginUserPageInner() {
 								<div>
 									<div className='text-[32px]/[40px] font-bold text-white'>{uniqueCompanies}</div>
 									<div className='text-[14px]/[20px] text-white/80'>Unique Companies</div>
-									<div className='text-[12px]/[16px] text-white/60'>
-										{(totalAccounts / uniqueCompanies).toFixed(1)} accounts/company
-									</div>
 								</div>
 								<div className='w-[48px] h-[48px] bg-white/20 rounded-lg flex items-center justify-center'>
 									<IconBuilding className='w-[24px] h-[24px] text-white' />
@@ -244,7 +280,7 @@ function LoginUserPageInner() {
 									<div className='text-[32px]/[40px] font-bold text-white'>{uniqueLocations}</div>
 									<div className='text-[14px]/[20px] text-white/80'>Active Locations</div>
 									<div className='text-[12px]/[16px] text-white/60'>
-										{(allLocations.length / uniqueLocations).toFixed(1)} avg/location
+										{(allLocations.length / uniqueLocations).toFixed(1)} avg accounts per location
 									</div>
 								</div>
 								<div className='w-[48px] h-[48px] bg-white/20 rounded-lg flex items-center justify-center'>
@@ -287,31 +323,39 @@ function LoginUserPageInner() {
 							</div>
 						</div>
 
-						{/* Top Companies */}
+						{/* Account Distribution Analysis */}
 						<div className='card bg-card-color rounded-xl p-6 border border-dashed border-border-color'>
 							<div className='flex items-center gap-3 mb-4'>
-								<div className='w-[32px] h-[32px] bg-success-10 rounded-lg flex items-center justify-center'>
-									<IconBuilding className='w-[16px] h-[16px] text-success' />
+								<div className='w-[32px] h-[32px] bg-info-10 rounded-lg flex items-center justify-center'>
+									<IconMapPin className='w-[16px] h-[16px] text-info' />
 								</div>
-								<h3 className='text-[16px]/[22px] font-semibold text-font-color'>Top Companies</h3>
+								<h3 className='text-[16px]/[22px] font-semibold text-font-color'>
+									Multi-Location Accounts
+								</h3>
 							</div>
 							<div className='space-y-3'>
-								{topCompanies.map(([company, count], index) => (
-									<div key={company} className='flex items-center justify-between'>
+								{accountComplexity.map((item, index) => (
+									<div key={item.username} className='flex items-center justify-between'>
 										<div className='flex items-center gap-3'>
-											<div className='w-[24px] h-[24px] bg-success text-white rounded-md flex items-center justify-center text-[12px] font-bold'>
+											<div className='w-[24px] h-[24px] bg-info text-white rounded-md flex items-center justify-center text-[12px] font-bold'>
 												{index + 1}
 											</div>
-											<span className='text-[14px]/[18px] text-font-color font-medium truncate'>{company}</span>
+											<div className='min-w-0'>
+												<div className='text-[14px]/[18px] text-font-color font-medium truncate'>{item.username}</div>
+												<div className='text-[11px]/[14px] text-font-color-100 truncate'>{item.company}</div>
+											</div>
 										</div>
 										<div className='flex items-center gap-2'>
-											<div className='w-[60px] bg-success-10 rounded-full h-2'>
+											<div className='w-[60px] bg-info-10 rounded-full h-2'>
 												<div 
-													className='bg-success h-2 rounded-full' 
-													style={{ width: `${(count / topCompanies[0][1]) * 100}%` }}
+													className='bg-info h-2 rounded-full' 
+													style={{ width: `${(item.locationCount / accountComplexity[0].locationCount) * 100}%` }}
 												/>
 											</div>
-											<span className='text-[12px]/[16px] text-font-color-100 font-mono'>{count}</span>
+											<div className='text-right'>
+												<div className='text-[12px]/[16px] text-font-color-100 font-mono'>{item.locationCount}</div>
+												<div className='text-[10px]/[12px] text-font-color-100'>locations</div>
+											</div>
 										</div>
 									</div>
 								))}
@@ -448,9 +492,15 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 				</div>
 				<div className='flex items-center gap-2'>
 					{account.is_EDI ? (
-						<IconShield className='w-[16px] h-[16px] text-success' />
+						<>
+							<IconShield className='w-[16px] h-[16px] text-success' />
+							<span className='text-[12px]/[16px] text-success font-medium'>EDI</span>
+						</>
 					) : (
-						<IconUsers className='w-[16px] h-[16px] text-font-color-100' />
+						<>
+							<IconUsers className='w-[16px] h-[16px] text-font-color-100' />
+							<span className='text-[12px]/[16px] text-font-color-100'>STD</span>
+						</>
 					)}
 				</div>
 			</div>
