@@ -41,21 +41,29 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         return firstMenu;
       }
     } else if (pathSegments.length >= 2) {
-      // /[topmenu]/[sidemenu] - return the sidemenu
-      const sidebarMenu = pathSegments[1];
-      console.log('🔧 Using sidebar menu from URL:', sidebarMenu, 'for path:', pageUrl);
-      
-      // Verify this sidebar menu exists in the visible menus
+      // Find the sidebar menu that contains the current route
       const visibleMenus = getVisibleSidebarMenus(activeTopMenu, userApps);
-      const menuExists = visibleMenus.some(menu => menu.keyword === sidebarMenu);
-      console.log('🔍 Menu exists check:', menuExists, 'available menus:', visibleMenus.map(m => m.keyword));
+      console.log('🔍 Searching for route in visible menus:', visibleMenus.map(m => ({ keyword: m.keyword, title: m.title })));
       
-      if (menuExists) {
-        return sidebarMenu;
-      } else {
-        console.log('⚠️ Sidebar menu not found, falling back to first menu');
-        return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
+      for (const menu of visibleMenus) {
+        // Check if this menu has the current route
+        if (menu.route === pageUrl) {
+          console.log('🔧 Found direct route match:', menu.keyword);
+          return menu.keyword;
+        }
+        
+        // Check if any dropdown menu has the current route
+        if (menu.dropdownMenus) {
+          const matchingDropdown = menu.dropdownMenus.find(dropdown => dropdown.route === pageUrl);
+          if (matchingDropdown) {
+            console.log('🔧 Found dropdown route match:', menu.keyword, 'for route:', pageUrl);
+            return menu.keyword;
+          }
+        }
       }
+      
+      console.log('⚠️ No sidebar menu found for route:', pageUrl, 'falling back to first menu');
+      return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
     }
     
     return null;
