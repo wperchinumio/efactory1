@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
 import { exportAnalyticsReport } from '@/lib/exportUtils';
+import * as echarts from 'echarts';
 import { 
 	IconCalendar, 
 	IconDownload, 
@@ -284,25 +285,173 @@ export default function AdminAnalyticsByAccount() {
 	// ECharts component - dynamically imported for SSR compatibility
 	const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
-	// Generate ECharts options - simple and fast
+	// Detect current theme and register custom themes
+	const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+
+	useEffect(() => {
+		// Detect system preference and current theme
+		const detectTheme = () => {
+			const htmlElement = document.documentElement;
+			const dataTheme = htmlElement.getAttribute('data-theme');
+			
+			if (dataTheme === 'dark') {
+				setCurrentTheme('dark');
+			} else {
+				setCurrentTheme('light');
+			}
+		};
+
+		// Register custom light theme
+		echarts.registerTheme('luno-light', {
+			color: [
+				'#7C3AED', '#DC2626', '#059669', '#D97706', '#2563EB',
+				'#DB2777', '#0891B2', '#65A30D', '#EA580C', '#7C2D12'
+			],
+			backgroundColor: 'transparent',
+			textStyle: {
+				color: '#374151',
+				fontSize: 12
+			},
+			title: {
+				textStyle: {
+					color: '#1F2937'
+				}
+			},
+			legend: {
+				textStyle: {
+					color: '#374151'
+				}
+			},
+			categoryAxis: {
+				axisLine: {
+					lineStyle: {
+						color: '#E5E7EB'
+					}
+				},
+				axisTick: {
+					lineStyle: {
+						color: '#E5E7EB'
+					}
+				},
+				axisLabel: {
+					color: '#6B7280'
+				},
+				splitLine: {
+					lineStyle: {
+						color: '#F3F4F6'
+					}
+				}
+			},
+			valueAxis: {
+				axisLine: {
+					lineStyle: {
+						color: '#E5E7EB'
+					}
+				},
+				axisTick: {
+					lineStyle: {
+						color: '#E5E7EB'
+					}
+				},
+				axisLabel: {
+					color: '#6B7280'
+				},
+				splitLine: {
+					lineStyle: {
+						color: '#F3F4F6'
+					}
+				}
+			}
+		});
+
+		// Register custom dark theme
+		echarts.registerTheme('luno-dark', {
+			color: [
+				'#8B5CF6', '#F87171', '#34D399', '#FBBF24', '#60A5FA',
+				'#F472B6', '#22D3EE', '#A3E635', '#FB923C', '#A78BFA'
+			],
+			backgroundColor: 'transparent',
+			textStyle: {
+				color: '#F3F4F6',
+				fontSize: 12
+			},
+			title: {
+				textStyle: {
+					color: '#F9FAFB'
+				}
+			},
+			legend: {
+				textStyle: {
+					color: '#F3F4F6'
+				}
+			},
+			categoryAxis: {
+				axisLine: {
+					lineStyle: {
+						color: '#4B5563'
+					}
+				},
+				axisTick: {
+					lineStyle: {
+						color: '#4B5563'
+					}
+				},
+				axisLabel: {
+					color: '#9CA3AF'
+				},
+				splitLine: {
+					lineStyle: {
+						color: '#374151'
+					}
+				}
+			},
+			valueAxis: {
+				axisLine: {
+					lineStyle: {
+						color: '#4B5563'
+					}
+				},
+				axisTick: {
+					lineStyle: {
+						color: '#4B5563'
+					}
+				},
+				axisLabel: {
+					color: '#9CA3AF'
+				},
+				splitLine: {
+					lineStyle: {
+						color: '#374151'
+					}
+				}
+			}
+		});
+
+		// Initial theme detection
+		detectTheme();
+
+		// Watch for theme changes
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+					detectTheme();
+				}
+			});
+		});
+
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme']
+		});
+
+		return () => observer.disconnect();
+	}, []);
+
+	// Generate ECharts options - using theme system
 	const getEChartsOption = () => {
 		if (!rows?.length || !timeHeaders?.length) return {};
 
 		const categories = rows.map((r) => r.name || r.id || '');
-		// Clean, professional colors that work perfectly in both light and dark modes
-		const colors = [
-			'#7C3AED', // Purple - Primary brand color
-			'#DC2626', // Red
-			'#059669', // Green
-			'#D97706', // Orange
-			'#2563EB', // Blue
-			'#DB2777', // Pink
-			'#0891B2', // Cyan
-			'#65A30D', // Lime
-			'#EA580C', // Orange Red
-			'#7C2D12'  // Brown
-		];
-
 		let series = [];
 
 		if (showTrendLine || compareYears) {
@@ -311,8 +460,7 @@ export default function AdminAnalyticsByAccount() {
 				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
 				type: showTrendLine ? 'line' : 'bar',
 				data: rows.map((r) => r[selectedDataset] ?? 0),
-				smooth: showTrendLine,
-				itemStyle: { color: colors[0] }
+				smooth: showTrendLine
 			});
 
 			if (compareYears) {
@@ -320,16 +468,14 @@ export default function AdminAnalyticsByAccount() {
 					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
 					type: showTrendLine ? 'line' : 'bar',
 					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)),
-					smooth: showTrendLine,
-					itemStyle: { color: colors[1] }
+					smooth: showTrendLine
 				});
 
 				series.push({
 					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
 					type: showTrendLine ? 'line' : 'bar',
 					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)),
-					smooth: showTrendLine,
-					itemStyle: { color: colors[2] }
+					smooth: showTrendLine
 				});
 			}
 		} else {
@@ -347,62 +493,42 @@ export default function AdminAnalyticsByAccount() {
 					data: rows.map((account) => {
 						const timeData = account.timeData?.[timeIndex];
 						return timeData?.[selectedDataset] ?? 0;
-					}),
-					itemStyle: { color: colors[timeIndex] }
+					})
 				});
 			}
 		}
 
 		return {
 			animation: false, // Disable animations for better performance
-			backgroundColor: 'transparent', // Let the container handle background
 			grid: {
 				left: '3%',
 				right: '4%',
 				bottom: '15%',
-				containLabel: true,
-				borderColor: '#E5E7EB',
-				show: false
+				containLabel: true
 			},
 			tooltip: {
 				trigger: 'axis',
 				axisPointer: {
 					type: 'shadow'
 				},
-				backgroundColor: '#FFFFFF',
-				borderColor: '#7C3AED',
-				borderWidth: 2,
-				textStyle: {
-					color: '#374151',
-					fontSize: 12
-				},
-				padding: [12, 16],
 				extraCssText: 'z-index: 99999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15);',
 				position: function (point, params, dom, rect, size) {
-					// Let ECharts automatically choose the best position
-					// point: [x, y] mouse position
-					// size: {contentSize: [width, height], viewSize: [width, height]}
-					
 					const [mouseX, mouseY] = point;
 					const {contentSize, viewSize} = size;
 					const [tooltipWidth, tooltipHeight] = contentSize;
 					const [chartWidth, chartHeight] = viewSize;
 					
-					// Smart positioning logic
-					let x = mouseX + 10; // Default: right of mouse
-					let y = mouseY + 10; // Default: below mouse
+					let x = mouseX + 10;
+					let y = mouseY + 10;
 					
-					// If tooltip would go off right edge, position to left of mouse
 					if (x + tooltipWidth > chartWidth) {
 						x = mouseX - tooltipWidth - 10;
 					}
 					
-					// If tooltip would go off bottom edge, position above mouse
 					if (y + tooltipHeight > chartHeight) {
 						y = mouseY - tooltipHeight - 10;
 					}
 					
-					// Ensure tooltip stays within chart bounds
 					x = Math.max(5, Math.min(x, chartWidth - tooltipWidth - 5));
 					y = Math.max(5, Math.min(y, chartHeight - tooltipHeight - 5));
 					
@@ -414,36 +540,32 @@ export default function AdminAnalyticsByAccount() {
 					const account = rows[params[0].dataIndex];
 					if (!account) return '';
 
-					// Company header
-					let tooltip = `<div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #374151;">
+					let tooltip = `<div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">
 						${account.company_code || account.name || ''} - ${account.company_name || ''}
 					</div>`;
 					
-					// Time period information (for stacked columns)
 					if (!showTrendLine && !compareYears && params.length > 0) {
 						const seriesIndex = params[0].seriesIndex;
 						const timeHeader = timeHeaders[seriesIndex];
 						if (timeHeader) {
-							tooltip += `<div style="margin-bottom: 8px; padding: 8px; background-color: #F3F4F6; border-radius: 4px; border: 1px solid #E5E7EB;">
-								<div style="font-weight: 600; color: #374151;">Time: ${timeHeader.name || ''}</div>
-								<div style="color: #6B7280; font-size: 11px;">From: ${timeHeader.from || ''}</div>
-								<div style="color: #6B7280; font-size: 11px;">To: ${timeHeader.to || ''}</div>
+							tooltip += `<div style="margin-bottom: 8px; padding: 8px; background-color: rgba(124, 58, 237, 0.1); border-radius: 4px;">
+								<div style="font-weight: 600;">Time: ${timeHeader.name || ''}</div>
+								<div style="font-size: 11px; opacity: 0.8;">From: ${timeHeader.from || ''}</div>
+								<div style="font-size: 11px; opacity: 0.8;">To: ${timeHeader.to || ''}</div>
 							</div>`;
 						}
 					}
 					
-					// Account number
-					tooltip += `<div style="margin-bottom: 8px; color: #374151;">
+					tooltip += `<div style="margin-bottom: 8px;">
 						<strong>Account #: ${account.name || account.id || ''}</strong>
 					</div>`;
 					
-					// Values
 					params.forEach((param: any) => {
 						const datasetName = selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1);
 						tooltip += `<div style="margin-bottom: 4px; display: flex; align-items: center;">
-							<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; margin-right: 8px; border-radius: 2px; border: 1px solid #E5E7EB;"></span>
-							<span style="color: #6B7280;">${datasetName}: </span>
-							<strong style="color: #374151; margin-left: 4px;">${param.value.toLocaleString()}</strong>
+							<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; margin-right: 8px; border-radius: 2px;"></span>
+							<span>${datasetName}: </span>
+							<strong style="margin-left: 4px;">${param.value.toLocaleString()}</strong>
 						</div>`;
 					});
 
@@ -452,11 +574,7 @@ export default function AdminAnalyticsByAccount() {
 			},
 			legend: {
 				type: 'scroll',
-				top: 0,
-				textStyle: {
-					fontSize: 12,
-					color: '#374151'
-				}
+				top: 0
 			},
 			xAxis: {
 				type: 'category',
@@ -465,54 +583,15 @@ export default function AdminAnalyticsByAccount() {
 					rotate: -45,
 					fontSize: 10,
 					interval: Math.max(0, Math.ceil(categories.length / 30) - 1), // Max 30 labels
-					margin: 8,
-					color: '#6B7280'
-				},
-				axisLine: {
-					lineStyle: {
-						color: '#E5E7EB',
-						width: 1
-					}
-				},
-				axisTick: {
-					lineStyle: {
-						color: '#E5E7EB'
-					}
-				},
-				splitLine: {
-					show: false
+					margin: 8
 				}
 			},
 			yAxis: {
 				type: 'value',
 				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
-				nameTextStyle: {
-					color: '#374151',
-					fontSize: 12,
-					fontWeight: 500
-				},
 				axisLabel: {
 					formatter: function(value: number) {
 						return value.toLocaleString();
-					},
-					color: '#6B7280'
-				},
-				axisLine: {
-					lineStyle: {
-						color: '#E5E7EB',
-						width: 1
-					}
-				},
-				axisTick: {
-					lineStyle: {
-						color: '#E5E7EB'
-					}
-				},
-				splitLine: {
-					lineStyle: {
-						color: '#E5E7EB',
-						width: 1,
-						type: [4, 4] // Dashed line
 					}
 				}
 			},
@@ -717,7 +796,7 @@ export default function AdminAnalyticsByAccount() {
 									<h3 className='text-[16px] font-semibold text-font-color'>Analytics Chart</h3>
 									<div className='flex items-center gap-2 ml-auto'>
 										<span className='text-[12px] text-font-color-100'>Total:</span>
-										<span className='text-[14px] font-bold text-primary'>
+										<span className='text-[14px] font-bold text-font-color'>
 											{selectedDataset === 'orders' && stats.totalOrders.toLocaleString()}
 											{selectedDataset === 'lines' && stats.totalLines.toLocaleString()}
 											{selectedDataset === 'packages' && stats.totalPackages.toLocaleString()}
@@ -728,6 +807,7 @@ export default function AdminAnalyticsByAccount() {
 								<div className="chart-container">
 									<ReactECharts 
 										option={getEChartsOption()} 
+										theme={currentTheme === 'dark' ? 'luno-dark' : 'luno-light'}
 										style={{ width: '100%', height: '400px' }}
 										opts={{ renderer: 'canvas' }}
 									/>
