@@ -301,127 +301,133 @@ export default function AdminAnalyticsByAccount() {
 			}
 		};
 
-		// Register custom light theme
-		echarts.registerTheme('luno-light', {
-			color: [
-				'#7C3AED', '#DC2626', '#059669', '#D97706', '#2563EB',
-				'#DB2777', '#0891B2', '#65A30D', '#EA580C', '#7C2D12'
-			],
-			backgroundColor: 'transparent',
-			textStyle: {
-				color: '#374151',
-				fontSize: 12
+		// Register wonderland light theme
+		echarts.registerTheme('wonderland-light', {
+			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
+			"backgroundColor": "rgba(252,252,252,0)",
+			"textStyle": {
+				"color": "#333333"
 			},
-			title: {
-				textStyle: {
-					color: '#1F2937'
+			"title": {
+				"textStyle": {
+					"color": "#666666"
+				},
+				"subtextStyle": {
+					"color": "#999999"
 				}
 			},
-			legend: {
-				textStyle: {
-					color: '#374151'
+			"legend": {
+				"textStyle": {
+					"color": "#333333"
 				}
 			},
-			categoryAxis: {
-				axisLine: {
-					lineStyle: {
-						color: '#E5E7EB'
+			"categoryAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#cccccc"
 					}
 				},
-				axisTick: {
-					lineStyle: {
-						color: '#E5E7EB'
+				"axisTick": {
+					"lineStyle": {
+						"color": "#cccccc"
 					}
 				},
-				axisLabel: {
-					color: '#6B7280'
+				"axisLabel": {
+					"textStyle": {
+						"color": "#999999"
+					}
 				},
-				splitLine: {
-					lineStyle: {
-						color: '#F3F4F6'
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#f0f0f0"]
 					}
 				}
 			},
-			valueAxis: {
-				axisLine: {
-					lineStyle: {
-						color: '#E5E7EB'
+			"valueAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#cccccc"
 					}
 				},
-				axisTick: {
-					lineStyle: {
-						color: '#E5E7EB'
+				"axisTick": {
+					"lineStyle": {
+						"color": "#cccccc"
 					}
 				},
-				axisLabel: {
-					color: '#6B7280'
+				"axisLabel": {
+					"textStyle": {
+						"color": "#999999"
+					}
 				},
-				splitLine: {
-					lineStyle: {
-						color: '#F3F4F6'
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#f0f0f0"]
 					}
 				}
 			}
 		});
 
-		// Register custom dark theme
-		echarts.registerTheme('luno-dark', {
-			color: [
-				'#8B5CF6', '#F87171', '#34D399', '#FBBF24', '#60A5FA',
-				'#F472B6', '#22D3EE', '#A3E635', '#FB923C', '#A78BFA'
-			],
-			backgroundColor: 'transparent',
-			textStyle: {
-				color: '#F3F4F6',
-				fontSize: 12
+		// Register wonderland dark theme
+		echarts.registerTheme('wonderland-dark', {
+			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
+			"backgroundColor": "rgba(0,0,0,0)",
+			"textStyle": {
+				"color": "#ffffff"
 			},
-			title: {
-				textStyle: {
-					color: '#F9FAFB'
+			"title": {
+				"textStyle": {
+					"color": "#ffffff"
+				},
+				"subtextStyle": {
+					"color": "#cccccc"
 				}
 			},
-			legend: {
-				textStyle: {
-					color: '#F3F4F6'
+			"legend": {
+				"textStyle": {
+					"color": "#ffffff"
 				}
 			},
-			categoryAxis: {
-				axisLine: {
-					lineStyle: {
-						color: '#4B5563'
+			"categoryAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#666666"
 					}
 				},
-				axisTick: {
-					lineStyle: {
-						color: '#4B5563'
+				"axisTick": {
+					"lineStyle": {
+						"color": "#666666"
 					}
 				},
-				axisLabel: {
-					color: '#9CA3AF'
+				"axisLabel": {
+					"textStyle": {
+						"color": "#cccccc"
+					}
 				},
-				splitLine: {
-					lineStyle: {
-						color: '#374151'
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#333333"]
 					}
 				}
 			},
-			valueAxis: {
-				axisLine: {
-					lineStyle: {
-						color: '#4B5563'
+			"valueAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#666666"
 					}
 				},
-				axisTick: {
-					lineStyle: {
-						color: '#4B5563'
+				"axisTick": {
+					"lineStyle": {
+						"color": "#666666"
 					}
 				},
-				axisLabel: {
-					color: '#9CA3AF'
+				"axisLabel": {
+					"textStyle": {
+						"color": "#cccccc"
+					}
 				},
-				splitLine: {
-					lineStyle: {
-						color: '#374151'
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#333333"]
 					}
 				}
 			}
@@ -460,7 +466,8 @@ export default function AdminAnalyticsByAccount() {
 				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
 				type: showTrendLine ? 'line' : 'bar',
 				data: rows.map((r) => r[selectedDataset] ?? 0),
-				smooth: showTrendLine
+				smooth: showTrendLine,
+				animationDelay: 0
 			});
 
 			if (compareYears) {
@@ -468,14 +475,16 @@ export default function AdminAnalyticsByAccount() {
 					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
 					type: showTrendLine ? 'line' : 'bar',
 					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)),
-					smooth: showTrendLine
+					smooth: showTrendLine,
+					animationDelay: 200
 				});
 
 				series.push({
 					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
 					type: showTrendLine ? 'line' : 'bar',
 					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)),
-					smooth: showTrendLine
+					smooth: showTrendLine,
+					animationDelay: 400
 				});
 			}
 		} else {
@@ -493,13 +502,16 @@ export default function AdminAnalyticsByAccount() {
 					data: rows.map((account) => {
 						const timeData = account.timeData?.[timeIndex];
 						return timeData?.[selectedDataset] ?? 0;
-					})
+					}),
+					animationDelay: timeIndex * 100
 				});
 			}
 		}
 
 		return {
-			animation: false, // Disable animations for better performance
+			animation: true,
+			animationDuration: 1000,
+			animationEasing: 'cubicOut',
 			grid: {
 				left: '3%',
 				right: '4%',
@@ -807,7 +819,8 @@ export default function AdminAnalyticsByAccount() {
 								<div className="chart-container">
 									<ReactECharts 
 										option={getEChartsOption()} 
-										theme={currentTheme === 'dark' ? 'luno-dark' : 'luno-light'}
+										theme={currentTheme === 'dark' ? 'wonderland-dark' : 'wonderland-light'}
+										key={`account-chart-${selectedDataset}-${compareYears}-${showTrendLine}-${currentTheme}`}
 										style={{ width: '100%', height: '400px' }}
 										opts={{ renderer: 'canvas' }}
 									/>

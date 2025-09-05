@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
 import { exportAnalyticsReport } from '@/lib/exportUtils';
+import * as echarts from 'echarts';
 import { 
 	IconCalendar, 
 	IconDownload, 
@@ -213,119 +214,304 @@ export default function AdminAnalyticsByTime() {
 		};
 	}, [rows]);
 
-	const ReactApexChart = useMemo(() => dynamic(() => import('react-apexcharts'), { ssr: false }), []);
+	// ECharts component - dynamically imported for SSR compatibility
+	const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
-	const chartSeries = useMemo(() => {
-		if (!rows?.length) return [] as any[];
-		
-		const series = [];
-		
+	// Detect current theme and register custom themes
+	const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+
+	useEffect(() => {
+		// Detect system preference and current theme
+		const detectTheme = () => {
+			const htmlElement = document.documentElement;
+			const dataTheme = htmlElement.getAttribute('data-theme');
+			
+			if (dataTheme === 'dark') {
+				setCurrentTheme('dark');
+			} else {
+				setCurrentTheme('light');
+			}
+		};
+
+		// Register ECharts built-in themes
+		echarts.registerTheme('vintage', {
+			"color": ["#d87c7c","#919e8b", "#d7ab82","#6e7074","#61a0a8","#efa18d","#787464","#cc7e63","#724e58","#4b565b"],
+			"backgroundColor": "rgba(254,248,239,1)",
+			"textStyle": {},
+			"title": {
+				"textStyle": {
+					"color": "#333333"
+				},
+				"subtextStyle": {
+					"color": "#aaaaaa"
+				}
+			}
+		});
+
+		// Register light theme
+		echarts.registerTheme('wonderland-light', {
+			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
+			"backgroundColor": "rgba(252,252,252,0)",
+			"textStyle": {
+				"color": "#333333"
+			},
+			"title": {
+				"textStyle": {
+					"color": "#666666"
+				},
+				"subtextStyle": {
+					"color": "#999999"
+				}
+			},
+			"legend": {
+				"textStyle": {
+					"color": "#333333"
+				}
+			},
+			"categoryAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#999999"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#f0f0f0"]
+					}
+				}
+			},
+			"valueAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#999999"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#f0f0f0"]
+					}
+				}
+			}
+		});
+
+		// Register dark theme
+		echarts.registerTheme('wonderland-dark', {
+			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
+			"backgroundColor": "rgba(0,0,0,0)",
+			"textStyle": {
+				"color": "#ffffff"
+			},
+			"title": {
+				"textStyle": {
+					"color": "#ffffff"
+				},
+				"subtextStyle": {
+					"color": "#cccccc"
+				}
+			},
+			"legend": {
+				"textStyle": {
+					"color": "#ffffff"
+				}
+			},
+			"categoryAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#333333"]
+					}
+				}
+			},
+			"valueAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#333333"]
+					}
+				}
+			}
+		});
+
+		// Initial theme detection
+		detectTheme();
+
+		// Watch for theme changes
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+					detectTheme();
+				}
+			});
+		});
+
+		observer.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme']
+		});
+
+		return () => observer.disconnect();
+	}, []);
+
+	// Generate ECharts options - using theme system with smooth animations
+	const getEChartsOption = () => {
+		if (!rows?.length) return {};
+
+		const categories = rows.map((r) => r.name || r.id || '');
+		let series = [];
+
 		// Main dataset for current year
 		series.push({
 			name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+			type: showTrendLine ? 'line' : 'bar',
 			data: rows.map((r) => r[selectedDataset] ?? 0),
-			type: showTrendLine ? 'line' : 'column'
+			smooth: showTrendLine,
+			animationDelay: (idx: number) => idx * 50, // Stagger animation
+			label: {
+				show: !showTrendLine, // Show labels only for bar charts
+				position: 'top',
+				fontSize: 11,
+				fontWeight: 'bold',
+				color: currentTheme === 'dark' ? '#F3F4F6' : '#374151', // Theme-aware single color
+				borderWidth: 0,
+				backgroundColor: 'transparent',
+				formatter: function(params: any) {
+					return params.value.toLocaleString();
+				}
+			}
 		});
 		
 		// Add comparison years if enabled
 		if (compareYears) {
-			// Previous year data (simulated for now)
 			series.push({
 				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
-				data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)), // Simulate 15% less
-				type: showTrendLine ? 'line' : 'column'
+				type: showTrendLine ? 'line' : 'bar',
+				data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)),
+				smooth: showTrendLine,
+				animationDelay: (idx: number) => idx * 50 + 200,
+				label: {
+					show: !showTrendLine,
+					position: 'top',
+					fontSize: 11,
+					fontWeight: 'bold',
+					color: currentTheme === 'dark' ? '#F3F4F6' : '#374151', // Theme-aware single color
+					borderWidth: 0,
+					backgroundColor: 'transparent',
+					formatter: function(params: any) {
+						return params.value.toLocaleString();
+					}
+				}
 			});
 			
-			// Two years ago data (simulated for now)
 			series.push({
 				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
-				data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)), // Simulate 30% less
-				type: showTrendLine ? 'line' : 'column'
+				type: showTrendLine ? 'line' : 'bar',
+				data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)),
+				smooth: showTrendLine,
+				animationDelay: (idx: number) => idx * 50 + 400,
+				label: {
+					show: !showTrendLine,
+					position: 'top',
+					fontSize: 11,
+					fontWeight: 'bold',
+					color: currentTheme === 'dark' ? '#F3F4F6' : '#374151', // Theme-aware single color
+					borderWidth: 0,
+					backgroundColor: 'transparent',
+					formatter: function(params: any) {
+						return params.value.toLocaleString();
+					}
+				}
 			});
 		}
-		
-		return series as any[];
-	}, [rows, selectedDataset, compareYears, showTrendLine]);
 
-	const chartOptions = useMemo(() => {
-		const categories = rows.map((r) => r.name || r.id || '');
 		return {
-			chart: { 
-				type: showTrendLine ? 'line' : 'column',
-				height: 400,
-				toolbar: { 
-					show: true,
-					tools: {
-						download: true,
-						selection: false,
-						zoom: true,
-						zoomin: true,
-						zoomout: true,
-						pan: false,
-						reset: true
-					}
-				},
-				zoom: { enabled: true },
-				animations: { enabled: true, speed: 800 }
-			},
-			plotOptions: {
-				bar: {
-					borderRadius: 4,
-					columnWidth: '60%'
-				}
-			},
-			stroke: { 
-				curve: 'smooth', 
-				width: showTrendLine ? 3 : 0
-			},
-			colors: ['var(--chart-color1)', 'var(--chart-color2)', 'var(--chart-color3)', 'var(--chart-color4)'],
-			xaxis: { 
-				categories,
-				labels: { 
-					rotate: -45,
-					style: {
-						colors: 'var(--font-color-100)',
-						fontSize: '12px'
-					}
-				},
-				axisBorder: {
-					color: 'var(--border-color)'
-				}
-			},
-			yaxis: {
-				title: { 
-					text: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1), 
-					style: { color: 'var(--font-color-100)' } 
-				},
-				labels: { 
-					formatter: (v: number) => `${Math.round(v).toLocaleString()}`,
-					style: { colors: 'var(--font-color-100)' }
-				}
-			},
-			legend: { 
-				position: 'top',
-				horizontalAlign: 'center',
-				labels: {
-					colors: 'var(--font-color)'
-				}
-			},
-			grid: { 
-				borderColor: 'var(--border-color)',
-				strokeDashArray: 3
+			animation: true, // Enable smooth animations
+			animationDuration: 1000,
+			animationEasing: 'cubicOut',
+			grid: {
+				left: '3%',
+				right: '4%',
+				bottom: '15%',
+				containLabel: true
 			},
 			tooltip: {
-				theme: 'dark',
-				shared: true,
-				intersect: false,
-				y: {
-					formatter: (val: number) => val.toLocaleString()
+				trigger: 'axis',
+				axisPointer: { type: 'shadow' },
+				extraCssText: 'z-index: 99999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15);'
+			},
+			legend: {
+				type: 'scroll',
+				top: 0
+			},
+			xAxis: {
+				type: 'category',
+				data: categories,
+				axisLabel: {
+					rotate: -45,
+					fontSize: 10,
+					margin: 8
 				}
 			},
-			dataLabels: {
-				enabled: false
-			}
-		} as any;
-	}, [rows, selectedDataset, showTrendLine]);
+			yAxis: {
+				type: 'value',
+				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+				axisLabel: {
+					formatter: function(value: number) {
+						return value.toLocaleString();
+					}
+				}
+			},
+			series: series
+		};
+	};
+
 
 	const clearFilters = () => {
 		setFilters({
@@ -598,7 +784,7 @@ export default function AdminAnalyticsByTime() {
 									<h3 className='text-[16px] font-semibold text-font-color'>Analytics Chart</h3>
 									<div className='flex items-center gap-2 ml-auto'>
 										<span className='text-[12px] text-font-color-100'>Total:</span>
-										<span className='text-[14px] font-bold text-primary'>
+										<span className='text-[14px] font-bold text-font-color'>
 											{selectedDataset === 'orders' && stats.totalOrders.toLocaleString()}
 											{selectedDataset === 'lines' && stats.totalLines.toLocaleString()}
 											{selectedDataset === 'packages' && stats.totalPackages.toLocaleString()}
@@ -606,14 +792,15 @@ export default function AdminAnalyticsByTime() {
 										</span>
 									</div>
 								</div>
-								<ReactApexChart 
-									options={chartOptions as any} 
-									series={chartSeries as any} 
-									type={showTrendLine ? 'line' : 'bar'} 
-									height={400} 
-									width='100%' 
-									key={`${selectedDataset}-${compareYears}-${showTrendLine}`}
-								/>
+								<div className="chart-container">
+									<ReactECharts 
+										option={getEChartsOption()} 
+										theme={currentTheme === 'dark' ? 'wonderland-dark' : 'wonderland-light'}
+										key={`wonderland-${currentTheme}-theme`}
+										style={{ width: '100%', height: '400px' }}
+										opts={{ renderer: 'canvas' }}
+									/>
+								</div>
 								
 								{/* Chart Controls */}
 								<div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mt-6 p-4 bg-primary-5 border border-border-color rounded-lg'>

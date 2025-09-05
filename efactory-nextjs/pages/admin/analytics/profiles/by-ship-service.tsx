@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { postJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
 import { exportAnalyticsReport } from '@/lib/exportUtils';
+import * as echarts from 'echarts';
 import { 
 	IconCalendar, 
 	IconDownload, 
@@ -190,7 +191,164 @@ export default function AdminAnalyticsByShipService() {
 		}), { totalOrders: 0, totalLines: 0, totalPackages: 0, totalUnits: 0 });
 	}, [rows]);
 
-	const ReactApexChart = useMemo(() => dynamic(() => import('react-apexcharts'), { ssr: false }), []);
+	// ECharts component - dynamically imported for SSR compatibility
+	const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
+
+	// Detect current theme and register custom themes
+	const [currentTheme, setCurrentTheme] = useState<'light' | 'dark'>('light');
+
+	useEffect(() => {
+		// Register ECharts themes (wonderland theme like By Time page)
+		const detectTheme = () => {
+			const htmlElement = document.documentElement;
+			const dataTheme = htmlElement.getAttribute('data-theme');
+			setCurrentTheme(dataTheme === 'dark' ? 'dark' : 'light');
+		};
+
+		// Register light theme
+		echarts.registerTheme('wonderland-light', {
+			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
+			"backgroundColor": "rgba(252,252,252,0)",
+			"textStyle": {
+				"color": "#333333"
+			},
+			"title": {
+				"textStyle": {
+					"color": "#666666"
+				},
+				"subtextStyle": {
+					"color": "#999999"
+				}
+			},
+			"legend": {
+				"textStyle": {
+					"color": "#333333"
+				}
+			},
+			"categoryAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#999999"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#f0f0f0"]
+					}
+				}
+			},
+			"valueAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#999999"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#f0f0f0"]
+					}
+				}
+			}
+		});
+
+		// Register dark theme
+		echarts.registerTheme('wonderland-dark', {
+			"color": ["#4ea397","#22c3aa","#7bd9a5","#d0648a","#f58db2","#f2b3c9"],
+			"backgroundColor": "rgba(0,0,0,0)",
+			"textStyle": {
+				"color": "#ffffff"
+			},
+			"title": {
+				"textStyle": {
+					"color": "#ffffff"
+				},
+				"subtextStyle": {
+					"color": "#cccccc"
+				}
+			},
+			"legend": {
+				"textStyle": {
+					"color": "#ffffff"
+				}
+			},
+			"categoryAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#333333"]
+					}
+				}
+			},
+			"valueAxis": {
+				"axisLine": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisTick": {
+					"lineStyle": {
+						"color": "#666666"
+					}
+				},
+				"axisLabel": {
+					"textStyle": {
+						"color": "#cccccc"
+					}
+				},
+				"splitLine": {
+					"lineStyle": {
+						"color": ["#333333"]
+					}
+				}
+			}
+		});
+
+		detectTheme();
+		const observer = new MutationObserver((mutations) => {
+			mutations.forEach((mutation) => {
+				if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+					detectTheme();
+				}
+			});
+		});
+
+		observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+		return () => observer.disconnect();
+	}, []);
 
 	// Process data like legacy: Top 10 + "Others" aggregation
 	const processedData = useMemo(() => {
@@ -247,33 +405,6 @@ export default function AdminAnalyticsByShipService() {
 		return sortedData;
 	}, [rows, selectedDataset]);
 
-	// Bar chart series (horizontal bars like legacy)
-	const barChartSeries = useMemo(() => {
-		if (!processedData?.length) return [] as any[];
-		
-		const series = [];
-		const dataKey = selectedDataset;
-		
-		// Add comparison years if enabled
-		if (compareYears) {
-			series.push({
-				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
-				data: processedData.map((r) => r.year_2?.[dataKey] ?? 0)
-			});
-			series.push({
-				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
-				data: processedData.map((r) => r.year_1?.[dataKey] ?? 0)
-			});
-		}
-		
-		// Add current year data
-		series.push({
-			name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
-			data: processedData.map((r) => r[dataKey] ?? 0)
-		});
-		
-		return series as any[];
-	}, [processedData, selectedDataset, compareYears]);
 
 	// Pie chart data (only current year, no comparison)
 	const pieChartData = useMemo(() => {
@@ -286,126 +417,155 @@ export default function AdminAnalyticsByShipService() {
 		}));
 	}, [processedData, selectedDataset]);
 
-	// Bar chart options (horizontal bars like legacy)
-	const barChartOptions = useMemo(() => {
+	// ECharts bar chart options (horizontal bars like legacy)
+	const getBarChartOption = () => {
 		const categories = processedData.map((r) => r.name || r.id || '');
-		return {
-			chart: { 
+		const series = [];
+		const dataKey = selectedDataset;
+		
+		// Add comparison years if enabled
+		if (compareYears) {
+			series.push({
+				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
 				type: 'bar',
-				toolbar: { show: false }, 
-				stacked: false,
-				height: 450,
-				offsetX: 0,
-				offsetY: 0,
-				parentHeightOffset: 0,
-				sparkline: {
-					enabled: false
+				data: processedData.map((r) => r.year_2?.[dataKey] ?? 0),
+				label: {
+					show: true,
+					position: 'right',
+					fontSize: 11,
+					fontWeight: 'bold',
+					formatter: (params: any) => params.value.toLocaleString(),
+					color: '#ffffff',
+					borderWidth: 0,
+					backgroundColor: 'transparent'
 				}
-			},
-			plotOptions: { 
-				bar: { 
-					horizontal: true,
-					columnWidth: '70%',
-					dataLabels: {
-						position: 'top'
-					}
-				} 
-			},
-			stroke: { 
-				show: true, 
-				width: 1, 
-				colors: ['transparent'] 
-			},
-			colors: ['#731F0B', '#BB4C31', '#D08472'],
-			xaxis: { 
-				categories,
-				labels: {
-					formatter: (v: number) => `${Math.round(v).toLocaleString()}`
+			});
+			series.push({
+				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
+				type: 'bar',
+				data: processedData.map((r) => r.year_1?.[dataKey] ?? 0),
+				label: {
+					show: true,
+					position: 'right',
+					fontSize: 11,
+					fontWeight: 'bold',
+					formatter: (params: any) => params.value.toLocaleString(),
+					color: '#ffffff',
+					borderWidth: 0,
+					backgroundColor: 'transparent'
 				}
-			},
-			yaxis: { 
-				labels: {
-					style: {
-						fontSize: '11px'
-					}
-				}
-			},
-			legend: { 
-				position: 'top',
-				horizontalAlign: 'left'
-			},
-			fill: { opacity: 0.9 },
-			grid: { 
-				borderColor: 'var(--border-color)',
-				strokeDashArray: 1,
-				padding: {
-					top: 0,
-					right: 80,
-					bottom: 0,
-					left: 0
-				}
-			},
-			dataLabels: { 
-				enabled: true,
-				formatter: (val: number) => val.toLocaleString(),
-				style: {
-					fontSize: '11px',
-					colors: ['#fff'],
-					fontWeight: 'bold'
-				},
-				offsetX: -10,
-				offsetY: 0,
-				textAnchor: 'end',
-				distributed: false
-			},
-			tooltip: {
-				y: {
-					formatter: (val: number) => val.toLocaleString()
-				}
+			});
+		}
+		
+		// Add current year data
+		series.push({
+			name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+			type: 'bar',
+			data: processedData.map((r) => r[dataKey] ?? 0),
+			label: {
+				show: true,
+				position: 'right',
+				fontSize: 11,
+				fontWeight: 'bold',
+				formatter: (params: any) => params.value.toLocaleString(),
+				color: '#ffffff',
+				borderWidth: 0,
+				backgroundColor: 'transparent'
 			}
-		} as any;
-	}, [processedData]);
+		});
 
-	// Pie chart options (donut chart like legacy)
-	const pieChartOptions = useMemo(() => {
 		return {
-			chart: {
-				type: 'donut',
-				height: 450
+			animation: true,
+			animationDuration: 1000,
+			animationEasing: 'cubicOut',
+			grid: {
+				left: '15%',
+				right: '15%',
+				top: '10%',
+				bottom: '10%',
+				containLabel: true
 			},
-			colors: [
-				'#731F0B', '#BB4C31', '#D08472', '#8B4513', '#A0522D', 
-				'#CD853F', '#DEB887', '#F4A460', '#D2691E', '#B22222', '#DC143C'
-			],
-			labels: pieChartData.map(d => d.name),
+			xAxis: {
+				type: 'value',
+				axisLabel: {
+					formatter: (value: number) => value.toLocaleString()
+				}
+			},
+			yAxis: {
+				type: 'category',
+				data: categories,
+				axisLabel: {
+					fontSize: 11
+				}
+			},
+			series: series,
 			legend: {
-				position: 'bottom',
-				fontSize: '11px'
-			},
-			plotOptions: {
-				pie: {
-					donut: {
-						size: '30%'
-					}
-				}
-			},
-			dataLabels: {
-				enabled: true,
-				formatter: (val: number, opts: any) => {
-					return `${val.toFixed(1)}%`;
-				},
-				style: {
-					fontSize: '10px',
-					colors: ['#fff']
-				}
+				top: 0,
+				left: 0
 			},
 			tooltip: {
-				y: {
-					formatter: (val: number) => val.toLocaleString()
+				trigger: 'axis',
+				axisPointer: {
+					type: 'shadow'
+				},
+				formatter: (params: any) => {
+					let result = `<strong>${params[0].name}</strong><br/>`;
+					params.forEach((param: any) => {
+						result += `${param.seriesName}: ${param.value.toLocaleString()}<br/>`;
+					});
+					return result;
 				}
 			}
-		} as any;
-	}, [pieChartData]);
+		};
+	};
+
+	// ECharts pie chart options (donut chart like legacy)
+	const getPieChartOption = () => {
+		return {
+			animation: true,
+			animationDuration: 1000,
+			animationEasing: 'cubicOut',
+			tooltip: {
+				trigger: 'item',
+				formatter: '{a} <br/>{b}: {c} ({d}%)'
+			},
+			legend: {
+				bottom: 0,
+				left: 'center',
+				textStyle: {
+					fontSize: 11
+				}
+			},
+			series: [
+				{
+					name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+					type: 'pie',
+					radius: ['30%', '70%'],
+					center: ['50%', '40%'],
+					data: pieChartData,
+					emphasis: {
+						itemStyle: {
+							shadowBlur: 10,
+							shadowOffsetX: 0,
+							shadowColor: 'rgba(0, 0, 0, 0.5)'
+						}
+					},
+					label: {
+						show: true,
+						formatter: '{d}%',
+						fontSize: 10,
+						fontWeight: 'bold',
+						color: '#ffffff',
+						borderWidth: 0,
+						backgroundColor: 'transparent'
+					},
+					labelLine: {
+						show: true
+					}
+				}
+			]
+		};
+	};
 
 	if (!mounted) {
 		return (
@@ -579,12 +739,12 @@ export default function AdminAnalyticsByShipService() {
 										{/* Bar Chart */}
 										<div className='col-span-7'>
 											{processedData.length > 0 ? (
-												<ReactApexChart
-													options={barChartOptions as any} 
-													series={barChartSeries as any} 
-													type='bar' 
-													height={450} 
-													key={`bar-${selectedDataset}-${compareYears}`}
+												<ReactECharts 
+													option={getBarChartOption()} 
+													theme={currentTheme === 'dark' ? 'wonderland-dark' : 'wonderland-light'}
+													key={`bar-${selectedDataset}-${compareYears}-${currentTheme}`}
+													style={{ width: '100%', height: '450px' }}
+													opts={{ renderer: 'canvas' }}
 												/>
 											) : (
 												<div className='flex items-center justify-center h-[450px] bg-gray-50 rounded-lg'>
@@ -596,12 +756,12 @@ export default function AdminAnalyticsByShipService() {
 										{/* Pie Chart */}
 										<div className='col-span-5'>
 											{pieChartData.length > 0 ? (
-												<ReactApexChart
-													options={pieChartOptions as any} 
-													series={pieChartData.map(d => d.value)} 
-													type='donut' 
-													height={450} 
-													key={`pie-${selectedDataset}`}
+												<ReactECharts 
+													option={getPieChartOption()} 
+													theme={currentTheme === 'dark' ? 'wonderland-dark' : 'wonderland-light'}
+													key={`pie-${selectedDataset}-${currentTheme}`}
+													style={{ width: '100%', height: '450px' }}
+													opts={{ renderer: 'canvas' }}
 												/>
 											) : (
 												<div className='flex items-center justify-center h-[450px] bg-gray-50 rounded-lg'>
