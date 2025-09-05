@@ -90,6 +90,7 @@ export default function AdminAnalyticsByAccount() {
 		setMounted(true);
 	}, []);
 
+
 	async function runReport() {
 		setLoading(true);
 		setError(null);
@@ -280,119 +281,189 @@ export default function AdminAnalyticsByAccount() {
 		};
 	}, [rows]);
 
-	const ReactApexChart = useMemo(() => dynamic(() => import('react-apexcharts'), { ssr: false }), []);
+	// ECharts component - dynamically imported for SSR compatibility
+	const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
-	const chartSeries = useMemo(() => {
-		if (!rows?.length) return [] as any[];
-		
-		const series = [];
-		
-		// Main dataset for current year
-		series.push({
-			name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
-			data: rows.map((r) => r[selectedDataset] ?? 0),
-			type: showTrendLine ? 'line' : 'column'
-		});
-		
-		// Add comparison years if enabled
-		if (compareYears) {
-			// Previous year data (simulated for now)
+	// Generate ECharts options - simple and fast
+	const getEChartsOption = () => {
+		if (!rows?.length || !timeHeaders?.length) return {};
+
+		const categories = rows.map((r) => r.name || r.id || '');
+		const colors = ['#7C3AED', '#DC2626', '#059669', '#D97706', '#2563EB', '#7C2D12', '#BE185D', '#4338CA'];
+
+		let series = [];
+
+		if (showTrendLine || compareYears) {
+			// Simple series for trend/comparison
 			series.push({
-				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
-				data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)), // Simulate 15% less
-				type: showTrendLine ? 'line' : 'column'
+				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+				type: showTrendLine ? 'line' : 'bar',
+				data: rows.map((r) => r[selectedDataset] ?? 0),
+				smooth: showTrendLine,
+				itemStyle: { color: colors[0] }
 			});
+
+			if (compareYears) {
+				series.push({
+					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-1 year)`,
+					type: showTrendLine ? 'line' : 'bar',
+					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.85)),
+					smooth: showTrendLine,
+					itemStyle: { color: colors[1] }
+				});
+
+				series.push({
+					name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
+					type: showTrendLine ? 'line' : 'bar',
+					data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)),
+					smooth: showTrendLine,
+					itemStyle: { color: colors[2] }
+				});
+			}
+		} else {
+			// Stacked columns
+			const maxTimePeriods = Math.min(6, timeHeaders.length);
 			
-			// Two years ago data (simulated for now)
-			series.push({
-				name: `${selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1)} (-2 years)`,
-				data: rows.map((r) => Math.round((r[selectedDataset] ?? 0) * 0.7)), // Simulate 30% less
-				type: showTrendLine ? 'line' : 'column'
-			});
-		}
-		
-		return series as any[];
-	}, [rows, selectedDataset, compareYears, showTrendLine]);
+			for (let timeIndex = 0; timeIndex < maxTimePeriods; timeIndex++) {
+				const timeHeader = timeHeaders[timeIndex];
+				if (!timeHeader) continue;
 
-	const chartOptions = useMemo(() => {
-		const categories = rows.map((r) => r.company_code || r.name || r.id || '');
+				series.push({
+					name: timeHeader.name || `Period ${timeIndex + 1}`,
+					type: 'bar',
+					stack: 'total',
+					data: rows.map((account) => {
+						const timeData = account.timeData?.[timeIndex];
+						return timeData?.[selectedDataset] ?? 0;
+					}),
+					itemStyle: { color: colors[timeIndex] }
+				});
+			}
+		}
+
 		return {
-			chart: { 
-				type: showTrendLine ? 'line' : 'column',
-				height: 400,
-				toolbar: { 
-					show: true,
-					tools: {
-						download: true,
-						selection: false,
-						zoom: true,
-						zoomin: true,
-						zoomout: true,
-						pan: false,
-						reset: true
-					}
-				},
-				zoom: { enabled: true },
-				animations: { enabled: true, speed: 800 }
-			},
-			plotOptions: {
-				bar: {
-					borderRadius: 4,
-					columnWidth: '60%'
-				}
-			},
-			stroke: { 
-				curve: 'smooth', 
-				width: showTrendLine ? 3 : 0
-			},
-			colors: ['var(--chart-color1)', 'var(--chart-color2)', 'var(--chart-color3)', 'var(--chart-color4)'],
-			xaxis: { 
-				categories,
-				labels: { 
-					rotate: -45,
-					style: {
-						colors: 'var(--font-color-100)',
-						fontSize: '12px'
-					}
-				},
-				axisBorder: {
-					color: 'var(--border-color)'
-				}
-			},
-			yaxis: {
-				title: { 
-					text: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1), 
-					style: { color: 'var(--font-color-100)' } 
-				},
-				labels: { 
-					formatter: (v: number) => `${Math.round(v).toLocaleString()}`,
-					style: { colors: 'var(--font-color-100)' }
-				}
-			},
-			legend: { 
-				position: 'top',
-				horizontalAlign: 'center',
-				labels: {
-					colors: 'var(--font-color)'
-				}
-			},
-			grid: { 
-				borderColor: 'var(--border-color)',
-				strokeDashArray: 3
+			animation: false, // Disable animations for better performance
+			grid: {
+				left: '3%',
+				right: '4%',
+				bottom: '15%',
+				containLabel: true
 			},
 			tooltip: {
-				theme: 'dark',
-				shared: true,
-				intersect: false,
-				y: {
-					formatter: (val: number) => val.toLocaleString()
+				trigger: 'axis',
+				axisPointer: {
+					type: 'shadow'
+				},
+				backgroundColor: '#ffffff',
+				borderColor: '#2563EB',
+				borderWidth: 2,
+				textStyle: {
+					color: '#000000',
+					fontSize: 12
+				},
+				padding: [12, 16],
+				extraCssText: 'z-index: 99999 !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15);',
+				position: function (point, params, dom, rect, size) {
+					// Let ECharts automatically choose the best position
+					// point: [x, y] mouse position
+					// size: {contentSize: [width, height], viewSize: [width, height]}
+					
+					const [mouseX, mouseY] = point;
+					const {contentSize, viewSize} = size;
+					const [tooltipWidth, tooltipHeight] = contentSize;
+					const [chartWidth, chartHeight] = viewSize;
+					
+					// Smart positioning logic
+					let x = mouseX + 10; // Default: right of mouse
+					let y = mouseY + 10; // Default: below mouse
+					
+					// If tooltip would go off right edge, position to left of mouse
+					if (x + tooltipWidth > chartWidth) {
+						x = mouseX - tooltipWidth - 10;
+					}
+					
+					// If tooltip would go off bottom edge, position above mouse
+					if (y + tooltipHeight > chartHeight) {
+						y = mouseY - tooltipHeight - 10;
+					}
+					
+					// Ensure tooltip stays within chart bounds
+					x = Math.max(5, Math.min(x, chartWidth - tooltipWidth - 5));
+					y = Math.max(5, Math.min(y, chartHeight - tooltipHeight - 5));
+					
+					return [x, y];
+				},
+				formatter: function(params: any) {
+					if (!Array.isArray(params)) params = [params];
+					
+					const account = rows[params[0].dataIndex];
+					if (!account) return '';
+
+					// Company header
+					let tooltip = `<div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">
+						${account.company_code || account.name || ''} - ${account.company_name || ''}
+					</div>`;
+					
+					// Time period information (for stacked columns)
+					if (!showTrendLine && !compareYears && params.length > 0) {
+						const seriesIndex = params[0].seriesIndex;
+						const timeHeader = timeHeaders[seriesIndex];
+						if (timeHeader) {
+							tooltip += `<div style="margin-bottom: 8px; padding: 8px; background-color: #f3f4f6; border-radius: 4px;">
+								<div style="font-weight: 600; color: #374151;">Time: ${timeHeader.name || ''}</div>
+								<div style="color: #6b7280; font-size: 11px;">From: ${timeHeader.from || ''}</div>
+								<div style="color: #6b7280; font-size: 11px;">To: ${timeHeader.to || ''}</div>
+							</div>`;
+						}
+					}
+					
+					// Account number
+					tooltip += `<div style="margin-bottom: 8px; color: #374151;">
+						<strong>Account #: ${account.name || account.id || ''}</strong>
+					</div>`;
+					
+					// Values
+					params.forEach((param: any) => {
+						const datasetName = selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1);
+						tooltip += `<div style="margin-bottom: 4px; display: flex; align-items: center;">
+							<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; margin-right: 8px; border-radius: 2px;"></span>
+							<span style="color: #374151;">${datasetName}: </span>
+							<strong style="color: #1f2937; margin-left: 4px;">${param.value.toLocaleString()}</strong>
+						</div>`;
+					});
+
+					return tooltip;
 				}
 			},
-			dataLabels: {
-				enabled: false
-			}
-		} as any;
-	}, [rows, selectedDataset, showTrendLine]);
+			legend: {
+				type: 'scroll',
+				top: 0,
+				textStyle: {
+					fontSize: 12
+				}
+			},
+			xAxis: {
+				type: 'category',
+				data: categories,
+				axisLabel: {
+					rotate: -45,
+					fontSize: 10,
+					interval: Math.max(0, Math.ceil(categories.length / 30) - 1), // Max 30 labels
+					margin: 8
+				}
+			},
+			yAxis: {
+				type: 'value',
+				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+				axisLabel: {
+					formatter: function(value: number) {
+						return value.toLocaleString();
+					}
+				}
+			},
+			series: series
+		};
+	};
 
 	if (!mounted) {
 		return (
@@ -599,13 +670,10 @@ export default function AdminAnalyticsByAccount() {
 										</span>
 									</div>
 								</div>
-								<ReactApexChart 
-									options={chartOptions as any} 
-									series={chartSeries as any} 
-									type={showTrendLine ? 'line' : 'bar'} 
-									height={400} 
-									width='100%' 
-									key={`${selectedDataset}-${compareYears}-${showTrendLine}`}
+								<ReactECharts 
+									option={getEChartsOption()} 
+									style={{ width: '100%', height: '400px' }}
+									opts={{ renderer: 'canvas' }}
 								/>
 								
 								{/* Chart Controls */}
