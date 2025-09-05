@@ -16,6 +16,68 @@ import {
   IconPackage,
   IconShip,
   IconFileText,
+  IconCubes,
+  IconArrowDown,
+  IconArrowsExchange,
+  IconTag,
+  IconShoppingCart,
+  IconTruck,
+  IconChartBar,
+  IconCloud,
+  IconFiles,
+  IconSettings,
+  IconMapPin,
+  IconFileSpreadsheet,
+  IconCalendar,
+  IconCalculator,
+  IconInfoCircle,
+  IconCloudUpload,
+  IconBriefcase,
+  IconUserPlus,
+  IconGear,
+  IconShare,
+  IconBuilding,
+  IconClock,
+  IconBolt,
+  IconCalendarCheck,
+  IconFactory,
+  IconBoxSeam,
+  IconBarcode,
+  IconSearch,
+  IconEdit,
+  IconEye,
+  IconDownload,
+  IconUpload,
+  IconRefresh,
+  IconAlertTriangle,
+  IconCheckCircle,
+  IconX,
+  IconMinus,
+  IconFilter,
+  IconSortAscending,
+  IconDatabase,
+  IconServer,
+  IconNetwork,
+  IconMail,
+  IconBell,
+  IconKey,
+  IconLock,
+  IconShield,
+  IconUserCheck,
+  IconCreditCard,
+  IconReceipt,
+  IconCurrency,
+  IconPercentage,
+  IconTarget,
+  IconTrendingUp,
+  IconPieChart,
+  IconActivity,
+  IconZap,
+  IconGlobe,
+  IconLink,
+  IconExternalLink,
+  IconDownload as IconImport,
+  IconUpload as IconExport,
 } from '@tabler/icons-react';
 
 interface SidebarMenuProps {
@@ -72,6 +134,23 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const calculatedActiveSidebarMenu = getActiveSidebarMenu();
   console.log('✅ Final active sidebar menu calculated:', calculatedActiveSidebarMenu);
 
+  // Helper function to check if a parent menu should be highlighted
+  // Only highlight if one of its children is actually selected
+  const shouldHighlightParent = (item: MenuItem) => {
+    // If this menu has a direct route and it matches the current URL, highlight it
+    if (item.route === pageUrl) {
+      return true;
+    }
+    
+    // If this menu has dropdown children, only highlight if one of the children is selected
+    if (item.dropdownMenus && item.dropdownMenus.length > 0) {
+      const hasSelectedChild = item.dropdownMenus.some(dropdown => dropdown.route === pageUrl);
+      return hasSelectedChild;
+    }
+    
+    return false;
+  };
+
   // Helper function to render icons (Tabler components or CSS classes)
   const renderIcon = (item: MenuItem) => {
     if (item.iconComponent) {
@@ -80,7 +159,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     } else if (item.iconClassName) {
       return <i className={`${item.iconClassName} w-[22px] h-[22px]`} />;
     }
-    return null;
+    // Fallback icon if no icon is defined
+    return <IconBoxSeam className="stroke-[1.5] w-[22px] h-[22px] text-gray-400" />;
   };
   
   // Use exact Luno state management pattern
@@ -291,7 +371,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   <li key={key} className='sidebar-listitem'>
                     <button
                       onClick={() => menuToggle(key)}
-                      className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || calculatedActiveSidebarMenu === item.keyword) ? 'text-secondary' : ''}`}
+                      className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || shouldHighlightParent(item)) ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
                       <span className='link'>{item.title}</span>
@@ -339,7 +419,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               <li key={key} className='sidebar-listitem'>
                 <button
                   onClick={() => menuToggle(key)}
-                  className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || calculatedActiveSidebarMenu === item.keyword) ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(menuActive === key || shouldHighlightParent(item)) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>
@@ -367,7 +447,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                 <Link 
                   href={item.route || '#'} 
                   onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
-                  className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${(pageUrl === item.route || calculatedActiveSidebarMenu === item.keyword) ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>
