@@ -33,7 +33,8 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   // Update active top menu when route changes
   useEffect(() => {
     console.log('🚀 NAVIGATION CONTEXT USEEFFECT TRIGGERED!');
-    const pathname = router.asPath; // Use asPath to get actual URL, not route pattern
+    // Strip query strings for proper route matching
+    const pathname = router.asPath.split('?')[0];
     console.log('🔄 Navigation context - pathname changed:', pathname, 'userApps:', userApps);
     
     // Skip admin routes - they don't use dynamic navigation

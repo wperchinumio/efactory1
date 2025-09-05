@@ -87,7 +87,13 @@ interface SidebarMenuProps {
 const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const { userApps, activeTopMenu } = useNavigation();
   const router = useRouter();
-  const pageUrl = router.asPath; // Use asPath to get the actual URL, not the route pattern
+  
+  // Helper function to strip query strings from URL
+  const stripQueryString = (url: string): string => {
+    return url.split('?')[0];
+  };
+  
+  const pageUrl = stripQueryString(router.asPath); // Strip query strings for proper route matching
   
   // Calculate active sidebar menu directly from URL - much simpler and more reliable
   const getActiveSidebarMenu = () => {
