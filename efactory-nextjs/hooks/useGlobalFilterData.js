@@ -455,13 +455,30 @@ export function useGlobalFilterData() {
 			];
 		};
 
+		// Get order type options
+		const getOrderTypeOptions = () => {
+			const orderTypes = data.order_types || {
+				'STANDARD': 'Standard',
+				'RUSH': 'Rush',
+				'EXPEDITED': 'Expedited',
+				'BACKORDER': 'Backorder',
+				'DROPSHIP': 'Dropship'
+			};
+
+			return Object.keys(orderTypes).map(code => ({
+				value: code,
+				label: orderTypes[code]
+			}));
+		};
+
 		return {
 			getWarehouseOptions: () => warehouseOptions,
 			getAccountOptions,
 			getCountryOptions,
 			getStateOptions,
 			getChannelOptions,
-			getDestinationOptions
+			getDestinationOptions,
+			getOrderTypeOptions
 		};
 	};
 

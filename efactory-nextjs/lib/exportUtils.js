@@ -97,6 +97,36 @@ export const exportAnalyticsReport = (data, reportTitle, reportType, options = {
         'Units': line.units || 0
       }))
     }
+  } else if (reportType === 'by-account') {
+    if (compareYears) {
+      reportData = data.map((line) => ({
+        'Account': line.id || line.name,
+        'Company Name': line.company_name || line.name,
+        'Company Code': line.company_code || line.id,
+        'Orders - 2': line.year_2?.orders || 0,
+        'Orders - 1': line.year_1?.orders || 0,
+        'Orders': line.orders || 0,
+        'Lines - 2': line.year_2?.lines || 0,
+        'Lines - 1': line.year_1?.lines || 0,
+        'Lines': line.lines || 0,
+        'Packages - 2': line.year_2?.packages || 0,
+        'Packages - 1': line.year_1?.packages || 0,
+        'Packages': line.packages || 0,
+        'Units - 2': line.year_2?.units || 0,
+        'Units - 1': line.year_1?.units || 0,
+        'Units': line.units || 0
+      }))
+    } else {
+      reportData = data.map((line) => ({
+        'Account': line.id || line.name,
+        'Company Name': line.company_name || line.name,
+        'Company Code': line.company_code || line.id,
+        'Orders': line.orders || 0,
+        'Lines': line.lines || 0,
+        'Packages': line.packages || 0,
+        'Units': line.units || 0
+      }))
+    }
   } else {
     // Generic fallback
     reportData = data.map((line) => ({

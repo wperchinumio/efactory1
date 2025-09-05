@@ -10,3 +10,5 @@ export { default as DestinationFilterCombobox } from './DestinationFilterCombobo
 export { default as ChannelFilterCombobox } from './ChannelFilterCombobox';
 export { default as CountryFilterCombobox } from './CountryFilterCombobox';
 export { default as StateFilterCombobox } from './StateFilterCombobox';
+export { default as OrderTypeFilterCombobox } from './OrderTypeFilterCombobox';
+export { default as CustomerFilterCombobox } from './CustomerFilterCombobox';
