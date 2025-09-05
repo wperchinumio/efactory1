@@ -289,7 +289,19 @@ export default function AdminAnalyticsByAccount() {
 		if (!rows?.length || !timeHeaders?.length) return {};
 
 		const categories = rows.map((r) => r.name || r.id || '');
-		const colors = ['#7C3AED', '#DC2626', '#059669', '#D97706', '#2563EB', '#7C2D12', '#BE185D', '#4338CA'];
+		// Clean, professional colors that work perfectly in both light and dark modes
+		const colors = [
+			'#7C3AED', // Purple - Primary brand color
+			'#DC2626', // Red
+			'#059669', // Green
+			'#D97706', // Orange
+			'#2563EB', // Blue
+			'#DB2777', // Pink
+			'#0891B2', // Cyan
+			'#65A30D', // Lime
+			'#EA580C', // Orange Red
+			'#7C2D12'  // Brown
+		];
 
 		let series = [];
 
@@ -343,22 +355,25 @@ export default function AdminAnalyticsByAccount() {
 
 		return {
 			animation: false, // Disable animations for better performance
+			backgroundColor: 'transparent', // Let the container handle background
 			grid: {
 				left: '3%',
 				right: '4%',
 				bottom: '15%',
-				containLabel: true
+				containLabel: true,
+				borderColor: '#E5E7EB',
+				show: false
 			},
 			tooltip: {
 				trigger: 'axis',
 				axisPointer: {
 					type: 'shadow'
 				},
-				backgroundColor: '#ffffff',
-				borderColor: '#2563EB',
+				backgroundColor: '#FFFFFF',
+				borderColor: '#7C3AED',
 				borderWidth: 2,
 				textStyle: {
-					color: '#000000',
+					color: '#374151',
 					fontSize: 12
 				},
 				padding: [12, 16],
@@ -400,7 +415,7 @@ export default function AdminAnalyticsByAccount() {
 					if (!account) return '';
 
 					// Company header
-					let tooltip = `<div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #1f2937;">
+					let tooltip = `<div style="font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #374151;">
 						${account.company_code || account.name || ''} - ${account.company_name || ''}
 					</div>`;
 					
@@ -409,10 +424,10 @@ export default function AdminAnalyticsByAccount() {
 						const seriesIndex = params[0].seriesIndex;
 						const timeHeader = timeHeaders[seriesIndex];
 						if (timeHeader) {
-							tooltip += `<div style="margin-bottom: 8px; padding: 8px; background-color: #f3f4f6; border-radius: 4px;">
+							tooltip += `<div style="margin-bottom: 8px; padding: 8px; background-color: #F3F4F6; border-radius: 4px; border: 1px solid #E5E7EB;">
 								<div style="font-weight: 600; color: #374151;">Time: ${timeHeader.name || ''}</div>
-								<div style="color: #6b7280; font-size: 11px;">From: ${timeHeader.from || ''}</div>
-								<div style="color: #6b7280; font-size: 11px;">To: ${timeHeader.to || ''}</div>
+								<div style="color: #6B7280; font-size: 11px;">From: ${timeHeader.from || ''}</div>
+								<div style="color: #6B7280; font-size: 11px;">To: ${timeHeader.to || ''}</div>
 							</div>`;
 						}
 					}
@@ -426,9 +441,9 @@ export default function AdminAnalyticsByAccount() {
 					params.forEach((param: any) => {
 						const datasetName = selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1);
 						tooltip += `<div style="margin-bottom: 4px; display: flex; align-items: center;">
-							<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; margin-right: 8px; border-radius: 2px;"></span>
-							<span style="color: #374151;">${datasetName}: </span>
-							<strong style="color: #1f2937; margin-left: 4px;">${param.value.toLocaleString()}</strong>
+							<span style="display: inline-block; width: 12px; height: 12px; background-color: ${param.color}; margin-right: 8px; border-radius: 2px; border: 1px solid #E5E7EB;"></span>
+							<span style="color: #6B7280;">${datasetName}: </span>
+							<strong style="color: #374151; margin-left: 4px;">${param.value.toLocaleString()}</strong>
 						</div>`;
 					});
 
@@ -439,7 +454,8 @@ export default function AdminAnalyticsByAccount() {
 				type: 'scroll',
 				top: 0,
 				textStyle: {
-					fontSize: 12
+					fontSize: 12,
+					color: '#374151'
 				}
 			},
 			xAxis: {
@@ -449,15 +465,54 @@ export default function AdminAnalyticsByAccount() {
 					rotate: -45,
 					fontSize: 10,
 					interval: Math.max(0, Math.ceil(categories.length / 30) - 1), // Max 30 labels
-					margin: 8
+					margin: 8,
+					color: '#6B7280'
+				},
+				axisLine: {
+					lineStyle: {
+						color: '#E5E7EB',
+						width: 1
+					}
+				},
+				axisTick: {
+					lineStyle: {
+						color: '#E5E7EB'
+					}
+				},
+				splitLine: {
+					show: false
 				}
 			},
 			yAxis: {
 				type: 'value',
 				name: selectedDataset.charAt(0).toUpperCase() + selectedDataset.slice(1),
+				nameTextStyle: {
+					color: '#374151',
+					fontSize: 12,
+					fontWeight: 500
+				},
 				axisLabel: {
 					formatter: function(value: number) {
 						return value.toLocaleString();
+					},
+					color: '#6B7280'
+				},
+				axisLine: {
+					lineStyle: {
+						color: '#E5E7EB',
+						width: 1
+					}
+				},
+				axisTick: {
+					lineStyle: {
+						color: '#E5E7EB'
+					}
+				},
+				splitLine: {
+					lineStyle: {
+						color: '#E5E7EB',
+						width: 1,
+						type: [4, 4] // Dashed line
 					}
 				}
 			},
@@ -670,11 +725,13 @@ export default function AdminAnalyticsByAccount() {
 										</span>
 									</div>
 								</div>
-								<ReactECharts 
-									option={getEChartsOption()} 
-									style={{ width: '100%', height: '400px' }}
-									opts={{ renderer: 'canvas' }}
-								/>
+								<div className="chart-container">
+									<ReactECharts 
+										option={getEChartsOption()} 
+										style={{ width: '100%', height: '400px' }}
+										opts={{ renderer: 'canvas' }}
+									/>
+								</div>
 								
 								{/* Chart Controls */}
 								<div className='flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 mt-6 p-4 bg-primary-5 border border-border-color rounded-lg'>

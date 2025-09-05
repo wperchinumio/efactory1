@@ -35,11 +35,17 @@
   --primary: #191a1c;
   --primary-10: #191a1c1a;
   --secondary: #837788;
-  --chart-color1: #191a1c;
-  --chart-color2: #837788;
-  --chart-color3: #374765;
-  --chart-color4: #484261;
-  --chart-color5: #717788;
+  /* Professional Chart Colors - Work well in both light and dark modes */
+  --chart-color-1: #7C3AED;  /* Purple - Primary brand color */
+  --chart-color-2: #DC2626;  /* Red */
+  --chart-color-3: #059669;  /* Green */
+  --chart-color-4: #D97706;  /* Orange */
+  --chart-color-5: #2563EB;  /* Blue */
+  --chart-color-6: #DB2777;  /* Pink */
+  --chart-color-7: #0891B2;  /* Cyan */
+  --chart-color-8: #65A30D;  /* Lime */
+  --chart-color-9: #EA580C;  /* Orange Red */
+  --chart-color-10: #7C2D12; /* Brown */
 }
 
 [data-theme="light"] {
@@ -987,4 +993,39 @@ body .apexcharts-legend-marker {
     padding: .2em .4em;
     line-height: 1;
   }
+}
+
+/* ========================================
+   CHART THEME CLASSES - Reusable for ECharts
+   ======================================== */
+
+.chart-theme-light {
+  --chart-bg: transparent;
+  --chart-text: #374151;
+  --chart-text-secondary: #6B7280;
+  --chart-border: #E5E7EB;
+  --chart-grid: #F3F4F6;
+  --chart-tooltip-bg: #FFFFFF;
+  --chart-tooltip-border: #7C3AED;
+  --chart-tooltip-shadow: rgba(0, 0, 0, 0.1);
+}
+
+.chart-theme-dark {
+  --chart-bg: transparent;
+  --chart-text: #F3F4F6;
+  --chart-text-secondary: #9CA3AF;
+  --chart-border: #374151;
+  --chart-grid: #4B5563;
+  --chart-tooltip-bg: #1F2937;
+  --chart-tooltip-border: #8B5CF6;
+  --chart-tooltip-shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Auto-apply chart theme based on data-theme */
+[data-theme="light"] .chart-container {
+  @apply chart-theme-light;
+}
+
+[data-theme="dark"] .chart-container {
+  @apply chart-theme-dark;
 }
