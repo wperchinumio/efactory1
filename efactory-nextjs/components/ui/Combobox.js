@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IconChevronDown, IconCheck, IconSearch } from '@tabler/icons-react';
+import { IconChevronDown, IconCheck, IconSearch, IconX } from '@tabler/icons-react';
 
 const Combobox = ({ 
 	value, 
@@ -62,6 +62,13 @@ const Combobox = ({
 		}
 	};
 
+	const handleClear = (e) => {
+		e.stopPropagation();
+		onValueChange('');
+		setIsOpen(false);
+		setSearchQuery('');
+	};
+
 	return (
 		<div className={`relative ${className}`} ref={containerRef} style={{ zIndex: isOpen ? 99999 : 'auto' }}>
 			{/* Trigger Button */}
@@ -87,11 +94,23 @@ const Combobox = ({
 						{selectedOption ? selectedOption.label : placeholder}
 					</span>
 				</div>
-				<IconChevronDown 
-					className={`w-4 h-4 text-font-color-100 flex-shrink-0 transition-transform duration-200 ${
-						isOpen ? 'rotate-180' : ''
-					}`} 
-				/>
+				<div className="flex items-center gap-1">
+					{selectedOption && (
+						<button
+							type="button"
+							onClick={handleClear}
+							className="p-1 hover:bg-border-color rounded transition-colors duration-200"
+							title="Clear selection"
+						>
+							<IconX className="w-3 h-3 text-font-color-100" />
+						</button>
+					)}
+					<IconChevronDown 
+						className={`w-4 h-4 text-font-color-100 flex-shrink-0 transition-transform duration-200 ${
+							isOpen ? 'rotate-180' : ''
+						}`} 
+					/>
+				</div>
 			</button>
 
 			{/* Dropdown Content - Using fixed positioning to escape stacking context */}
