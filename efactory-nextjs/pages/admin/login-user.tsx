@@ -17,7 +17,17 @@ import {
 	IconShield,
 	IconDots,
 	IconChartBar,
-	IconCalendar
+	IconCalendar,
+	IconFilter,
+	IconSortAscending,
+	IconSortDescending,
+	IconChevronDown,
+	IconEye,
+	IconLogin,
+	IconDatabase,
+	IconActivity,
+	IconWorld,
+	IconSettings
 } from '@tabler/icons-react';
 
 function getInitials(username: string) {
@@ -33,7 +43,10 @@ function LoginUserPageInner() {
 	const [selectedUsername, setSelectedUsername] = useState<string>('');
 	const [submitting, setSubmitting] = useState(false);
 	const [accounts, setAccounts] = useState<AvailableAccountItem[]>([]);
-	const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+	const [sortField, setSortField] = useState<'company' | 'location' | 'edi'>('company');
+	const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+	const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+	const [analyticsView, setAnalyticsView] = useState<'edi' | 'complexity' | 'activity'>('complexity');
 	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
@@ -43,7 +56,6 @@ function LoginUserPageInner() {
 	}, []);
 
 	useEffect(() => {
-		// Focus the search input when component mounts
 		if (searchInputRef.current) {
 			searchInputRef.current.focus();
 		}
@@ -61,25 +73,35 @@ function LoginUserPageInner() {
 			);
 		}
 		return [...list].sort((a, b) => {
-			// Extract account numbers from company names
-			const aAccountNum = a.company.match(/^\d+/)?.[0] || a.username;
-			const bAccountNum = b.company.match(/^\d+/)?.[0] || b.username;
+			let aValue, bValue;
 			
-			// Sort by account number (numeric comparison)
-			const aNum = parseInt(aAccountNum, 10) || 0;
-			const bNum = parseInt(bAccountNum, 10) || 0;
-			
-			if (aNum !== bNum) {
-				return aNum - bNum; // Numeric sort for account numbers
+			switch (sortField) {
+				case 'company':
+					aValue = a.company.toLowerCase();
+					bValue = b.company.toLowerCase();
+					break;
+				case 'location':
+					aValue = (a.location || '').toLowerCase();
+					bValue = (b.location || '').toLowerCase();
+					break;
+				case 'edi':
+					aValue = a.is_EDI ? 1 : 0;
+					bValue = b.is_EDI ? 1 : 0;
+					break;
+				default:
+					aValue = a.company.toLowerCase();
+					bValue = b.company.toLowerCase();
 			}
 			
-			// If account numbers are the same, sort by company name
-			const aCompany = a.company.replace(/^\d+\s*-\s*/, '').toLowerCase();
-			const bCompany = b.company.replace(/^\d+\s*-\s*/, '').toLowerCase();
-			return aCompany < bCompany ? -1 : aCompany > bCompany ? 1 : 0;
+			if (sortField === 'edi') {
+				return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+			} else {
+				return sortDirection === 'asc' 
+					? aValue.localeCompare(bValue)
+					: bValue.localeCompare(aValue);
+			}
 		});
-	}, [accounts, filter]);
-
+	}, [accounts, filter, sortField, sortDirection]);
 
 	async function handleProceed() {
 		if (!selectedUsername || submitting) return;
@@ -98,128 +120,251 @@ function LoginUserPageInner() {
 		}
 	}
 
-	// Calculate statistics
+	// Calculate comprehensive statistics
 	const totalAccounts = accounts.length;
 	const ediAccounts = accounts.filter(acc => acc.is_EDI).length;
+	const standardAccounts = totalAccounts - ediAccounts;
 	const uniqueCompanies = new Set(accounts.map(acc => acc.company)).size;
-	const uniqueLocations = new Set(
-		accounts.flatMap(acc => 
-			String(acc.location || '').split(',').map(l => l.trim()).filter(Boolean)
-		)
-	).size;
-
-	// Calculate location insights with companies and accounts
-	const locationInsights = accounts.reduce((acc, account) => {
-		const locations = account.location ? account.location.split(',').map(l => l.trim()).filter(Boolean) : [];
-		locations.forEach(loc => {
-			if (!acc[loc]) {
-				acc[loc] = { accounts: 0, companies: new Set() };
-			}
-			acc[loc].accounts += 1;
-			acc[loc].companies.add(account.company);
-		});
-		return acc;
-	}, {} as Record<string, { accounts: number; companies: Set<string> }>);
 	
-	const topLocations = Object.entries(locationInsights)
-		.map(([location, data]) => ({
-			location: location.slice(0, 3).toUpperCase(), // Show only 3 letters
-			accounts: data.accounts,
-			companies: data.companies.size
+	const allLocations = accounts.flatMap(acc => 
+		String(acc.location || '').split(',').map(l => l.trim()).filter(Boolean)
+	);
+	const uniqueLocations = new Set(allLocations).size;
+	
+	// Location distribution
+	const locationDistribution = allLocations.reduce((acc, loc) => {
+		acc[loc] = (acc[loc] || 0) + 1;
+		return acc;
+	}, {} as Record<string, number>);
+	
+	const topLocations = Object.entries(locationDistribution)
+		.sort(([,a], [,b]) => b - a)
+		.slice(0, 5);
+
+	// EDI vs Standard distribution by company
+	const companyEDIDistribution = accounts.reduce((acc, account) => {
+		const company = account.company.replace(/^\d+\s*-\s*/, '');
+		if (!acc[company]) {
+			acc[company] = { total: 0, edi: 0, standard: 0 };
+		}
+		acc[company].total += 1;
+		if (account.is_EDI) {
+			acc[company].edi += 1;
+		} else {
+			acc[company].standard += 1;
+		}
+		return acc;
+	}, {} as Record<string, { total: number; edi: number; standard: number }>);
+
+	// Most EDI-enabled companies (companies with highest EDI percentage)
+	const ediEnabledCompanies = Object.entries(companyEDIDistribution)
+		.map(([company, data]) => ({
+			company,
+			...data,
+			ediPercentage: (data.edi / data.total) * 100
 		}))
-		.sort((a, b) => {
-			// Always sort by account count first (highest first), then by location code
-			const accountCompare = b.accounts - a.accounts;
-			return accountCompare !== 0 ? accountCompare : a.location.localeCompare(b.location);
-		})
+		.filter(item => item.total >= 2) // Only companies with 2+ accounts
+		.sort((a, b) => b.ediPercentage - a.ediPercentage)
+		.slice(0, 5);
+
+	// Account complexity analysis (accounts with most locations)
+	const accountComplexity = accounts
+		.map(account => ({
+			username: account.username,
+			company: account.company.replace(/^\d+\s*-\s*/, ''),
+			locationCount: account.location ? account.location.split(',').filter(l => l.trim()).length : 0,
+			isEDI: account.is_EDI
+		}))
+		.sort((a, b) => b.locationCount - a.locationCount)
+		.slice(0, 5);
+
+	// Recent activity simulation (based on account characteristics)
+	const recentActivity = accounts
+		.map(account => ({
+			username: account.username,
+			company: account.company.replace(/^\d+\s*-\s*/, ''),
+			activityScore: (account.is_EDI ? 85 : 60) + (account.location ? account.location.split(',').length * 5 : 0),
+			lastActivity: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random within last week
+			isEDI: account.is_EDI
+		}))
+		.sort((a, b) => b.activityScore - a.activityScore)
 		.slice(0, 5);
 
 	return (
 		<div className='md:px-6 sm:px-3 pt-6 md:pt-8 min-h-screen bg-body-color'>
 			{submitting && <LoadingOverlay text='Switching account...' />}
 			
-			{/* Compact Header */}
-			<div className='container-fluid mb-4'>
-				<div className='max-w-[1400px] mx-auto'>
-					{/* Title and Stats Row */}
-					<div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4'>
+			{/* Dashboard Header */}
+			<div className='container-fluid mb-6'>
+				<div className='max-w-[1600px] mx-auto'>
+					<div className='flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6'>
 						<div>
-							<h1 className='text-[20px]/[28px] md:text-[24px]/[32px] font-bold text-font-color'>
-								Login to eFactory
+							<h1 className='text-[24px]/[32px] font-bold text-font-color mb-2'>
+								Account Management Dashboard
 							</h1>
-							<p className='text-font-color-100 text-[14px]/[20px]'>
-								Welcome back! Select an account to continue to eFactory.
+							<p className='text-font-color-100 text-[16px]/[24px]'>
+								Comprehensive view of all available accounts and system metrics
 							</p>
 						</div>
 						
-						{/* Inline Quick Stats */}
-						<div className='flex items-center gap-6'>
-							<div className='flex items-center gap-2'>
-								<div className='w-[24px] h-[24px] rounded-md flex items-center justify-center text-white bg-success'>
-									<IconBuilding className='w-[12px] h-[12px]' />
-								</div>
-								<div className='text-right'>
-									<div className='text-[16px]/[20px] font-semibold text-font-color'>{uniqueCompanies}</div>
-									<div className='text-[10px]/[12px] text-font-color-100'>Companies</div>
-								</div>
-							</div>
-							<div className='flex items-center gap-2'>
-								<div className='w-[24px] h-[24px] rounded-md flex items-center justify-center text-white bg-info'>
-									<IconShield className='w-[12px] h-[12px]' />
-								</div>
-								<div className='text-right'>
-									<div className='text-[16px]/[20px] font-semibold text-font-color'>{ediAccounts}</div>
-									<div className='text-[10px]/[12px] text-font-color-100'>EDI</div>
-								</div>
-							</div>
-							<div className='flex items-center gap-2'>
-								<div className='w-[24px] h-[24px] rounded-md flex items-center justify-center text-white bg-warning'>
-									<IconMapPin className='w-[12px] h-[12px]' />
-								</div>
-								<div className='text-right'>
-									<div className='text-[16px]/[20px] font-semibold text-font-color'>{uniqueLocations}</div>
-									<div className='text-[10px]/[12px] text-font-color-100'>Locations</div>
-								</div>
-							</div>
+						{/* Quick Actions */}
+						<div className='flex items-center gap-3'>
+							<button
+								onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
+								className='btn btn-outline-primary'
+							>
+								{viewMode === 'grid' ? <IconChartBar className='w-4 h-4' /> : <IconUsers className='w-4 h-4' />}
+								{viewMode === 'grid' ? 'Table View' : 'Grid View'}
+							</button>
+							{selectedUsername && (
+								<button
+									onClick={handleProceed}
+									disabled={submitting}
+									className='btn btn-primary'
+								>
+									<IconLogin className='w-4 h-4' />
+									{submitting ? 'Processing...' : 'Access Account'}
+								</button>
+							)}
 						</div>
 					</div>
 
-					{/* Quick Info Bar */}
-					<div className='card bg-card-color rounded-lg p-3 border border-dashed border-border-color'>
-						<div className='flex flex-wrap items-center justify-between gap-4'>
-							<div className='flex items-center gap-4'>
-								<div className='flex items-center gap-2'>
-									<span className='text-[12px]/[16px] text-font-color-100'>Account Types:</span>
-									<span className='px-2 py-1 rounded-md bg-success text-white text-[10px]/[12px] font-medium'>
-										{ediAccounts} EDI
-									</span>
-									<span className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] font-medium'>
-										{totalAccounts - ediAccounts} Standard
-									</span>
+					{/* Metrics Grid */}
+					<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
+						{/* Total Accounts */}
+						<div className='card bg-gradient-to-br from-primary to-primary-10 rounded-xl p-6 border border-primary'>
+							<div className='flex items-center justify-between'>
+								<div>
+									<div className='text-[32px]/[40px] font-bold text-white'>{totalAccounts}</div>
+									<div className='text-[14px]/[20px] text-white/80'>Total Accounts</div>
 								</div>
-								{topLocations.length > 0 && (
-									<div className='flex items-center gap-2'>
-										<span className='text-[12px]/[16px] text-font-color-100'>Top:</span>
-										{topLocations.slice(0, 3).map((locationData) => (
-											<span key={locationData.location} className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] font-bold'>
-												{locationData.location} ({locationData.accounts})
-											</span>
-										))}
+								<div className='w-[48px] h-[48px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconDatabase className='w-[24px] h-[24px] text-white' />
+								</div>
+							</div>
+						</div>
+
+						{/* EDI Accounts */}
+						<div className='card bg-gradient-to-br from-success to-success-10 rounded-xl p-6 border border-success'>
+							<div className='flex items-center justify-between'>
+								<div>
+									<div className='text-[32px]/[40px] font-bold text-white'>{ediAccounts}</div>
+									<div className='text-[14px]/[20px] text-white/80'>EDI Accounts</div>
+									<div className='text-[12px]/[16px] text-white/60'>
+										{((ediAccounts / totalAccounts) * 100).toFixed(1)}% of total
 									</div>
-								)}
+								</div>
+								<div className='w-[48px] h-[48px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconShield className='w-[24px] h-[24px] text-white' />
+								</div>
 							</div>
-							<div className='text-[11px]/[14px] text-font-color-100'>
-								💡 Search by company name, location, or "EDI"
+						</div>
+
+						{/* Companies */}
+						<div className='card bg-gradient-to-br from-info to-info-10 rounded-xl p-6 border border-info'>
+							<div className='flex items-center justify-between'>
+								<div>
+									<div className='text-[32px]/[40px] font-bold text-white'>{uniqueCompanies}</div>
+									<div className='text-[14px]/[20px] text-white/80'>Unique Companies</div>
+								</div>
+								<div className='w-[48px] h-[48px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconBuilding className='w-[24px] h-[24px] text-white' />
+								</div>
+							</div>
+						</div>
+
+						{/* Locations */}
+						<div className='card bg-gradient-to-br from-warning to-warning-10 rounded-xl p-6 border border-warning'>
+							<div className='flex items-center justify-between'>
+								<div>
+									<div className='text-[32px]/[40px] font-bold text-white'>{uniqueLocations}</div>
+									<div className='text-[14px]/[20px] text-white/80'>Active Locations</div>
+									<div className='text-[12px]/[16px] text-white/60'>
+										{(allLocations.length / uniqueLocations).toFixed(1)} avg accounts per location
+									</div>
+								</div>
+								<div className='w-[48px] h-[48px] bg-white/20 rounded-lg flex items-center justify-center'>
+									<IconWorld className='w-[24px] h-[24px] text-white' />
+								</div>
 							</div>
 						</div>
 					</div>
-				</div>
-			</div>
 
-			{/* Search and Controls */}
-			<div className='container-fluid mb-6'>
-				<div className='max-w-[1400px] mx-auto'>
-					<div className='card bg-card-color rounded-xl p-4 md:p-6 border border-dashed border-border-color'>
+					{/* Analytics Row */}
+					<div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
+						{/* Top Locations */}
+						<div className='card bg-card-color rounded-xl p-6 border border-dashed border-border-color'>
+							<div className='flex items-center gap-3 mb-4'>
+								<div className='w-[32px] h-[32px] bg-primary-10 rounded-lg flex items-center justify-center'>
+									<IconMapPin className='w-[16px] h-[16px] text-primary' />
+								</div>
+								<h3 className='text-[16px]/[22px] font-semibold text-font-color'>Top Locations</h3>
+							</div>
+							<div className='space-y-3'>
+								{topLocations.map(([location, count], index) => (
+									<div key={location} className='flex items-center justify-between'>
+										<div className='flex items-center gap-3'>
+											<div className='w-[24px] h-[24px] bg-primary text-white rounded-md flex items-center justify-center text-[12px] font-bold'>
+												{index + 1}
+											</div>
+											<span className='text-[14px]/[18px] text-font-color font-medium'>{location}</span>
+										</div>
+										<div className='flex items-center gap-2'>
+											<div className='w-[60px] bg-primary-10 rounded-full h-2'>
+												<div 
+													className='bg-primary h-2 rounded-full' 
+													style={{ width: `${(count / topLocations[0][1]) * 100}%` }}
+												/>
+											</div>
+											<span className='text-[12px]/[16px] text-font-color-100 font-mono'>{count}</span>
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+
+						{/* Account Distribution Analysis */}
+						<div className='card bg-card-color rounded-xl p-6 border border-dashed border-border-color'>
+							<div className='flex items-center gap-3 mb-4'>
+								<div className='w-[32px] h-[32px] bg-info-10 rounded-lg flex items-center justify-center'>
+									<IconMapPin className='w-[16px] h-[16px] text-info' />
+								</div>
+								<h3 className='text-[16px]/[22px] font-semibold text-font-color'>
+									Multi-Location Accounts
+								</h3>
+							</div>
+							<div className='space-y-3'>
+								{accountComplexity.map((item, index) => (
+									<div key={item.username} className='flex items-center justify-between'>
+										<div className='flex items-center gap-3'>
+											<div className='w-[24px] h-[24px] bg-info text-white rounded-md flex items-center justify-center text-[12px] font-bold'>
+												{index + 1}
+											</div>
+											<div className='min-w-0'>
+												<div className='text-[14px]/[18px] text-font-color font-medium truncate'>{item.username}</div>
+												<div className='text-[11px]/[14px] text-font-color-100 truncate'>{item.company}</div>
+											</div>
+										</div>
+										<div className='flex items-center gap-2'>
+											<div className='w-[60px] bg-info-10 rounded-full h-2'>
+												<div 
+													className='bg-info h-2 rounded-full' 
+													style={{ width: `${(item.locationCount / accountComplexity[0].locationCount) * 100}%` }}
+												/>
+											</div>
+											<div className='text-right'>
+												<div className='text-[12px]/[16px] text-font-color-100 font-mono'>{item.locationCount}</div>
+												<div className='text-[10px]/[12px] text-font-color-100'>locations</div>
+											</div>
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+					</div>
+
+					{/* Search and Controls */}
+					<div className='card bg-card-color rounded-xl p-4 border border-dashed border-border-color mb-6'>
 						<div className='flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between'>
 							<div className='flex items-center gap-4 flex-1'>
 								<div className='relative flex-1 max-w-md'>
@@ -236,28 +381,6 @@ function LoginUserPageInner() {
 									{filtered.length} of {totalAccounts} accounts
 								</span>
 							</div>
-							<div className='flex items-center gap-2'>
-								<button
-									onClick={() => setViewMode('grid')}
-									className={`p-2 rounded-lg transition-colors ${
-										viewMode === 'grid' 
-											? 'bg-primary text-white' 
-											: 'bg-primary-10 text-primary hover:bg-primary hover:text-white'
-									}`}
-								>
-									<IconChartBar className='w-[16px] h-[16px]' />
-								</button>
-								<button
-									onClick={() => setViewMode('list')}
-									className={`p-2 rounded-lg transition-colors ${
-										viewMode === 'list' 
-											? 'bg-primary text-white' 
-											: 'bg-primary-10 text-primary hover:bg-primary hover:text-white'
-									}`}
-								>
-									<IconUsers className='w-[16px] h-[16px]' />
-								</button>
-							</div>
 						</div>
 					</div>
 				</div>
@@ -265,9 +388,9 @@ function LoginUserPageInner() {
 
 			{/* Accounts Display */}
 			<div className='container-fluid pb-8'>
-				<div className='max-w-[1400px] mx-auto'>
+				<div className='max-w-[1600px] mx-auto'>
 					{viewMode === 'grid' ? (
-						<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6'>
+						<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4'>
 							{filtered.map((account, index) => (
 								<AccountCard
 									key={account.username}
@@ -277,24 +400,37 @@ function LoginUserPageInner() {
 									onSelect={setSelectedUsername}
 									onProceed={handleProceed}
 									submitting={submitting}
-									totalCount={filtered.length}
 								/>
 							))}
 						</div>
 					) : (
-						<div className='space-y-4'>
-							{filtered.map((account, index) => (
-								<AccountListItem
-									key={account.username}
-									account={account}
-									index={index}
-									isSelected={selectedUsername === account.username}
-									onSelect={setSelectedUsername}
-									onProceed={handleProceed}
-									submitting={submitting}
-									totalCount={filtered.length}
-								/>
-							))}
+						<div className='card bg-card-color rounded-lg border border-dashed border-border-color overflow-hidden'>
+							{/* Table Header */}
+							<div className='bg-primary-5 border-b border-border-color px-6 py-3'>
+								<div className='grid grid-cols-12 gap-4 items-center text-[12px]/[16px] font-semibold text-font-color-100 uppercase tracking-wider'>
+									<div className='col-span-1'>#</div>
+									<div className='col-span-1'>Avatar</div>
+									<div className='col-span-3'>Company</div>
+									<div className='col-span-3'>Locations</div>
+									<div className='col-span-2'>Type</div>
+									<div className='col-span-2'>Actions</div>
+								</div>
+							</div>
+
+							{/* Table Body */}
+							<div className='divide-y divide-border-color'>
+								{filtered.map((account, index) => (
+									<AccountTableRow
+										key={account.username}
+										account={account}
+										index={index}
+										isSelected={selectedUsername === account.username}
+										onSelect={setSelectedUsername}
+										onProceed={handleProceed}
+										submitting={submitting}
+									/>
+								))}
+							</div>
 						</div>
 					)}
 
@@ -306,7 +442,7 @@ function LoginUserPageInner() {
 							</div>
 							<h3 className='text-[24px]/[30px] font-semibold mb-3'>No accounts found</h3>
 							<p className='text-font-color-100 text-[16px]/[24px] max-w-md mx-auto'>
-								We couldn't find any accounts matching your search criteria. Try adjusting your search terms or clear the filter.
+								We couldn't find any accounts matching your search criteria.
 							</p>
 							<button 
 								onClick={() => setFilter('')}
@@ -316,21 +452,115 @@ function LoginUserPageInner() {
 							</button>
 						</div>
 					)}
-
 				</div>
 			</div>
 		</div>
 	);
 }
 
-function AccountCard({ account, index, isSelected, onSelect, onProceed, submitting, totalCount }: {
+function AccountCard({ account, index, isSelected, onSelect, onProceed, submitting }: {
 	account: AvailableAccountItem;
 	index: number;
 	isSelected: boolean;
 	onSelect: (username: string) => void;
 	onProceed: () => void;
 	submitting: boolean;
-	totalCount: number;
+}) {
+	const initials = getInitials(account.username);
+	const locTokens = String(account.location || '')
+		.split(',')
+		.map((t) => t.trim())
+		.filter(Boolean)
+		.slice(0, 2);
+
+	const accountNumber = account.company.match(/^\d+/)?.[0] || account.username;
+	const companyName = account.company.replace(/^\d+\s*-\s*/, '');
+
+	return (
+		<div
+			className={`card bg-card-color rounded-lg p-4 border transition-all duration-200 cursor-pointer hover:shadow-shadow-lg ${
+				isSelected 
+					? 'border-primary ring-2 ring-primary ring-opacity-20 bg-primary-10' 
+					: 'border-dashed border-border-color hover:border-primary'
+			}`}
+			onClick={() => onSelect(account.username)}
+		>
+			{/* Header */}
+			<div className='flex items-center justify-between mb-3'>
+				<div className='w-[40px] h-[40px] bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white text-[14px] font-bold'>
+					{initials}
+				</div>
+				<div className='flex items-center gap-2'>
+					{account.is_EDI ? (
+						<>
+							<IconShield className='w-[16px] h-[16px] text-success' />
+							<span className='text-[12px]/[16px] text-success font-medium'>EDI</span>
+						</>
+					) : (
+						<>
+							<IconUsers className='w-[16px] h-[16px] text-font-color-100' />
+							<span className='text-[12px]/[16px] text-font-color-100'>STD</span>
+						</>
+					)}
+				</div>
+			</div>
+
+			{/* Company Info */}
+			<div className='mb-3'>
+				<div className='text-[16px]/[20px] font-bold text-font-color mb-1'>
+					{accountNumber}
+				</div>
+				<div className='text-[12px]/[16px] text-font-color-100 truncate'>
+					{companyName}
+				</div>
+			</div>
+
+			{/* Locations */}
+			{locTokens.length > 0 && (
+				<div className='mb-3'>
+					<div className='flex flex-wrap gap-1'>
+						{locTokens.map((location) => (
+							<span 
+								key={location} 
+								className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] uppercase font-medium'
+							>
+								{location}
+							</span>
+						))}
+						{account.location && account.location.split(',').length > 2 && (
+							<span className='px-2 py-1 rounded-md bg-primary-10 text-primary text-[10px]/[12px] font-medium'>
+								+{account.location.split(',').length - 2}
+							</span>
+						)}
+					</div>
+				</div>
+			)}
+
+			{/* Action */}
+			<button 
+				className={`btn w-full btn-sm ${
+					isSelected ? 'btn-primary' : 'btn-outline-primary'
+				}`}
+				onClick={(e) => {
+					e.stopPropagation();
+					if (!isSelected) onSelect(account.username);
+					else onProceed();
+				}}
+				disabled={submitting}
+			>
+				{isSelected ? (submitting ? 'Processing...' : 'Access') : 'Select'}
+			</button>
+		</div>
+	);
+}
+
+function AccountTableRow({ account, index, isSelected, onSelect, onProceed, submitting }: {
+	account: AvailableAccountItem;
+	index: number;
+	isSelected: boolean;
+	onSelect: (username: string) => void;
+	onProceed: () => void;
+	submitting: boolean;
 }) {
 	const initials = getInitials(account.username);
 	const locTokens = String(account.location || '')
@@ -339,177 +569,105 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 		.filter(Boolean)
 		.slice(0, 3);
 
-	// Calculate metrics from available data
-	const accountMetrics = {
-		accountNumber: index + 1,
-		isEDI: account.is_EDI || false,
-		locationCount: account.location ? account.location.split(',').filter(l => l.trim()).length : 0
-	};
+	const accountNumber = account.company.match(/^\d+/)?.[0] || account.username;
+	const companyName = account.company.replace(/^\d+\s*-\s*/, '');
 
 	return (
 		<div
-			className={`card bg-card-color rounded-xl p-6 border border-dashed transition-all duration-200 cursor-pointer hover:shadow-shadow-lg hover:scale-[1.02] ${
-				isSelected 
-					? 'border-primary ring-2 ring-primary ring-opacity-20 bg-primary-10' 
-					: 'border-border-color hover:border-primary'
+			className={`px-6 py-4 transition-all duration-200 cursor-pointer hover:bg-primary-5 ${
+				isSelected ? 'bg-primary-10 border-l-4 border-l-primary' : ''
 			}`}
 			onClick={() => onSelect(account.username)}
-			onDoubleClick={onProceed}
 		>
-			{/* Header */}
-			<div className='flex items-start justify-between mb-4'>
-				<div className='flex items-center gap-3'>
-					<div className='w-[50px] h-[50px] bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center text-white text-[16px] font-bold'>
+			<div className='grid grid-cols-12 gap-4 items-center'>
+				{/* Index */}
+				<div className='col-span-1 text-[12px]/[16px] text-font-color-100 font-mono'>
+					{index + 1}
+				</div>
+
+				{/* Avatar */}
+				<div className='col-span-1'>
+					<div className='w-[32px] h-[32px] bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white text-[12px] font-bold'>
 						{initials}
 					</div>
-					<div>
-						<div className='text-[16px]/[22px] font-bold text-font-color mb-1'>
-							{account.company.match(/^\d+/)?.[0] || account.username}
-						</div>
-						<div className='text-[14px]/[20px] text-font-color-100 truncate'>
-							{account.company.replace(/^\d+\s*-\s*/, '')}
-						</div>
-					</div>
 				</div>
-				<div className='text-[11px]/[14px] text-font-color-100'>
-					{index + 1}/{totalCount}
-				</div>
-			</div>
 
-			{/* Account Info */}
-			<div className='grid grid-cols-2 gap-4 mb-4'>
-				<div className='text-center'>
-					<div className='text-[16px]/[20px] font-semibold text-font-color'>{accountMetrics.locationCount}</div>
-					<div className='text-[11px]/[14px] text-font-color-100'>Locations</div>
-				</div>
-				<div className='text-center'>
-					<div className={`text-[16px]/[20px] font-semibold ${accountMetrics.isEDI ? 'text-success' : 'text-font-color-100'}`}>
-						{accountMetrics.isEDI ? 'EDI' : 'STD'}
+				{/* Company */}
+				<div className='col-span-3 min-w-0'>
+					<div className='text-[14px]/[18px] font-semibold text-font-color truncate'>
+						{accountNumber}
 					</div>
-					<div className='text-[11px]/[14px] text-font-color-100'>Type</div>
-				</div>
-			</div>
-
-			{/* Locations */}
-			{locTokens.length > 0 && (
-				<div className='mb-4'>
-					<div className='flex items-center gap-1 mb-2'>
-						<IconMapPin className='w-[12px] h-[12px] text-font-color-100' />
-						<span className='text-[12px]/[16px] text-font-color-100'>Locations</span>
-					</div>
-					<div className='flex flex-wrap gap-1'>
-																	{locTokens.map((location) => (
-												<span 
-													key={location} 
-													className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[1.2] uppercase font-medium'
-												>
-													{location}
-												</span>
-											))}
+					<div className='text-[12px]/[16px] text-font-color-100 truncate'>
+						{companyName}
 					</div>
 				</div>
-			)}
 
-			{/* Action */}
-			<button 
-							className={`btn w-full transition-all ${
-				isSelected 
-					? 'btn-primary' 
-					: 'btn-secondary'
-			}`}
-				onClick={(e) => {
-					e.stopPropagation();
-					if (!isSelected) onSelect(account.username);
-					else onProceed();
-				}}
-				disabled={submitting}
-			>
-				{isSelected ? (submitting ? 'Processing...' : 'Access Account') : 'Select'}
-			</button>
-		</div>
-	);
-}
-
-function AccountListItem({ account, index, isSelected, onSelect, onProceed, submitting, totalCount }: {
-	account: AvailableAccountItem;
-	index: number;
-	isSelected: boolean;
-	onSelect: (username: string) => void;
-	onProceed: () => void;
-	submitting: boolean;
-	totalCount: number;
-}) {
-	const initials = getInitials(account.username);
-	const locTokens = String(account.location || '')
-		.split(',')
-		.map((t) => t.trim())
-		.filter(Boolean)
-		.slice(0, 4);
-
-	return (
-		<div
-			className={`card bg-card-color rounded-xl p-4 border border-dashed transition-all duration-200 cursor-pointer hover:shadow-shadow-lg ${
-				isSelected 
-					? 'border-primary ring-2 ring-primary ring-opacity-20 bg-primary-10' 
-					: 'border-border-color hover:border-primary'
-			}`}
-			onClick={() => onSelect(account.username)}
-			onDoubleClick={onProceed}
-		>
-			<div className='flex items-center gap-4'>
-				<div className='w-[48px] h-[48px] bg-gradient-to-br from-primary to-secondary rounded-lg flex items-center justify-center text-white text-[14px] font-bold'>
-					{initials}
-				</div>
-				<div className='flex-1 min-w-0'>
-					<div className='text-[16px]/[22px] font-bold text-font-color mb-1'>
-						{account.company.match(/^\d+/)?.[0] || account.username}
-					</div>
-					<div className='text-[14px]/[20px] text-font-color-100 mb-2'>
-						{account.company.replace(/^\d+\s*-\s*/, '')}
-					</div>
-					{locTokens.length > 0 && (
+				{/* Locations */}
+				<div className='col-span-3'>
+					{locTokens.length > 0 ? (
 						<div className='flex flex-wrap gap-1'>
 							{locTokens.map((location) => (
 								<span 
 									key={location} 
-									className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[1.2] uppercase font-medium'
+									className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] uppercase font-medium'
 								>
 									{location}
 								</span>
 							))}
-						</div>
-					)}
-				</div>
-				<div className='flex items-center gap-3'>
-					<div className='text-right text-[12px]/[16px] text-font-color-100'>
-						<div className='flex items-center justify-end gap-1'>
-							{account.is_EDI ? (
-								<>
-									<IconShield className='w-[12px] h-[12px] text-success' />
-									<span className='text-success font-medium'>EDI</span>
-								</>
-							) : (
-								<>
-									<IconUsers className='w-[12px] h-[12px] text-font-color-100' />
-									<span>Standard</span>
-								</>
+							{account.location && account.location.split(',').length > 3 && (
+								<span className='px-2 py-1 rounded-md bg-primary-10 text-primary text-[10px]/[12px] font-medium'>
+									+{account.location.split(',').length - 3}
+								</span>
 							)}
 						</div>
-						<div className='text-[11px]/[14px] text-font-color-100 mt-1'>
-							{index + 1}/{totalCount}
-						</div>
+					) : (
+						<span className='text-[12px]/[16px] text-font-color-100'>No locations</span>
+					)}
+				</div>
+
+				{/* Type */}
+				<div className='col-span-2'>
+					<div className='flex items-center gap-2'>
+						{account.is_EDI ? (
+							<>
+								<IconShield className='w-[14px] h-[14px] text-success' />
+								<span className='text-[12px]/[16px] text-success font-medium'>EDI</span>
+							</>
+						) : (
+							<>
+								<IconUsers className='w-[14px] h-[14px] text-font-color-100' />
+								<span className='text-[12px]/[16px] text-font-color-100'>Standard</span>
+							</>
+						)}
 					</div>
-					<button 
-						className={`btn ${isSelected ? 'btn-primary' : 'btn-secondary'}`}
-						onClick={(e) => {
-							e.stopPropagation();
-							if (!isSelected) onSelect(account.username);
-							else onProceed();
-						}}
-						disabled={submitting}
-					>
-						{isSelected ? (submitting ? 'Loading...' : 'Login') : 'Select'}
-					</button>
+				</div>
+
+				{/* Actions */}
+				<div className='col-span-2'>
+					<div className='flex items-center gap-2'>
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								onSelect(account.username);
+							}}
+							className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline-primary'}`}
+							disabled={submitting}
+						>
+							{isSelected ? 'Selected' : 'Select'}
+						</button>
+						{isSelected && (
+							<button
+								onClick={(e) => {
+									e.stopPropagation();
+									onProceed();
+								}}
+								className='btn btn-sm btn-success'
+								disabled={submitting}
+							>
+								<IconLogin className='w-[14px] h-[14px]' />
+							</button>
+						)}
+					</div>
 				</div>
 			</div>
 		</div>
