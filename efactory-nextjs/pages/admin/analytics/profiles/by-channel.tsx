@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { postJson } from '@/lib/api/http';
 import { exportAnalyticsReport } from '@/lib/exportUtils';
+import { useChartAnimation } from '@/hooks/useChartAnimation';
 import * as echarts from 'echarts';
 import { 
 	IconCalendar, 
@@ -51,7 +52,9 @@ export default function AdminAnalyticsByChannel() {
 	const [error, setError] = useState<string | null>(null);
 	const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
 	const [mounted, setMounted] = useState(false);
-	const [dataJustLoaded, setDataJustLoaded] = useState(false);
+	
+	// Chart animation hook
+	const { triggerDataLoadAnimation, triggerDatasetChangeAnimation, getAnimationSettings } = useChartAnimation();
 	
 	// Chart dataset and comparison options
 	const [selectedDataset, setSelectedDataset] = useState<'orders' | 'lines' | 'packages' | 'units'>('orders');
@@ -115,9 +118,7 @@ export default function AdminAnalyticsByChannel() {
 
 			setRows(res.data?.chart || []);
 			setLoaded(true);
-			setDataJustLoaded(true);
-			// Reset the flag after a short delay to allow animation
-			setTimeout(() => setDataJustLoaded(false), 1500);
+			triggerDataLoadAnimation();
 		} catch (e: any) {
 			setError(e?.message || 'Failed to load report');
 		} finally {
@@ -132,8 +133,7 @@ export default function AdminAnalyticsByChannel() {
 
 	const handleDatasetChange = (dataset: 'orders' | 'lines' | 'packages' | 'units') => {
 		setSelectedDataset(dataset);
-		setDataJustLoaded(true);
-		setTimeout(() => setDataJustLoaded(false), 1000);
+		triggerDatasetChangeAnimation();
 	};
 
 	const clearAllFilters = () => {
@@ -453,9 +453,7 @@ export default function AdminAnalyticsByChannel() {
 		});
 
 		return {
-			animation: dataJustLoaded,
-			animationDuration: dataJustLoaded ? 1000 : 0,
-			animationEasing: 'cubicOut',
+			...getAnimationSettings(),
 			grid: {
 				left: '15%',
 				right: '15%',
@@ -500,9 +498,7 @@ export default function AdminAnalyticsByChannel() {
 	// ECharts pie chart options (donut chart like legacy)
 	const getPieChartOption = () => {
 		return {
-			animation: dataJustLoaded,
-			animationDuration: dataJustLoaded ? 1000 : 0,
-			animationEasing: 'cubicOut',
+			...getAnimationSettings(),
 			tooltip: {
 				trigger: 'item',
 				formatter: '{a} <br/>{b}: {c} ({d}%)'
