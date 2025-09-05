@@ -12,6 +12,7 @@ import {
   type ThemeMode,
   type LunoTheme
 } from '../lib/chartThemes';
+import { initializeThemeFromStorage } from '../lib/themeStorage';
 
 export interface UseChartThemeReturn {
   currentTheme: ThemeMode;
@@ -33,6 +34,9 @@ export function useChartTheme(): UseChartThemeReturn {
 
   // Initialize themes on first load
   useEffect(() => {
+    // Load theme preferences from localStorage first
+    initializeThemeFromStorage();
+    // Then initialize chart themes
     initializeChartThemes();
   }, []);
 

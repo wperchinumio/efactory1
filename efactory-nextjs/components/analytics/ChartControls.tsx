@@ -14,6 +14,9 @@ interface ChartControlsProps {
 	showTrendLine?: boolean;
 	onShowTrendLineChange?: (checked: boolean) => void;
 	
+	// Show options section (optional - defaults to true)
+	showOptions?: boolean;
+	
 	// Active filters display
 	activeFilters: React.ReactNode;
 }
@@ -25,6 +28,7 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
 	onCompareYearsChange,
 	showTrendLine,
 	onShowTrendLineChange,
+	showOptions = true,
 	activeFilters
 }) => {
 	return (
@@ -35,39 +39,41 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
 				onDatasetChange={onDatasetChange}
 			/>
 			
-			{/* Comparison Options */}
-			<div className='flex-1'>
-				<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Options</label>
-				<div className='space-y-3'>
-					<div className="form-check">
-						<input
-							type="checkbox"
-							id="compareYears"
-							checked={compareYears}
-							onChange={(e) => onCompareYearsChange(e.target.checked)}
-							className="form-check-input"
-						/>
-						<label className="form-check-label" htmlFor="compareYears">
-							Compare to previous 2 years
-						</label>
-					</div>
-					{/* Show Trend Line checkbox - only render if props are provided */}
-					{showTrendLine !== undefined && onShowTrendLineChange && (
+			{/* Comparison Options - only show if showOptions is true */}
+			{showOptions && (
+				<div className='flex-1'>
+					<label className='block text-xs font-medium text-font-color-100 uppercase tracking-wider mb-2'>Options</label>
+					<div className='space-y-3'>
 						<div className="form-check">
 							<input
 								type="checkbox"
-								id="showTrendLine"
-								checked={showTrendLine}
-								onChange={(e) => onShowTrendLineChange(e.target.checked)}
+								id="compareYears"
+								checked={compareYears}
+								onChange={(e) => onCompareYearsChange(e.target.checked)}
 								className="form-check-input"
 							/>
-							<label className="form-check-label" htmlFor="showTrendLine">
-								Show Trend Line
+							<label className="form-check-label" htmlFor="compareYears">
+								Compare to previous 2 years
 							</label>
 						</div>
-					)}
+						{/* Show Trend Line checkbox - only render if props are provided */}
+						{showTrendLine !== undefined && onShowTrendLineChange && (
+							<div className="form-check">
+								<input
+									type="checkbox"
+									id="showTrendLine"
+									checked={showTrendLine}
+									onChange={(e) => onShowTrendLineChange(e.target.checked)}
+									className="form-check-input"
+								/>
+								<label className="form-check-label" htmlFor="showTrendLine">
+									Show Trend Line
+								</label>
+							</div>
+						)}
+					</div>
 				</div>
-			</div>
+			)}
 			
 			{/* Active Filters Display */}
 			<div className='flex-1'>

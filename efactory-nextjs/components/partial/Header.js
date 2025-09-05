@@ -52,6 +52,12 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { clearAuthToken, getAuthToken, performLogout } from '@/lib/auth/storage';
+import { 
+    getThemePreferences, 
+    saveThemePreferences, 
+    applyThemePreferences, 
+    initializeThemeFromStorage 
+} from '@/lib/themeStorage';
 
 export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleChat, containerToggle, container }) {
 
@@ -87,11 +93,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         document.body.classList.toggle("overflow-hidden", !themeSetting)
     }
 
-    // color setting
+    // color setting - initialize from localStorage
     const [selectedTheme, setSelectedTheme] = useState("indigo");
     const handleThemeChange = (name) => {
         setSelectedTheme(name);
         document.body.setAttribute("data-luno-theme", name);
+        // Save to localStorage
+        saveThemePreferences({ lunoTheme: name });
     };
     useEffect(() => {
         document.body.setAttribute("data-luno-theme", selectedTheme);
@@ -103,6 +111,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         updatedDynamicColorItem[index].colorValue = newColor.rgb;
         setDynamicColorItem(updatedDynamicColorItem);
         updateCssVariable(updatedDynamicColorItem[index].variable, newColor.rgb);
+        
+        // Save dynamic colors to localStorage
+        const dynamicColors = updatedDynamicColorItem.map(item => ({
+            variable: item.variable,
+            colorValue: item.colorValue
+        }));
+        saveThemePreferences({ dynamicColors });
     };
     const handleClickDynamicColor = (index) => {
         const updatedDynamicColorItem = [...dynamicColorItem];
@@ -118,33 +133,39 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         document.documentElement.style.setProperty(variable, `rgba(${color.r}, ${color.g}, ${color.b}, ${color.a})`);
     };
 
-    // light dark mode
+    // light dark mode - initialize from localStorage
     const [darkMode, setDarkMode] = useState(false)
     const toggleDarkMode = () => {
         const newDarkMode = !darkMode;
         setDarkMode(newDarkMode);
         document.documentElement.setAttribute("data-theme", newDarkMode ? "dark" : "light");
+        // Save to localStorage
+        saveThemePreferences({ mode: newDarkMode ? 'dark' : 'light' });
     };
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     }, [darkMode]);
 
-    // rtl mode
+    // rtl mode - initialize from localStorage
     const [rtlMode, setRtlMode] = useState(false)
     const toggleRtlMode = () => {
         const newRtlMode = !rtlMode;
         setRtlMode(newRtlMode);
         document.documentElement.setAttribute("dir", newRtlMode ? "rtl" : "ltr");
+        // Save to localStorage
+        saveThemePreferences({ rtlMode: newRtlMode });
     };
     useEffect(() => {
         document.documentElement.setAttribute('dir', rtlMode ? 'rtl' : 'ltr');
     }, [rtlMode]);
 
-    // font family setting
+    // font family setting - initialize from localStorage
     const [selectedFontFamily, setSelectedFontFamily] = useState("Mulish, sans-serif");
     const toggleFontFamily = (fontFamily) => {
         setSelectedFontFamily(fontFamily);
         document.body.style.setProperty("--font-family", fontFamily);
+        // Save to localStorage
+        saveThemePreferences({ fontFamily });
     };
 
     // dynamic font setting
@@ -303,53 +324,95 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
             color: "bg-primary",
             label: "Primary Color",
             variable: "--primary",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-secondary",
             label: "Secondary Color",
             variable: "--secondary",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-body-color",
             label: "Body Background",
             variable: "--body-color",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-card-color",
             label: "Card Background",
             variable: "--card-color",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-border-color",
             label: "Border Color",
             variable: "--border-color",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-chart-color1",
             label: "Chart Color 1",
             variable: "--chart-color1",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-chart-color2",
             label: "Chart Color 2",
             variable: "--chart-color2",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-chart-color3",
             label: "Chart Color 3",
             variable: "--chart-color3",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-chart-color4",
             label: "Chart Color 4",
             variable: "--chart-color4",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
         {
             color: "bg-chart-color5",
             label: "Chart Color 5",
             variable: "--chart-color5",
+            colorValue: { r: 0, g: 0, b: 0, a: 1 },
+            displayColorPicker: false
         },
     ])
+
+    // Initialize theme preferences from localStorage on component mount
+    useEffect(() => {
+        const preferences = initializeThemeFromStorage();
+        
+        // Update component state with loaded preferences
+        setSelectedTheme(preferences.lunoTheme);
+        setDarkMode(preferences.mode === 'dark');
+        setRtlMode(preferences.rtlMode);
+        setSelectedFontFamily(preferences.fontFamily);
+        
+        // Apply dynamic colors if they exist
+        if (preferences.dynamicColors && preferences.dynamicColors.length > 0) {
+            setDynamicColorItem(prev => 
+                prev.map((item, index) => ({
+                    ...item,
+                    colorValue: preferences.dynamicColors[index]?.colorValue || { r: 0, g: 0, b: 0, a: 1 },
+                    displayColorPicker: false
+                }))
+            );
+        }
+    }, []);
 
     const fontItem = [
         {

@@ -648,6 +648,7 @@ export default function AdminAnalyticsByAccount() {
 									onDatasetChange={handleDatasetChange}
 									compareYears={false}
 									onCompareYearsChange={() => {}}
+									showOptions={false}
 									activeFilters={
 										<>
 											<div>Time: {filters.timeWeekly.charAt(0).toUpperCase() + filters.timeWeekly.slice(1)}</div>
