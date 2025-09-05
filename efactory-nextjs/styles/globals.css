@@ -35,6 +35,9 @@
   --primary: #191a1c;
   --primary-10: #191a1c1a;
   --secondary: #837788;
+  /* DCL brand defaults */
+  --brand-primary: #2FA4D7; /* DCL blue */
+  --brand-secondary: #0B5E8E;
   /* Professional Chart Colors - Work well in both light and dark modes */
   --chart-color-1: #7C3AED;  /* Purple - Primary brand color */
   --chart-color-2: #DC2626;  /* Red */
@@ -47,6 +50,10 @@
   --chart-color-9: #EA580C;  /* Orange Red */
   --chart-color-10: #7C2D12; /* Brown */
 }
+.brand-dcl {
+  --secondary: var(--brand-primary);
+}
+
 
 [data-theme="light"] {
   --body-color: #f4f7f6;
@@ -1056,4 +1063,87 @@ body .apexcharts-legend-marker {
 
 .animation-delay-400 {
   animation-delay: 0.4s;
+}
+
+/* ========================================
+   Auth: Subtle animated thin-line background
+   Inspired by nextjs.org hero lines
+   ======================================== */
+.animated-grid-bg {
+  --line-color: color-mix(in oklab, var(--font-color-100) 40%, transparent);
+  --accent: var(--secondary);
+  background:
+    linear-gradient(transparent 0 0) padding-box,
+    repeating-linear-gradient(
+      to right,
+      var(--line-color),
+      var(--line-color) 1px,
+      transparent 1px,
+      transparent 32px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--line-color),
+      var(--line-color) 1px,
+      transparent 1px,
+      transparent 32px
+    );
+  mask-image: radial-gradient(1200px 600px at 50% 0, black, transparent 70%);
+}
+
+/* flowing highlight line */
+.animated-grid-bg::before,
+.animated-grid-bg::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: slide-accent 6s linear infinite;
+  opacity: .6;
+}
+.animated-grid-bg::after {
+  top: 40%;
+  animation-duration: 8s;
+  opacity: .35;
+}
+.animated-grid-bg::before { top: 20%; }
+
+@keyframes slide-accent {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(50%); }
+}
+
+/* Underline accent used under the auth title */
+.brand-underline {
+  width: 140px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+}
+
+/* ========================================
+   Auth: ultra-light animated curved path lines
+   ======================================== */
+.fx-lines svg { display: block; }
+.fx-lines path {
+  stroke: color-mix(in oklab, var(--secondary) 28%, transparent);
+  stroke-width: 1;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .55;
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--secondary) 30%, transparent));
+}
+.fx-lines path.is-dashed {
+  stroke-dasharray: 4 10;
+  animation: dash-move 10s linear infinite;
+}
+.fx-lines path.is-glow {
+  stroke: color-mix(in oklab, var(--secondary) 60%, white);
+  opacity: .25;
+}
+
+@keyframes dash-move {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -200; }
 }

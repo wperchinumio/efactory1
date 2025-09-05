@@ -9,53 +9,49 @@ export default function AuthLayout({ children }) {
             <div className='container-fluid'>
                 <div className='flex gap-15 w-full relative z-[1]'>
                     <div className='items-center justify-center w-full lg:flex hidden'>
-                        <div className='max-w-[400px]'>
-                            <div className='mb-4'>
+                        <div className='max-w-[460px]'>
+                            <div className='mb-6'>
                                 <CompanyLogo className="text-primary w-[116px] h-auto" />
                             </div>
-                            <p className='mb-12 text-[32px]/[40px] font-medium'>
-                                Build digital products with:
+                            <p className='mb-6 text-[28px]/[36px] font-medium'>
+                                An order fulfillment platform made by operators, for operators.
                             </p>
-                            <div className='mb-8'>
-                                <p className='text-[24px]/[30px] mb-2'>
-                                    All-in-one tool
-                                </p>
-                                <p>
-                                    Amazing Features to make your life easier & work efficient
-                                </p>
+                            <div className='mb-6 text-font-color-100'>
+                                With best-in-class fulfillment software and customizable solutions, eFactory gives omnichannel brands complete control and visibility of orders, inventory, shipping, and returns—real time and at scale.
                             </div>
-                            <div className='mb-12'>
-                                <p className='text-[24px]/[30px] mb-2'>
-                                    Easily add & manage your services
-                                </p>
-                                <p>
-                                    It brings together your tasks, projects, timelines, files and more
-                                </p>
-                            </div>
-                            <div className='flex flex-wrap gap-4 mb-4'>
-                                <Link href="#" className='transition-all hover:text-primary'>
-                                    Home
-                                </Link>
-                                <Link href="#" className='transition-all hover:text-primary'>
-                                    About Us
-                                </Link>
-                                <Link href="#" className='transition-all hover:text-primary'>
-                                    FAQs
-                                </Link>
-                            </div>
-                            <div className='flex flex-wrap gap-4'>
-                                <Link href="#" className='w-[34px] h-[34px] rounded-full bg-border-color flex items-center justify-center text-white transition-all hover:bg-secondary'>
-                                    <IconBrandFacebookFilled width="18" height="18" />
-                                </Link>
-                                <Link href="#" className='w-[34px] h-[34px] rounded-full bg-border-color flex items-center justify-center text-white transition-all hover:bg-secondary'>
-                                    <IconBrandTwitterFilled width="18" height="18" />
-                                </Link>
-                                <Link href="#" className='w-[34px] h-[34px] rounded-full bg-border-color flex items-center justify-center text-white transition-all hover:bg-secondary'>
-                                    <IconBrandGithubFilled width="18" height="18" />
-                                </Link>
-                                <Link href="#" className='w-[34px] h-[34px] rounded-full bg-border-color flex items-center justify-center text-white transition-all hover:bg-secondary'>
-                                    <IconBrandYoutubeFilled width="18" height="18" />
-                                </Link>
+                            <ul className='space-y-3 mb-8'>
+                                <li className='flex gap-3'>
+                                    <span className='mt-1 h-2 w-2 rounded-full bg-secondary flex-none'></span>
+                                    <div>
+                                        <div className='font-medium'>Order operations</div>
+                                        <div className='text-font-color-100 text-[14px]'>Manage DTC, retail, and wholesale in one portal.</div>
+                                    </div>
+                                </li>
+                                <li className='flex gap-3'>
+                                    <span className='mt-1 h-2 w-2 rounded-full bg-secondary flex-none'></span>
+                                    <div>
+                                        <div className='font-medium'>Inventory control</div>
+                                        <div className='text-font-color-100 text-[14px]'>Real-time stock, locations, and financial-grade accuracy.</div>
+                                    </div>
+                                </li>
+                                <li className='flex gap-3'>
+                                    <span className='mt-1 h-2 w-2 rounded-full bg-secondary flex-none'></span>
+                                    <div>
+                                        <div className='font-medium'>Shipping intelligence</div>
+                                        <div className='text-font-color-100 text-[14px]'>Cost transparency, carrier performance, and tracking.</div>
+                                    </div>
+                                </li>
+                                <li className='flex gap-3'>
+                                    <span className='mt-1 h-2 w-2 rounded-full bg-secondary flex-none'></span>
+                                    <div>
+                                        <div className='font-medium'>Analytics & reporting</div>
+                                        <div className='text-font-color-100 text-[14px]'>Granular insights to connect fulfillment to your business.</div>
+                                    </div>
+                                </li>
+                            </ul>
+                            <div className='text-[13px] text-font-color-100'>
+                                Source: DCL eFactory overview – Modern fulfillment for high‑growth brands. See “Our Technology Platform”.
+                                <Link href="https://dclcorp.com/why-dcl/efactory-platform/" target="_blank" rel="noreferrer" className='text-primary ms-1 underline'>Learn more</Link>.
                             </div>
                         </div>
                     </div>
