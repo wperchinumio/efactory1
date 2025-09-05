@@ -43,14 +43,6 @@ export function getCurrentTheme(): { mode: ThemeMode; lunoTheme: LunoTheme } {
   const dataTheme = htmlElement.getAttribute('data-theme') || bodyElement.getAttribute('data-theme');
   const dataLunoTheme = (htmlElement.getAttribute('data-luno-theme') || bodyElement.getAttribute('data-luno-theme')) as LunoTheme;
 
-  console.log('getCurrentTheme called:', { 
-    htmlTheme: htmlElement.getAttribute('data-theme'),
-    bodyTheme: bodyElement.getAttribute('data-theme'),
-    htmlLunoTheme: htmlElement.getAttribute('data-luno-theme'),
-    bodyLunoTheme: bodyElement.getAttribute('data-luno-theme'),
-    finalTheme: dataTheme,
-    finalLunoTheme: dataLunoTheme
-  });
 
   return {
     mode: dataTheme === 'dark' ? 'dark' : 'light',
@@ -65,7 +57,6 @@ function getChartColors(lunoTheme: LunoTheme): string[] {
   // Read CSS variables dynamically based on current theme
   const getThemeColor = (colorVar: string, fallback: string) => {
     const value = getCSSVariable(colorVar) || fallback;
-    console.log(`Reading ${colorVar} for theme ${lunoTheme}:`, value);
     return value;
   };
 
@@ -360,14 +351,6 @@ export function updateChartTheme(): string {
   const config = generateChartThemeConfig(mode, lunoTheme);
   const themeName = getEChartsThemeName(mode, lunoTheme);
   
-  console.log('updateChartTheme - Generated config:', {
-    mode,
-    lunoTheme,
-    themeName,
-    colors: config.colors,
-    backgroundColor: config.backgroundColor,
-    textColor: config.textColor
-  });
   
   // Re-register the theme with updated colors
   registerEChartsTheme(themeName, config);

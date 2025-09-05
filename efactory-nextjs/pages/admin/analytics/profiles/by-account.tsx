@@ -561,16 +561,16 @@ export default function AdminAnalyticsByAccount() {
 							<div className='flex items-center justify-between mb-2'>
 								<div>
 									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalOrders.toLocaleString()}</div>
-									<div className='text-[10px]/[12px] text-white/80'>Total Orders</div>
+									<div className='text-[12px]/[14px] text-white/80'>Total Orders</div>
 								</div>
 								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
 									<IconShoppingCart className='w-[12px] h-[12px] text-white' />
 								</div>
 							</div>
 							<div className='flex items-center justify-between'>
-								<div className='text-[9px]/[11px] text-white/60'>
-									{stats.avgOrdersPerAccount.toFixed(0)} avg/account
-								</div>
+													<div className='text-[11px]/[13px] text-white/60'>
+						{stats.avgOrdersPerAccount.toFixed(0)} avg/account
+					</div>
 							</div>
 						</div>
 
@@ -579,16 +579,16 @@ export default function AdminAnalyticsByAccount() {
 							<div className='flex items-center justify-between mb-2'>
 								<div>
 									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalLines.toLocaleString()}</div>
-									<div className='text-[10px]/[12px] text-white/80'>Total Lines</div>
+									<div className='text-[12px]/[14px] text-white/80'>Total Lines</div>
 								</div>
 								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
 									<IconList className='w-[12px] h-[12px] text-white' />
 								</div>
 							</div>
 							<div className='flex items-center justify-between'>
-								<div className='text-[9px]/[11px] text-white/60'>
-									{stats.avgLinesPerAccount.toFixed(0)} avg/account
-								</div>
+													<div className='text-[11px]/[13px] text-white/60'>
+						{stats.avgLinesPerAccount.toFixed(0)} avg/account
+					</div>
 							</div>
 						</div>
 
@@ -597,14 +597,14 @@ export default function AdminAnalyticsByAccount() {
 							<div className='flex items-center justify-between mb-2'>
 								<div>
 									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalPackages.toLocaleString()}</div>
-									<div className='text-[10px]/[12px] text-white/80'>Total Packages</div>
+									<div className='text-[12px]/[14px] text-white/80'>Total Packages</div>
 								</div>
 								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
 									<IconPackage className='w-[12px] h-[12px] text-white' />
 								</div>
 							</div>
 							<div className='flex items-center justify-between'>
-								<div className='text-[9px]/[11px] text-white/60'>
+								<div className='text-[11px]/[13px] text-white/60'>
 									{stats.totalPackages > 0 ? (stats.totalPackages / stats.totalAccounts).toFixed(0) : 0} avg/account
 								</div>
 							</div>
@@ -615,14 +615,14 @@ export default function AdminAnalyticsByAccount() {
 							<div className='flex items-center justify-between mb-2'>
 								<div>
 									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalUnits.toLocaleString()}</div>
-									<div className='text-[10px]/[12px] text-white/80'>Total Units</div>
+									<div className='text-[12px]/[14px] text-white/80'>Total Units</div>
 								</div>
 								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
 									<IconBox className='w-[12px] h-[12px] text-white' />
 								</div>
 							</div>
 							<div className='flex items-center justify-between'>
-								<div className='text-[9px]/[11px] text-white/60'>
+								<div className='text-[11px]/[13px] text-white/60'>
 									{stats.totalUnits > 0 ? (stats.totalUnits / stats.totalAccounts).toFixed(0) : 0} avg/account
 								</div>
 							</div>
@@ -633,17 +633,17 @@ export default function AdminAnalyticsByAccount() {
 							<div className='flex items-center justify-between mb-2'>
 								<div>
 									<div className='text-[16px]/[20px] font-bold text-white'>{stats.totalAccounts.toLocaleString()}</div>
-									<div className='text-[10px]/[12px] text-white/80'>Total Accounts</div>
+									<div className='text-[12px]/[14px] text-white/80'>Total Accounts</div>
 								</div>
 								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
 									<IconUsers className='w-[12px] h-[12px] text-white' />
 								</div>
 							</div>
 							<div className='flex items-center justify-between'>
-								<div className='text-[9px]/[11px] text-white/60'>
+								<div className='text-[11px]/[13px] text-white/60'>
 									Active accounts
 								</div>
-								<div className='text-[9px]/[11px] text-white/80 font-medium'>
+								<div className='text-[11px]/[13px] text-white/80 font-medium'>
 									100% active
 								</div>
 							</div>
@@ -654,17 +654,17 @@ export default function AdminAnalyticsByAccount() {
 							<div className='flex items-center justify-between mb-2'>
 								<div>
 									<div className='text-[16px]/[20px] font-bold text-white'>{stats.uniqueCompanies.toLocaleString()}</div>
-									<div className='text-[10px]/[12px] text-white/80'>Unique Companies</div>
+									<div className='text-[12px]/[14px] text-white/80'>Unique Companies</div>
 								</div>
 								<div className='w-[24px] h-[24px] bg-white/20 rounded-lg flex items-center justify-center'>
 									<IconBuilding className='w-[12px] h-[12px] text-white' />
 								</div>
 							</div>
 							<div className='flex items-center justify-between'>
-								<div className='text-[9px]/[11px] text-white/60'>
+								<div className='text-[11px]/[13px] text-white/60'>
 									{stats.totalAccounts > 0 ? (stats.totalAccounts / stats.uniqueCompanies).toFixed(1) : 0} accounts/company
 								</div>
-								<div className='text-[9px]/[11px] text-white/80 font-medium'>
+								<div className='text-[11px]/[13px] text-white/80 font-medium'>
 									{stats.uniqueCompanies > 0 ? ((stats.uniqueCompanies / stats.totalAccounts) * 100).toFixed(1) : 0}% diversity
 								</div>
 							</div>

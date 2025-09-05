@@ -67,7 +67,6 @@ export function saveThemePreferences(preferences: Partial<ThemePreferences>): vo
     const current = getThemePreferences();
     const updated = { ...current, ...preferences };
     localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify(updated));
-    console.log('Theme preferences saved:', updated);
   } catch (error) {
     console.error('Failed to save theme preferences to localStorage:', error);
   }
@@ -127,7 +126,6 @@ export function clearThemePreferences(): void {
   
   try {
     localStorage.removeItem(THEME_STORAGE_KEY);
-    console.log('Theme preferences cleared from localStorage');
   } catch (error) {
     console.error('Failed to clear theme preferences from localStorage:', error);
   }

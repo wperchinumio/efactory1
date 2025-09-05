@@ -30,7 +30,6 @@ export function useChartTheme(): UseChartThemeReturn {
   const [currentLunoTheme, setCurrentLunoTheme] = useState<LunoTheme>('indigo');
   const [echartsThemeName, setEchartsThemeName] = useState<string>('luno-indigo-light');
 
-  console.log('useChartTheme hook initialized');
 
   // Initialize themes on first load
   useEffect(() => {
@@ -42,29 +41,19 @@ export function useChartTheme(): UseChartThemeReturn {
 
   // Function to update theme state
   const updateThemeState = useCallback(() => {
-    console.log('updateThemeState called');
     // Add a longer delay to ensure CSS variables are fully updated
     setTimeout(() => {
       const { mode, lunoTheme } = getCurrentTheme();
-      console.log('Theme detected:', { mode, lunoTheme });
       setCurrentTheme(mode);
       setCurrentLunoTheme(lunoTheme);
       
       // Force a re-render by updating the theme name
       const newThemeName = updateChartTheme();
       setEchartsThemeName(newThemeName);
-      console.log('Chart theme updated to:', newThemeName);
       
       // Log the actual CSS variables being read
       if (typeof window !== 'undefined') {
         const computedStyle = getComputedStyle(document.documentElement);
-        console.log('CSS Variables being read:', {
-          chartColor1: computedStyle.getPropertyValue('--chart-color1').trim(),
-          chartColor2: computedStyle.getPropertyValue('--chart-color2').trim(),
-          chartColor3: computedStyle.getPropertyValue('--chart-color3').trim(),
-          chartColor4: computedStyle.getPropertyValue('--chart-color4').trim(),
-          chartColor5: computedStyle.getPropertyValue('--chart-color5').trim()
-        });
       }
     }, 100);
   }, []);
@@ -78,19 +67,11 @@ export function useChartTheme(): UseChartThemeReturn {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    console.log('Setting up theme change observer');
 
     const observer = new MutationObserver((mutations) => {
-      console.log('Mutation detected:', mutations);
       mutations.forEach((mutation) => {
-        console.log('Mutation details:', {
-          type: mutation.type,
-          attributeName: mutation.attributeName,
-          target: mutation.target
-        });
         if (mutation.type === 'attributes' && 
             (mutation.attributeName === 'data-theme' || mutation.attributeName === 'data-luno-theme')) {
-          console.log('Theme change detected, calling updateThemeState');
           updateThemeState();
         }
       });
