@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IconCopy } from '@tabler/icons-react';
+import { IconCopy, IconCalculator } from '@tabler/icons-react';
 
 interface CalculatorProps {
   onClose?: () => void;
@@ -183,8 +183,11 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
   return (
     <div className="bg-card-color rounded-xl shadow-2xl border border-border-color w-[400px] overflow-hidden">
       {/* Header */}
-      <div className="bg-primary text-white p-4 flex items-center justify-between">
-        <h3 className="text-xl font-bold">Calculator</h3>
+      <div className="bg-gradient-to-br from-primary to-secondary text-white px-4 py-4 flex items-center justify-between rounded-t-xl">
+        <h3 className="text-xl font-bold flex items-center gap-2">
+          <IconCalculator className="w-7 h-7" />
+          <span>Calculator</span>
+        </h3>
         {onClose && (
           <button
             onClick={onClose}
