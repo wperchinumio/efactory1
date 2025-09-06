@@ -262,7 +262,7 @@ function UsersPage() {
 						<div className='flex items-center gap-3'>
 							<button
 								onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
-								className='btn btn-outline-primary'
+								variant="outline"
 							>
 								{viewMode === 'table' ? <IconUsers className='w-4 h-4' /> : <IconDatabase className='w-4 h-4' />}
 								{viewMode === 'table' ? 'Grid View' : 'Table View'}
