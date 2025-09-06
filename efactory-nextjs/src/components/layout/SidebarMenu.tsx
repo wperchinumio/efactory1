@@ -88,6 +88,9 @@ interface SidebarMenuProps {
 
 const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const { userApps, activeTopMenu, setActiveTopMenu } = useNavigation();
+  
+  // Track mini sidebar state
+  const [isMiniSidebar, setIsMiniSidebar] = useState(false);
   const router = useRouter();
   
   // Helper function to strip query strings from URL
@@ -189,6 +192,36 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const toggleAdminMenu = () => {
     setAdminMenu(!adminMenu);
   };
+
+  // Track mini sidebar state by observing CSS class changes
+  useEffect(() => {
+    const checkMiniSidebar = () => {
+      const adminWrapper = document.querySelector('.admin-wrapper');
+      setIsMiniSidebar(adminWrapper?.classList.contains('mini-sidebar') || false);
+    };
+
+    // Check initial state
+    checkMiniSidebar();
+
+    // Create a MutationObserver to watch for class changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          checkMiniSidebar();
+        }
+      });
+    });
+
+    // Start observing the admin-wrapper element
+    const adminWrapper = document.querySelector('.admin-wrapper');
+    if (adminWrapper) {
+      observer.observe(adminWrapper, { attributes: true, attributeFilter: ['class'] });
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // Load theme preferences on component mount and listen for changes
   useEffect(() => {
@@ -419,15 +452,20 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       {/* Sidebar header - with logo and smaller title */}
       <div className='sidebar-header px-3 mb-4 flex items-center justify-between gap-2'>
         <div className='flex items-center gap-2 min-w-0'>
-          <CompanyLogo className="w-[91px] h-auto text-primary flex-shrink-0" />
-          <h4 className='sidebar-title text-[16px]/[22px] font-medium mb-0 truncate'>
-            <span className='sm-txt'>e</span><span>Factory</span>
-          </h4>
+          <CompanyLogo 
+            className={isMiniSidebar ? "w-[30px] h-auto text-primary flex-shrink-0" : "w-[91px] h-auto text-primary flex-shrink-0"} 
+            miniMode={isMiniSidebar} 
+          />
+          {!isMiniSidebar && (
+            <h4 className='sidebar-title text-[16px]/[22px] font-medium mb-0 truncate'>
+              <span className='sm-txt'>e</span><span>Factory</span>
+            </h4>
+          )}
         </div>
       </div>
 
-      {/* Top menu switcher - show only on small screens */}
-      {visibleTopMenus.length > 0 && (
+      {/* Top menu switcher - show only on small screens and when sidebar is not collapsed */}
+      {visibleTopMenus.length > 0 && !isMiniSidebar && (
         <div className='px-3 -mt-4 mb-4'>
           <div className='relative xl:hidden'>
             <button
@@ -472,8 +510,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         </div>
       )}
 
-      {/* Contextual search box (from navigation config) */}
-      {searchPlaceholder && (
+      {/* Contextual search box (from navigation config) - hide when sidebar is collapsed */}
+      {searchPlaceholder && !isMiniSidebar && (
         <div className='px-3 py-4'>
           <div className='relative flex-1 max-w-md'>
             <IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />

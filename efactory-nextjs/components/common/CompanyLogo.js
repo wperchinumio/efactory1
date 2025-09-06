@@ -1,4 +1,20 @@
-export default function CompanyLogo({ className }) {
+import Image from 'next/image'
+
+export default function CompanyLogo({ className, miniMode = false }) {
+    if (miniMode) {
+        // Show only the square DCL symbol from separate SVG file
+        return (
+            <Image 
+                src="/images/logo_square.svg" 
+                alt="DCL Logo" 
+                width={30} 
+                height={29} 
+                className={className}
+            />
+        )
+    }
+
+    // Show full logo with text
     return (
         <svg className={className} viewBox="0 0 106 29" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
             <desc>Logo</desc>
