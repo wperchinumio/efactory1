@@ -350,19 +350,19 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
           {/* Row 6: = and Copy */}
           <div className="flex gap-2">
             <button
-              onClick={calculate}
-              className="h-12 bg-success text-white rounded-lg font-semibold hover:bg-success-80 transition-colors flex items-center justify-center"
-              style={{ width: 'calc(75% - 4px)' }}
-            >
-              =
-            </button>
-            <button
               onClick={copyToClipboard}
               className="h-12 bg-info text-white rounded-lg font-semibold hover:bg-info-80 transition-colors flex items-center justify-center"
-              style={{ width: 'calc(25% - 4px)' }}
+              style={{ width: 'calc(25% - 8px)' }}
               title="Copy result to clipboard"
             >
               <IconCopy className="w-4 h-4" />
+            </button>
+            <button
+              onClick={calculate}
+              className="h-12 bg-success text-white rounded-lg font-semibold hover:bg-success-80 transition-colors flex items-center justify-center"
+              style={{ width: 'calc(75% )' }}
+            >
+              =
             </button>
           </div>
         </div>
