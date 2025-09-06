@@ -1,5 +1,5 @@
 import { postJson } from './http';
-import type { LoginRequest, LoginResponseData, LoginForAccountRequest } from './models/auth';
+import type { LoginRequest, LoginResponseData, LoginForAccountRequest, AvailableAccountItem } from './models/auth';
 
 export async function loginRequest(
 	username: string,
@@ -30,5 +30,5 @@ export async function logoutApi() {
 }
 
 export async function loadAccounts() {
-	return postJson<{ available_accounts: string[]; admin_roles: string[] }>('/api/authentication', { func: 'loadAccounts' });
+	return postJson<{ available_accounts: AvailableAccountItem[]; admin_roles: string[] }>('/api/authentication', { func: 'loadAccounts' });
 }
