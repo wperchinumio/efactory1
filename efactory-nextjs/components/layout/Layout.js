@@ -58,10 +58,12 @@ export default function Layout({ children, userApps = [] }) {
   }, []);
   
   // Clear navigation logic:
-  // 1. If user is on /admin routes → show admin sidebar
-  // 2. Otherwise → show dynamic sidebar following /[topmenu]/[sidemenu] pattern
+  // 1. If user is on /admin routes AND no userApps → show admin sidebar
+  // 2. If admin has userApps (impersonating customer) → show customer sidebar
+  // 3. Otherwise → show dynamic sidebar following /[topmenu]/[sidemenu] pattern
   const isAdminRoute = router.pathname.startsWith('/admin');
-  const isCustomerContext = !isAdminRoute; // Everything except /admin routes
+  const isAdminImpersonating = isAdmin && userApps.length > 0;
+  const isCustomerContext = !isAdminRoute || isAdminImpersonating; // Customer context if not admin route OR admin impersonating customer
 
   
   // Don't render navigation until hydrated to avoid mismatch

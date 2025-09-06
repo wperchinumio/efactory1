@@ -50,10 +50,16 @@ export default function App({ Component, pageProps }) {
   }, [isAuthRoute, router]);
 
   // For all non-auth routes, provide the real user apps from auth token
+  // BUT only for non-admin users (admin users get userApps only when they select a customer)
   useEffect(() => {
     if (!isAuthRoute) {
       const auth = getAuthToken();
-      if (auth && auth.user_data && auth.user_data.apps) {
+      const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+      const isAdmin = roles.includes('ADM');
+      
+      // Only set userApps for non-admin users (regular customers)
+      // Admin users get userApps only when they select a customer
+      if (!isAdmin && auth && auth.user_data && auth.user_data.apps) {
         setUserApps(auth.user_data.apps);
       }
     }

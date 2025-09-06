@@ -28,3 +28,7 @@ export async function checkAuth() {
 export async function logoutApi() {
 	return postJson('/api/authentication', { func: 'logout' });
 }
+
+export async function loadAccounts() {
+	return postJson<{ available_accounts: string[]; admin_roles: string[] }>('/api/authentication', { func: 'loadAccounts' });
+}

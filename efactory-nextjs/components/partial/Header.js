@@ -46,7 +46,8 @@ import {
 } from '/public/images';
 import Link from 'next/link';
 import Image from 'next/image';
-import { clearAuthToken, getAuthToken, performLogout } from '@/lib/auth/storage';
+import { clearAuthToken, getAuthToken, performLogout, setAuthToken } from '@/lib/auth/storage';
+import { loadAccounts } from '@/lib/api/auth';
 import { 
     getThemePreferences, 
     saveThemePreferences, 
@@ -108,6 +109,15 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
     const toggleThemeSetting = () => {
         setThemeSetting(!themeSetting)
         document.body.classList.toggle("overflow-hidden", !themeSetting)
+    }
+
+    // user profile dropdown
+    const [userProfileOpen, setUserProfileOpen] = useState(false)
+    const toggleUserProfile = () => {
+        setUserProfileOpen(!userProfileOpen)
+    }
+    const closeUserProfile = () => {
+        setUserProfileOpen(false)
     }
 
     // color setting - initialize from localStorage
@@ -253,12 +263,16 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
             ) {
                 setSearchBar(false);
             }
+            // Close user profile dropdown when clicking outside
+            if (userProfileOpen && !event.target.closest('.user-profile-dropdown')) {
+                setUserProfileOpen(false);
+            }
         };
         document.addEventListener('click', handleClickOutside);
         return () => {
             document.removeEventListener('click', handleClickOutside);
         };
-    }, [searchBar]);
+    }, [searchBar, userProfileOpen]);
 
     function handleSearchChange(e){
         const value = e.target.value;
@@ -424,12 +438,49 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         if (typeof window !== 'undefined') window.location.href = '/auth/sign-in';
     }
 
+    // handle change user (back to DCL menu) - like legacy system
+    async function handleChangeUser() {
+        try {
+            // Call loadAccounts API like legacy system
+            const response = await loadAccounts();
+            
+            // Update auth token with fresh available_accounts and admin_roles
+            // Clear user_data.apps to ensure admin sidebar is shown
+            const currentAuth = getAuthToken();
+            if (currentAuth) {
+                const updatedAuth = {
+                    ...currentAuth,
+                    available_accounts: response.data.available_accounts,
+                    admin_roles: response.data.admin_roles || [],
+                    user_data: {
+                        ...currentAuth.user_data,
+                        apps: [] // Clear apps to show admin sidebar
+                    }
+                };
+                setAuthToken(updatedAuth);
+            }
+            
+            // Force page reload to reset all state and show admin sidebar
+            if (typeof window !== 'undefined') {
+                window.location.href = '/admin/login-user';
+            }
+        } catch (error) {
+            console.error('Failed to load accounts:', error);
+            // Fallback to direct navigation
+            if (typeof window !== 'undefined') {
+                window.location.href = '/admin/login-user';
+            }
+        }
+    }
+
     // Avoid reading localStorage during SSR to prevent hydration mismatch
     const [isAdmin, setIsAdmin] = useState(false)
     useEffect(() => {
         const auth = getAuthToken();
         const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
-        setIsAdmin(roles.includes('ADM'))
+        const isLocalAdmin = auth?.user_data?.is_local_admin === true;
+        // Admin if has ADM role OR is_local_admin (like legacy)
+        setIsAdmin(roles.includes('ADM') || isLocalAdmin)
     }, [])
 
     return (
@@ -467,13 +518,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         <button onClick={toggleThemeSetting} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
                             <IconSettings className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
                         </button>
-                        <div className='relative group flex'>
-                            <button className='md:px-3 px-2'>
+                        <div className='relative flex user-profile-dropdown'>
+                            <button onClick={toggleUserProfile} className='md:px-3 px-2'>
                                 <div className='w-[36px] h-[36px] min-w-[36px] bg-primary-10 text-primary rounded-full flex items-center justify-center shadow-shadow-lg transition-all hover:bg-primary hover:text-white'>
                                     <IconUser className='w-[20px] h-[20px]' />
                                 </div>
                             </button>
-                            <div className='bg-card-color text-font-color rounded-xl overflow-hidden md:w-[240px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] opacity-0 invisible scale-0 transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:scale-100'>
+                            <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[240px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
                                 <div className='p-4 border-b border-border-color'>
                                     <div className='font-semibold'>
                                         Allie Grater
@@ -483,37 +534,38 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                     </div>
                                 </div>
                                 <div className='p-1 m-1 custom-scrollbar overflow-auto max-h-[calc(80svh-163px)]'>
-                                    <Link href="#" className='py-2 px-4 flex items-center gap-3'>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                         <IconUser className='w-[16px] h-[16px]' />
                                         My Profile
                                     </Link>
                                     {isAdmin ? (
-                                        <Link href="/admin/login-user" className='py-2 px-4 flex items-center gap-3'>
-                                            Switch Account
-                                        </Link>
+                                        <button onClick={() => { closeUserProfile(); handleChangeUser(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary font-semibold w-full text-left'>
+                                            <IconArrowsMaximize className='w-[16px] h-[16px]' />
+                                            Back to DCL Menu
+                                        </button>
                                     ) : null}
-                                    <Link href="#" className='py-2 px-4 flex items-center gap-3'>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                         <IconSettings className='w-[16px] h-[16px]' />
                                         Settings
                                     </Link>
-                                    <Link href="#" className='py-2 px-4 flex items-center gap-3'>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                         <IconCreditCard className='w-[16px] h-[16px]' />
                                         Billing
                                     </Link>
-                                    <Link href="#" className='py-2 px-4 flex items-center gap-3'>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                         <IconUsersGroup className='w-[16px] h-[16px]' />
                                         Manage Team
                                     </Link>
-                                    <Link href="#" className='py-2 px-4 flex items-center gap-3'>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                         <IconCalendarFilled className='w-[16px] h-[16px]' />
                                         My Events
                                     </Link>
-                                    <Link href="#" className='py-2 px-4 flex items-center gap-3'>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                         <IconTag className='w-[16px] h-[16px]' />
                                         Support Ticket
                                     </Link>
                                 </div>
-                                <button onClick={handleLogout} className='bg-secondary uppercase text-[14px]/[20px] text-white py-5 px-10 text-center w-full inline-block'>
+                                <button onClick={() => { closeUserProfile(); handleLogout(); }} className='bg-secondary uppercase text-[14px]/[20px] text-white py-5 px-10 text-center w-full inline-block'>
                                     Sign Out
                                 </button>
                             </div>
