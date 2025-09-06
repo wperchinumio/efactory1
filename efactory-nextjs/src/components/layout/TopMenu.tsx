@@ -318,23 +318,28 @@ const TopMenu: React.FC = () => {
               className="absolute top-full left-0 mt-1 bg-card-color text-font-color z-[1] rounded-xl min-w-[200px] shadow-shadow-lg border border-border-color"
             >
               <ul className="py-2">
-                {menu.dropdownMenus.map((dropdownItem) => (
-                  <li key={dropdownItem.keyword}>
-                    {dropdownItem.route ? (
-                      <button
-                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(dropdownItem.route!); }}
-                        onClick={(e) => { e.preventDefault(); }}
-                        className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
-                      >
-                        {dropdownItem.title}
-                      </button>
-                    ) : (
-                      <div className="px-4 py-2 text-sm font-semibold text-secondary whitespace-nowrap cursor-default select-none">
-                        {dropdownItem.title}
-                      </div>
-                    )}
-                  </li>
-                ))}
+                {menu.dropdownMenus.map((dropdownItem) => {
+                  const isSection = !dropdownItem.route;
+                  const route = dropdownItem.route || '';
+                  const isActiveChild = !!route && (router.asPath === route || router.asPath.startsWith(route));
+                  return (
+                    <li key={dropdownItem.keyword}>
+                      {isSection ? (
+                        <div className="mx-2 my-1 px-3 py-2 text-sm font-semibold text-secondary bg-secondary-10 rounded-md w-[calc(100%-1rem)] cursor-default select-none">
+                          {dropdownItem.title}
+                        </div>
+                      ) : (
+                        <button
+                          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(route); }}
+                          onClick={(e) => { e.preventDefault(); }}
+                          className={`w-full px-4 py-2 text-left text-sm transition-all whitespace-nowrap ${isActiveChild ? 'text-secondary bg-secondary-10' : 'hover:bg-gray-100'}`}
+                        >
+                          {dropdownItem.title}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

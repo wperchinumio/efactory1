@@ -409,10 +409,10 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         </div>
       </div>
 
-      {/* Top menu switcher (dropdown) - mobile friendly, no horizontal scroll */}
+      {/* Top menu switcher - show only on small screens */}
       {visibleTopMenus.length > 0 && (
         <div className='px-3 -mt-4 mb-4'>
-          <div className='relative'>
+          <div className='relative xl:hidden'>
             <button
               ref={topSwitchButtonRef}
               onClick={() => setTopSwitchOpen(prev => !prev)}
