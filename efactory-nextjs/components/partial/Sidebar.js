@@ -161,37 +161,22 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
 
     return (
         <>
-            <div className='sidebar-header px-3 mb-6 flex items-center justify-between gap-2'>
-                <h4 className='sidebar-title text-[24px]/[30px] font-medium mb-0'>
-                    <span className='sm-txt'>e</span><span>Factory Admin</span>
-                </h4>
-                <div className="sidebar-dropdown relative flex">
-                    <button ref={buttonRef} onClick={toggleAdminMenu} className='bg-primary-10 p-[2px] rounded-full text-primary transition-all hover:bg-primary hover:text-white'>
-                        <IconDots className='w-[20px] h-[20px]' />
-                    </button>
-                    <ul ref={menuRef} className={`bg-card-color text-font-color z-[1] rounded-xl w-[180px] shadow-shadow-lg absolute end-0 top-full origin-top-right transition-all duration-300 ${adminMenu ? ' opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
-                        <li>
-                            <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                                Landing page
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                                Inventary
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                                eCommerce
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                                HRMS
-                            </Link>
-                        </li>
-                    </ul>
+            <div className='sidebar-header px-3 mb-4 flex items-center justify-between gap-2'>
+                <div className='flex items-center gap-2 min-w-0'>
+                    <svg className="w-[91px] h-auto text-primary flex-shrink-0" viewBox="0 0 106 29" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
+                        <desc>Logo</desc>
+                        <path d="M18.3,5.1l3.6-3.6c1.3-1.3,2.4-1.3,3.1-1.1c0.9,0.2,1.8,0.7,2.5,1.4c1.4,1.3,2.5,3.3,0.3,5.5 l-3.6,3.6c-1.3,1.3-2.4,1.3-3.1,1.1c-0.4-0.1-0.8-0.2-1.2-0.5l1.7-1.7c0.6-0.6,0.6-1.6,0-2.2l0,0c-0.6-0.6-1.6-0.6-2.2,0l-1.7,1.7 C16.9,8.1,16.7,6.6,18.3,5.1"></path>
+                        <path d="M10.8,23.9l-3.6,3.6c-1.3,1.3-2.4,1.3-3.1,1.1c-0.9-0.2-1.8-0.7-2.5-1.4c-1.4-1.3-2.5-3.3-0.3-5.5 l3.6-3.6C6.2,16.9,7.3,16.9,8,17c0.4,0.1,0.8,0.2,1.2,0.5l-1.7,1.7c-0.6,0.6-0.6,1.6,0,2.2l0,0c0.6,0.6,1.6,0.6,2.2,0l1.7-1.7 C12.3,20.9,12.4,22.4,10.8,23.9"></path>
+                        <path d="M2.3,16.7l-2.3,2.2V3c0-0.9,0.8-1.7,1.7-1.7h16.3l-2.5,2.4c-3.7,3.6-2.7,6.8-1.2,8.9l-2.9,2.8 c-0.9-0.6-1.9-1-2.9-1.2C5.5,13.6,3.5,15.5,2.3,16.7"></path>
+                        <path d="M28,11.2V27c0,0.9-0.8,1.7-1.7,1.7H10.2l2.4-2.4c3.7-3.6,2.7-6.8,1.1-8.8l2.9-2.8 c0.9,0.6,1.9,1,2.9,1.2c3.2,0.6,5.1-1.4,6.3-2.5L28,11.2z"></path>
+                        <polygon points="86.2,28.6 86.2,0.4 92.5,0.4 92.5,22.5 105.9,22.5 105.9,28.6 "></polygon>
+                        <path d="M72.2,6.5h10.8V0.3H72.7c-8.8,0-12.3,4.5-13.6,9c-1.3-4.5-4.8-9-13.6-9H34.1v18.9h6.4V6.5h5.5 c5.9,0,7.1,4.3,7.1,8c0,2-0.5,4-1.4,5.5c-0.8,1.2-2.2,2.6-5.7,2.6H34.1v6.1H45c3.2,0,8.7,0,12.3-5.3c0.8-1.2,1.4-2.4,1.9-3.8 c0.4,1.4,1,2.6,1.9,3.8c3.6,5.3,9,5.3,12.3,5.3h9.9v-6.1H72.2c-3.5,0-4.9-1.5-5.7-2.6c-0.9-1.4-1.4-3.4-1.4-5.4 C65.2,10.8,66.4,6.5,72.2,6.5"></path>
+                    </svg>
+                    <h4 className='sidebar-title text-[16px]/[22px] font-medium mb-0 truncate'>
+                        <span className='sm-txt'>e</span><span>Factory Admin</span>
+                    </h4>
                 </div>
+                {/* Admin quick dropdown removed per request */}
             </div>
             <div className='create-new-project px-3 py-4 flex gap-5'>
                 <select className="select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-30 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary">

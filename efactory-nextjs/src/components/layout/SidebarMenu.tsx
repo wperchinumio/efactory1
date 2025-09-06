@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import CompanyLogo from '@/components/common/CompanyLogo';
 import { useRouter } from 'next/router';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { getVisibleSidebarMenus, sidebarConfigs, topMenuConfig } from '../../config/navigation';
@@ -10,7 +11,6 @@ import {
   IconChevronRight,
   IconChevronsDown,
   IconChevronDown,
-  IconDots,
   IconPlus,
   IconHome,
   IconPencil,
@@ -369,44 +369,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
 
   return (
     <>
-      {/* Sidebar header - exact Luno structure */}
-      <div className='sidebar-header px-3 mb-6 flex items-center justify-between gap-2'>
-        <h4 className='sidebar-title text-[24px]/[30px] font-medium mb-0'>
-          <span className='sm-txt'>e</span><span>Factory</span>
-        </h4>
-        <div className="sidebar-dropdown relative flex">
-          <button 
-            ref={buttonRef}
-            onClick={toggleAdminMenu}
-            className='bg-primary-10 p-[2px] rounded-full text-primary transition-all hover:bg-primary hover:text-white'
-          >
-            <IconDots className='w-[20px] h-[20px]' />
-          </button>
-          <ul 
-            ref={menuRef}
-            className={`bg-card-color text-font-color z-[1] rounded-xl w-[180px] shadow-shadow-lg absolute end-0 top-full origin-top-right transition-all duration-300 ${adminMenu ? ' opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}
-          >
-            <li>
-              <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                Landing page
-              </Link>
-            </li>
-            <li>
-              <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                Inventory
-              </Link>
-            </li>
-            <li>
-              <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                eCommerce
-              </Link>
-            </li>
-            <li>
-              <Link href="#" className="px-4 py-2 flex hover:bg-gray-100">
-                HRMS
-              </Link>
-            </li>
-          </ul>
+      {/* Sidebar header - with logo and smaller title */}
+      <div className='sidebar-header px-3 mb-4 flex items-center justify-between gap-2'>
+        <div className='flex items-center gap-2 min-w-0'>
+          <CompanyLogo className="w-[91px] h-auto text-primary flex-shrink-0" />
+          <h4 className='sidebar-title text-[16px]/[22px] font-medium mb-0 truncate'>
+            <span className='sm-txt'>e</span><span>Factory</span>
+          </h4>
         </div>
       </div>
 
