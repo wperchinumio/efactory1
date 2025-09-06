@@ -9,6 +9,7 @@ const DynamicRoutePage = () => {
   const { slug } = router.query;
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [routeAccess, setRouteAccess] = useState(true);
 
   useEffect(() => {
     if (!slug || !Array.isArray(slug)) return;
@@ -27,14 +28,6 @@ const DynamicRoutePage = () => {
 
     // Check if user has access to this pathname
     const hasAccess = hasAccessToPathname(pathname, userApps);
-    
-    if (!hasAccess) {
-      // Redirect to first available route
-      const { getDefaultRoute } = require('../src/utils/navigation');
-      const defaultRoute = getDefaultRoute(userApps);
-      router.replace(defaultRoute);
-      return;
-    }
 
     // Check if this is a valid route that should show a page
     const appId = getAppIdForPathname(pathname);
@@ -46,6 +39,7 @@ const DynamicRoutePage = () => {
       router.replace(defaultRoute);
       return;
     }
+    setRouteAccess(hasAccess);
     setIsValid(true);
     setIsLoading(false);
 
@@ -101,7 +95,7 @@ const DynamicRoutePage = () => {
               <ul className='text-sm text-font-color-100 space-y-1'>
                 <li>• Pathname: /{slug?.join('/')}</li>
                 <li>• App ID: {getAppIdForPathname('/' + slug?.join('/'))}</li>
-                <li>• Access: Granted</li>
+                <li>• Access: {routeAccess ? 'Granted' : 'Denied'}</li>
               </ul>
             </div>
           </div>

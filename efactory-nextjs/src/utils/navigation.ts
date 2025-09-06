@@ -160,6 +160,12 @@ const routeAppIdsTable = {
   '/ftp-folders/send': 62,
   '/ftp-folders/get': 62,
 
+  // Services top-level sections
+  '/services/communications': 77,
+  '/services/documents': 62,
+  '/services/setup': 65,
+  '/services/administration-tasks': 67,
+
   '/services/administration-tasks/accounts': 67,
   '/services/administration-tasks/orderpoints-settings': 65,
   '/services/administration-tasks/returntrak-settings': 66,

@@ -195,6 +195,12 @@ const TopMenu: React.FC = () => {
     };
   }, []);
 
+  // Close any open menus on route change (ensures dropdown/overflow closes after navigation)
+  useEffect(() => {
+    setActiveDropdown(null);
+    setShowOverflowMenu(false);
+  }, [router.asPath]);
+
   const handleMenuClick = (menuKeyword: string) => {
     const menu = allMenus.find(m => m.keyword === menuKeyword);
     
@@ -232,9 +238,10 @@ const TopMenu: React.FC = () => {
   };
 
   const handleDropdownItemClick = (route: string) => {
-    router.push(route);
+    // Navigate and close menus synchronously
     setActiveDropdown(null);
-    setShowOverflowMenu(false); // Close overflow menu when navigating
+    setShowOverflowMenu(false);
+    router.push(route);
   };
 
   const handleOverflowMenuClick = (menuKeyword: string) => {
@@ -313,7 +320,8 @@ const TopMenu: React.FC = () => {
                 {menu.dropdownMenus.map((dropdownItem) => (
                   <li key={dropdownItem.keyword}>
                     <button
-                      onClick={() => handleDropdownItemClick(dropdownItem.route)}
+                      onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(dropdownItem.route); }}
+                      onClick={(e) => { e.preventDefault(); }}
                       className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
                     >
                       {dropdownItem.title}
@@ -372,7 +380,8 @@ const TopMenu: React.FC = () => {
                     {menu.dropdownMenus.map((dropdownItem) => (
                       <li key={dropdownItem.keyword}>
                         <button
-                          onClick={() => handleDropdownItemClick(dropdownItem.route)}
+                          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(dropdownItem.route); }}
+                          onClick={(e) => { e.preventDefault(); }}
                           className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
                         >
                           {dropdownItem.title}
