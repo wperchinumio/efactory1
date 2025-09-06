@@ -12,6 +12,7 @@ import {
   IconChevronsDown,
   IconChevronDown,
   IconPlus,
+  IconSearch,
   IconHome,
   IconPencil,
   IconClipboardList,
@@ -45,7 +46,6 @@ import {
   IconFactory,
   IconBoxSeam,
   IconBarcode,
-  IconSearch,
   IconEdit,
   IconEye,
   IconDownload,
@@ -287,6 +287,23 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   // Get visible menus using effective user apps
   let visibleMenus = effectiveActiveTopMenu ? getVisibleSidebarMenus(effectiveActiveTopMenu, effectiveUserApps) : [];
 
+  // Determine search box type and placeholder from sidebar config
+  const currentSidebarConfigKey = effectiveActiveTopMenu || '';
+  const currentSidebarConfig = currentSidebarConfigKey ? sidebarConfigs[currentSidebarConfigKey as keyof typeof sidebarConfigs] : null;
+  const searchType = currentSidebarConfig && 'searchBox' in currentSidebarConfig ? (currentSidebarConfig as any).searchBox as string | undefined : undefined;
+  const searchPlaceholder = (() => {
+    switch (searchType) {
+      case 'order':
+        return 'Search for Order #...';
+      case 'item':
+        return 'Search for Item #...';
+      case 'rma':
+        return 'Search for RMA #...';
+      default:
+        return undefined;
+    }
+  })();
+
   // Compute visible top menus for quick switching inside sidebar
   const visibleTopMenus: TopMenuConfig[] = topMenuConfig.filter(menu => {
     if (!menu.appIds || menu.appIds.length === 0) return true;
@@ -455,17 +472,19 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         </div>
       )}
 
-      {/* Project selector - exact Luno structure */}
-      <div className='create-new-project px-3 py-4 flex gap-5'>
-        <input
-          type="text"
-          placeholder="Search for Order #..."
-          className="select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-30 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary"
-        />
-        <button className='add-project bg-primary text-white rounded-full p-2 transition-all duration-300'>
-          <IconPlus className='w-[20px] h-[20px]' />
-        </button>
-      </div>
+      {/* Contextual search box (from navigation config) */}
+      {searchPlaceholder && (
+        <div className='px-3 py-4'>
+          <div className='relative flex-1 max-w-md'>
+            <IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
+            <input
+              type="text"
+              placeholder={searchPlaceholder}
+              className='form-control pl-9 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors'
+            />
+          </div>
+        </div>
+      )}
 
       {/* Menu items - exact Luno structure */}
       <ul className='sidebar-list px-3 mb-4 main-menu'>

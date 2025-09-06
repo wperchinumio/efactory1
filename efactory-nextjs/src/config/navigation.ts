@@ -157,7 +157,7 @@ export const topMenuConfig: TopMenuConfig[] = [
 // Sidebar configurations - based on sidebar.js
 export const sidebarConfigs: Record<string, SidebarConfig> = {
   overview: {
-    searchBox: 'order',
+    searchBox: 'order', // Legacy shows Order # search here
     menus: [
       {
         keyword: 'overview',
@@ -176,7 +176,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     ]
   },
   orders: {
-    searchBox: 'order',
+    searchBox: 'order', // Legacy shows Order # search here
     menus: [
       {
         keyword: 'orders',
@@ -365,7 +365,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     ]
   },
   items: {
-    searchBox: 'item',
+    searchBox: 'item', // Legacy shows Item # search here
     menus: [
       {
         keyword: 'items',
@@ -670,7 +670,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
     ]
   },
   returntrak: {
-    searchBox: 'rma',
+    searchBox: 'rma', // Legacy shows RMA search here
     menus: [
       {
         keyword: 'rma_entry',
