@@ -297,7 +297,8 @@ const TopMenu: React.FC = () => {
             onClick={() => handleMenuClick(menu.keyword)}
             className={`
               flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
-              ${activeTopMenu === menu.keyword || activeDropdown === menu.keyword
+              ${(activeTopMenu === menu.keyword ||
+                (menu.keyword === 'services' && (router.asPath.startsWith('/documents') || router.asPath.startsWith('/services/administration-tasks')))) || activeDropdown === menu.keyword
                 ? 'text-secondary bg-secondary-10 rounded-md'
                 : 'text-font-color'
               }
@@ -319,13 +320,19 @@ const TopMenu: React.FC = () => {
               <ul className="py-2">
                 {menu.dropdownMenus.map((dropdownItem) => (
                   <li key={dropdownItem.keyword}>
-                    <button
-                      onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(dropdownItem.route); }}
-                      onClick={(e) => { e.preventDefault(); }}
-                      className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
-                    >
-                      {dropdownItem.title}
-                    </button>
+                    {dropdownItem.route ? (
+                      <button
+                        onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(dropdownItem.route!); }}
+                        onClick={(e) => { e.preventDefault(); }}
+                        className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
+                      >
+                        {dropdownItem.title}
+                      </button>
+                    ) : (
+                      <div className="px-4 py-2 text-sm font-semibold text-secondary whitespace-nowrap cursor-default select-none">
+                        {dropdownItem.title}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

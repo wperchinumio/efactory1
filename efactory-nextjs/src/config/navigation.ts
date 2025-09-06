@@ -136,43 +136,20 @@ export const topMenuConfig: TopMenuConfig[] = [
     sidebarConfig: 'edi'
   },
   {
-    keyword: 'documents',
-    title: 'Documents',
-    iconComponent: IconFiles,
-    appIds: [62],
-    sidebarConfig: 'documents'
-  },
-  {
     keyword: 'services',
     title: 'Services',
     iconComponent: IconSettings,
     appIds: [67, 65, 66, 99992, 77, 78, 79, 80, 81, 68, 69, 214],
     isDropdown: true,
     dropdownMenus: [
-      {
-        keyword: 'communications',
-        title: 'Communications',
-        route: '/services/communications',
-        appId: 77
-      },
-      {
-        keyword: 'documents',
-        title: 'Documents',
-        route: '/services/documents',
-        appId: 62
-      },
-      {
-        keyword: 'setup',
-        title: 'Setup',
-        route: '/services/setup',
-        appId: 65
-      },
-      {
-        keyword: 'administration_tasks',
-        title: 'Administration Tasks',
-        route: '/services/administration-tasks',
-        appId: 67
-      }
+      // Section title: Communications (no route)
+      { keyword: 'section_communications', title: 'Communications', route: '', appId: undefined as any },
+      // Documents behaves like a main menu
+      { keyword: 'documents', title: 'Documents', route: '/documents', appId: 62 },
+      // Section title: Setup (no route)
+      { keyword: 'section_setup', title: 'Setup', route: '', appId: undefined as any },
+      // Administration Tasks behaves like a main menu
+      { keyword: 'administration_tasks', title: 'Administration Tasks', route: '/services/administration-tasks/accounts', appId: 67 }
     ]
   }
 ];
@@ -1340,10 +1317,21 @@ export const getVisibleSidebarMenus = (sidebarKey: string, userApps: number[]): 
 
 // Helper function to determine which top menu should be active based on pathname
 export const getActiveTopMenu = (pathname: string, userApps: number[]): string | null => {
+  // Normalize pathname (strip query)
+  const cleanPath = pathname.split('?')[0];
+
+  // Special-case mapping: some sections live under "Services" dropdown but have their own sidebars
+  if (cleanPath === '/documents' || cleanPath.startsWith('/documents/')) {
+    return 'documents';
+  }
+  if (cleanPath.startsWith('/services/administration-tasks')) {
+    return 'administration_tasks';
+  }
+
   const visibleMenus = getVisibleTopMenus(userApps);
   
   // Handle root path - return first available menu
-  if (pathname === '/') {
+  if (cleanPath === '/') {
     return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
   }
   
@@ -1352,9 +1340,9 @@ export const getActiveTopMenu = (pathname: string, userApps: number[]): string |
     if (sidebarConfig) {
       // Check if any menu item in this sidebar matches the pathname
       const hasMatchingRoute = sidebarConfig.menus.some(menuItem => {
-        if (menuItem.route === pathname) return true;
+        if (menuItem.route === cleanPath) return true;
         if (menuItem.dropdownMenus) {
-          return menuItem.dropdownMenus.some(dropdown => dropdown.route === pathname);
+          return menuItem.dropdownMenus.some(dropdown => dropdown.route === cleanPath);
         }
         return false;
       });

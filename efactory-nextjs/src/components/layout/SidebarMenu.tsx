@@ -275,8 +275,17 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     }
   })();
 
+  // Compute the active top menu, including special-case mapping from services dropdown
+  const effectiveActiveTopMenu = (() => {
+    if (activeTopMenu) return activeTopMenu;
+    const path = pageUrl;
+    if (path === '/documents' || path.startsWith('/documents/')) return 'documents';
+    if (path.startsWith('/services/administration-tasks')) return 'administration_tasks';
+    return null;
+  })();
+
   // Get visible menus using effective user apps
-  let visibleMenus = activeTopMenu ? getVisibleSidebarMenus(activeTopMenu, effectiveUserApps) : [];
+  let visibleMenus = effectiveActiveTopMenu ? getVisibleSidebarMenus(effectiveActiveTopMenu, effectiveUserApps) : [];
 
   // Compute visible top menus for quick switching inside sidebar
   const visibleTopMenus: TopMenuConfig[] = topMenuConfig.filter(menu => {
