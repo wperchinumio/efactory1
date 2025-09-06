@@ -84,6 +84,7 @@ import {
   IconMessage,
   IconPower,
 } from '@tabler/icons-react';
+import Calculator from '../../components/ui/Calculator';
 
 interface SidebarMenuProps {
   setMobileNav?: (value: boolean) => void;
@@ -202,8 +203,10 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const [note, setNote] = useState(false);
   const toggleNote = () => setNote(!note);
 
-  const [chat, setChat] = useState(false);
-  const toggleChat = () => setChat(!chat);
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+
+  // Replace toggleChat with toggleCalculator
+  const toggleCalculator = () => setCalculatorOpen(!calculatorOpen);
 
   // Track mini sidebar state by observing CSS class changes
   useEffect(() => {
@@ -459,6 +462,19 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     }
   }, [pageUrl, sidebarAutoCollapse, visibleMenus]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && calculatorOpen) {
+        setCalculatorOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [calculatorOpen]);
+
   return (
     <>
       {/* Sidebar header - with logo and smaller title */}
@@ -671,7 +687,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         )}
       </ul>
       <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-3 border border-dashed rounded-xl p-2 mt-auto'>
-  <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-[2px] after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+  <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
     <span title='My Schedule'>
       <IconCalendar className='stroke-[1.5] w-[20px] h-[20px]' />
     </span>
@@ -681,7 +697,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       <IconNote className='stroke-[1.5] w-[20px] h-[20px]' />
     </span>
   </button>
-  <button onClick={toggleChat} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:transition-all after:duration-500 after:ease-in-out ${chat ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+  <button onClick={toggleCalculator} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:transition-all after:duration-500 after:ease-in-out ${calculatorOpen ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
     <span title='Calculator'>
       <IconCalculator className='stroke-[1.5] w-[20px] h-[20px]' />
     </span>
@@ -692,6 +708,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
   </Link>
 </div>
+{calculatorOpen && (
+  <div className='fixed inset-0 z-50 flex items-center justify-center'>
+    <Calculator onClose={() => setCalculatorOpen(false)} />
+  </div>
+)}
     </>
   );
 };
