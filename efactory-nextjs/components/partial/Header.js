@@ -446,7 +446,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         
                         {/* Top Navigation Menu - Only show for customer context */}
                         {showNewNavigation && (
-                            <div className='hidden lg:flex items-center ml-6 flex-1 min-w-0'>
+                            <div className='flex items-center ml-6 flex-1 min-w-0'>
                                 <TopMenu />
                             </div>
                         )}
