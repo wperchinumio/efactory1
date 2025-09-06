@@ -475,13 +475,32 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
 
     // Avoid reading localStorage during SSR to prevent hydration mismatch
     const [isAdmin, setIsAdmin] = useState(false)
+    const [userInfo, setUserInfo] = useState({ username: '', email: '' })
+    
     useEffect(() => {
         const auth = getAuthToken();
         const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
         const isLocalAdmin = auth?.user_data?.is_local_admin === true;
         // Admin if has ADM role OR is_local_admin (like legacy)
-        setIsAdmin(roles.includes('ADM') || isLocalAdmin)
-    }, [])
+        const adminStatus = roles.includes('ADM') || isLocalAdmin;
+        setIsAdmin(adminStatus)
+        
+        // Get user info from auth token
+        if (auth && auth.user_data) {
+            // Try multiple possible fields for username
+            const username = auth.user_data.name || 
+                            auth.user_data.user_id || 
+                            auth.user_data.username || 
+                            auth.user_data.login || 
+                            auth.user_data.account || 
+                            'Admin User';
+            
+            setUserInfo({
+                username: username,
+                email: auth.user_data.email || ''
+            });
+        }
+    }, [userApps]) // Re-run when userApps changes (impersonation state)
 
     return (
         <>
@@ -516,37 +535,46 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                             <IconMoonStars className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
                         </button>
                         <div className='relative flex user-profile-dropdown'>
-                            <button onClick={toggleUserProfile} className='md:px-3 px-2'>
-                                <div className='w-[36px] h-[36px] min-w-[36px] bg-primary-10 text-primary rounded-full flex items-center justify-center shadow-shadow-lg transition-all hover:bg-primary hover:text-white'>
-                                    <IconUser className='w-[20px] h-[20px]' />
-                                </div>
+                            <button onClick={toggleUserProfile} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
+                                <IconUser className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
                             </button>
                             <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[240px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
                                 <div className='p-4 border-b border-border-color'>
                                     <div className='font-semibold'>
-                                        Allie Grater
+                                        {userInfo.username}
                                     </div>
-                                    <div className='text-font-color-100'>
-                                        alliegrater@luno.com
-                                    </div>
+                                    {userInfo.email && (
+                                        <div className='text-font-color-100'>
+                                            {userInfo.email}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className='p-1 m-1 custom-scrollbar overflow-auto max-h-[calc(80svh-163px)]'>
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconUser className='w-[16px] h-[16px]' />
-                                        My Profile
-                                    </Link>
+                                    {/* Show My Profile, Team Members, and Leave Feedback only for regular users or admin impersonating */}
+                                    {(!isAdmin || (isAdmin && userApps.length > 0)) ? (
+                                        <>
+                                            <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                                <IconUser className='w-[16px] h-[16px]' />
+                                                My Profile
+                                            </Link>
+                                            <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                                <IconUsersGroup className='w-[16px] h-[16px]' />
+                                                Team Members
+                                            </Link>
+                                            <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                                <IconThumbUpFilled className='w-[16px] h-[16px]' />
+                                                Leave a feedback
+                                            </Link>
+                                        </>
+                                    ) : null}
+                                    
+                                    {/* Settings is always available */}
                                     <button onClick={() => { closeUserProfile(); toggleThemeSetting(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
                                         <IconSettings className='w-[16px] h-[16px]' />
                                         Settings
                                     </button>
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconUsersGroup className='w-[16px] h-[16px]' />
-                                        Team Members
-                                    </Link>
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconThumbUpFilled className='w-[16px] h-[16px]' />
-                                        Leave a feedback
-                                    </Link>
+                                    
+                                    {/* Back to DCL Menu only shows when admin is impersonating */}
                                     {isAdmin && userApps.length > 0 ? (
                                         <button onClick={() => { closeUserProfile(); handleChangeUser(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary font-semibold w-full text-left'>
                                             <IconArrowBigLeftFilled className='w-[16px] h-[16px]' />
