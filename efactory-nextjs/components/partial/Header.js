@@ -457,13 +457,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         <button onClick={toggleFullScreen} className='xl:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
                             <IconArrowsMaximize className='stroke-[1.5]' />
                         </button>
-                        <button onClick={toggleNote} className='xl:hidden sm:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
-                            <IconNote className='stroke-[1.5] w-[20px] h-[20px]' />
-                        </button>
-
-                        <button onClick={toggleChat} className='xl:hidden sm:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
-                            <IconMessage className='stroke-[1.5] w-[20px] h-[20px]' />
-                        </button>
+                        {/* Removed note and chat buttons per request */}
                         <button
                             onClick={toggleDarkMode}
                             className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'

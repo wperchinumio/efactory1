@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useNavigation } from '../../contexts/NavigationContext';
-import { getVisibleSidebarMenus, sidebarConfigs } from '../../config/navigation';
-import { MenuItem, DropdownMenuItem } from '../../types/api/auth';
+import { getVisibleSidebarMenus, sidebarConfigs, topMenuConfig } from '../../config/navigation';
+import { MenuItem, DropdownMenuItem, TopMenuConfig } from '../../types/api/auth';
 import { getAuthToken } from '../../../lib/auth/storage';
 import { getThemePreferences } from '../../../lib/themeStorage';
 import {
   IconChevronRight,
   IconChevronsDown,
+  IconChevronDown,
   IconDots,
   IconPlus,
   IconHome,
@@ -86,7 +87,7 @@ interface SidebarMenuProps {
 }
 
 const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
-  const { userApps, activeTopMenu } = useNavigation();
+  const { userApps, activeTopMenu, setActiveTopMenu } = useNavigation();
   const router = useRouter();
   
   // Helper function to strip query strings from URL
@@ -162,6 +163,17 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     // Fallback icon if no icon is defined
     return <IconBoxSeam className="stroke-[1.5] w-[22px] h-[22px] text-gray-400" />;
   };
+
+  // Helper to render top menu icons
+  const renderTopIcon = (menu: TopMenuConfig) => {
+    if (menu.iconComponent) {
+      const IconComponent = menu.iconComponent;
+      return <IconComponent className="w-[18px] h-[18px]" />;
+    } else if (menu.iconClassName) {
+      return <i className={`${menu.iconClassName} w-[18px] h-[18px]`} />;
+    }
+    return null;
+  };
   
   // Use exact Luno state management pattern
   const [adminMenu, setAdminMenu] = useState(false);
@@ -170,6 +182,9 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const [menuActive, setMenuActive] = useState<number | null>(null);
   const [activeMenus, setActiveMenus] = useState<Set<number>>(new Set());
   const [sidebarAutoCollapse, setSidebarAutoCollapse] = useState(true);
+  const [topSwitchOpen, setTopSwitchOpen] = useState(false);
+  const topSwitchMenuRef = useRef<HTMLUListElement>(null);
+  const topSwitchButtonRef = useRef<HTMLButtonElement>(null);
 
   const toggleAdminMenu = () => {
     setAdminMenu(!adminMenu);
@@ -215,6 +230,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       ) {
         setAdminMenu(false);
       }
+
+      // Close top menu switcher
+      if (
+        topSwitchMenuRef.current &&
+        !topSwitchMenuRef.current.contains(event.target as Node) &&
+        topSwitchButtonRef.current &&
+        !topSwitchButtonRef.current.contains(event.target as Node)
+      ) {
+        setTopSwitchOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
@@ -252,6 +277,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
 
   // Get visible menus using effective user apps
   let visibleMenus = activeTopMenu ? getVisibleSidebarMenus(activeTopMenu, effectiveUserApps) : [];
+
+  // Compute visible top menus for quick switching inside sidebar
+  const visibleTopMenus: TopMenuConfig[] = topMenuConfig.filter(menu => {
+    if (!menu.appIds || menu.appIds.length === 0) return true;
+    return menu.appIds.some(appId => effectiveUserApps.includes(appId));
+  });
+  const activeTopMenuTitle = (() => {
+    const found = visibleTopMenus.find(m => m.keyword === activeTopMenu);
+    return found ? found.title : 'Select section';
+  })();
   
   // Special case: if we're on overview page and no visible menus, show overview menu anyway
   if (pageUrl === '/overview' && visibleMenus.length === 0) {
@@ -374,6 +409,52 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
           </ul>
         </div>
       </div>
+
+      {/* Top menu switcher (dropdown) - mobile friendly, no horizontal scroll */}
+      {visibleTopMenus.length > 0 && (
+        <div className='px-3 -mt-4 mb-4'>
+          <div className='relative'>
+            <button
+              ref={topSwitchButtonRef}
+              onClick={() => setTopSwitchOpen(prev => !prev)}
+              className='relative select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-15 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary'
+            >
+              {(() => {
+                const current = visibleTopMenus.find(m => m.keyword === activeTopMenu) || visibleTopMenus[0];
+                return (
+                  <>
+                    <span className='absolute top-1/2 -translate-y-1/2 ltr:left-5 rtl:right-5 flex items-center'>
+                      {renderTopIcon(current)}
+                    </span>
+                    <span className='truncate'>{activeTopMenuTitle}</span>
+                  </>
+                );
+              })()}
+            </button>
+
+            <ul
+              ref={topSwitchMenuRef}
+              className={`bg-card-color text-font-color z-[2] rounded-xl shadow-shadow-lg absolute left-0 right-0 top-full mt-2 border border-border-color max-h-[60svh] overflow-auto custom-scrollbar
+                origin-top transition-all duration-200 ${topSwitchOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-95'}`}
+            >
+              {visibleTopMenus.map(menu => (
+                <li key={menu.keyword}>
+                  <button
+                    onClick={() => { setActiveTopMenu(menu.keyword); setTopSwitchOpen(false); }}
+                    className={`w-full px-4 py-2 flex items-center gap-2 text-left text-sm transition-all whitespace-nowrap
+                      ${activeTopMenu === menu.keyword ? 'text-secondary bg-secondary-10' : 'hover:bg-gray-100'}`}
+                  >
+                    <span className='flex items-center w-[18px] h-[18px]'>
+                      {renderTopIcon(menu)}
+                    </span>
+                    <span className='whitespace-nowrap'>{menu.title}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Project selector - exact Luno structure */}
       <div className='create-new-project px-3 py-4 flex gap-5'>
