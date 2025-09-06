@@ -315,17 +315,19 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
 
 
   // Initialize active menus based on current route - only run when route or mode changes
-  const prevPageUrl = useRef(pageUrl);
-  const prevSidebarAutoCollapse = useRef(sidebarAutoCollapse);
+  // Initialize with null so the effect below runs on first mount
+  const prevPageUrl = useRef<string | null>(null);
+  const prevSidebarAutoCollapse = useRef<boolean | null>(null);
   
   useEffect(() => {
+    const isFirstRun = prevPageUrl.current === null || prevSidebarAutoCollapse.current === null;
     const routeChanged = prevPageUrl.current !== pageUrl;
     const modeChanged = prevSidebarAutoCollapse.current !== sidebarAutoCollapse;
     
-    if (routeChanged || modeChanged) {
+    if (isFirstRun || routeChanged || modeChanged) {
       if (sidebarAutoCollapse) {
         // Auto-collapse mode: find first matching menu
-        let foundIndex = null;
+        let foundIndex: number | null = null;
         for (let i = 0; i < visibleMenus.length; i++) {
           const item = visibleMenus[i];
           if (item.dropdownMenus) {
@@ -341,6 +343,18 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
           }
           if (foundIndex !== null) break;
         }
+
+        // Fallback: match by calculated active sidebar menu keyword
+        if (foundIndex === null && calculatedActiveSidebarMenu) {
+          const idx = visibleMenus.findIndex(m => m.keyword === calculatedActiveSidebarMenu);
+          if (idx >= 0) foundIndex = idx;
+        }
+
+        // Final fallback: first menu
+        if (foundIndex === null && visibleMenus.length > 0) {
+          foundIndex = 0;
+        }
+
         setMenuActive(foundIndex);
       } else {
         // Multi-expand mode: find all matching menus
@@ -358,6 +372,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
             newActiveMenus.add(i);
           }
         }
+
+        // Fallback: ensure at least the calculated menu is expanded
+        if (newActiveMenus.size === 0 && calculatedActiveSidebarMenu) {
+          const idx = visibleMenus.findIndex(m => m.keyword === calculatedActiveSidebarMenu);
+          if (idx >= 0) newActiveMenus.add(idx);
+        }
+
         setActiveMenus(newActiveMenus);
       }
       
