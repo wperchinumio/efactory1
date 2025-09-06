@@ -80,7 +80,10 @@ const TopMenu: React.FC = () => {
     const cache: Record<string, number> = {};
     for (let i = 0; i < allMenus.length; i += 1) {
       const el = measureDiv.children.item(i) as HTMLElement | null;
-      cache[allMenus[i].keyword] = el ? el.offsetWidth : 0;
+      const menu = allMenus[i];
+      if (menu) {
+        cache[menu.keyword] = el ? el.offsetWidth : 0;
+      }
     }
 
     // Overflow button width
@@ -121,6 +124,7 @@ const TopMenu: React.FC = () => {
       let used = 0;
       for (let i = 0; i < allMenus.length; i += 1) {
         const menu = allMenus[i];
+        if (!menu) continue;
         const w = itemWidthCacheRef.current[menu.keyword] || 0;
         const gap = i === 0 ? 0 : gapWidthRef.current;
         const needOverflow = (i < allMenus.length - 1);
@@ -220,6 +224,7 @@ const TopMenu: React.FC = () => {
     const sidebarConfig = sidebarConfigs[menuKeyword];
     if (sidebarConfig && sidebarConfig.menus && sidebarConfig.menus.length > 0) {
       const firstMenu = sidebarConfig.menus[0];
+      if (!firstMenu) return;
       let firstSubRoute = null;
       
       // Check if first menu has a direct route
@@ -228,7 +233,10 @@ const TopMenu: React.FC = () => {
       } 
       // Check if first menu has dropdown menus
       else if (firstMenu.dropdownMenus && firstMenu.dropdownMenus.length > 0) {
-        firstSubRoute = firstMenu.dropdownMenus[0].route;
+        const firstDropdown = firstMenu.dropdownMenus[0];
+        if (firstDropdown) {
+          firstSubRoute = firstDropdown.route;
+        }
       }
       
       if (firstSubRoute) {
@@ -263,6 +271,7 @@ const TopMenu: React.FC = () => {
     const sidebarConfig = sidebarConfigs[menuKeyword];
     if (sidebarConfig && sidebarConfig.menus && sidebarConfig.menus.length > 0) {
       const firstMenu = sidebarConfig.menus[0];
+      if (!firstMenu) return;
       let firstSubRoute = null;
       
       // Check if first menu has a direct route
@@ -271,7 +280,10 @@ const TopMenu: React.FC = () => {
       } 
       // Check if first menu has dropdown menus
       else if (firstMenu.dropdownMenus && firstMenu.dropdownMenus.length > 0) {
-        firstSubRoute = firstMenu.dropdownMenus[0].route;
+        const firstDropdown = firstMenu.dropdownMenus[0];
+        if (firstDropdown) {
+          firstSubRoute = firstDropdown.route;
+        }
       }
       
       if (firstSubRoute) {
@@ -314,7 +326,7 @@ const TopMenu: React.FC = () => {
           {/* Dropdown menu */}
           {menu.isDropdown && activeDropdown === menu.keyword && menu.dropdownMenus && (
             <div
-              ref={el => dropdownRefs.current[menu.keyword] = el}
+              ref={el => { dropdownRefs.current[menu.keyword] = el; }}
               className="absolute top-full left-0 mt-1 bg-card-color text-font-color z-[1] rounded-xl min-w-[200px] shadow-shadow-lg border border-border-color"
             >
               <ul className="py-2">

@@ -10,14 +10,14 @@ interface MobileNavigationProps {
 }
 
 const MobileNavigation: React.FC<MobileNavigationProps> = ({ className = '' }) => {
-  const { userApps, activeTopMenu, setActiveTopMenu, setActiveSidebarMenu } = useNavigation();
+  const { userApps, activeTopMenu, setActiveTopMenu } = useNavigation();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState<Set<string>>(new Set());
 
   const allMenus = getVisibleTopMenus(userApps);
   const currentSidebarConfig = activeTopMenu ? sidebarConfigs[activeTopMenu] : null;
-  const visibleSidebarMenus = currentSidebarConfig ? getVisibleSidebarMenus(activeTopMenu, userApps) : [];
+  const visibleSidebarMenus = currentSidebarConfig && activeTopMenu ? getVisibleSidebarMenus(activeTopMenu, userApps) : [];
 
   // Close mobile menu when route changes
   useEffect(() => {

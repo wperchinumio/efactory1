@@ -1,4 +1,4 @@
-import { TopMenuConfig, SidebarConfig } from '../types/api/auth';
+import { TopMenuConfig, SidebarConfig, MenuItem } from '../types/api/auth';
 import {
   IconHome,
   IconBook,
@@ -14,25 +14,23 @@ import {
   IconShare,
   IconArrowDown,
   IconPencil,
-  IconCubes,
+  IconCube,
   IconMapPin,
   IconFileSpreadsheet,
   IconCalendar,
   IconCalculator,
   IconInfoCircle,
   IconUsers,
-  IconEnvelope,
   IconCloudUpload,
   IconBriefcase,
   IconUserPlus,
-  IconGear,
   IconBuilding,
   IconClock,
   IconBolt,
   IconCalendarCheck,
   IconChartBarOff,
   IconReportAnalytics,
-  IconFactory,
+  IconBuildingWarehouse,
   IconPackage,
   IconClipboardList,
   IconShip,
@@ -46,7 +44,7 @@ import {
   IconUpload,
   IconRefresh,
   IconAlertTriangle,
-  IconCheckCircle,
+  IconCircleCheck,
   IconX,
   IconPlus,
   IconMinus,
@@ -67,9 +65,8 @@ import {
   IconPercentage,
   IconTarget,
   IconTrendingUp,
-  IconPieChart,
+  IconChartPie,
   IconActivity,
-  IconZap,
   IconGlobe,
   IconLink,
   IconExternalLink,
@@ -463,7 +460,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'assembly',
-        iconComponent: IconCubes,
+        iconComponent: IconCube,
         title: 'Assembly',
         route: '/inventory/assembly',
         appIds: [40]
@@ -533,7 +530,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'drafts',
-        iconComponent: IconCubes,
+        iconComponent: IconCube,
         badge: '/orderpoints/drafts',
         badgeClassName: 'badge badge-info badge-margin-fix',
         title: 'Drafts',
@@ -682,7 +679,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'draft',
-        iconComponent: IconCubes,
+        iconComponent: IconCube,
         badge: '/returntrak/drafts',
         badgeClassName: 'badge badge-info',
         title: 'Drafts',
@@ -950,7 +947,7 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       {
         keyword: 'tradingPartners',
         sectionTitleBefore: 'TRADING PARTNERS',
-        iconComponent: IconFactory,
+        iconComponent: IconBuildingWarehouse,
         title: 'Trading Partners',
         isDropdownOpenDefault: false,
         dropdownMenus: [
@@ -1189,28 +1186,28 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
       },
       {
         keyword: 'orderpoints_settings',
-        iconComponent: IconGear,
+        iconComponent: IconSettings,
         title: 'OrderPoints Settings',
         route: '/services/administration-tasks/orderpoints-settings',
         appIds: [65]
       },
       {
         keyword: 'returntrak_settings',
-        iconComponent: IconGear,
+        iconComponent: IconSettings,
         title: 'ReturnTrak Settings',
         route: '/services/administration-tasks/returntrak-settings',
         appIds: [66]
       },
       {
         keyword: 'special_settings',
-        iconComponent: IconGear,
+        iconComponent: IconSettings,
         title: 'Special Settings',
         route: '/services/administration-tasks/special-settings',
         appIds: [99992]
       },
       {
         keyword: 'email_notif',
-        iconComponent: IconEnvelope,
+        iconComponent: IconMail,
         title: 'Email Notifications',
         isDropdownOpenDefault: true,
         dropdownMenus: [
@@ -1309,16 +1306,16 @@ export const getVisibleSidebarMenus = (sidebarKey: string, userApps: number[]): 
 
   return filteredMenus.map(menu => ({
     ...menu,
-    dropdownMenus: menu.dropdownMenus?.filter(dropdown => 
+    dropdownMenus: menu.dropdownMenus?.filter(dropdown =>
       dropdown.appId ? userApps.includes(dropdown.appId) : false
-    )
+    ) || []
   }));
 };
 
 // Helper function to determine which top menu should be active based on pathname
 export const getActiveTopMenu = (pathname: string, userApps: number[]): string | null => {
   // Normalize pathname (strip query)
-  const cleanPath = pathname.split('?')[0];
+  const cleanPath = pathname.split('?')[0] || '';
 
   // Special-case mapping: some sections live under "Services" dropdown but have their own sidebars
   if (cleanPath === '/documents' || cleanPath.startsWith('/documents/')) {
@@ -1332,10 +1329,11 @@ export const getActiveTopMenu = (pathname: string, userApps: number[]): string |
   
   // Handle root path - return first available menu
   if (cleanPath === '/') {
-    return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
+    return visibleMenus.length > 0 && visibleMenus[0] ? visibleMenus[0].keyword : null;
   }
   
   for (const menu of visibleMenus) {
+    if (!menu.sidebarConfig) continue;
     const sidebarConfig = sidebarConfigs[menu.sidebarConfig];
     if (sidebarConfig) {
       // Check if any menu item in this sidebar matches the pathname

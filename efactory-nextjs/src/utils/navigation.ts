@@ -192,26 +192,26 @@ export const getAppIdForPathname = (pathname: string): number | null => {
   // Remove query string
   const cleanPathname = pathname.replace(/\?.+/, '');
   
-  // Check for exact match first
-  if (routeAppIdsTable[cleanPathname]) {
-    return routeAppIdsTable[cleanPathname];
-  }
+	// Check for exact match first
+	if (cleanPathname in routeAppIdsTable) {
+		return (routeAppIdsTable as any)[cleanPathname];
+	}
   
-  // Check for view routes (e.g., /orders/view/123 -> /orders)
-  if (cleanPathname.includes('/view/')) {
-    const basePath = cleanPathname.substring(0, cleanPathname.indexOf('/view/'));
-    if (routeAppIdsTable[basePath]) {
-      return routeAppIdsTable[basePath];
-    }
-  }
+	// Check for view routes (e.g., /orders/view/123 -> /orders)
+	if (cleanPathname.includes('/view/')) {
+		const basePath = cleanPathname.substring(0, cleanPathname.indexOf('/view/'));
+		if (basePath in routeAppIdsTable) {
+			return (routeAppIdsTable as any)[basePath];
+		}
+	}
   
-  // Check for manage-filters routes
-  if (cleanPathname.includes('/manage-filters')) {
-    const basePath = cleanPathname.substring(0, cleanPathname.indexOf('/manage-filters'));
-    if (routeAppIdsTable[basePath]) {
-      return routeAppIdsTable[basePath];
-    }
-  }
+	// Check for manage-filters routes
+	if (cleanPathname.includes('/manage-filters')) {
+		const basePath = cleanPathname.substring(0, cleanPathname.indexOf('/manage-filters'));
+		if (basePath in routeAppIdsTable) {
+			return (routeAppIdsTable as any)[basePath];
+		}
+	}
   
   return null;
 };

@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import CompanyLogo from '@/components/common/CompanyLogo';
 import { useRouter } from 'next/router';
-import { useNavigation } from '../../contexts/NavigationContext';
-import { getVisibleSidebarMenus, sidebarConfigs, topMenuConfig } from '../../config/navigation';
-import { MenuItem, DropdownMenuItem, TopMenuConfig } from '../../types/api/auth';
-import { getAuthToken } from '../../../lib/auth/storage';
-import { getThemePreferences } from '../../../lib/themeStorage';
+import { useNavigation } from '@/contexts/NavigationContext';
+import { getVisibleSidebarMenus, sidebarConfigs, topMenuConfig } from '@/config/navigation';
+import { MenuItem, DropdownMenuItem, TopMenuConfig } from '@/types/api/auth';
+import { getAuthToken } from '@/lib/auth/storage';
+import { getThemePreferences } from '@/lib/themeStorage';
 import {
   IconChevronRight,
   IconChevronsDown,
@@ -19,7 +19,7 @@ import {
   IconPackage,
   IconShip,
   IconFileText,
-  IconCubes,
+  IconCube,
   IconArrowDown,
   IconArrowsExchange,
   IconTag,
@@ -37,13 +37,12 @@ import {
   IconCloudUpload,
   IconBriefcase,
   IconUserPlus,
-  IconGear,
   IconShare,
   IconBuilding,
   IconClock,
   IconBolt,
   IconCalendarCheck,
-  IconFactory,
+  IconBuildingWarehouse,
   IconBoxSeam,
   IconBarcode,
   IconEdit,
@@ -52,7 +51,7 @@ import {
   IconUpload,
   IconRefresh,
   IconAlertTriangle,
-  IconCheckCircle,
+  IconCircleCheck,
   IconX,
   IconMinus,
   IconFilter,
@@ -72,9 +71,8 @@ import {
   IconPercentage,
   IconTarget,
   IconTrendingUp,
-  IconPieChart,
+  IconChartPie,
   IconActivity,
-  IconZap,
   IconGlobe,
   IconLink,
   IconExternalLink,
@@ -99,7 +97,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   
   // Helper function to strip query strings from URL
   const stripQueryString = (url: string): string => {
-    return url.split('?')[0];
+    return url.split('?')[0] || '';
   };
   
   const pageUrl = stripQueryString(router.asPath); // Strip query strings for proper route matching
@@ -108,14 +106,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const getActiveSidebarMenu = () => {
     const pathSegments = pageUrl.split('/').filter(Boolean);
     
-    if (pathSegments.length === 1) {
+    if (pathSegments.length === 1 && activeTopMenu) {
       // Only /[topmenu] - return first available sidebar menu
       const visibleMenus = getVisibleSidebarMenus(activeTopMenu, userApps);
       if (visibleMenus.length > 0) {
-        const firstMenu = visibleMenus[0].keyword;
-        return firstMenu;
+        const firstMenu = visibleMenus[0];
+        if (firstMenu) {
+          return firstMenu.keyword;
+        }
       }
-    } else if (pathSegments.length >= 2) {
+    } else if (pathSegments.length >= 2 && activeTopMenu) {
       // Find the sidebar menu that contains the current route
       const visibleMenus = getVisibleSidebarMenus(activeTopMenu, userApps);
       
@@ -127,14 +127,14 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         
         // Check if any dropdown menu has the current route
         if (menu.dropdownMenus) {
-          const matchingDropdown = menu.dropdownMenus.find(dropdown => dropdown.route === pageUrl);
+          const matchingDropdown = menu.dropdownMenus.find((dropdown: DropdownMenuItem) => dropdown.route === pageUrl);
           if (matchingDropdown) {
             return menu.keyword;
           }
         }
       }
       
-      return visibleMenus.length > 0 ? visibleMenus[0].keyword : null;
+      return visibleMenus.length > 0 && visibleMenus[0] ? visibleMenus[0].keyword : null;
     }
     
     return null;
@@ -244,7 +244,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     setSidebarAutoCollapse(themePrefs.sidebarAutoCollapse);
 
     // Listen for theme changes (when user toggles setting in Theme Setting modal)
-    const handleStorageChange = (e) => {
+    const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'efactory-theme-preferences') {
         const newThemePrefs = getThemePreferences();
         setSidebarAutoCollapse(newThemePrefs.sidebarAutoCollapse);
@@ -404,14 +404,14 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         let foundIndex: number | null = null;
         for (let i = 0; i < visibleMenus.length; i++) {
           const item = visibleMenus[i];
-          if (item.dropdownMenus) {
+          if (item && item.dropdownMenus) {
             for (const child of item.dropdownMenus) {
               if (child.route === pageUrl) {
                 foundIndex = i;
                 break;
               }
             }
-          } else if (item.route === pageUrl) {
+          } else if (item && item.route === pageUrl) {
             foundIndex = i;
             break;
           }
@@ -435,14 +435,14 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         const newActiveMenus = new Set<number>();
         for (let i = 0; i < visibleMenus.length; i++) {
           const item = visibleMenus[i];
-          if (item.dropdownMenus) {
+          if (item && item.dropdownMenus) {
             for (const child of item.dropdownMenus) {
               if (child.route === pageUrl) {
                 newActiveMenus.add(i);
                 break;
               }
             }
-          } else if (item.route === pageUrl) {
+          } else if (item && item.route === pageUrl) {
             newActiveMenus.add(i);
           }
         }
@@ -503,6 +503,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
             >
               {(() => {
                 const current = visibleTopMenus.find(m => m.keyword === activeTopMenu) || visibleTopMenus[0];
+                if (!current) return null;
                 return (
                   <>
                     <span className='absolute top-1/2 -translate-y-1/2 ltr:left-5 rtl:right-5 flex items-center'>
@@ -611,7 +612,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                       }
                     </button>
                     <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
-                      {item.dropdownMenus.map((sub, subKey) => (
+                      {item.dropdownMenus.map((sub: DropdownMenuItem, subKey: number) => (
                         <li key={subKey}>
                           <Link 
                             href={sub.route} 
@@ -658,7 +659,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   }
                 </button>
                 <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
-                  {item.dropdownMenus.map((sub, subKey) => (
+                  {item.dropdownMenus.map((sub: DropdownMenuItem, subKey: number) => (
                     <li key={subKey}>
                       <Link 
                         href={sub.route} 
