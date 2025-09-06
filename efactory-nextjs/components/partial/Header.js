@@ -464,9 +464,14 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         >
                             <IconMoonStars className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
                         </button>
+                        <button onClick={toggleThemeSetting} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
+                            <IconSettings className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
+                        </button>
                         <div className='relative group flex'>
                             <button className='md:px-3 px-2'>
-                                <Image src={profile_av} alt='profile' width="36" height="36" className='w-[36px] h-[36px] min-w-[36px] bg-white shadow-shadow-lg p-1 rounded-full saturate-50 transition-all hover:filter-none' />
+                                <div className='w-[36px] h-[36px] min-w-[36px] bg-primary-10 text-primary rounded-full flex items-center justify-center shadow-shadow-lg transition-all hover:bg-primary hover:text-white'>
+                                    <IconUser className='w-[20px] h-[20px]' />
+                                </div>
                             </button>
                             <div className='bg-card-color text-font-color rounded-xl overflow-hidden md:w-[240px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] opacity-0 invisible scale-0 transition-all duration-300 group-hover:opacity-100 group-hover:visible group-hover:scale-100'>
                                 <div className='p-4 border-b border-border-color'>
@@ -513,9 +518,6 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                 </button>
                             </div>
                         </div>
-                        <button onClick={toggleThemeSetting} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
-                            <IconSettings className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
-                        </button>
                         <button className={`md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300 xl:hidden hamburger-menu ${mobileNav ? 'opened' : ''}`} onClick={toggleMobileNav}>
                             <svg width="20" height="20" viewBox="0 0 100 100">
                                 <path className="line line1" d="M 20,29.000046 H 80.000231 C 80.000231,29.000046 94.498839,28.817352 94.532987,66.711331 94.543142,77.980673 90.966081,81.670246 85.259173,81.668997 79.552261,81.667751 75.000211,74.999942 75.000211,74.999942 L 25.000021,25.000058" />
