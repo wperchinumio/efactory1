@@ -487,17 +487,20 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         
         // Get user info from auth token
         if (auth && auth.user_data) {
-            // Try multiple possible fields for username
-            const username = auth.user_data.name || 
-                            auth.user_data.user_id || 
-                            auth.user_data.username || 
-                            auth.user_data.login || 
-                            auth.user_data.account || 
-                            'Admin User';
+            // If in pure admin context (no impersonation), always show Admin User
+            const showAdminUser = adminStatus && (Array.isArray(userApps) ? userApps.length === 0 : true);
+            const username = showAdminUser
+                ? 'Admin User'
+                : (auth.user_data.name || 
+                    auth.user_data.user_id || 
+                    auth.user_data.username || 
+                    auth.user_data.login || 
+                    auth.user_data.account || 
+                    'Admin User');
             
             setUserInfo({
                 username: username,
-                email: auth.user_data.email || ''
+                email: showAdminUser ? '' : (auth.user_data.email || '')
             });
         }
     }, [userApps]) // Re-run when userApps changes (impersonation state)
