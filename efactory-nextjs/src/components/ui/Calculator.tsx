@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { IconCopy } from '@tabler/icons-react';
 
 interface CalculatorProps {
   onClose?: () => void;
@@ -113,6 +114,21 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
     }
   };
 
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(display);
+      // You could add a toast notification here if needed
+    } catch (err) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = display;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+  };
+
   // Keyboard support
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -150,6 +166,10 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
       } else if (key === 'Backspace') {
         event.stopPropagation();
         backspace();
+      } else if ((event.ctrlKey || event.metaKey) && key === 'c') {
+        event.preventDefault();
+        event.stopPropagation();
+        copyToClipboard();
       }
     };
 
@@ -327,20 +347,29 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
             </button>
           </div>
 
-          {/* Row 6: = */}
+          {/* Row 6: = and Copy */}
           <div className="flex gap-2">
             <button
               onClick={calculate}
-              className="flex-1 h-12 bg-success text-white rounded-lg font-semibold hover:bg-success-80 transition-colors"
+              className="h-12 bg-success text-white rounded-lg font-semibold hover:bg-success-80 transition-colors flex items-center justify-center"
+              style={{ width: 'calc(75% - 4px)' }}
             >
               =
+            </button>
+            <button
+              onClick={copyToClipboard}
+              className="h-12 bg-info text-white rounded-lg font-semibold hover:bg-info-80 transition-colors flex items-center justify-center"
+              style={{ width: 'calc(25% - 4px)' }}
+              title="Copy result to clipboard"
+            >
+              <IconCopy className="w-4 h-4" />
             </button>
           </div>
         </div>
 
         {/* Keyboard shortcuts info */}
         <div className="mt-4 text-xs text-font-color-100 text-center">
-          Keyboard shortcuts: Numbers, +, -, *, /, (, ), Enter/=, Esc (clear), Backspace
+          Keyboard shortcuts: Numbers, +, -, *, /, (, ), Enter/=, Esc (clear), Backspace, Ctrl+C (copy)
         </div>
       </div>
     </div>
