@@ -514,8 +514,8 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 			</div>
 
 			{/* Company Info */}
-			<div className='mb-3'>
-				<div className='text-[16px]/[20px] font-bold text-font-color mb-1'>
+			<div className='mb-2'>
+				<div className='text-[16px]/[20px] font-bold text-font-color mb-0.5'>
 					{accountNumber}
 				</div>
 				<div className='text-[12px]/[16px] text-font-color-100 truncate'>
@@ -523,38 +523,46 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 				</div>
 			</div>
 
-			{/* Locations */}
-			{locTokens.length > 0 && (
-				<div className='mb-3'>
-					<div className='flex flex-wrap gap-1'>
-						{locTokens.map((location) => (
-							<span 
-								key={location} 
-								className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] uppercase font-medium'
-							>
-								{location}
-							</span>
-						))}
-						{account.location && account.location.split(',').length > 2 && (
-							<span className='px-2 py-1 rounded-md bg-primary-10 text-primary text-[10px]/[12px] font-medium'>
-								+{account.location.split(',').length - 2}
-							</span>
-						)}
+			{/* Locations + Action */}
+			<div className='mt-2'>
+				<div className='flex items-center justify-between gap-3'>
+					{/* Locations */}
+					{locTokens.length > 0 ? (
+						<div className='flex flex-wrap gap-1'>
+							{locTokens.map((location) => (
+								<span 
+									key={location} 
+									className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] uppercase font-medium'
+								>
+									{location}
+								</span>
+							))}
+							{account.location && account.location.split(',').length > 2 && (
+								<span className='px-2 py-1 rounded-md bg-primary-10 text-primary text-[10px]/[12px] font-medium'>
+									+{account.location.split(',').length - 2}
+								</span>
+							)}
+						</div>
+					) : (
+						<div />
+					)}
+
+					{/* Action */}
+					<div className='shrink-0'>
+						<Button 
+							onClick={(e) => {
+								e.stopPropagation();
+								if (!isSelected) onSelect(account.username);
+								else onProceed();
+							}}
+							disabled={submitting}
+							className='px-4 py-2 text-[12px]'
+						>
+							{isSelected ? (submitting ? 'Processing...' : 'Access') : 'Select'}
+						</Button>
 					</div>
 				</div>
-			)}
-
-			{/* Action */}
-			<Button 
-				onClick={(e) => {
-					e.stopPropagation();
-					if (!isSelected) onSelect(account.username);
-					else onProceed();
-				}}
-				disabled={submitting}
-			>
-				{isSelected ? (submitting ? 'Processing...' : 'Access') : 'Select'}
-			</Button>
+			</div>
 		</div>
 	);
 }
