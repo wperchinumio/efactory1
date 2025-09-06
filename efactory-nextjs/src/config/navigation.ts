@@ -147,7 +147,33 @@ export const topMenuConfig: TopMenuConfig[] = [
     title: 'Services',
     iconComponent: IconSettings,
     appIds: [67, 65, 66, 99992, 77, 78, 79, 80, 81, 68, 69, 214],
-    sidebarConfig: 'administration_tasks'
+    isDropdown: true,
+    dropdownMenus: [
+      {
+        keyword: 'communications',
+        title: 'Communications',
+        route: '/services/communications',
+        appId: 77
+      },
+      {
+        keyword: 'documents',
+        title: 'Documents',
+        route: '/services/documents',
+        appId: 62
+      },
+      {
+        keyword: 'setup',
+        title: 'Setup',
+        route: '/services/setup',
+        appId: 65
+      },
+      {
+        keyword: 'administration_tasks',
+        title: 'Administration Tasks',
+        route: '/services/administration-tasks',
+        appId: 67
+      }
+    ]
   }
 ];
 

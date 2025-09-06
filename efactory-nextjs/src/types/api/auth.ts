@@ -59,7 +59,9 @@ export interface TopMenuConfig {
   iconClassName?: string; // For CSS class icons (legacy support)
   iconComponent?: React.ComponentType<any>; // For Tabler Icon components
   appIds: number[];
-  sidebarConfig: string; // Reference to sidebar config key
+  sidebarConfig?: string; // Reference to sidebar config key (optional for dropdowns)
+  isDropdown?: boolean; // Whether this menu has a dropdown
+  dropdownMenus?: DropdownMenuItem[]; // Dropdown menu items
 }
 
 export interface SidebarConfig {
