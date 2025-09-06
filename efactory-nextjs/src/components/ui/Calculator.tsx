@@ -161,7 +161,10 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
         event.stopPropagation();
         calculate();
       } else if (key === 'Escape') {
-        event.stopPropagation();
+        if (onClose) {
+          onClose();
+          return;
+        }
         clear();
       } else if (key === 'Backspace') {
         event.stopPropagation();
@@ -175,7 +178,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [display, expression, lastResult]);
+  }, [display, expression, lastResult, onClose]);
 
   return (
     <div className="bg-card-color rounded-xl shadow-2xl border border-border-color w-[400px] overflow-hidden">
