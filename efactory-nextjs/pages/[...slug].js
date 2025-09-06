@@ -19,6 +19,13 @@ const DynamicRoutePage = () => {
 
     // Get user apps from auth token
     const auth = getAuthToken();
+    
+    // If no auth token at all, redirect to sign-in
+    if (!auth || !auth.api_token) {
+      router.replace('/auth/sign-in');
+      return;
+    }
+
     const userApps = auth?.user_data?.apps || [];
     const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
     const isAdmin = roles.includes('ADM');

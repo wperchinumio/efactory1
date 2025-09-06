@@ -515,9 +515,6 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         >
                             <IconMoonStars className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
                         </button>
-                        <button onClick={toggleThemeSetting} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
-                            <IconSettings className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
-                        </button>
                         <div className='relative flex user-profile-dropdown'>
                             <button onClick={toggleUserProfile} className='md:px-3 px-2'>
                                 <div className='w-[36px] h-[36px] min-w-[36px] bg-primary-10 text-primary rounded-full flex items-center justify-center shadow-shadow-lg transition-all hover:bg-primary hover:text-white'>
@@ -538,32 +535,24 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                         <IconUser className='w-[16px] h-[16px]' />
                                         My Profile
                                     </Link>
+                                    <button onClick={() => { closeUserProfile(); toggleThemeSetting(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
+                                        <IconSettings className='w-[16px] h-[16px]' />
+                                        Settings
+                                    </button>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                        <IconUsersGroup className='w-[16px] h-[16px]' />
+                                        Team Members
+                                    </Link>
+                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                        <IconThumbUpFilled className='w-[16px] h-[16px]' />
+                                        Leave a feedback
+                                    </Link>
                                     {isAdmin && userApps.length > 0 ? (
                                         <button onClick={() => { closeUserProfile(); handleChangeUser(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary font-semibold w-full text-left'>
                                             <IconArrowBigLeftFilled className='w-[16px] h-[16px]' />
                                             Back to DCL Menu
                                         </button>
                                     ) : null}
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconSettings className='w-[16px] h-[16px]' />
-                                        Settings
-                                    </Link>
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconCreditCard className='w-[16px] h-[16px]' />
-                                        Billing
-                                    </Link>
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconUsersGroup className='w-[16px] h-[16px]' />
-                                        Manage Team
-                                    </Link>
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconCalendarFilled className='w-[16px] h-[16px]' />
-                                        My Events
-                                    </Link>
-                                    <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                        <IconTag className='w-[16px] h-[16px]' />
-                                        Support Ticket
-                                    </Link>
                                 </div>
                                 <button onClick={() => { closeUserProfile(); handleLogout(); }} className='bg-secondary uppercase text-[14px]/[20px] text-white py-5 px-10 text-center w-full inline-block'>
                                     Sign Out

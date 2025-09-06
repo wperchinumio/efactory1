@@ -73,7 +73,15 @@ export default function Signin() {
                 }
                 router.replace('/admin/login-user');
             } else {
-                router.replace('/');
+                // For regular users, redirect directly to their default route to avoid index page
+                const userApps = res.data.user_data.apps || [];
+                if (userApps.length > 0) {
+                    const { getDefaultRoute } = await import('../../src/utils/navigation');
+                    const defaultRoute = getDefaultRoute(userApps);
+                    router.replace(defaultRoute);
+                } else {
+                    router.replace('/no-apps');
+                }
             }
         } catch (err) {
             const message = (err && err.error_message) || 'Login failed';
