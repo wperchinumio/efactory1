@@ -31,7 +31,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 	const { method = 'GET' } = req;
 
 	// Log the target URL for debugging
-	console.log(`🔗 Proxy forwarding: ${method} ${target}`);
 
 	const headers: Record<string, string> = {};
 	for (const [key, value] of Object.entries(req.headers)) {

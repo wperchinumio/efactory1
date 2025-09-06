@@ -20,9 +20,18 @@ const DynamicRoutePage = () => {
     // Get user apps from auth token
     const auth = getAuthToken();
     const userApps = auth?.user_data?.apps || [];
+    const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+    const isAdmin = roles.includes('ADM');
 
+    // If no apps, handle based on user type
     if (userApps.length === 0) {
-      router.replace('/no-apps');
+      if (isAdmin) {
+        // Admin with no apps should go to login-user page
+        router.replace('/admin/login-user');
+      } else {
+        // Regular user with no apps - show no-apps page
+        router.replace('/no-apps');
+      }
       return;
     }
 

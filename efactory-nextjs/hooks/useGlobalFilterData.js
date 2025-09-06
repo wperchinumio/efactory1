@@ -92,7 +92,6 @@ export function useGlobalFilterData() {
 					localStorage.setItem('globalApiData', JSON.stringify(response.data));
 					
 					if (!response.data.sub_warehouses || Object.keys(response.data.sub_warehouses).length === 0) {
-						console.warn('⚠️ API returned empty sub_warehouses, checking other fields...');
 						throw new Error('Empty sub_warehouses in API response');
 					}
 					

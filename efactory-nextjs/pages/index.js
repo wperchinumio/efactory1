@@ -10,17 +10,24 @@ const DynamicRootPage = () => {
     // Get user apps from auth token
     const auth = getAuthToken();
     const userApps = auth?.user_data?.apps || [];
+    const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
+    const isAdmin = roles.includes('ADM');
     
     if (userApps.length > 0) {
       // Get the default route for this user based on their permissions
       const defaultRoute = getDefaultRoute(userApps);
-      console.log('🔄 Redirecting to default route:', defaultRoute, 'for user apps:', userApps);
       
       // Redirect to the first available menu
       router.replace(defaultRoute);
     } else {
-      // No apps available, redirect to no-apps page
-      router.replace('/no-apps');
+      // No apps available - handle based on user type
+      if (isAdmin) {
+        // Admin with no apps should go to login-user page
+        router.replace('/admin/login-user');
+      } else {
+        // Regular user with no apps - show no-apps page
+        router.replace('/no-apps');
+      }
     }
   }, [router]);
 
