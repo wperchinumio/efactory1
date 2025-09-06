@@ -30,6 +30,9 @@ const TopMenu: React.FC = () => {
   const overflowRef = useRef<HTMLUListElement>(null);
   const overflowButtonRef = useRef<HTMLButtonElement>(null);
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const itemWidthCacheRef = useRef<Record<string, number>>({});
+  const overflowButtonWidthRef = useRef<number>(0);
+  const gapWidthRef = useRef<number>(0);
 
   // Filter menus based on user permissions - memoized to prevent infinite re-renders
   const allMenus = useMemo(() => {
@@ -39,129 +42,127 @@ const TopMenu: React.FC = () => {
     });
   }, [userApps]);
 
-  // Handle responsive menu overflow with actual space measurement
+  // Precompute widths of items and overflow button for instant layout calculation
+  const recomputeItemWidths = () => {
+    const measureDiv = document.createElement('div');
+    measureDiv.style.position = 'absolute';
+    measureDiv.style.visibility = 'hidden';
+    measureDiv.style.top = '-9999px';
+    measureDiv.style.left = '-9999px';
+    measureDiv.style.whiteSpace = 'nowrap';
+    measureDiv.className = 'flex items-center space-x-1';
+
+    // Add one button per menu to measure
+    allMenus.forEach(menu => {
+      const button = document.createElement('button');
+      button.className = 'flex items-center gap-2 px-4 py-2 text-sm font-medium';
+      button.innerHTML = `
+        <div class="w-[18px] h-[18px]"></div>
+        <span class="whitespace-nowrap">${menu.title}</span>
+        ${menu.isDropdown ? '<div class="w-[16px] h-[16px]"></div>' : ''}
+      `;
+      measureDiv.appendChild(button);
+    });
+
+    // Add sample overflow button
+    const overflowBtn = document.createElement('button');
+    overflowBtn.className = 'flex items-center gap-1 px-3 py-2 text-sm font-medium';
+    overflowBtn.innerHTML = '<div class="w-[18px] h-[18px]"></div>';
+    measureDiv.appendChild(overflowBtn);
+
+    document.body.appendChild(measureDiv);
+
+    // Determine inter-item gap from Tailwind space-x-1 (read from second child)
+    const second = measureDiv.children.item(1) as HTMLElement | null;
+    gapWidthRef.current = second ? parseFloat(getComputedStyle(second).marginLeft || '0') : 0;
+
+    // Cache each button width (excluding gap)
+    const cache: Record<string, number> = {};
+    for (let i = 0; i < allMenus.length; i += 1) {
+      const el = measureDiv.children.item(i) as HTMLElement | null;
+      cache[allMenus[i].keyword] = el ? el.offsetWidth : 0;
+    }
+
+    // Overflow button width
+    const overflowEl = measureDiv.lastElementChild as HTMLElement | null;
+    overflowButtonWidthRef.current = overflowEl ? overflowEl.offsetWidth : 0;
+
+    document.body.removeChild(measureDiv);
+    itemWidthCacheRef.current = cache;
+  };
+
+  // Handle responsive menu overflow with faster, cached measurement
   useEffect(() => {
     if (!menuRef.current || allMenus.length === 0) {
-      console.log('No container or menus available:', { 
-        hasContainer: !!menuRef.current, 
-        menuCount: allMenus.length 
-      });
       return;
     }
 
-    let resizeTimeout: NodeJS.Timeout;
-    let lastWidth = 0;
+    let rafId = 0;
+    let lastWidth = -1;
+    let resizeObserver: ResizeObserver | null = null;
 
     const measureActualSpace = () => {
       const container = menuRef.current;
       if (!container) return;
-      
-      const containerWidth = container.offsetWidth;
-      
-      // Skip if width hasn't changed significantly
-      if (Math.abs(containerWidth - lastWidth) < 5) return;
+
+      const containerWidth = container.clientWidth;
+      if (containerWidth === lastWidth) return;
       lastWidth = containerWidth;
-      
-      const availableWidth = containerWidth - 40; // Account for padding/margins
-      
-      console.log('Menu measurement:', {
-        containerWidth,
-        availableWidth,
-        allMenusCount: allMenus.length,
-        allMenus: allMenus.map(m => m.title)
-      });
-      
-      // Start with all menus and work backwards
-      let visibleCount = allMenus.length;
-      let bestFit = { visible: allMenus, overflow: [] };
-      
-      // Fallback: if measurement fails, show all menus
-      try {
-        while (visibleCount > 0) {
-          const visibleMenus = allMenus.slice(0, visibleCount);
-          const overflowMenus = allMenus.slice(visibleCount);
-          
-          // Create a hidden measurement container
-          const measureDiv = document.createElement('div');
-          measureDiv.style.position = 'absolute';
-          measureDiv.style.visibility = 'hidden';
-          measureDiv.style.top = '-9999px';
-          measureDiv.style.left = '-9999px';
-          measureDiv.style.whiteSpace = 'nowrap';
-          measureDiv.className = 'flex items-center space-x-1';
-          
-          // Add each visible menu button
-          visibleMenus.forEach(menu => {
-            const button = document.createElement('button');
-            button.className = 'flex items-center gap-2 px-4 py-2 text-sm font-medium';
-            button.innerHTML = `
-              <div class="w-[18px] h-[18px]"></div>
-              <span>${menu.title}</span>
-              ${menu.isDropdown ? '<div class="w-[16px] h-[16px]"></div>' : ''}
-            `;
-            measureDiv.appendChild(button);
-          });
-          
-          // Add overflow button if needed
-          if (overflowMenus.length > 0) {
-            const overflowBtn = document.createElement('button');
-            overflowBtn.className = 'flex items-center gap-1 px-3 py-2 text-sm font-medium';
-            overflowBtn.innerHTML = '<div class="w-[18px] h-[18px]"></div>';
-            measureDiv.appendChild(overflowBtn);
-          }
-          
-          // Measure the actual width
-          document.body.appendChild(measureDiv);
-          const measuredWidth = measureDiv.offsetWidth;
-          document.body.removeChild(measureDiv);
-          
-          // Check if it fits
-          if (measuredWidth <= availableWidth) {
-            bestFit = { visible: visibleMenus, overflow: overflowMenus };
-            break;
-          }
-          
-          visibleCount--;
+
+      const availableWidth = containerWidth;
+
+      // Ensure widths are cached
+      const cacheMissing = !allMenus.every(m => (itemWidthCacheRef.current[m.keyword] || 0) > 0);
+      if (cacheMissing || overflowButtonWidthRef.current === 0 || gapWidthRef.current === 0) {
+        recomputeItemWidths();
+      }
+
+      let visibleCount = 0;
+      let used = 0;
+      for (let i = 0; i < allMenus.length; i += 1) {
+        const menu = allMenus[i];
+        const w = itemWidthCacheRef.current[menu.keyword] || 0;
+        const gap = i === 0 ? 0 : gapWidthRef.current;
+        const needOverflow = (i < allMenus.length - 1);
+        const overflowCost = needOverflow && (i >= 0) ? (gapWidthRef.current + overflowButtonWidthRef.current) : 0;
+        const candidate = used + gap + w + overflowCost;
+        if (candidate <= availableWidth) {
+          used += gap + w;
+          visibleCount = i + 1;
+        } else {
+          break;
         }
-      } catch (error) {
-        // If measurement fails, show all menus as fallback
-        console.warn('Menu measurement failed, showing all menus:', error);
-        bestFit = { visible: allMenus, overflow: [] };
       }
-      
-      // Ensure we always have at least one menu visible
-      if (bestFit.visible.length === 0) {
-        bestFit = { visible: allMenus.slice(0, 1), overflow: allMenus.slice(1) };
-      }
-      
-      // Apply the result
-      console.log('Setting visible menus:', {
-        visible: bestFit.visible.map(m => m.title),
-        overflow: bestFit.overflow.map(m => m.title)
-      });
-      
-      setVisibleMenus(bestFit.visible);
-      setOverflowMenus(bestFit.overflow);
+
+      if (visibleCount <= 0) visibleCount = 1; // Always show at least one
+
+      const newVisible = allMenus.slice(0, visibleCount);
+      const newOverflow = allMenus.slice(visibleCount);
+      setVisibleMenus(newVisible);
+      setOverflowMenus(newOverflow);
+      if (newOverflow.length === 0) setShowOverflowMenu(false);
     };
 
-    const debouncedMeasure = () => {
-      clearTimeout(resizeTimeout);
-      resizeTimeout = setTimeout(measureActualSpace, 100);
+    const scheduleMeasure = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(measureActualSpace);
     };
 
-    // Initial fallback - show all menus immediately
-    setVisibleMenus(allMenus);
-    setOverflowMenus([]);
-    
-    // Then measure and optimize
-    setTimeout(measureActualSpace, 50);
-    
-    // Listen for resize events
-    window.addEventListener('resize', debouncedMeasure);
+    // Initial compute and measure immediately
+    recomputeItemWidths();
+    measureActualSpace();
+
+    // Listen for resize events and container size changes
+    window.addEventListener('resize', scheduleMeasure);
+    if (typeof ResizeObserver !== 'undefined' && menuRef.current) {
+      resizeObserver = new ResizeObserver(() => scheduleMeasure());
+      resizeObserver.observe(menuRef.current);
+    }
 
     return () => {
-      clearTimeout(resizeTimeout);
-      window.removeEventListener('resize', debouncedMeasure);
+      if (rafId) cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', scheduleMeasure);
+      if (resizeObserver) resizeObserver.disconnect();
     };
   }, [allMenus]);
 
@@ -281,7 +282,7 @@ const TopMenu: React.FC = () => {
   }
 
   return (
-    <div ref={menuRef} className="flex items-center space-x-1">
+    <div ref={menuRef} className="flex items-center space-x-1 w-full">
       {/* Visible menu items - using exact Luno theme pattern */}
       {visibleMenus.map((menu) => (
         <div key={menu.keyword} className="relative">
@@ -296,7 +297,7 @@ const TopMenu: React.FC = () => {
             `}
           >
             {renderIcon(menu)}
-            {menu.title}
+            <span className="whitespace-nowrap">{menu.title}</span>
             {menu.isDropdown && (
               <IconChevronDown className={`w-[16px] h-[16px] transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
             )}
@@ -313,7 +314,7 @@ const TopMenu: React.FC = () => {
                   <li key={dropdownItem.keyword}>
                     <button
                       onClick={() => handleDropdownItemClick(dropdownItem.route)}
-                      className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100"
+                      className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
                     >
                       {dropdownItem.title}
                     </button>
@@ -339,8 +340,8 @@ const TopMenu: React.FC = () => {
           <ul 
             ref={overflowRef}
             className={`
-              bg-card-color text-font-color z-[1] rounded-xl min-w-[280px] shadow-shadow-lg 
-              absolute end-0 top-full origin-top-right transition-all duration-300 mt-1
+              bg-card-color text-font-color z-[50] rounded-xl min-w-[280px] shadow-shadow-lg 
+              absolute end-0 top-full origin-top-right transition-all duration-200 mt-1
               whitespace-nowrap
               ${showOverflowMenu ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}
             `}

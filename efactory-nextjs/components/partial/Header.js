@@ -436,7 +436,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         <>
             <div className="md:py-4 md:px-6 sm:p-3 py-3 border-b-4 border-card-color bg-body-color sticky top-0 z-[2] xl:shadow-none shadow-lg">
                 <div className='container-fluid flex items-center'>
-                <div className='flex items-center gap-3 sm:pe-4 pe-2'>
+                <div className='flex items-center gap-3 sm:pe-4 pe-2 flex-1 min-w-0'>
                         <button onClick={toggleMiniSidebar} className='xl:flex hidden items-center justify-center w-[36px] h-[36px] min-w-[36px] text-primary bg-primary-10 rounded-full'>
                             <IconArrowBigLeftFilled className={`transition-all ${miniSidebar ? 'rotate-180 rtl:rotate-0' : 'rotate-0 rtl:rotate-180'}`} />
                         </button>
@@ -446,7 +446,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         
                         {/* Top Navigation Menu - Only show for customer context */}
                         {showNewNavigation && (
-                            <div className='hidden lg:flex items-center ml-6'>
+                            <div className='hidden lg:flex items-center ml-6 flex-1 min-w-0'>
                                 <TopMenu />
                             </div>
                         )}
