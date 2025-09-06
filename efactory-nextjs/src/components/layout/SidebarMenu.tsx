@@ -189,6 +189,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const [menuActive, setMenuActive] = useState<number | null>(null);
   const [activeMenus, setActiveMenus] = useState<Set<number>>(new Set());
   const [sidebarAutoCollapse, setSidebarAutoCollapse] = useState(true);
+  const [menusInitialized, setMenusInitialized] = useState(false);
   const [topSwitchOpen, setTopSwitchOpen] = useState(false);
   const topSwitchMenuRef = useRef<HTMLUListElement>(null);
   const topSwitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -424,6 +425,17 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
           if (idx >= 0) foundIndex = idx;
         }
 
+        // Fallback: find first menu that should be open by default
+        if (foundIndex === null) {
+          for (let i = 0; i < visibleMenus.length; i++) {
+            const item = visibleMenus[i];
+            if (item && item.isDropdownOpenDefault && item.dropdownMenus && item.dropdownMenus.length > 0) {
+              foundIndex = i;
+              break;
+            }
+          }
+        }
+
         // Final fallback: first menu
         if (foundIndex === null && visibleMenus.length > 0) {
           foundIndex = 0;
@@ -443,6 +455,14 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               }
             }
           } else if (item && item.route === pageUrl) {
+            newActiveMenus.add(i);
+          }
+        }
+
+        // Add menus that should be open by default (isDropdownOpenDefault: true)
+        for (let i = 0; i < visibleMenus.length; i++) {
+          const item = visibleMenus[i];
+          if (item && item.isDropdownOpenDefault && item.dropdownMenus && item.dropdownMenus.length > 0) {
             newActiveMenus.add(i);
           }
         }
@@ -597,7 +617,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               );
 
               // Add the menu item after divider
-              if (item.dropdownMenus) {
+              if (item.dropdownMenus && item.dropdownMenus.length > 0) {
                 menuItems.push(
                   <li key={key} className='sidebar-listitem'>
                     <button
@@ -645,7 +665,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
             }
 
             // Regular menu items without section divider
-            return item.dropdownMenus ? (
+            return item.dropdownMenus && item.dropdownMenus.length > 0 ? (
               <li key={key} className='sidebar-listitem'>
                 <button
                   onClick={() => menuToggle(key)}
@@ -704,7 +724,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     </span>
   </button>
   <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary' onClick={() => {
-    localStorage.removeItem('authToken');
+    import('@/lib/auth/storage').then(({ clearAuthToken }) => clearAuthToken());
   }}>
     <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
   </Link>

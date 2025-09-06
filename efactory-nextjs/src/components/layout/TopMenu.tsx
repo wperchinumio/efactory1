@@ -401,17 +401,26 @@ const TopMenu: React.FC = () => {
                 {/* Dropdown items in overflow menu */}
                 {menu.isDropdown && activeDropdown === menu.keyword && menu.dropdownMenus && (
                   <ul className="ml-4 mt-1 space-y-1">
-                    {menu.dropdownMenus.map((dropdownItem) => (
-                      <li key={dropdownItem.keyword}>
-                        <button
-                          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(dropdownItem.route); }}
-                          onClick={(e) => { e.preventDefault(); }}
-                          className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
-                        >
-                          {dropdownItem.title}
-                        </button>
-                      </li>
-                    ))}
+                    {menu.dropdownMenus.map((dropdownItem) => {
+                      const isSection = !dropdownItem.route;
+                      return (
+                        <li key={dropdownItem.keyword}>
+                          {isSection ? (
+                            <div className="px-4 py-2 text-sm font-semibold text-secondary bg-secondary-10 rounded-md cursor-default select-none">
+                              {dropdownItem.title}
+                            </div>
+                          ) : (
+                            <button
+                              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(dropdownItem.route); }}
+                              onClick={(e) => { e.preventDefault(); }}
+                              className="w-full px-4 py-2 text-left text-sm transition-all hover:text-secondary hover:bg-gray-100 whitespace-nowrap"
+                            >
+                              {dropdownItem.title}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </li>

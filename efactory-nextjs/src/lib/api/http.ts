@@ -63,7 +63,8 @@ export async function httpRequest<TResponse = unknown, TBody = unknown>(
 
 	if (!res.ok) {
 		if (res.status === 401 && typeof window !== 'undefined') {
-			window.localStorage.removeItem('authToken');
+			// Clear all auth data including globalApiData
+			import('../auth/storage').then(({ clearAuthToken }) => clearAuthToken());
 			if (!window.location.pathname.includes('/auth')) {
 				window.location.href = '/auth/sign-in';
 			}

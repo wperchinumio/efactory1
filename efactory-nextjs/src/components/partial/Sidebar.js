@@ -49,7 +49,6 @@ import {
     IconUserCircle,
     IconCalculator
 } from '@tabler/icons-react'
-import NewProject from '../../pages/app/project/NewProject';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getAuthToken } from '@/lib/auth/storage';
@@ -129,10 +128,6 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
         setSchedule(!schedule)
     }
 
-    const [newProjectSidebar, setNewProjectSidebar] = useState(false)
-    const toggleNewProject = () => {
-        setNewProjectSidebar(!newProjectSidebar)
-    }
 
     // Defer role detection to the client after mount to avoid SSR hydration mismatch
     const [isAdmin, setIsAdmin] = useState(false)
@@ -222,7 +217,6 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                         <option value="2">Book Manager</option>
                         <option value="3">Luno Sass App</option>
                     </select> */}
-                    <NewProject newProjectSidebar={newProjectSidebar} toggleNewProject={toggleNewProject} />
                 </div>
             )}
             {/* When admin, render a flat list (no groups) */}
@@ -279,7 +273,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                 </button>
                 <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary' onClick={() => {
   // Perform logout logic here
-  localStorage.removeItem('authToken');
+  import('@/lib/auth/storage').then(({ clearAuthToken }) => clearAuthToken());
 }}>
   <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
 </Link>

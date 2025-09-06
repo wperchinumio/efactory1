@@ -444,6 +444,27 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
             // Call loadAccounts API like legacy system
             const response = await loadAccounts();
             
+            // Also call global admin API to reload full admin global data
+            const { getJson } = await import('../../lib/api/http');
+            const globalResponse = await getJson('/api/global?admin=1');
+            
+            // Store the fresh global admin data
+            if (globalResponse && globalResponse.data) {
+                // Clear the old data first
+                window.localStorage.removeItem('globalApiData');
+                // Add a small delay to ensure removal is processed
+                await new Promise(resolve => setTimeout(resolve, 100));
+                // Set the new data
+                window.localStorage.setItem('globalApiData', JSON.stringify(globalResponse.data));
+                
+                // Dispatch multiple events to ensure components refresh
+                window.dispatchEvent(new CustomEvent('globalApiDataUpdated'));
+                window.dispatchEvent(new CustomEvent('storage', { 
+                    detail: { key: 'globalApiData', newValue: JSON.stringify(globalResponse.data) } 
+                }));
+                
+            }
+            
             // Update auth token with fresh available_accounts and admin_roles
             // Clear user_data.apps to ensure admin sidebar is shown
             const currentAuth = getAuthToken();
@@ -460,15 +481,21 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                 setAuthToken(updatedAuth);
             }
             
-            // Force page reload to reset all state and show admin sidebar
+            
+            // Use React router navigation instead of page reload to preserve console logs
             if (typeof window !== 'undefined') {
-                window.location.href = '/admin/login-user';
+                // Force a small delay to ensure all state updates are processed
+                setTimeout(() => {
+                    window.location.replace('/admin/login-user');
+                }, 500);
             }
         } catch (error) {
-            console.error('Failed to load accounts:', error);
+            console.error('Failed to load accounts or global data:', error);
             // Fallback to direct navigation
             if (typeof window !== 'undefined') {
-                window.location.href = '/admin/login-user';
+                setTimeout(() => {
+                    window.location.replace('/admin/login-user');
+                }, 1000);
             }
         }
     }

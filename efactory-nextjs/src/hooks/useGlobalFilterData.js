@@ -36,6 +36,31 @@ export function useGlobalFilterData() {
 		error: null
 	});
 
+	// Add a refresh trigger to force reload when global data changes
+	const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+	// Listen for custom events to detect when globalApiData is updated
+	useEffect(() => {
+		const handleGlobalDataUpdate = () => {
+			// Global data was updated, trigger refresh
+			setRefreshTrigger(prev => prev + 1);
+		};
+
+		const handleStorageEvent = (e) => {
+			if (e.detail && e.detail.key === 'globalApiData') {
+				setRefreshTrigger(prev => prev + 1);
+			}
+		};
+
+		// Listen for custom event that fires when global data is updated
+		window.addEventListener('globalApiDataUpdated', handleGlobalDataUpdate);
+		window.addEventListener('storage', handleStorageEvent);
+		return () => {
+			window.removeEventListener('globalApiDataUpdated', handleGlobalDataUpdate);
+			window.removeEventListener('storage', handleStorageEvent);
+		};
+	}, []);
+
 	useEffect(() => {
 		async function loadGlobalData() {
 			try {
@@ -197,7 +222,7 @@ export function useGlobalFilterData() {
 		}
 
 		loadGlobalData();
-	}, []);
+	}, [refreshTrigger]);
 
 	// Function to get filter options from the loaded data
 	const getFilterOptions = () => {
@@ -217,18 +242,25 @@ export function useGlobalFilterData() {
 		// Get warehouse options
 		let warehouseData = {};
 		
-		// Try to get warehouse data from auth token first
+		// Check if user is admin - admins should use global data, not limited auth token data
 		try {
 			const authToken = getAuthToken();
-			if (authToken && authToken.user_data && authToken.user_data.warehouses) {
+			const isAdmin = authToken?.user_data?.roles?.includes('ADM') || false;
+			
+			// For admins, prioritize global sub_warehouses data
+			if (isAdmin && sub_warehouses && Object.keys(sub_warehouses).length > 0) {
+				warehouseData = sub_warehouses;
+			}
+			// For regular users, use auth token warehouses
+			else if (authToken && authToken.user_data && authToken.user_data.warehouses) {
 				warehouseData = authToken.user_data.warehouses;
+			}
+			// Fallback to sub_warehouses
+			else {
+				warehouseData = sub_warehouses;
 			}
 		} catch (e) {
 			// Fallback to sub_warehouses
-		}
-		
-		// Fallback to sub_warehouses if no auth token warehouses
-		if (Object.keys(warehouseData).length === 0) {
 			warehouseData = sub_warehouses;
 		}
 		
@@ -280,11 +312,32 @@ export function useGlobalFilterData() {
 				
 				// Strategy: Try multiple sources for accounts
 				
-				// Source 1: calc_accounts from auth token (preferred)
-				if (authToken && authToken.user_data && authToken.user_data.calc_accounts && authToken.user_data.calc_accounts.length > 0) {
+				// Check if user is admin - admins should use global data, not limited auth token data
+				const isAdmin = authToken?.user_data?.roles?.includes('ADM') || false;
+				
+				// Source 1: For admins, prioritize global sub_warehouses data
+				if (isAdmin && sub_warehouses && Object.keys(sub_warehouses).length > 0) {
+					let calc_accounts = [];
+					
+					Object.keys(sub_warehouses).forEach((warehouseKey) => {
+						const warehouseData = sub_warehouses[warehouseKey];
+						
+						// Handle different data structures
+						if (Array.isArray(warehouseData)) {
+							// Direct array of accounts
+							calc_accounts = [...calc_accounts, ...warehouseData];
+						}
+					});
+					
+					// Remove duplicates and convert to strings
+					const uniqueAccounts = [...new Set(calc_accounts)].map(acc => String(acc));
+					accounts = uniqueAccounts;
+				}
+				// Source 2: calc_accounts from auth token (for regular users)
+				else if (authToken && authToken.user_data && authToken.user_data.calc_accounts && authToken.user_data.calc_accounts.length > 0) {
 					accounts = [...authToken.user_data.calc_accounts];
 				}
-				// Source 2: Extract from global API sub_warehouses data
+				// Source 3: Extract from global API sub_warehouses data (fallback)
 				else if (sub_warehouses && Object.keys(sub_warehouses).length > 0) {
 					
 					// EMERGENCY: Let's also check localStorage directly
@@ -441,20 +494,24 @@ export function useGlobalFilterData() {
 			return [];
 		};
 
-		// Get channel options
+		// Get channel options from order_types
 		const getChannelOptions = () => {
-			return [
-				{ value: 'AMZN', label: 'AMZN - Amazon' },
-				{ value: 'EBAY', label: 'EBAY - eBay' },
-				{ value: 'SHOP', label: 'SHOP - Shopify' },
-				{ value: 'ETSY', label: 'ETSY - Etsy' },
-				{ value: 'WLMT', label: 'WLMT - Walmart' },
-				{ value: 'TARG', label: 'TARG - Target' },
-				{ value: 'BEST', label: 'BEST - Best Buy' },
-				{ value: 'HOME', label: 'HOME - Home Depot' },
-				{ value: 'LOWE', label: 'LOWE - Lowes' },
-				{ value: 'COST', label: 'COST - Costco' }
-			];
+			const orderTypes = data.order_types || {};
+			
+			return Object.keys(orderTypes)
+				.sort((a, b) => {
+					const nameA = typeof orderTypes[a] === 'object' ? orderTypes[a].name || orderTypes[a] : orderTypes[a];
+					const nameB = typeof orderTypes[b] === 'object' ? orderTypes[b].name || orderTypes[b] : orderTypes[b];
+					return String(nameA).localeCompare(String(nameB));
+				})
+				.map(code => {
+					const orderType = orderTypes[code];
+					const name = typeof orderType === 'object' ? orderType.name || orderType : orderType;
+					return {
+						value: code,
+						label: `${code} - ${name}`
+					};
+				});
 		};
 
 		// Get destination options

@@ -108,6 +108,7 @@ export function clearAuthToken() {
 	if (typeof window === 'undefined') return;
 	window.localStorage.removeItem('authToken');
 	window.localStorage.removeItem('appdata');
+	window.localStorage.removeItem('globalApiData');
 }
 
 export async function performLogout() {
