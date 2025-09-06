@@ -1,6 +1,8 @@
+import type { AvailableAccountItem } from '../api/models/auth';
+
 export interface AuthToken {
 	api_token: string;
-	available_accounts?: string[];
+	available_accounts?: AvailableAccountItem[];
 	admin_roles?: string[];
 	user_data?: Record<string, unknown> & {
 		roles?: string[];

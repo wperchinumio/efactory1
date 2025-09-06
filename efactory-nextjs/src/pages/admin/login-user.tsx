@@ -52,7 +52,7 @@ function LoginUserPageInner() {
 
 	useEffect(() => {
 		const token = getAuthToken();
-		const list = Array.isArray(token?.available_accounts) ? (token!.available_accounts as any) : [];
+		const list = Array.isArray(token?.available_accounts) ? token!.available_accounts : [];
 		setAccounts(list);
 	}, []);
 
@@ -68,8 +68,8 @@ function LoginUserPageInner() {
 		if (q) {
 			list = list.filter((acc) =>
 				acc.username.toLowerCase().includes(q) ||
-				acc.company.toLowerCase().includes(q) ||
-				acc.location.toLowerCase().includes(q) ||
+				(acc.company || '').toLowerCase().includes(q) ||
+				(acc.location || '').toLowerCase().includes(q) ||
 				(acc.is_EDI ? 'edi' : '').includes(q),
 			);
 		}
@@ -78,8 +78,8 @@ function LoginUserPageInner() {
 			
 			switch (sortField) {
 				case 'company':
-					aValue = a.company.toLowerCase();
-					bValue = b.company.toLowerCase();
+					aValue = (a.company || '').toLowerCase();
+					bValue = (b.company || '').toLowerCase();
 					break;
 				case 'location':
 					aValue = (a.location || '').toLowerCase();
@@ -90,8 +90,8 @@ function LoginUserPageInner() {
 					bValue = b.is_EDI ? 1 : 0;
 					break;
 				default:
-					aValue = a.company.toLowerCase();
-					bValue = b.company.toLowerCase();
+					aValue = (a.company || '').toLowerCase();
+					bValue = (b.company || '').toLowerCase();
 			}
 			
 			if (sortField === 'edi') {
@@ -153,7 +153,7 @@ function LoginUserPageInner() {
 
 	// EDI vs Standard distribution by company
 	const companyEDIDistribution = accounts.reduce((acc, account) => {
-		const company = account.company.replace(/^\d+\s*-\s*/, '');
+		const company = (account.company || '').replace(/^\d+\s*-\s*/, '');
 		if (!acc[company]) {
 			acc[company] = { total: 0, edi: 0, standard: 0 };
 		}
@@ -181,7 +181,7 @@ function LoginUserPageInner() {
 	const accountComplexity = accounts
 		.map(account => ({
 			username: account.username,
-			company: account.company.replace(/^\d+\s*-\s*/, ''),
+			company: (account.company || '').replace(/^\d+\s*-\s*/, ''),
 			locationCount: account.location ? account.location.split(',').filter(l => l.trim()).length : 0,
 			isEDI: account.is_EDI
 		}))
@@ -192,7 +192,7 @@ function LoginUserPageInner() {
 	const recentActivity = accounts
 		.map(account => ({
 			username: account.username,
-			company: account.company.replace(/^\d+\s*-\s*/, ''),
+			company: (account.company || '').replace(/^\d+\s*-\s*/, ''),
 			activityScore: (account.is_EDI ? 85 : 60) + (account.location ? account.location.split(',').length * 5 : 0),
 			lastActivity: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random within last week
 			isEDI: account.is_EDI
@@ -311,7 +311,7 @@ function LoginUserPageInner() {
 							</div>
 							<div className='space-y-3'>
 								{topLocations.map(([location, count], index) => (
-									<div key={location} className='flex items-center justify-between'>
+									<div key={`location-${index}-${location}`} className='flex items-center justify-between'>
 										<div className='flex items-center gap-3'>
 											<div className='w-[24px] h-[24px] bg-primary text-white rounded-md flex items-center justify-center text-[12px] font-bold'>
 												{index + 1}
@@ -344,7 +344,7 @@ function LoginUserPageInner() {
 							</div>
 							<div className='space-y-3'>
 								{accountComplexity.map((item, index) => (
-									<div key={item.username} className='flex items-center justify-between'>
+									<div key={`complexity-${index}-${item.username}`} className='flex items-center justify-between'>
 										<div className='flex items-center gap-3'>
 											<div className='w-[24px] h-[24px] bg-info text-white rounded-md flex items-center justify-center text-[12px] font-bold'>
 												{index + 1}
@@ -402,7 +402,7 @@ function LoginUserPageInner() {
 						<div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4'>
 							{filtered.map((account, index) => (
 								<AccountCard
-									key={account.username}
+									key={`account-card-${index}-${account.username}`}
 									account={account}
 									index={index}
 									isSelected={selectedUsername === account.username}
@@ -430,7 +430,7 @@ function LoginUserPageInner() {
 							<div className='divide-y divide-border-color'>
 								{filtered.map((account, index) => (
 									<AccountTableRow
-										key={account.username}
+										key={`account-table-${index}-${account.username}`}
 										account={account}
 										index={index}
 										isSelected={selectedUsername === account.username}
@@ -483,8 +483,8 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 		.filter(Boolean)
 		.slice(0, 2);
 
-	const accountNumber = account.company.match(/^\d+/)?.[0] || account.username;
-	const companyName = account.company.replace(/^\d+\s*-\s*/, '');
+	const accountNumber = (account.company || '').match(/^\d+/)?.[0] || account.username;
+	const companyName = (account.company || '').replace(/^\d+\s*-\s*/, '');
 
 	return (
 		<div
@@ -531,9 +531,9 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 					{/* Locations */}
 					{locTokens.length > 0 ? (
 						<div className='flex flex-wrap gap-1'>
-							{locTokens.map((location) => (
+							{locTokens.map((location, idx) => (
 								<span 
-									key={location} 
+									key={`${account.username}-location-${idx}-${location}`} 
 									className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] uppercase font-medium'
 								>
 									{location}
@@ -552,8 +552,7 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 					{/* Action */}
 					<div className='shrink-0'>
 						<Button 
-						onClick={(e: any) => {
-							e.stopPropagation();
+						onClick={() => {
 							if (!isSelected) onSelect(account.username);
 							else onProceed();
 						}}
@@ -584,8 +583,8 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 		.filter(Boolean)
 		.slice(0, 3);
 
-	const accountNumber = account.company.match(/^\d+/)?.[0] || account.username;
-	const companyName = account.company.replace(/^\d+\s*-\s*/, '');
+	const accountNumber = (account.company || '').match(/^\d+/)?.[0] || account.username;
+	const companyName = (account.company || '').replace(/^\d+\s*-\s*/, '');
 
 	return (
 		<div
@@ -621,9 +620,9 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 				<div className='col-span-3'>
 					{locTokens.length > 0 ? (
 						<div className='flex flex-wrap gap-1'>
-							{locTokens.map((location) => (
+							{locTokens.map((location, idx) => (
 								<span 
-									key={location} 
+									key={`${account.username}-table-location-${idx}-${location}`} 
 									className='px-2 py-1 rounded-md bg-primary text-white text-[10px]/[12px] uppercase font-medium'
 								>
 									{location}
@@ -661,8 +660,7 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 				<div className='col-span-2'>
 					<div className='flex items-center gap-2'>
 						<Button
-						onClick={(e: any) => {
-							e.stopPropagation();
+						onClick={() => {
 							onSelect(account.username);
 						}}
 							disabled={submitting}
@@ -671,8 +669,7 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 						</Button>
 						{isSelected && (
 							<Button
-							onClick={(e: any) => {
-								e.stopPropagation();
+							onClick={() => {
 								onProceed();
 							}}
 								className='btn btn-sm btn-success'

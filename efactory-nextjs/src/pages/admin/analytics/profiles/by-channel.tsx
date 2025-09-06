@@ -150,9 +150,9 @@ export default function AdminAnalyticsByChannel() {
 		});
 	};
 
-	const hasActiveFilters = () => {
+	const hasActiveFilters = (): boolean => {
 		return filters.warehouse.length > 0 || filters.account.length > 0 || 
-		       filters.country || filters.state || filters.shippedDate !== '-90D';
+		       !!filters.country || !!filters.state || filters.shippedDate !== '-90D';
 	};
 
 
@@ -588,7 +588,7 @@ export default function AdminAnalyticsByChannel() {
 
 		<AnalyticsFilterHeader
 			viewMode={viewMode}
-			onViewModeChange={setViewMode}
+			onViewModeChange={(mode: string) => setViewMode(mode as 'chart' | 'table')}
 			hasActiveFilters={hasActiveFilters()}
 			onClearAllFilters={clearAllFilters}
 		>

@@ -159,7 +159,7 @@ export default function AdminAnalyticsByShipService() {
 		});
 	};
 
-	const hasActiveFilters = () => {
+	const hasActiveFilters = (): boolean => {
 		return (
 			filters.shippedDate !== '-90D' ||
 			filters.warehouse.length > 0 ||
@@ -609,7 +609,7 @@ export default function AdminAnalyticsByShipService() {
 
 		<AnalyticsFilterHeader
 			viewMode={viewMode}
-			onViewModeChange={setViewMode}
+			onViewModeChange={(mode: string) => setViewMode(mode as 'chart' | 'table')}
 			hasActiveFilters={hasActiveFilters()}
 			onClearAllFilters={clearAllFilters}
 		>

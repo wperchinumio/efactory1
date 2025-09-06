@@ -494,7 +494,7 @@ function UsersPage() {
 							<div className='flex items-center gap-3'>
 								<Combobox
 									value={statusFilter}
-									onValueChange={setStatusFilter}
+									onValueChange={(value: string) => setStatusFilter(value as 'all' | 'online' | 'offline' | 'ws')}
 					options={[
 						{ value: 'all', label: 'All Status' },
 						{ value: 'online', label: 'Online Only' },

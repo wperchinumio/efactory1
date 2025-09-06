@@ -190,9 +190,9 @@ export default function AdminAnalyticsByTime() {
 		});
 	};
 
-	const hasActiveFilters = () => {
-		return filters.warehouse.length > 0 || filters.account.length > 0 || filters.destination || 
-		       filters.channel.length > 0 || filters.country || filters.state ||
+	const hasActiveFilters = (): boolean => {
+		return filters.warehouse.length > 0 || filters.account.length > 0 || !!filters.destination || 
+		       filters.channel.length > 0 || !!filters.country || !!filters.state ||
 		       filters.shippedDate !== '-90D' || filters.timeWeekly !== 'weekly';
 	};
 
@@ -620,7 +620,7 @@ export default function AdminAnalyticsByTime() {
 
 		<AnalyticsFilterHeader
 			viewMode={viewMode}
-			onViewModeChange={setViewMode}
+			onViewModeChange={(mode: string) => setViewMode(mode as 'chart' | 'table')}
 			hasActiveFilters={hasActiveFilters()}
 			onClearAllFilters={clearAllFilters}
 		>

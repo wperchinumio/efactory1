@@ -8,8 +8,8 @@ export interface LoginRequest {
 
 export interface AvailableAccountItem {
 	username: string;
-	company: string;
-	location: string;
+	company?: string;
+	location?: string;
 	is_EDI?: boolean;
 }
 
