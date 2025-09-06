@@ -26,6 +26,7 @@ import {
 } from '@tabler/icons-react';
 import dynamic from 'next/dynamic';
 import Combobox from '@/components/ui/Combobox';
+import Button from '@/components/ui/Button';
 
 interface LicenseSummaryRow {
 	row_id?: number;
@@ -252,12 +253,19 @@ function LicenseSummaryPageInner() {
 						
 						{/* Quick Actions */}
 						<div className='flex items-center gap-3'>
-							<button
+							<Button
 								onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
-								className='btn btn-outline-primary'
 							>
 								{viewMode === 'table' ? <IconChartBar className='w-4 h-4' /> : <IconTable className='w-4 h-4' />}
 								{viewMode === 'table' ? 'Grid View' : 'Table View'}
+							</Button>
+							<button 
+								className='btn btn-primary' 
+								onClick={onExport} 
+								disabled={!loaded}
+							>
+								<IconDownload className='w-4 h-4' />
+								Export
 							</button>
 							<button 
 								className='btn btn-secondary' 
@@ -266,14 +274,6 @@ function LicenseSummaryPageInner() {
 							>
 								<IconRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
 								{loading ? 'Refreshing...' : 'Refresh'}
-							</button>
-							<button 
-								className='btn btn-primary' 
-								onClick={onExport} 
-								disabled={!loaded}
-							>
-								<IconDownload className='w-4 h-4' />
-								Export
 							</button>
 						</div>
 					</div>

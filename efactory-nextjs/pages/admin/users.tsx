@@ -28,6 +28,7 @@ import {
 	IconStar
 } from '@tabler/icons-react';
 import Combobox from '@/components/ui/Combobox';
+import Button from '@/components/ui/Button';
 
 interface UserStatRow {
 	row_id?: number;
@@ -260,12 +261,19 @@ function UsersPage() {
 						
 						{/* Quick Actions */}
 						<div className='flex items-center gap-3'>
-							<button
+							<Button
 								onClick={() => setViewMode(viewMode === 'table' ? 'grid' : 'table')}
-								variant="outline"
 							>
 								{viewMode === 'table' ? <IconUsers className='w-4 h-4' /> : <IconDatabase className='w-4 h-4' />}
 								{viewMode === 'table' ? 'Grid View' : 'Table View'}
+							</Button>
+							<button 
+								className='btn btn-primary' 
+								onClick={onExport} 
+								disabled={!loaded}
+							>
+								<IconDownload className='w-4 h-4' />
+								Export
 							</button>
 							<button 
 								className='btn btn-secondary' 
@@ -274,14 +282,6 @@ function UsersPage() {
 							>
 								<IconRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
 								{loading ? 'Refreshing...' : 'Refresh'}
-							</button>
-							<button 
-								className='btn btn-primary' 
-								onClick={onExport} 
-								disabled={!loaded}
-							>
-								<IconDownload className='w-4 h-4' />
-								Export
 							</button>
 						</div>
 					</div>

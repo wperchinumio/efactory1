@@ -29,6 +29,8 @@ import {
 	IconWorld,
 	IconSettings
 } from '@tabler/icons-react';
+import Button from '@/components/ui/Button';
+import { Text } from '@/components/ui';
 
 function getInitials(username: string) {
 	return (username || '')
@@ -217,22 +219,20 @@ function LoginUserPageInner() {
 						
 						{/* Quick Actions */}
 						<div className='flex items-center gap-3'>
-							<button
+							<Button
 								onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
-								className='btn btn-outline-primary'
 							>
 								{viewMode === 'grid' ? <IconChartBar className='w-4 h-4' /> : <IconUsers className='w-4 h-4' />}
 								{viewMode === 'grid' ? 'Table View' : 'Grid View'}
-							</button>
+							</Button>
 							{selectedUsername && (
-								<button
+								<Button
 									onClick={handleProceed}
 									disabled={submitting}
-									className='btn btn-primary'
 								>
 									<IconLogin className='w-4 h-4' />
 									{submitting ? 'Processing...' : 'Access Account'}
-								</button>
+								</Button>
 							)}
 						</div>
 					</div>
@@ -452,12 +452,12 @@ function LoginUserPageInner() {
 							<p className='text-font-color-100 text-[16px]/[24px] max-w-md mx-auto'>
 								We couldn't find any accounts matching your search criteria.
 							</p>
-							<button 
+							<Button 
 								onClick={() => setFilter('')}
-								className='btn btn-outline-primary mt-4'
+								variant="outline"
 							>
 								Clear Search
-							</button>
+							</Button>
 						</div>
 					)}
 				</div>
@@ -545,10 +545,7 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 			)}
 
 			{/* Action */}
-			<button 
-				className={`btn w-full btn-sm ${
-					isSelected ? 'btn-primary' : 'btn-outline-primary'
-				}`}
+			<Button 
 				onClick={(e) => {
 					e.stopPropagation();
 					if (!isSelected) onSelect(account.username);
@@ -557,7 +554,7 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 				disabled={submitting}
 			>
 				{isSelected ? (submitting ? 'Processing...' : 'Access') : 'Select'}
-			</button>
+			</Button>
 		</div>
 	);
 }
@@ -623,7 +620,7 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 								</span>
 							))}
 							{account.location && account.location.split(',').length > 3 && (
-								<span className='px-2 py-1 rounded-md bg-primary-10 text-primary text-[10px]/[12px] font-medium'>
+								<span className='px-2 py-1 rounded-md dark:bg-primary-700 text-white text-[10px]/[12px] font-medium'>
 									+{account.location.split(',').length - 3}
 								</span>
 							)}
@@ -653,18 +650,17 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 				{/* Actions */}
 				<div className='col-span-2'>
 					<div className='flex items-center gap-2'>
-						<button
+						<Button
 							onClick={(e) => {
 								e.stopPropagation();
 								onSelect(account.username);
 							}}
-							className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline-primary'}`}
 							disabled={submitting}
 						>
 							{isSelected ? 'Selected' : 'Select'}
-						</button>
+						</Button>
 						{isSelected && (
-							<button
+							<Button
 								onClick={(e) => {
 									e.stopPropagation();
 									onProceed();
@@ -673,7 +669,7 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 								disabled={submitting}
 							>
 								<IconLogin className='w-[14px] h-[14px]' />
-							</button>
+							</Button>
 						)}
 					</div>
 				</div>

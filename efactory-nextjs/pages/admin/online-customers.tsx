@@ -253,7 +253,7 @@ function OnlineCustomersPageInner() {
 						<div className='flex items-center gap-3'>
 							<button
 								onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
-								className='btn btn-outline-primary'
+								className='btn btn-primary'
 							>
 								{viewMode === 'grid' ? <IconTable className='w-4 h-4' /> : <IconChartBar className='w-4 h-4' />}
 								{viewMode === 'grid' ? 'Table View' : 'Grid View'}

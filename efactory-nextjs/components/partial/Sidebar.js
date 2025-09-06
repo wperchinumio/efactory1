@@ -211,15 +211,12 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
             </div>
             {!isMiniSidebar && (
                 <div className='create-new-project px-3 py-4 flex gap-5'>
-                    <select className="select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-30 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary">
+                    {/* <select className="select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-30 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary">
                         <option defaultValue="">Select Project</option>
                         <option value="1">Luno University</option>
                         <option value="2">Book Manager</option>
                         <option value="3">Luno Sass App</option>
-                    </select>
-                    <button onClick={toggleNewProject} className={`add-project bg-primary text-white rounded-full p-2 transition-all duration-300 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-[2px] after:transition-all after:duration-500 after:ease-in-out ${newProjectSidebar ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
-                        <IconPlus className='w-[20px] h-[20px]' />
-                    </button>
+                    </select> */}
                     <NewProject newProjectSidebar={newProjectSidebar} toggleNewProject={toggleNewProject} />
                 </div>
             )}
@@ -275,9 +272,12 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                         <IconMessage className='stroke-[1.5] w-[20px] h-[20px]' />
                     </span>
                 </button>
-                <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary'>
-                    <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
-                </Link>
+                <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary' onClick={() => {
+  // Perform logout logic here
+  localStorage.removeItem('authToken');
+}}>
+  <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
+</Link>
             </div>
         </>
     )
