@@ -538,9 +538,9 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                         <IconUser className='w-[16px] h-[16px]' />
                                         My Profile
                                     </Link>
-                                    {isAdmin ? (
+                                    {isAdmin && userApps.length > 0 ? (
                                         <button onClick={() => { closeUserProfile(); handleChangeUser(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary font-semibold w-full text-left'>
-                                            <IconArrowsMaximize className='w-[16px] h-[16px]' />
+                                            <IconArrowBigLeftFilled className='w-[16px] h-[16px]' />
                                             Back to DCL Menu
                                         </button>
                                     ) : null}

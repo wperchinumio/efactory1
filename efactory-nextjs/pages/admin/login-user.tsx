@@ -108,11 +108,19 @@ function LoginUserPageInner() {
 		setSubmitting(true);
 		try {
 			const res = await loginForAccount(selectedUsername);
+			
+			// For admin impersonation, we need to preserve the original admin context
+			// while setting the customer's user_data and apps
+			const currentAuth = getAuthToken();
 			setAuthToken({
 				api_token: res.data.api_token,
-				available_accounts: [],
+				available_accounts: currentAuth?.available_accounts || [], // Keep original admin accounts for "Back to DCL Menu"
 				admin_roles: res.data.admin_roles,
-				user_data: res.data.user_data,
+				user_data: {
+					...res.data.user_data,
+					// Preserve admin role information for the "Back to DCL Menu" functionality
+					roles: [...(res.data.user_data.roles || []), ...(currentAuth?.user_data?.roles?.includes('ADM') ? ['ADM'] : [])]
+				},
 			});
 			router.replace('/');
 		} catch (e) {

@@ -46,13 +46,20 @@ export default function Signin() {
             } else if (typeof window !== 'undefined') {
                 window.localStorage.removeItem('rememberUsername');
             }
+            const isAdmin = Array.isArray(res.data.user_data?.roles) && res.data.user_data.roles.includes('ADM');
+            
             setAuthToken({
                 api_token: res.data.api_token,
                 available_accounts: res.data.available_accounts,
                 admin_roles: res.data.admin_roles,
-                user_data: res.data.user_data, // Apps are already in user_data from API response
+                user_data: {
+                    ...res.data.user_data,
+                    // For admin users, FORCE apps to be empty on initial login so they see admin sidebar
+                    // Apps will be populated only when they select a customer to impersonate
+                    apps: isAdmin ? [] : (res.data.user_data.apps || [])
+                }
             });
-            const isAdmin = Array.isArray(res.data.user_data?.roles) && res.data.user_data.roles.includes('ADM');
+            
             if (isAdmin && Array.isArray(res.data.available_accounts) && res.data.available_accounts.length) {
                 // For admin users, call global API BEFORE customer selection (like legacy)
                 console.log('🔧 Admin user detected - calling global API before customer selection');

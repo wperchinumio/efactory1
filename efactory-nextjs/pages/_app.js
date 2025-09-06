@@ -30,37 +30,30 @@ export default function App({ Component, pageProps }) {
         if (!hasToken) {
           router.replace('/auth/sign-in');
         } else {
-          // Get user apps from auth token
+          // Get user apps from auth token and handle both admin and customer users
           const auth = getAuthToken();
           const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
           const isAdmin = roles.includes('ADM');
           
-          // Only set userApps for non-admin users (regular customers)
-          // Admin users get userApps only when they select a customer
-          if (!isAdmin) {
-            // Apps are in user_data like legacy system
-            const apps = auth?.user_data?.apps || [];
-            setUserApps(apps);
+          if (auth && auth.user_data) {
+            const apps = auth.user_data.apps || [];
+            
+            if (!isAdmin) {
+              // Regular customer users: always show their apps
+              setUserApps(apps);
+            } else {
+              // Admin users: 
+              // - On initial login: apps = [] → show admin sidebar (userApps = [])
+              // - After selecting customer: apps = [...] → show customer sidebar + "Back to DCL Menu"
+              setUserApps(apps);
+            }
+          } else {
+            // No user_data or no auth - clear userApps
+            setUserApps([]);
           }
         }
       } catch {
         router.replace('/auth/sign-in');
-      }
-    }
-  }, [isAuthRoute, router]);
-
-  // For all non-auth routes, provide the real user apps from auth token
-  // BUT only for non-admin users (admin users get userApps only when they select a customer)
-  useEffect(() => {
-    if (!isAuthRoute) {
-      const auth = getAuthToken();
-      const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
-      const isAdmin = roles.includes('ADM');
-      
-      // Only set userApps for non-admin users (regular customers)
-      // Admin users get userApps only when they select a customer
-      if (!isAdmin && auth && auth.user_data && auth.user_data.apps) {
-        setUserApps(auth.user_data.apps);
       }
     }
   }, [isAuthRoute, router.pathname]);
