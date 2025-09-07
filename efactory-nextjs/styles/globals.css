@@ -79,7 +79,7 @@
 
 html[data-luno-theme="indigo"],
 body[data-luno-theme="indigo"] {
-  --primary: #655385 !important;
+  --primary: #4C3575 !important;
   --primary-10: #cec8d71a !important;
   --secondary: #e05170 !important;
   --chart-color1: #b9b3a8 !important;
@@ -89,9 +89,21 @@ body[data-luno-theme="indigo"] {
   --chart-color5: #fb8665 !important;
 }
 
+[data-theme="dark"] html[data-luno-theme="indigo"],
+[data-theme="dark"] body[data-luno-theme="indigo"] {
+  --primary: #7754b5 !important;
+  /*--primary-10: #cec8d71a !important;
+  --secondary: #e05170 !important;
+  --chart-color1: #b9b3a8 !important;
+  --chart-color2: #4C3575 !important;
+  --chart-color3: #98427e !important;
+  --chart-color4: #d55a75 !important;
+  --chart-color5: #fb8665 !important;*/
+}
+
 html[data-luno-theme="blue"],
 body[data-luno-theme="blue"] {
-  --primary: #2794eb !important;
+  --primary: #4595D2 !important;
   --primary-10: #4c35751a !important;
   --secondary: #00AC9A !important;
   --chart-color1: #2794eb !important;
@@ -127,10 +139,10 @@ body[data-luno-theme="green"] {
 
 html[data-luno-theme="orange"],
 body[data-luno-theme="orange"] {
-  --primary: #FF9234 !important;
+  --primary: #d47828 !important;
   --primary-10: #FF92341a !important;
   --secondary: #D8C962 !important;
-  --chart-color1: #FFA600 !important;
+  --chart-color1: #d47828 !important;
   --chart-color2: #FF8982 !important;
   --chart-color3: #FFC0B7 !important;
   --chart-color4: #CF7F00 !important;
