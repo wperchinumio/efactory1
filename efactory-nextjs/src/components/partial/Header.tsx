@@ -55,6 +55,7 @@ import {
     initializeThemeFromStorage 
 } from '@/lib/themeStorage';
 import TopMenu from '../layout/TopMenu';
+import { useLoading } from '@/contexts/LoadingContext';
 
 interface HeaderProps {
 	toggleMobileNav: () => void;
@@ -67,6 +68,8 @@ interface HeaderProps {
 }
 
 export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleChat, containerToggle, container, userApps = [] }: HeaderProps) {
+    const { loadingStates, setChangingUser } = useLoading();
+    const { isChangingUser } = loadingStates;
     
     // Determine if we should show the new navigation - use state to avoid hydration mismatch
     const [showNewNavigation, setShowNewNavigation] = useState(false);
@@ -454,75 +457,42 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         if (typeof window !== 'undefined') window.location.href = '/auth/sign-in';
     }
 
-    // handle change user (back to DCL menu) - like legacy system
+    // handle change user (back to DCL menu) - optimized for speed like legacy
     async function handleChangeUser() {
+        setChangingUser(true, 'Switching to DCL Menu...');
+        
         try {
-            // Call loadAccounts API like legacy system
-            const response = await loadAccounts();
-            
-            // Also call global admin API to reload full admin global data
-            const { getJson } = await import('../../lib/api/http');
-            const globalResponse = await getJson('/api/global?admin=1');
-            
-            // Store the fresh global admin data
-            if (globalResponse && globalResponse.data) {
-                // Clear the old data first
-                window.localStorage.removeItem('globalApiData');
-                // Add a small delay to ensure removal is processed
-                await new Promise(resolve => setTimeout(resolve, 100));
-                // Set the new data
-                window.localStorage.setItem('globalApiData', JSON.stringify(globalResponse.data));
-                
-                // Dispatch multiple events to ensure components refresh
-                window.dispatchEvent(new CustomEvent('globalApiDataUpdated'));
-                window.dispatchEvent(new CustomEvent('storage', { 
-                    detail: { key: 'globalApiData', newValue: JSON.stringify(globalResponse.data) } 
-                }));
-                
-            }
-            
-            // Update auth token with fresh available_accounts and admin_roles
-            // Clear user_data.apps to ensure admin sidebar is shown
+            // Just clear the apps from auth token to show admin sidebar (like legacy)
             const currentAuth = getAuthToken();
             if (currentAuth) {
                 const updatedAuth = {
                     ...currentAuth,
-                    available_accounts: response.data.available_accounts || [],
-                    admin_roles: response.data.admin_roles || [],
                     user_data: {
-                        user_id: currentAuth.user_data?.user_id || 0,
-                        local: currentAuth.user_data?.local || false,
-                        roles: currentAuth.user_data?.roles || [],
-                        name: currentAuth.user_data?.name || null,
-                        is_master: currentAuth.user_data?.is_master || false,
-                        account: currentAuth.user_data?.account || null,
-                        region: currentAuth.user_data?.region || null,
-                        apps: [], // Clear apps to show admin sidebar
-                        warehouses: currentAuth.user_data?.warehouses || {},
-                        calc_accounts: currentAuth.user_data?.calc_accounts || [],
-                        calc_locations: currentAuth.user_data?.calc_locations || [],
-                        calc_account_regions: currentAuth.user_data?.calc_account_regions || {},
+                        ...currentAuth.user_data,
+                        apps: [] // Clear apps to show admin sidebar
                     }
                 };
                 setAuthToken(updatedAuth);
             }
             
-            
-            // Use React router navigation instead of page reload to preserve console logs
+            // Navigate immediately - let the target page handle data loading
             if (typeof window !== 'undefined') {
-                // Force a small delay to ensure all state updates are processed
+                // Short delay just to show the loading indicator
                 setTimeout(() => {
                     window.location.replace('/admin/login-user');
-                }, 500);
+                }, 300);
             }
         } catch (error) {
-            console.error('Failed to load accounts or global data:', error);
+            console.error('Failed to switch to DCL menu:', error);
             // Fallback to direct navigation
             if (typeof window !== 'undefined') {
-                setTimeout(() => {
-                    window.location.replace('/admin/login-user');
-                }, 1000);
+                window.location.replace('/admin/login-user');
             }
+        } finally {
+            // Reset loading state quickly
+            setTimeout(() => {
+                setChangingUser(false);
+            }, 500);
         }
     }
 
@@ -632,9 +602,26 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                     
                                     {/* Back to DCL Menu only shows when admin is impersonating */}
                                     {isAdmin && userApps.length > 0 ? (
-                                        <button onClick={() => { closeUserProfile(); handleChangeUser(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary font-semibold w-full text-left'>
-                                            <IconArrowBigLeftFilled className='w-[16px] h-[16px]' />
-                                            Back to DCL Menu
+                                        <button 
+                                            onClick={() => { closeUserProfile(); handleChangeUser(); }} 
+                                            disabled={isChangingUser}
+                                            className={`py-2 px-4 flex items-center gap-3 rounded-lg transition-all duration-200 font-semibold w-full text-left ${
+                                                isChangingUser 
+                                                    ? 'opacity-50 cursor-not-allowed' 
+                                                    : 'hover:bg-primary-10 hover:text-primary'
+                                            }`}
+                                        >
+                                            {isChangingUser ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                                    Loading...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <IconArrowBigLeftFilled className='w-[16px] h-[16px]' />
+                                                    Back to DCL Menu
+                                                </>
+                                            )}
                                         </button>
                                     ) : null}
                                 </div>

@@ -269,9 +269,7 @@ export function generateEChartsTheme(config: ChartThemeConfig): any {
         }
       },
       axisLabel: {
-        textStyle: {
-          color: isDark ? '#cccccc' : '#999999'
-        }
+        color: isDark ? '#cccccc' : '#999999'
       },
       splitLine: {
         lineStyle: {
@@ -291,9 +289,7 @@ export function generateEChartsTheme(config: ChartThemeConfig): any {
         }
       },
       axisLabel: {
-        textStyle: {
-          color: isDark ? '#cccccc' : '#999999'
-        }
+        color: isDark ? '#cccccc' : '#999999'
       },
       splitLine: {
         lineStyle: {

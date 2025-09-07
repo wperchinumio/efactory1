@@ -4,6 +4,7 @@ import Header from '../partial/Header'
 import Sidebar from '../partial/Sidebar'
 import Footer from '../partial/Footer'
 import { NavigationProvider } from '@/contexts/NavigationContext'
+import { LoadingProvider, useLoading } from '@/contexts/LoadingContext'
 import SidebarMenu from '@/components/layout/SidebarMenu'
 import { getAuthToken } from '@/lib/auth/storage'
 import type { UserApp } from '@/types/api'
@@ -13,7 +14,9 @@ interface LayoutProps {
   userApps?: UserApp[];
 }
 
-export default function Layout({ children, userApps = [] }: LayoutProps) {
+function LayoutContent({ children, userApps = [] }: LayoutProps) {
+  const { loadingStates } = useLoading();
+  const { isChangingUser } = loadingStates;
   const router = useRouter();
   
   // Hide footer on login-user, online-customer, users, analytics, and license-summary pages
@@ -103,7 +106,18 @@ export default function Layout({ children, userApps = [] }: LayoutProps) {
 
   return (
     <NavigationProvider userApps={userAppIds}>
-      <div className='admin-wrapper overflow-hidden'>
+      <div className={`admin-wrapper overflow-hidden ${isChangingUser ? 'pointer-events-none' : ''}`}>
+        {/* Global loading overlay when changing user */}
+        {isChangingUser && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-[9999]">
+            <div className="bg-card-color rounded-lg p-6 flex flex-col items-center gap-4 shadow-lg border border-border-color">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="text-font-color font-semibold">Switching to DCL Menu...</div>
+              <div className="text-font-color-100 text-sm">Please wait while we load your admin interface</div>
+            </div>
+          </div>
+        )}
+        
         <div className='flex h-svh relative'>
           <div className={`sidebar sm:w-[280px] sm:min-w-[280px] w-full px-2 py-4 overflow-y-scroll flex flex-col custom-scrollbar xl:static fixed xl:h-screen md:h-[calc(100vh-74px)] h-[calc(100vh-64px)] md:top-[74px] top-[64px] z-[3] bg-body-color xl:shadow-none transition-all duration-300 ${mobileNav ? 'shadow-shadow-lg left-0' : '-left-full'}`}>
             {isCustomerContext ? (
@@ -121,4 +135,12 @@ export default function Layout({ children, userApps = [] }: LayoutProps) {
       </div>
     </NavigationProvider>
   )
+}
+
+export default function Layout({ children, userApps = [] }: LayoutProps) {
+  return (
+    <LoadingProvider>
+      <LayoutContent children={children} userApps={userApps} />
+    </LoadingProvider>
+  );
 }
