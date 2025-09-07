@@ -146,7 +146,9 @@ export const topMenuConfig: TopMenuConfig[] = [
       // Section title: Setup (no route)
       { keyword: 'section_setup', title: 'Setup', route: '', appId: undefined as any },
       // Administration Tasks behaves like a main menu
-      { keyword: 'administration_tasks', title: 'Administration Tasks', route: '/services/administration-tasks/accounts', appId: 67 }
+      { keyword: 'administration_tasks', title: 'Administration Tasks', route: '/services/administration-tasks/accounts', appId: 67 },
+      // Test Components - dev only
+      { keyword: 'test_components', title: 'Test Components', route: '/testcomponents', appId: undefined as any, isDevOnly: true }
     ]
   }
 ];
@@ -1281,9 +1283,32 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
 
 // Helper function to get visible top menus based on user apps
 export const getVisibleTopMenus = (userApps: number[]): TopMenuConfig[] => {
-  return topMenuConfig.filter(menu => 
-    menu.appIds.some(appId => userApps.includes(appId))
-  );
+  return topMenuConfig.map(menu => {
+    // If it's a dropdown menu, filter the dropdown items
+    if (menu.isDropdown && menu.dropdownMenus) {
+      const filteredDropdownMenus = menu.dropdownMenus.filter(dropdownItem => {
+        // Check if it's a dev-only dropdown item
+        if (dropdownItem.isDevOnly) {
+          return process.env.NODE_ENV === 'development';
+        }
+        
+        // For regular dropdown items, check app access
+        return !dropdownItem.appId || userApps.includes(dropdownItem.appId);
+      });
+      
+      return {
+        ...menu,
+        dropdownMenus: filteredDropdownMenus
+      };
+    }
+    
+    // For regular menus, check app access
+    if (menu.isDevOnly) {
+      return process.env.NODE_ENV === 'development' ? menu : null;
+    }
+    
+    return menu.appIds.some(appId => userApps.includes(appId)) ? menu : null;
+  }).filter(Boolean) as TopMenuConfig[];
 };
 
 // Helper function to get visible sidebar menus based on user apps
@@ -1323,6 +1348,11 @@ export const getActiveTopMenu = (pathname: string, userApps: number[]): string |
   }
   if (cleanPath.startsWith('/services/administration-tasks')) {
     return 'administration_tasks';
+  }
+  
+  // Handle testcomponents route
+  if (cleanPath === '/testcomponents') {
+    return 'test_components';
   }
 
   const visibleMenus = getVisibleTopMenus(userApps);

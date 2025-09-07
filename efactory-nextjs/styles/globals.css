@@ -1168,6 +1168,11 @@ body .apexcharts-legend-marker {
   to   { stroke-dashoffset: -200; }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ========================================
    Chart Color Overrides - Highest Specificity
    ======================================== */

@@ -118,6 +118,7 @@ export interface DropdownMenuItem {
   badge?: string;
   badgeClassName?: string;
   appId?: number;
+  isDevOnly?: boolean;
 }
 
 export interface TopMenuConfig {
@@ -129,6 +130,7 @@ export interface TopMenuConfig {
   sidebarConfig?: string;
   isDropdown?: boolean;
   dropdownMenus?: DropdownMenuItem[];
+  isDevOnly?: boolean;
 }
 
 export interface SidebarConfig {
