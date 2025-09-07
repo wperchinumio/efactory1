@@ -47,6 +47,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { clearAuthToken, getAuthToken, performLogout, setAuthToken } from '@/lib/auth/storage';
+import type { AuthToken } from '@/types/api';
 import { loadAccounts } from '@/lib/api/auth';
 import { 
     getThemePreferences, 
@@ -464,8 +465,8 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         try {
             // Just clear the apps from auth token to show admin sidebar (like legacy)
             const currentAuth = getAuthToken();
-            if (currentAuth) {
-                const updatedAuth = {
+            if (currentAuth && currentAuth.user_data) {
+                const updatedAuth: AuthToken = {
                     ...currentAuth,
                     user_data: {
                         ...currentAuth.user_data,
