@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IconCopy, IconCalculator } from '@tabler/icons-react';
+import { useChartTheme } from '../../hooks/useChartTheme';
 
 interface CalculatorProps {
   onClose?: () => void;
@@ -9,6 +10,7 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
   const [expression, setExpression] = useState('');
   const [display, setDisplay] = useState('0');
   const [lastResult, setLastResult] = useState<string | null>(null);
+  const { currentLunoTheme } = useChartTheme();
 
   const inputNumber = (num: string) => {
     if (display === '0' || lastResult) {
@@ -183,7 +185,14 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
   return (
     <div className="bg-card-color rounded-xl shadow-2xl border border-border-color w-[400px] overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-br from-primary to-secondary text-white px-4 py-4 flex items-center justify-between rounded-t-xl">
+      <div 
+        className="px-4 py-4 flex items-center justify-between rounded-t-xl"
+        style={{
+          background: `linear-gradient(135deg, var(--chart-color1), var(--chart-color2))`,
+          color: 'white',
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+        }}
+      >
         <h3 className="text-xl font-bold flex items-center gap-2">
           <IconCalculator className="w-7 h-7" />
           <span>Calculator</span>
@@ -192,6 +201,9 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
           <button
             onClick={onClose}
             className="text-white hover:text-gray-200 text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+            style={{
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+            }}
           >
             ×
           </button>
@@ -217,25 +229,65 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
           <div className="flex gap-2">
             <button
               onClick={clear}
-              className="flex-1 h-12 bg-danger text-white rounded-lg font-semibold hover:bg-danger-80 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color3)',
+                '--hover-color': 'var(--chart-color3)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color3)';
+              }}
             >
               C
             </button>
             <button
               onClick={clearEntry}
-              className="flex-1 h-12 bg-danger text-white rounded-lg font-semibold hover:bg-danger-80 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color3)',
+                '--hover-color': 'var(--chart-color3)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color3)';
+              }}
             >
               CE
             </button>
             <button
               onClick={backspace}
-              className="flex-1 h-12 bg-danger text-white rounded-lg font-semibold hover:bg-danger-80 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color3)',
+                '--hover-color': 'var(--chart-color3)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color3)';
+              }}
             >
               ⌫
             </button>
             <button
               onClick={() => inputOperator('÷')}
-              className="flex-1 h-12 bg-primary text-white rounded-lg font-semibold hover:bg-primary-80 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color1)',
+                '--hover-color': 'var(--chart-color1)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color1)';
+              }}
             >
               ÷
             </button>
@@ -263,7 +315,17 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
             </button>
             <button
               onClick={() => inputOperator('×')}
-              className="flex-1 h-12 bg-primary text-white rounded-lg font-semibold hover:bg-primary-80 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color1)',
+                '--hover-color': 'var(--chart-color1)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color1)';
+              }}
             >
               ×
             </button>
@@ -291,7 +353,17 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
             </button>
             <button
               onClick={() => inputOperator('-')}
-              className="flex-1 h-12 bg-primary text-white rounded-lg font-semibold hover:bg-primary-80 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color1)',
+                '--hover-color': 'var(--chart-color1)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color1)';
+              }}
             >
               -
             </button>
@@ -319,7 +391,17 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
             </button>
             <button
               onClick={() => inputOperator('+')}
-              className="flex-1 h-12 bg-primary text-white rounded-lg font-semibold hover:bg-primary-80 dark:bg-purple-600 dark:hover:bg-purple-700 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color1)',
+                '--hover-color': 'var(--chart-color1)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color1)';
+              }}
             >
               +
             </button>
@@ -329,13 +411,33 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
           <div className="flex gap-2">
             <button
               onClick={() => inputParenthesis('(')}
-              className="flex-1 h-12 bg-secondary text-white rounded-lg font-semibold hover:bg-secondary-80 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color4)',
+                '--hover-color': 'var(--chart-color4)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color4)';
+              }}
             >
               (
             </button>
             <button
               onClick={() => inputParenthesis(')')}
-              className="flex-1 h-12 bg-secondary text-white rounded-lg font-semibold hover:bg-secondary-80 transition-colors"
+              className="flex-1 h-12 text-white rounded-lg font-semibold transition-colors"
+              style={{ 
+                backgroundColor: 'var(--chart-color4)',
+                '--hover-color': 'var(--chart-color4)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color4)';
+              }}
             >
               )
             </button>
@@ -357,16 +459,36 @@ const Calculator: React.FC<CalculatorProps> = ({ onClose }) => {
           <div className="flex gap-2">
             <button
               onClick={copyToClipboard}
-              className="h-12 bg-info text-white rounded-lg font-semibold hover:bg-info-80 transition-colors flex items-center justify-center"
-              style={{ width: 'calc(25% - 8px)' }}
+              className="h-12 text-white rounded-lg font-semibold transition-colors flex items-center justify-center"
+              style={{ 
+                width: 'calc(25% - 8px)',
+                backgroundColor: 'var(--chart-color2)',
+                '--hover-color': 'var(--chart-color2)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color2)';
+              }}
               title="Copy result to clipboard"
             >
               <IconCopy className="w-4 h-4" />
             </button>
             <button
               onClick={calculate}
-              className="h-12 bg-success text-white rounded-lg font-semibold hover:bg-success-80 transition-colors flex items-center justify-center"
-              style={{ width: 'calc(75% )' }}
+              className="h-12 text-white rounded-lg font-semibold transition-colors flex items-center justify-center"
+              style={{ 
+                width: 'calc(75% )',
+                backgroundColor: 'var(--chart-color5)',
+                '--hover-color': 'var(--chart-color5)'
+              } as React.CSSProperties}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--chart-color5)';
+              }}
             >
               =
             </button>
