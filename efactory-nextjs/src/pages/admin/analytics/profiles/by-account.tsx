@@ -714,7 +714,7 @@ export default function AdminAnalyticsByAccount() {
 				<DestinationFilterCombobox
 					value={filters.destination}
 					onValueChange={(value: any) => updateFilter('destination', value)}
-					className='flex-shrink-0 w-36'
+					className='flex-shrink-0 w-48'
 				/>
 
 				{/* Channel */}
@@ -742,7 +742,7 @@ export default function AdminAnalyticsByAccount() {
 					value={filters.state}
 					onValueChange={(value: any) => updateFilter('state', value)}
 					countryValue={filters.country}
-					className='flex-shrink-0 w-36'
+					className='flex-shrink-0 w-48'
 				/>
 			</div>
 

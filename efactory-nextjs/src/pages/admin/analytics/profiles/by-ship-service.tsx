@@ -653,7 +653,7 @@ export default function AdminAnalyticsByShipService() {
 					value={filters.state}
 					onValueChange={(value: any) => updateFilter('state', value)}
 					countryValue={filters.country}
-					className='flex-shrink-0 w-36'
+					className='flex-shrink-0 w-48'
 				/>
 			</div>
 
