@@ -79,8 +79,8 @@
 
 html[data-luno-theme="indigo"],
 body[data-luno-theme="indigo"] {
-  --primary: #4C3575 !important;
-  --primary-10: #4c35751a !important;
+  --primary: #655385 !important;
+  --primary-10: #cec8d71a !important;
   --secondary: #e05170 !important;
   --chart-color1: #b9b3a8 !important;
   --chart-color2: #4C3575 !important;
