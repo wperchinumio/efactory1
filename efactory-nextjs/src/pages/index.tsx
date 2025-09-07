@@ -1,55 +1,20 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { getDefaultRoute } from '@/utils/navigation';
-import { getAuthToken } from '@/lib/auth/storage';
 
-interface UserApp {
-  id: string;
-  name: string;
-  // Add other properties as needed
-}
-
-const DynamicRootPage = () => {
+export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Get user apps from auth token
-    const auth = getAuthToken();
-    const userApps = auth?.user_data?.apps || [];
-    const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
-    const isAdmin = roles.includes('ADM');
-    
-    if (userApps.length > 0) {
-      // Get the default route for this user based on their permissions
-      const defaultRoute = getDefaultRoute(userApps);
-      
-      // Redirect to the first available menu
-      router.replace(defaultRoute);
-    } else {
-      // No apps available - handle based on user type
-      if (isAdmin) {
-        // Admin with no apps should go to login-user page
-        router.replace('/admin/login-user');
-      } else {
-        // Regular user with no apps - show no-apps page
-        router.replace('/no-apps');
-      }
-    }
+    // Redirect to overview page
+    router.replace('/overview');
   }, [router]);
 
-  // Show loading while redirecting
   return (
-    <div className='md:px-6 sm:px-3 pt-4'>
-      <div className='container-fluid'>
-        <div className='flex items-center justify-center h-64'>
-          <div className='text-center'>
-            <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4'></div>
-            <p className='text-font-color-100'>Loading your dashboard...</p>
-          </div>
-        </div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p>Redirecting to overview...</p>
       </div>
     </div>
   );
-};
-
-export default DynamicRootPage;
+}

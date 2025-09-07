@@ -6,12 +6,7 @@ import Footer from '../partial/Footer'
 import { NavigationProvider } from '@/contexts/NavigationContext'
 import SidebarMenu from '@/components/layout/SidebarMenu'
 import { getAuthToken } from '@/lib/auth/storage'
-
-interface UserApp {
-  id: string;
-  name: string;
-  // Add other properties as needed
-}
+import type { UserApp } from '@/types/api'
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -23,10 +18,15 @@ export default function Layout({ children, userApps = [] }: LayoutProps) {
   
   // Hide footer on login-user, online-customer, users, analytics, and license-summary pages
   const hideFooter = router.pathname.includes('/login-user') || router.pathname.includes('/online-customer') || router.pathname.includes('/admin/users') || router.pathname.includes('/admin/analytics') || router.pathname.includes('/admin/license-summary');
-  const [container, setContainer] = useState<boolean>(() => {
-    // Initialize state from localStorage
-    return typeof localStorage !== "undefined" && localStorage.getItem('container') === 'true';
-  });
+  const [container, setContainer] = useState<boolean>(false);
+
+  // Initialize container state from localStorage after hydration
+  useEffect(() => {
+    if (typeof localStorage !== "undefined") {
+      const savedContainer = localStorage.getItem('container') === 'true';
+      setContainer(savedContainer);
+    }
+  }, []);
 
   useEffect(() => {
     // Update the container class based on state
@@ -40,7 +40,9 @@ export default function Layout({ children, userApps = [] }: LayoutProps) {
         el.classList.remove('container');
       }
     });
-    localStorage.setItem('container', container.toString());
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem('container', container.toString());
+    }
   }, [container, router.pathname]); // Update on container state or pageUrl change
 
   const containerToggle = (): void => {
@@ -83,9 +85,12 @@ export default function Layout({ children, userApps = [] }: LayoutProps) {
       <div className='admin-wrapper overflow-hidden'>
         <div className='flex h-svh relative'>
           <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
-            <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} containerToggle={containerToggle} container={container} userApps={[]} />
-            {children}
-            {!hideFooter && <Footer />}
+            <div className="p-4">
+              <div className="animate-pulse bg-gray-200 h-16 rounded mb-4"></div>
+              <div className="animate-pulse bg-gray-200 h-4 rounded mb-2"></div>
+              <div className="animate-pulse bg-gray-200 h-4 rounded mb-2"></div>
+              <div className="animate-pulse bg-gray-200 h-4 rounded"></div>
+            </div>
           </div>
         </div>
       </div>

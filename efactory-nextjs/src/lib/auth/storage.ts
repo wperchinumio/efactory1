@@ -1,15 +1,4 @@
-import type { AvailableAccountItem } from '../api/models/auth';
-
-export interface AuthToken {
-	api_token: string;
-	available_accounts?: AvailableAccountItem[];
-	admin_roles?: string[];
-	user_data?: Record<string, unknown> & {
-		roles?: string[];
-		warehouses?: Record<string, unknown>;
-		apps?: number[]; // User's app permissions - located in user_data like legacy
-	};
-}
+import type { AuthToken, AvailableAccount } from '@/types/api';
 
 export function getAuthToken(): AuthToken | null {
 	if (typeof window === 'undefined') return null;

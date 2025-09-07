@@ -1,5 +1,12 @@
 import { postJson } from './http';
-import type { LoginRequest, LoginResponseData, LoginForAccountRequest, AvailableAccountItem } from './models/auth';
+import type { 
+  LoginRequest, 
+  LoginResponseData, 
+  LoginForAccountRequest, 
+  AvailableAccount as AvailableAccountItem,
+  LoadAccountsResponse,
+  CheckAuthResponse
+} from '@/types/api';
 
 export async function loginRequest(
 	username: string,
@@ -22,7 +29,7 @@ export async function loginForAccount(account: string) {
 }
 
 export async function checkAuth() {
-	return postJson<{ is_local?: boolean }>('/api/authentication', { func: 'isAuth' });
+	return postJson<CheckAuthResponse>('/api/authentication', { func: 'isAuth' });
 }
 
 export async function logoutApi() {
@@ -30,5 +37,5 @@ export async function logoutApi() {
 }
 
 export async function loadAccounts() {
-	return postJson<{ available_accounts: AvailableAccountItem[]; admin_roles: string[] }>('/api/authentication', { func: 'loadAccounts' });
+	return postJson<LoadAccountsResponse>('/api/authentication', { func: 'loadAccounts' });
 }

@@ -490,8 +490,18 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                     available_accounts: response.data.available_accounts || [],
                     admin_roles: response.data.admin_roles || [],
                     user_data: {
-                        ...currentAuth.user_data,
-                        apps: [] // Clear apps to show admin sidebar
+                        user_id: currentAuth.user_data?.user_id || 0,
+                        local: currentAuth.user_data?.local || false,
+                        roles: currentAuth.user_data?.roles || [],
+                        name: currentAuth.user_data?.name || null,
+                        is_master: currentAuth.user_data?.is_master || false,
+                        account: currentAuth.user_data?.account || null,
+                        region: currentAuth.user_data?.region || null,
+                        apps: [], // Clear apps to show admin sidebar
+                        warehouses: currentAuth.user_data?.warehouses || {},
+                        calc_accounts: currentAuth.user_data?.calc_accounts || [],
+                        calc_locations: currentAuth.user_data?.calc_locations || [],
+                        calc_account_regions: currentAuth.user_data?.calc_account_regions || {},
                     }
                 };
                 setAuthToken(updatedAuth);

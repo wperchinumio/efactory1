@@ -1,4 +1,5 @@
 import type { IncomingHttpHeaders } from 'http';
+import type { ApiResponse } from '@/types/api';
 
 export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
@@ -7,12 +8,6 @@ export interface HttpRequestOptions<TBody = unknown> {
 	path: string;
 	body?: TBody;
 	headers?: Record<string, string>;
-}
-
-export interface ApiResponse<TData = unknown> {
-	data: TData;
-	internal_version?: string;
-	[key: string]: unknown;
 }
 
 function getBaseUrl(): string {
@@ -62,6 +57,11 @@ export async function httpRequest<TResponse = unknown, TBody = unknown>(
 	const payload = isJson ? await res.json() : undefined;
 
 	if (!res.ok) {
+		const error = payload ?? { 
+			error_message: `Request failed with status ${res.status}`,
+			status: res.status
+		};
+		
 		if (res.status === 401 && typeof window !== 'undefined') {
 			// Clear all auth data including globalApiData
 			import('../auth/storage').then(({ clearAuthToken }) => clearAuthToken());
@@ -69,7 +69,10 @@ export async function httpRequest<TResponse = unknown, TBody = unknown>(
 				window.location.href = '/auth/sign-in';
 			}
 		}
-		throw payload ?? { error_message: 'Request failed' };
+		
+		// Add status code to error for better handling
+		error.status = res.status;
+		throw error;
 	}
 
 	return payload as ApiResponse<TResponse>;

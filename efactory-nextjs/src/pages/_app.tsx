@@ -6,16 +6,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getAuthToken } from '@/lib/auth/storage';
 import { AppProps } from 'next/app';
-
-interface UserApp {
-  id: string;
-  name: string;
-  // Add other properties as needed
-}
+import type { UserApp } from '@/types/api';
 
 export default function App({ Component, pageProps }: AppProps) {
-
-  const { isAuthRoute } = pageProps;
+  const { isAuthRoute = false } = pageProps;
   const [userApps, setUserApps] = useState<UserApp[]>([]);
 
   const router = useRouter();
@@ -37,31 +31,18 @@ export default function App({ Component, pageProps }: AppProps) {
         if (!hasToken) {
           router.replace('/auth/sign-in');
         } else {
-          // Get user apps from auth token and handle both admin and customer users
           const auth = getAuthToken();
           const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
           const isAdmin = roles.includes('ADM');
           
           if (auth && auth.user_data) {
             const apps = auth.user_data.apps || [];
-            
-            // Transform number array to UserApp array
-            const userApps: UserApp[] = apps.map((appId: number) => ({
+            const userApps = apps.map((appId) => ({
               id: appId.toString(),
-              name: `App ${appId}` // You may want to map this to actual app names
+              name: `App ${appId}`
             }));
-            
-            if (!isAdmin) {
-              // Regular customer users: always show their apps
-              setUserApps(userApps);
-            } else {
-              // Admin users: 
-              // - On initial login: apps = [] → show admin sidebar (userApps = [])
-              // - After selecting customer: apps = [...] → show customer sidebar + "Back to DCL Menu"
-              setUserApps(userApps);
-            }
+            setUserApps(userApps);
           } else {
-            // No user_data or no auth - clear userApps
             setUserApps([]);
           }
         }

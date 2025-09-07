@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/router';
 import { NavigationContextType } from '../types/api/auth';
-import { getActiveTopMenu } from '../config/navigation';
+import { getActiveTopMenu, getVisibleTopMenus } from '../config/navigation';
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
@@ -20,9 +20,8 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   // Initialize with first available menu if no active menu
   useEffect(() => {
     if (!activeTopMenu && userApps.length > 0) {
-      const { getVisibleTopMenus } = require('../config/navigation');
       const visibleMenus = getVisibleTopMenus(userApps);
-      if (visibleMenus.length > 0) {
+      if (visibleMenus.length > 0 && visibleMenus[0]) {
         setActiveTopMenu(visibleMenus[0].keyword);
       }
     }
