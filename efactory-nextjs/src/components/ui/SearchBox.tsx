@@ -48,11 +48,13 @@ const SearchBox = ({
     large: 'w-6 h-6'
   };
 
+  // Pad input so placeholder/text doesn't overlap the icon on the left
+  // and leaves room for the clear button on the right when visible
   const paddingClasses = {
-    small: showClearButton && internalValue ? 'pl-2 pr-8' : 'pl-2 pr-3',
-    normal: showClearButton && internalValue ? 'pl-2.5 pr-2.5' : 'pl-2.5 pr-4',
-    large: showClearButton && internalValue ? 'pl-3 pr-3' : 'pl-3 pr-5'
-  };
+    small: `${showClearButton && internalValue ? 'pr-8' : 'pr-3'} pl-8`,
+    normal: `${showClearButton && internalValue ? 'pr-10' : 'pr-4'} pl-10`,
+    large: `${showClearButton && internalValue ? 'pr-12' : 'pr-5'} pl-12`
+  } as const;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -111,7 +113,7 @@ const SearchBox = ({
       {/* Search Icon */}
       <div className={`
         absolute left-0 top-0 h-full flex items-center justify-center pointer-events-none
-        ${size === 'small' ? 'w-9' : size === 'large' ? 'w-12' : 'w-10'}
+        ${size === 'small' ? 'w-8' : size === 'large' ? 'w-12' : 'w-10'}
       `}>
         <IconSearch className={`${iconSizeClasses[size]} text-font-color-100`} />
       </div>
