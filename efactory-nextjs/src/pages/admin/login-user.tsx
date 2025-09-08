@@ -689,4 +689,12 @@ function LoginUserPage() {
 	return <LoginUserPageInner />;
 }
 
+export async function getStaticProps() {
+  return {
+    props: {
+      isAuthRoute: false
+    }
+  };
+}
+
 export default dynamic(() => Promise.resolve(LoginUserPage), { ssr: false });

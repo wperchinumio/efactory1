@@ -11,3 +11,18 @@ export default function DynamicPage() {
     </div>
   );
 }
+
+export async function getStaticProps() {
+  return {
+    props: {
+      isAuthRoute: false
+    }
+  };
+}
+
+export async function getStaticPaths() {
+  return {
+    paths: [],
+    fallback: 'blocking'
+  };
+}

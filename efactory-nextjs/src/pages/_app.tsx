@@ -1,10 +1,12 @@
 import Head from 'next/head';
 import Layout from "@/components/layout/Layout";
 import AuthLayout from "@/components/layout/AuthLayout";
+import AuthGuard from "@/components/auth/AuthGuard";
+import AuthErrorBoundary from "@/components/auth/AuthErrorBoundary";
 import "../../styles/globals.css";
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { getAuthToken } from '@/lib/auth/storage';
+import { getAuthState } from '@/lib/auth/guards';
 import { AppProps } from 'next/app';
 import type { UserApp } from '@/types/api';
 
@@ -23,31 +25,23 @@ export default function App({ Component, pageProps }: AppProps) {
     };
   }, [pageUrl]);
 
+  // Update user apps when auth state changes
   useEffect(() => {
     if (!isAuthRoute) {
       try {
-        const raw = typeof window !== 'undefined' ? window.localStorage.getItem('authToken') : null;
-        const hasToken = raw ? Boolean(JSON.parse(raw)?.api_token) : false;
-        if (!hasToken) {
-          router.replace('/auth/sign-in');
+        const authState = getAuthState();
+        if (authState.isAuthenticated && authState.userApps) {
+          const apps = authState.userApps.map((appId) => ({
+            id: appId.toString(),
+            name: `App ${appId}`
+          }));
+          setUserApps(apps);
         } else {
-          const auth = getAuthToken();
-          const roles = Array.isArray(auth?.user_data?.roles) ? auth.user_data.roles : [];
-          const isAdmin = roles.includes('ADM');
-          
-          if (auth && auth.user_data) {
-            const apps = auth.user_data.apps || [];
-            const userApps = apps.map((appId) => ({
-              id: appId.toString(),
-              name: `App ${appId}`
-            }));
-            setUserApps(userApps);
-          } else {
-            setUserApps([]);
-          }
+          setUserApps([]);
         }
-      } catch {
-        router.replace('/auth/sign-in');
+      } catch (error) {
+        console.error('Error updating user apps:', error);
+        setUserApps([]);
       }
     }
   }, [isAuthRoute, router.pathname]);
@@ -58,17 +52,21 @@ export default function App({ Component, pageProps }: AppProps) {
         <link rel="icon" href="/favicon.ico" />
         <title>eFactory</title>
       </Head>
-      {
-        isAuthRoute ? (
-          <AuthLayout>
-            <Component {...pageProps} />
-          </AuthLayout>
-        ) : (
-          <Layout userApps={userApps}>
-            <Component {...pageProps} />
-          </Layout>
-        )
-      }
+      <AuthErrorBoundary>
+        <AuthGuard isAuthRoute={isAuthRoute}>
+          {
+            isAuthRoute ? (
+              <AuthLayout>
+                <Component {...pageProps} />
+              </AuthLayout>
+            ) : (
+              <Layout userApps={userApps}>
+                <Component {...pageProps} />
+              </Layout>
+            )
+          }
+        </AuthGuard>
+      </AuthErrorBoundary>
     </>
   );
 }

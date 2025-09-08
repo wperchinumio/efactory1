@@ -28,6 +28,14 @@ interface ChartData {
   options: any;
 }
 
+export async function getStaticProps() {
+  return {
+    props: {
+      isAuthRoute: false
+    }
+  };
+}
+
 export default function Analysis() {
 
   const [adminMenu, setAdminMenu] = useState<boolean>(false);

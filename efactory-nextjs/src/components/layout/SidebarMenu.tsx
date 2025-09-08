@@ -395,11 +395,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const prevSidebarAutoCollapse = useRef<boolean | null>(null);
   
   useEffect(() => {
-    const isFirstRun = prevPageUrl.current === null || prevSidebarAutoCollapse.current === null;
-    const routeChanged = prevPageUrl.current !== pageUrl;
-    const modeChanged = prevSidebarAutoCollapse.current !== sidebarAutoCollapse;
-    
-    if (isFirstRun || routeChanged || modeChanged) {
+    // Safety check to prevent hooks errors during auth state changes
+    try {
+      const isFirstRun = prevPageUrl.current === null || prevSidebarAutoCollapse.current === null;
+      const routeChanged = prevPageUrl.current !== pageUrl;
+      const modeChanged = prevSidebarAutoCollapse.current !== sidebarAutoCollapse;
+      
+      if (isFirstRun || routeChanged || modeChanged) {
       if (sidebarAutoCollapse) {
         // Auto-collapse mode: find first matching menu
         let foundIndex: number | null = null;
@@ -476,9 +478,15 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         setActiveMenus(newActiveMenus);
       }
       
-      // Update refs
-      prevPageUrl.current = pageUrl;
-      prevSidebarAutoCollapse.current = sidebarAutoCollapse;
+        // Update refs
+        prevPageUrl.current = pageUrl;
+        prevSidebarAutoCollapse.current = sidebarAutoCollapse;
+      }
+    } catch (error) {
+      console.error('Error in SidebarMenu useEffect:', error);
+      // Reset to safe state on error
+      setMenuActive(null);
+      setActiveMenus(new Set());
     }
   }, [pageUrl, sidebarAutoCollapse, visibleMenus]);
 

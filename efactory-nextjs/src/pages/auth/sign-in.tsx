@@ -14,6 +14,7 @@ export const getStaticProps: GetStaticProps = async () => {
     };
 }
 
+
 export default function Signin() {
 
     const [showPassword, setShowPassword] = useState<boolean>(false);
