@@ -803,6 +803,24 @@ body .react-data-table.striped .rdt_TableCol:not(:last-of-type) {
   background-repeat: no-repeat;
 }
 
+/* Radio visual tweak: use centered primary dot instead of background image */
+.form-radio .form-radio-input:checked {
+  background-color: var(--card-color);
+  border-color: var(--primary);
+  background-image: none;
+}
+.form-radio .form-radio-input:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.5em; /* 8px on 1rem input; scales with transform */
+  height: 0.5em;
+  background-color: var(--primary);
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+}
+
 .form-radio .form-radio-input:focus,
 .form-radio .form-radio-input:focus-visible {
   border-color: var(--sky);
