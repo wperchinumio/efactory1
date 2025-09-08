@@ -34,13 +34,13 @@ const Button = ({
 }: ButtonProps) => {
   const [isPressed, setIsPressed] = useState(false);
   // Base classes
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md leading-none box-border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
-  // Size classes
+  // Size classes (explicit heights to avoid external CSS affecting size)
   const sizeClasses = {
-    small: iconOnly ? '' : 'px-2 py-1 text-xs',
-    normal: iconOnly ? '' : 'px-3 py-1.5 text-sm',
-    large: iconOnly ? '' : 'px-4 py-2 text-sm'
+    small: iconOnly ? '' : 'h-6 px-2 text-xs',
+    normal: iconOnly ? '' : 'h-8 px-3 text-sm',
+    large: iconOnly ? '' : 'h-11 px-4 text-sm'
   };
 
   // Inline styles for icon-only buttons
@@ -106,7 +106,14 @@ const Button = ({
         />
       );
     }
-    return icon;
+    if (!icon) return null;
+    // Ensure icon size is smaller on small buttons (affects icon-only too)
+    const iconPixelSize = size === 'small' ? 12 : size === 'large' ? 16 : 14;
+    const existingClass = (icon as any)?.props?.className || '';
+    return React.cloneElement(icon as React.ReactElement<any>, {
+      size: iconPixelSize,
+      className: existingClass
+    });
   };
   
   // Render content
@@ -120,11 +127,15 @@ const Button = ({
     }
     
     const iconElement = renderIcon();
-    const iconSize = size === 'small' ? 'w-3 h-3' : size === 'large' ? 'w-4 h-4' : 'w-3.5 h-3.5';
+    // Use explicit pixel sizes on Tabler icons to avoid inflating button height
+    const iconPixelSize = size === 'small' ? 12 : size === 'large' ? 16 : 14;
     
     if (iconElement) {
+      const existingClass = (iconElement as any).props?.className || '';
+      const marginClass = children ? (iconPosition === 'left' ? 'mr-2' : 'ml-2') : '';
       const iconWithSize = React.cloneElement(iconElement as React.ReactElement<any>, {
-        className: `${iconSize} ${children ? (iconPosition === 'left' ? 'mr-2' : 'ml-2') : ''}`
+        size: iconPixelSize,
+        className: `${existingClass} ${marginClass}`.trim()
       });
       
       if (iconPosition === 'right') {

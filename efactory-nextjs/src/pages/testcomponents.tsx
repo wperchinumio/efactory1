@@ -141,17 +141,18 @@ const TestComponents = () => {
             {/* Theme Selector */}
             <div className="flex items-center gap-2">
               <label className="text-sm text-font-color">Theme:</label>
-              <select
-                value={currentTheme}
-                onChange={(e) => setCurrentTheme(e.target.value)}
-                className="px-3 py-1 bg-card-color border border-border-color rounded text-font-color text-sm"
-              >
+              <div className="flex flex-wrap gap-2">
                 {themes.map(theme => (
-                  <option key={theme.value} value={theme.value}>
+                  <Button
+                    key={theme.value}
+                    size="small"
+                    variant={currentTheme === theme.value ? 'primary' : 'outline'}
+                    onClick={() => setCurrentTheme(theme.value)}
+                  >
                     {theme.label}
-                  </option>
+                  </Button>
                 ))}
-              </select>
+              </div>
             </div>
           </div>
         </div>
