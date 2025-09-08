@@ -519,7 +519,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
             <button
               ref={topSwitchButtonRef}
               onClick={() => setTopSwitchOpen(prev => !prev)}
-              className='relative select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-15 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary'
+              className='relative select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-4 pe-4 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary'
             >
               {(() => {
                 const current = visibleTopMenus.find(m => m.keyword === activeTopMenu) || visibleTopMenus[0];
@@ -567,7 +567,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
             <input
               type="text"
               placeholder={searchPlaceholder}
-              className='form-control pl-36 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors'
+              className='form-control pl-9 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors'
             />
           </div>
         </div>
@@ -585,7 +585,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               <Link 
                 href="/overview" 
                 onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }} 
-                className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview' || calculatedActiveSidebarMenu === 'overview') ? 'text-secondary' : ''}`}
+                className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview' || calculatedActiveSidebarMenu === 'overview') ? 'text-secondary' : ''}`}
               >
                 <IconHome className="stroke-[1.5] w-[22px] h-[22px]" />
                 <span className='link'>Overview</span>
@@ -595,7 +595,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               <Link 
                 href="/overview/notes" 
                 onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }} 
-                className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview/notes' || calculatedActiveSidebarMenu === 'notes') ? 'text-secondary' : ''}`}
+                className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview/notes' || calculatedActiveSidebarMenu === 'notes') ? 'text-secondary' : ''}`}
               >
                 <IconPencil className="stroke-[1.5] w-[22px] h-[22px]" />
                 <span className='link'>Personal notes</span>
@@ -622,7 +622,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   <li key={key} className='sidebar-listitem'>
                     <button
                       onClick={() => menuToggle(key)}
-                      className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
+                      className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
                       <span className='link'>{item.title}</span>
@@ -631,13 +631,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                         <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />
                       }
                     </button>
-                    <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
+                    <ul className={`sidebar-sublist ps-8 relative before:absolute before:h-full before:w-[1px] ltr:before:left-2.5 rtl:before:right-2.5 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
                       {item.dropdownMenus.map((sub: DropdownMenuItem, subKey: number) => (
                         <li key={subKey}>
                           <Link 
                             href={sub.route} 
                             onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
-                            className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-24px] rtl:before:right-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.route ? 'text-secondary before:!block' : ''}`}
+                            className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-26.5px] rtl:before:right-[-26.5px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.route ? 'text-secondary before:!block' : ''}`}
                           >
                             {sub.title}
                           </Link>
@@ -652,7 +652,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                     <Link 
                       href={item.route || '#'} 
                       onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
-                      className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.route ? 'text-secondary' : ''}`}
+                      className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.route ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
                       <span className='link'>{item.title}</span>
@@ -669,7 +669,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               <li key={key} className='sidebar-listitem'>
                 <button
                   onClick={() => menuToggle(key)}
-                  className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>
@@ -678,13 +678,13 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                     <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />
                   }
                 </button>
-                <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
+                <ul className={`sidebar-sublist ps-8 relative before:absolute before:h-full before:w-[1px] ltr:before:left-2.5 rtl:before:right-2.5 before:top-0 before:bg-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 'block' : 'hidden'}`}>
                   {item.dropdownMenus.map((sub: DropdownMenuItem, subKey: number) => (
                     <li key={subKey}>
                       <Link 
                         href={sub.route} 
                         onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
-                        className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-24px] rtl:before:right-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.route ? 'text-secondary before:!block' : ''}`}
+                        className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-26.5px] rtl:before:right-[-26.5px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.route ? 'text-secondary before:!block' : ''}`}
                       >
                         {sub.title}
                       </Link>
@@ -697,7 +697,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                 <Link 
                   href={item.route || '#'} 
                   onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
-                  className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>

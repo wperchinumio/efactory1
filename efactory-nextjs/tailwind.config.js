@@ -6,6 +6,12 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  // safelist: [
+  //   // Common padding classes for development/debugging
+  //   'pl-10', 'pr-10', 'pt-10', 'pb-10', 'px-10', 'py-10',
+  //   'pl-11', 'pr-11', 'pt-11', 'pb-11', 'px-11', 'py-11',
+  //   'pl-12', 'pr-12', 'pt-12', 'pb-12', 'px-12', 'py-12',
+  // ],
   theme: {
     extend: {
       fontFamily: {
@@ -64,22 +70,38 @@ module.exports = {
         "chart4": "var(--chart-color4)",
         "chart5": "var(--chart-color5)",
       },
-      spacing: {
-        5: '5px',
-        9: '8px',
-        10: '10px',
-        15: '15px',
-        20: '20px',
-        30: '30px',
-        32: '32px',
-        36: '36px',
-        40: '40px',
-        50: '50px',
-        60: '60px',
-        80: '80px',
-        100: '100px',
-        150: '150px',
-      },
+      // Custom spacing commented out - now using Tailwind's standard rem-based spacing
+      // Previous custom pixel-based spacing:
+      // 5: '5px' → use 1.5 (6px) or 1 (4px)
+      // 9: '8px' → use 2 (8px) 
+      // 10: '10px' → use 2.5 (10px)
+      // 15: '15px' → use 4 (16px) or 3.5 (14px)
+      // 20: '20px' → use 5 (20px)
+      // 30: '30px' → use 8 (32px) or 7 (28px)
+      // 32: '32px' → use 8 (32px)
+      // 36: '36px' → use 9 (36px)
+      // 40: '40px' → use 10 (40px)
+      // 50: '50px' → use 12 (48px) or 14 (56px)
+      // 60: '60px' → use 16 (64px) or 14 (56px)
+      // 80: '80px' → use 20 (80px)
+      // 100: '100px' → use 24 (96px) or 28 (112px)
+      // 150: '150px' → use 36 (144px) or 40 (160px)
+      // spacing: {
+      //   5: '5px',
+      //   9: '8px',
+      //   10: '10px',
+      //   15: '15px',
+      //   20: '20px',
+      //   30: '30px',
+      //   32: '32px',
+      //   36: '36px',
+      //   40: '40px',
+      //   50: '50px',
+      //   60: '60px',
+      //   80: '80px',
+      //   100: '100px',
+      //   150: '150px',
+      // },
       screens: {
         'ssm': '375px',
         'sm': '640px',

@@ -158,7 +158,7 @@ export default function Analysis() {
         <div className='grid grid-cols-12 gap-4'>
           <div className='lg:col-span-3 sm:col-span-6 col-span-12 card flex flex-col bg-card-color rounded-xl overflow-hidden border border-dashed border-border-color'>
             <div className='md:p-6 p-4'>
-              <div className='flex items-center justify-between gap-5 mb-2'>
+              <div className='flex items-center justify-between gap-1.5 mb-2'>
                 <p>
                   NEW EMPLOYEE
                 </p>
@@ -183,7 +183,7 @@ export default function Analysis() {
           </div>
           <div className='lg:col-span-3 sm:col-span-6 col-span-12 card flex flex-col bg-card-color rounded-xl overflow-hidden border border-dashed border-border-color'>
             <div className='md:p-6 p-4'>
-              <div className='flex items-center justify-between gap-5 mb-2'>
+              <div className='flex items-center justify-between gap-1.5 mb-2'>
                 <p>
                   EXPENSE
                 </p>
@@ -208,7 +208,7 @@ export default function Analysis() {
           </div>
           <div className='lg:col-span-3 sm:col-span-6 col-span-12 card flex flex-col bg-card-color rounded-xl overflow-hidden border border-dashed border-border-color'>
             <div className='md:p-6 p-4'>
-              <div className='flex items-center justify-between gap-5 mb-2'>
+              <div className='flex items-center justify-between gap-1.5 mb-2'>
                 <p>
                   REVENUE
                 </p>
@@ -233,7 +233,7 @@ export default function Analysis() {
           </div>
           <div className='lg:col-span-3 sm:col-span-6 col-span-12 card flex flex-col bg-card-color rounded-xl overflow-hidden border border-dashed border-border-color'>
             <div className='md:p-6 p-4'>
-              <div className='flex items-center justify-between gap-5 mb-2'>
+              <div className='flex items-center justify-between gap-1.5 mb-2'>
                 <p>
                   NEW LEADS
                 </p>
@@ -264,7 +264,7 @@ export default function Analysis() {
             <Link href="/documentation" className='btn btn-white large'>Visit Documentation</Link>
           </div>
           <div className='xxl:col-span-6 lg:col-span-8 col-span-12 card rounded-xl bg-card-color border border-dashed border-border-color'>
-            <div className='flex items-center justify-between gap-15 md:p-6 p-4'>
+            <div className='flex items-center justify-between gap-4 md:p-6 p-4'>
               <div className='font-semibold'>
                 LUNO Revenue
               </div>
@@ -342,7 +342,7 @@ export default function Analysis() {
                 </p>
               </div>
             </div>
-            <div className='md:px-6 px-4 py-4 flex gap-10'>
+            <div className='md:px-6 px-4 py-4 flex gap-2.5'>
               <button className='btn btn-secondary w-full'>
                 Buy
               </button>
@@ -352,7 +352,7 @@ export default function Analysis() {
             </div>
           </div>
           <div className='xxl:col-span-3 lg:col-span-4 sm:col-span-6 col-span-12 card md:p-6 p-4 bg-card-color rounded-xl border border-dashed border-border-color'>
-            <div className='flex items-center justify-between gap-15 md:mb-6 mb-4'>
+            <div className='flex items-center justify-between gap-4 md:mb-6 mb-4'>
               <div className='font-semibold'>
                 Downloads
               </div>
@@ -410,7 +410,7 @@ export default function Analysis() {
           </div>
           <div className='xxl:col-span-6 lg:col-span-12 md:col-span-6 col-span-12 card rounded-xl bg-card-color flex flex-col border border-dashed border-border-color'>
             <div className='md:p-6 p-4'>
-              <div className='flex items-center justify-between gap-15 md:mb-6 mb-4'>
+              <div className='flex items-center justify-between gap-4 md:mb-6 mb-4'>
                 <div className='font-semibold'>
                   Reports overview
                 </div>

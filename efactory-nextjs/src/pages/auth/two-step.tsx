@@ -24,7 +24,7 @@ export default function TwoStep() {
       <p className='text-center sm:mb-12 mb-6 text-font-color-100'>
         We sent a verification code to your email. Enter the code from the email in the field below.
       </p>
-      <div className='flex gap-15 mb-20'>
+      <div className='flex gap-4 mb-5'>
         <div className='form-control'>
           <input type='number' id='twoStep1' placeholder='-' className='form-input text-center' />
         </div>
@@ -41,7 +41,7 @@ export default function TwoStep() {
       <Link href="/" className='btn btn-secondary large w-full uppercase'>
         Verify my account
       </Link>
-      <div className='text-center sm:mt-30 mt-6 text-font-color-100'>
+      <div className='text-center sm:mt-8 mt-6 text-font-color-100'>
         <p>
           Haven't received it?
         </p>

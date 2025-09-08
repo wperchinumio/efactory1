@@ -119,9 +119,9 @@ export default function Modals() {
                 </div>
                 {connectionRequestModal &&
                     <>
-                        <div className={`fixed p-15 w-full max-w-[800px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
-                            <div className='py-10 md:px-10 px-[7px] bg-card-color rounded-lg shadow-shadow-lg'>
-                                <div className='my-10 lg:px-20 md:px-10 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
+                        <div className={`fixed p-4 w-full max-w-[800px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
+                            <div className='py-2.5 md:px-2.5 px-[7px] bg-card-color rounded-lg shadow-shadow-lg'>
+                                <div className='my-2.5 lg:px-5 md:px-2.5 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
                                     <div className='flex justify-between items-start gap-4'>
                                         <div>
                                             <h5 className='text-[20px]/[30px] font-medium'>
@@ -211,26 +211,26 @@ export default function Modals() {
                 }
                 {createEventModal &&
                     <>
-                        <div className={`fixed p-15 w-full max-w-[800px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
-                            <div className='py-10 md:px-10 px-[7px] bg-card-color rounded-lg shadow-shadow-lg'>
-                                <div className='my-10 lg:px-20 md:px-10 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
+                        <div className={`fixed p-4 w-full max-w-[800px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
+                            <div className='py-2.5 md:px-2.5 px-[7px] bg-card-color rounded-lg shadow-shadow-lg'>
+                                <div className='my-2.5 lg:px-5 md:px-2.5 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
                                     <div className='text-[24px]/[30px] font-medium mb-2'>
                                         Create Event
                                     </div>
                                     <div className='text-font-color-100 mb-6'>
                                         All the Lorem Ipsum generators on the Internet tend to repeat predefined chunks as necessary
                                     </div>
-                                    <div className='form-control mb-15'>
+                                    <div className='form-control mb-4'>
                                         <label htmlFor='campaignsTitle' className='form-label'>
                                             Campaigns Title
                                         </label>
                                         <input type='text' id='campaignsTitle' placeholder='Campaigns Title' className='form-input' />
                                     </div>
-                                    <div className="form-control mb-15 flex flex-col">
+                                    <div className="form-control mb-4 flex flex-col">
                                         <label className='form-label'>Campaigns Description</label>
                                         <textarea className="form-textarea" placeholder="Leave a comment here" rows={3}></textarea>
                                     </div>
-                                    <div className='grid sm:grid-cols-3 grid-cols-1 gap-10 mb-1'>
+                                    <div className='grid sm:grid-cols-3 grid-cols-1 gap-2.5 mb-1'>
                                         <div className="form-control">
                                             <label htmlFor='campaignsDate' className='form-label'>Date</label>
                                             <input type="date" id='campaignsDate' className="form-input" placeholder="Select Date" />
@@ -246,11 +246,11 @@ export default function Modals() {
                                             <input type='text' id='campaignsDuration' placeholder='1h 45m' className='form-input' />
                                         </div>
                                     </div>
-                                    <p className="text-[14px]/[20px] text-font-color-100 flex gap-5 mb-15">
+                                    <p className="text-[14px]/[20px] text-font-color-100 flex gap-1.5 mb-4">
                                         <IconCircleCheckFilled className='w-[16px] h-[16px] min-w-[16px] mt-[2px]' />
                                         This event will take place on the july 14, 2022 form 02:30 PM untill 05:15 PM
                                     </p>
-                                    <div className='grid sm:grid-cols-2 grid-cols-1 gap-10 mb-15'>
+                                    <div className='grid sm:grid-cols-2 grid-cols-1 gap-2.5 mb-4'>
                                         <div className='form-control'>
                                             <label htmlFor='campaignsLocation' className='form-label'>
                                                 Location
@@ -269,7 +269,7 @@ export default function Modals() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className='form-control mb-15 flex gap-2 items-center'>
+                                    <div className='form-control mb-4 flex gap-2 items-center'>
                                         <label className='form-label'>
                                             Participate :
                                         </label>
@@ -286,7 +286,7 @@ export default function Modals() {
                                             <Image src={avatar4} width="26" height="26" alt='chat profile' className='w-[26px] h-[26px] min-w-[26px] border border-body-color rounded-md saturate-50 hover:saturate-100' />
                                         </Link>
                                     </div>
-                                    <div className='form-control mb-15'>
+                                    <div className='form-control mb-4'>
                                         <label className='form-label'>
                                             Set reminder
                                         </label>
@@ -314,7 +314,7 @@ export default function Modals() {
                                             <input type='text' className='form-input !rounded-s-none' />
                                         </div>
                                     </div>
-                                    <div className='flex items-stretch gap-5'>
+                                    <div className='flex items-stretch gap-1.5'>
                                         <button onClick={openCreateEventModal} className='btn btn-secondary'>
                                             Close
                                         </button>
@@ -330,9 +330,9 @@ export default function Modals() {
                 }
                 {jobListingModal &&
                     <>
-                        <div className={`fixed p-15 w-full max-w-[500px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
+                        <div className={`fixed p-4 w-full max-w-[500px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
                             <div className='bg-card-color rounded-lg shadow-shadow-lg overflow-hidden'>
-                                <div className='p-4 flex gap-5 justify-between border-b border-border-color'>
+                                <div className='p-4 flex gap-1.5 justify-between border-b border-border-color'>
                                     <p className='text-[20px]/[26px] font-medium'>
                                         Job listing
                                     </p>
@@ -340,8 +340,8 @@ export default function Modals() {
                                         <IconX />
                                     </button>
                                 </div>
-                                <div className='py-10 md:px-10 px-[7px] bg-body-color'>
-                                    <div className='my-10 lg:px-20 md:px-10 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
+                                <div className='py-2.5 md:px-2.5 px-[7px] bg-body-color'>
+                                    <div className='my-2.5 lg:px-5 md:px-2.5 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
                                         <p className="text-font-color-100 mb-4">If you are going to use a passage of Lorem Ipsum, you need</p>
                                         <div className='card bg-card-color rounded-xl md:p-6 p-4 mb-2'>
                                             <span className="small rounded-full text-white py-1 px-4 bg-primary">Creative &amp; Art</span>
@@ -388,9 +388,9 @@ export default function Modals() {
                 }
                 {orderTrackingModal &&
                     <>
-                        <div className={`fixed p-15 w-full max-w-[800px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
-                            <div className='py-10 md:px-10 px-[7px] bg-card-color rounded-lg shadow-shadow-lg'>
-                                <div className='my-10 lg:px-20 md:px-10 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
+                        <div className={`fixed p-4 w-full max-w-[800px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]`}>
+                            <div className='py-2.5 md:px-2.5 px-[7px] bg-card-color rounded-lg shadow-shadow-lg'>
+                                <div className='my-2.5 lg:px-5 md:px-2.5 px-[7px] md:max-h-[80svh] max-h-[60svh] overflow-auto custom-scrollbar'>
                                     <div className='text-[24px]/[30px] font-medium mb-2'>
                                         Order Tracking
                                     </div>
@@ -401,7 +401,7 @@ export default function Modals() {
                                         <p className="mb-1">Expected Arrival <span>01/06/2022</span></p>
                                         <p>Luno <span className="font-bold"><Link href="#" className='text-primary transition-all hover:text-secondary'>V504KO</Link></span></p>
                                     </div>
-                                    <ul className='ms-100 border-s-[3px] border-secondary'>
+                                    <ul className='ms-24 border-s-[3px] border-secondary'>
                                         <li data-date="12:30 - Sun" className='relative mb-1 last:mb-0 py-2 px-4 before:content-[attr(data-date)] before:min-w-[100px] before:text-[12px]/[18px] before:text-start before:absolute before:end-[calc(100%+20px)] after:absolute after:w-15 after:h-15 after:bg-card-color after:top-10 after:rounded-full after:end-[calc(100%-6px)] after:border-[3px] after:border-primary'>
                                             <div className="font-bold small flex justify-between items-center">
                                                 New Order

@@ -27,7 +27,7 @@ export default function Custom() {
             <p className='text-center sm:mb-12 mb-6 text-font-color-100'>
                 Sorry, the page you're looking for doesn;t exist. if you think something is brlken, report a problem.
             </p>
-            <Link href="/" className='btn btn-secondary large w-full uppercase mb-20'>
+            <Link href="/" className='btn btn-secondary large w-full uppercase mb-5'>
                 Back To Home
             </Link>
         </>

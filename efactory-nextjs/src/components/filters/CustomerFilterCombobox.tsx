@@ -31,7 +31,7 @@ const CustomerFilterCombobox = ({
 					onChange={(e) => onValueChange(e.target.value)}
 					placeholder="Enter customer..."
 					disabled={disabled}
-					className="w-full pl-10 pr-3 py-2 text-[14px] bg-white dark:bg-gray-800 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-font-color placeholder-font-color-100"
+					className="w-full pl-2.5 pr-3 py-2 text-[14px] bg-white dark:bg-gray-800 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-font-color placeholder-font-color-100"
 				/>
 			</div>
 		</div>

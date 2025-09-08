@@ -49,9 +49,9 @@ const SearchBox = ({
   };
 
   const paddingClasses = {
-    small: showClearButton && internalValue ? 'pl-9 pr-8' : 'pl-9 pr-3',
-    normal: showClearButton && internalValue ? 'pl-10 pr-10' : 'pl-10 pr-4',
-    large: showClearButton && internalValue ? 'pl-12 pr-12' : 'pl-12 pr-5'
+    small: showClearButton && internalValue ? 'pl-2 pr-8' : 'pl-2 pr-3',
+    normal: showClearButton && internalValue ? 'pl-2.5 pr-2.5' : 'pl-2.5 pr-4',
+    large: showClearButton && internalValue ? 'pl-3 pr-3' : 'pl-3 pr-5'
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

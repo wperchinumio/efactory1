@@ -22,7 +22,7 @@ export default function Signup() {
         </span>
       </div>
       <div className=''>
-        <div className='mb-15 flex gap-15'>
+        <div className='mb-4 flex gap-4'>
           <div className='form-control'>
             <label htmlFor='firstName' className='form-label'>
               Firstname
@@ -36,25 +36,25 @@ export default function Signup() {
             <input type='text' id='lastName' placeholder='Parker' className='form-input' />
           </div>
         </div>
-        <div className='form-control mb-15'>
+        <div className='form-control mb-4'>
           <label htmlFor='email' className='form-label'>
             Email
           </label>
           <input type='email' id='email' placeholder='name@example.com' className='form-input' />
         </div>
-        <div className='form-control mb-15'>
+        <div className='form-control mb-4'>
           <label htmlFor='password' className='form-label'>
             Password
           </label>
           <input type='password' id='password' placeholder='8+ characters required' className='form-input' />
         </div>
-        <div className='form-control mb-15'>
+        <div className='form-control mb-4'>
           <label htmlFor='confirmPassword' className='form-label'>
             Confirm Password
           </label>
           <input type='password' id='confirmPassword' placeholder='8+ characters required' className='form-input' />
         </div>
-        <div className="form-check mb-30">
+        <div className="form-check mb-8">
           <input
             type="checkbox"
             id="forgotPassword"
@@ -65,7 +65,7 @@ export default function Signup() {
         <Link href="/" className='btn btn-secondary large w-full uppercase'>
           Sign Up
         </Link>
-        <div className='text-center sm:mt-30 mt-6 text-font-color-100'>
+        <div className='text-center sm:mt-8 mt-6 text-font-color-100'>
           <p>
             Already have an account?
           </p>

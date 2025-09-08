@@ -11,7 +11,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
     return (
         <div className='admin-wrapper min-h-svh py-6 px-4 flex items-center justify-center bg-body-color after:fixed after:w-full after:h-full after:start-0 after:top-0 after:opacity-90 after:bg-[url("/images/auth.png")]'>
             <div className='container-fluid'>
-                <div className='flex gap-8 lg:gap-24 xl:gap-40 2xl:gap-56 w-full relative z-[1] justify-center'>
+                <div className='flex gap-8 lg:gap-24 xl:gap-10 2xl:gap-56 w-full relative z-[1] justify-center'>
                     <div className='items-center justify-center lg:w-auto lg:flex hidden'>
                         <div className='max-w-[460px]'>
                             <div className='mb-6'>

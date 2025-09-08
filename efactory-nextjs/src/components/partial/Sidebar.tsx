@@ -219,8 +219,8 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                 {/* Admin quick dropdown removed per request */}
             </div>
             {!isMiniSidebar && (
-                <div className='create-new-project px-3 py-4 flex gap-5'>
-                    {/* <select className="select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-30 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary">
+                <div className='create-new-project px-3 py-4 flex gap-1.5'>
+                    {/* <select className="select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-8 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary">
                         <option defaultValue="">Select Project</option>
                         <option value="1">Luno University</option>
                         <option value="2">Book Manager</option>
@@ -234,16 +234,16 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                     ('children' in item && item.children) ? <li key={key} className='sidebar-listitem'>
                         <button
                             onClick={() => menuToggle(key)}
-                            className={`sidebar-list-button flex items-center gap-10 w-full py-10 transition-all hover:text-secondary ${menuActive === key ? 'text-secondary' : ''}`}
+                            className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${menuActive === key ? 'text-secondary' : ''}`}
                         >
                             {'icon' in item && <item.icon className='stroke-[1.5] w-[22px] h-[22px]' />}
                             <span className='link'>{item.link}</span>
                             {menuActive === key ? <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />}
                         </button>
-                        <ul className={`sidebar-sublist ps-30 relative before:absolute before:h-full before:w-[1px] ltr:before:left-10 rtl:before:right-10 before:top-0 before:bg-secondary ${menuActive === key ? 'block' : 'hidden'}`}>
+                        <ul className={`sidebar-sublist ps-8 relative before:absolute before:h-full before:w-[1px] ltr:before:left-2.5 rtl:before:right-2.5 before:top-0 before:bg-secondary ${menuActive === key ? 'block' : 'hidden'}`}>
                             {(item.children as any[]).map((sub, subKey) => (
                                 <li key={subKey}>
-                                    <Link href={sub.url} onClick={() => { window.innerWidth < 1200 && setMobileNav(false) }} className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-24px] rtl:before:right-[-24px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.url ? 'text-secondary before:!block' : ''}`}>
+                                    <Link href={sub.url} onClick={() => { window.innerWidth < 1200 && setMobileNav(false) }} className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-26.5px] rtl:before:right-[-26.5px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.url ? 'text-secondary before:!block' : ''}`}>
                                         {sub.link}
                                     </Link>
                                 </li>
@@ -252,7 +252,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                     </li>
                         : item.url ?
                             <li key={key} className='sidebar-listitem'>
-                                <Link href={item.url} onClick={() => { window.innerWidth < 1200 && setMobileNav(false) }} className={`sidebar-list-link flex items-center gap-10 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.url ? 'text-secondary' : ''}`}>
+                                <Link href={item.url} onClick={() => { window.innerWidth < 1200 && setMobileNav(false) }} className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.url ? 'text-secondary' : ''}`}>
                                     {'icon' in item && item.icon ? <item.icon className='stroke-[1.5] w-[22px] h-[22px] rtl:rotate-180' /> : <IconChevronRight className='stroke-[1.5] w-[22px] h-[22px] rtl:rotate-180' />}
                                     <span className='link'>{item.link}</span>
                                 </Link>

@@ -122,7 +122,7 @@ export default function Signin() {
             </div>
             <form onSubmit={handleSubmit} className={`relative ${submitting ? 'pointer-events-none' : ''}`}>
                 <div className={`transition-opacity duration-300 ${submitting ? 'opacity-50' : 'opacity-100'}`}>
-                    <div className='form-control mb-15'>
+                    <div className='form-control mb-4'>
                         <label htmlFor='email' className='form-label'>
                             Username
                         </label>
@@ -137,7 +137,7 @@ export default function Signin() {
                             ref={usernameRef}
                         />
                     </div>
-                    <div className='form-control mb-15'>
+                    <div className='form-control mb-4'>
                         <label htmlFor='password' className='form-label'>
                             Password
                         </label>
@@ -161,7 +161,7 @@ export default function Signin() {
                             </button>
                         </div>
                     </div>
-                    <div className='flex flex-wrap items-center justify-between gap-10 sm:mb-30 mb-6'>
+                    <div className='flex flex-wrap items-center justify-between gap-2.5 sm:mb-8 mb-6'>
                         <div className="form-check">
                             <input
                                 type="checkbox"

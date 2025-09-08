@@ -24,7 +24,7 @@ export default function ForgotPassword() {
             <p className='text-center sm:mb-12 mb-6 text-font-color-100'>
                 Enter the email address you used when you joined and we'll send you instructions to reset your password.
             </p>
-            <div className='form-control mb-20'>
+            <div className='form-control mb-5'>
                 <label htmlFor='email' className='form-label'>
                     Email
                 </label>
@@ -33,7 +33,7 @@ export default function ForgotPassword() {
             <Link href="/auth/two-step" className='btn btn-secondary large w-full uppercase'>
                 Submit
             </Link>
-            <div className='text-center sm:mt-30 mt-6'>
+            <div className='text-center sm:mt-8 mt-6'>
                 <Link href="/auth/sign-in" className='text-primary'>
                     Back to Sign in
                 </Link>

@@ -626,7 +626,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                         </button>
                                     ) : null}
                                 </div>
-                                <button onClick={() => { closeUserProfile(); handleLogout(); }} className='bg-secondary uppercase text-[14px]/[20px] text-white py-5 px-10 text-center w-full inline-block'>
+                                <button onClick={() => { closeUserProfile(); handleLogout(); }} className='bg-secondary uppercase text-[14px]/[20px] text-white py-1.5 px-2.5 text-center w-full inline-block'>
                                     Sign Out
                                 </button>
                             </div>
@@ -642,7 +642,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                 </div>
             </div>
             <div className={`fixed top-0 bg-card-color z-[5] h-svh w-full max-w-[500px] transition-all duration-200 ${themeSetting ? 'ltr:right-0 rtl:left-0' : 'ltr:-right-full rtl:-left-full'}`}>
-                <div className='md:px-6 px-4 md:py-4 py-3 flex items-center justify-between gap-15 border-b border-border-color'>
+                <div className='md:px-6 px-4 md:py-4 py-3 flex items-center justify-between gap-4 border-b border-border-color'>
                     <div className='text-[20px]/[30px] font-medium'>
                         Theme Setting
                     </div>
@@ -650,9 +650,9 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         <IconX />
                     </button>
                 </div>
-                <div className='md:p-6 p-4 md:h-[calc(100svh-63px-67px)] h-[calc(100svh-55px-59px)] overflow-auto custom-scrollbar'>
+                <div className='md:p-6 p-4 md:h-[calc(100svh-63px-67px)] h-[calc(100svh-55px-1.59px)] overflow-auto custom-scrollbar'>
                     <div className='relative mb-6 md:p-4 py-4 px-3 border border-dashed border-primary rounded-xl'>
-                        <span className='inline-block bg-card-color px-5 font-semibold text-primary absolute -top-3'>
+                        <span className='inline-block bg-card-color px-1.5 font-semibold text-primary absolute -top-3'>
                             Color Setting
                         </span>
                         <ul className='flex gap-2'>
@@ -667,7 +667,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                             ))}
                         </ul>
                         <div className='dynamic-color-setting relative md:p-4 py-4 px-3 border border-dashed border-primary rounded-xl mt-6'>
-                            <span className='inline-block bg-card-color px-5 font-semibold text-primary absolute -top-3'>
+                            <span className='inline-block bg-card-color px-1.5 font-semibold text-primary absolute -top-3'>
                                 Dynamic Color Setting
                             </span>
                             <ul className='sm:columns-2 gap-2'>
@@ -694,7 +694,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         </div>
                     </div>
                     <div className='relative mb-6 md:p-4 py-4 px-3 border border-dashed border-border-color rounded-xl'>
-                        <span className='inline-block bg-card-color px-5 font-semibold absolute -top-3'>
+                        <span className='inline-block bg-card-color px-1.5 font-semibold absolute -top-3'>
                             Light/Dark & RTL Mode
                         </span>
                         <div className='flex'>
@@ -719,7 +719,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         </div>
                     </div>
                     <div className='relative mb-6 md:p-4 py-4 px-3 border border-dashed border-border-color rounded-xl'>
-                        <span className='inline-block bg-card-color px-5 font-semibold absolute -top-3'>
+                        <span className='inline-block bg-card-color px-1.5 font-semibold absolute -top-3'>
                             Google Font Setting
                         </span>
                         <div className='flex'>
@@ -760,7 +760,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                 className="form-input"
                             />
                         </div>
-                        <div className='flex items-start gap-5'>
+                        <div className='flex items-start gap-1.5'>
                             <button
                                 onClick={handleApply}
                                 className='btn btn-primary'
@@ -776,7 +776,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         </div>
                     </div>
                     <div>
-                        <div className='mb-5'>
+                        <div className='mb-1.5'>
                             More Setting
                         </div>
                         <ul>
@@ -819,7 +819,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         </ul>
                     </div>
                 </div>
-                <div className='md:px-6 px-4 md:py-4 py-3 flex items-center gap-10 border-t border-border-color'>
+                <div className='md:px-6 px-4 md:py-4 py-3 flex items-center gap-2.5 border-t border-border-color'>
                     <button className='btn btn-white !border-border-color w-full' onClick={toggleThemeSetting}>
                         Close
                     </button>

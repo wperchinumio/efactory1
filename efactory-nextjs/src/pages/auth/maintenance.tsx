@@ -23,11 +23,11 @@ export default function Maintenance() {
             <p className='text-center sm:mb-12 mb-6 text-font-color-100'>
                 To make things right we need some time to rebuild
             </p>
-            <div className='floating-form-control mb-20'>
+            <div className='floating-form-control mb-5'>
                 <input type='email' id='email' className='form-input' placeholder="Email" />
                 <label htmlFor='email' className='form-label'>Email</label>
             </div>
-            <Link href="/" className='btn btn-secondary large w-full uppercase mb-20'>
+            <Link href="/" className='btn btn-secondary large w-full uppercase mb-5'>
                 Send
             </Link>
             <p className='text-font-color-100 text-center'>

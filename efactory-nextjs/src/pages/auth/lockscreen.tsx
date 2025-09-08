@@ -27,7 +27,7 @@ export default function Lockscreen() {
                     Manuella Nevoresky
                 </p>
             </div>
-            <div className='form-control mb-20'>
+            <div className='form-control mb-5'>
                 <label htmlFor='password' className='form-label'>
                     Enter Password
                 </label>
@@ -46,7 +46,7 @@ export default function Lockscreen() {
             <Link href="/" className='btn btn-secondary large w-full uppercase'>
                 Sign In
             </Link>
-            <div className='text-center sm:mt-30 mt-6 text-font-color-100'>
+            <div className='text-center sm:mt-8 mt-6 text-font-color-100'>
                 <p>
                     Don't have an account yet?
                 </p>

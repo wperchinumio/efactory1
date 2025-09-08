@@ -15,7 +15,7 @@ interface WelcomeHeaderProps {
 
 export default function WelcomeHeader({ report, income }: WelcomeHeaderProps) {
     return (
-        <div className='flex md:items-center md:justify-between md:flex-row flex-col gap-15 md:mb-12 mb-6'>
+        <div className='flex md:items-center md:justify-between md:flex-row flex-col gap-4 md:mb-12 mb-6'>
             <div>
                 <p className='text-[20px]/[24px] font-medium mb-1'>
                     Welcome back, Allie!
