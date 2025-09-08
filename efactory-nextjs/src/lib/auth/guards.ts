@@ -71,9 +71,27 @@ export function isAdminRoute(pathname: string): boolean {
 }
 
 /**
+ * Dev-only open routes (no app id required)
+ */
+function isDevOpenRoute(pathname: string): boolean {
+  const pathOnly = typeof pathname === 'string' ? pathname.split('?')[0] : '';
+  return pathOnly === '/testcomponents';
+}
+
+/**
  * Get the appropriate redirect path based on user state and current path
  */
 export function getRedirectPath(pathname: string, authState: AuthState): string | null {
+  // In development, allow accessing specific dev routes without app-based access checks
+  if (process.env.NODE_ENV !== 'production' && isDevOpenRoute(pathname)) {
+    // Still require authentication; if not authenticated, go to login
+    if (!authState.isAuthenticated) {
+      return '/auth/sign-in';
+    }
+    // Authenticated: no redirect needed
+    return null;
+  }
+
   // If on auth route and authenticated, redirect based on user type
   if (isAuthRoute(pathname) && authState.isAuthenticated) {
     if (authState.isAdmin && authState.userApps.length === 0) {
@@ -209,6 +227,11 @@ export function hasRouteAccess(pathname: string, authState: AuthState): boolean 
   // Must be authenticated for non-auth routes
   if (!authState.isAuthenticated) {
     return false;
+  }
+
+  // Allow dev-only open routes regardless of app access when authenticated
+  if (process.env.NODE_ENV !== 'production' && isDevOpenRoute(pathname)) {
+    return true;
   }
 
   // Admin routes require admin role AND no user apps (pure admin only)
