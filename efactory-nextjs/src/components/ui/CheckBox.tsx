@@ -78,7 +78,7 @@ const CheckBox = ({
         <button
           type="button"
           role="checkbox"
-          aria-checked={checked}
+          aria-checked={indeterminate ? 'mixed' : checked}
           disabled={disabled}
           tabIndex={-1}
           onMouseDown={(e) => { 
@@ -106,13 +106,18 @@ const CheckBox = ({
             ${boxSize} rounded border border-border-color flex items-center justify-center
             focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-20
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'}
-            ${checked ? 'bg-primary border-primary' : 'bg-card-color'}
+            ${(checked || indeterminate) ? 'bg-primary border-primary' : 'bg-card-color'}
             ${inputClassName}
           `}
         >
-          {checked && (
+          {checked && !indeterminate && (
             <svg className={`${iconSize} text-white`} viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          )}
+          {indeterminate && (
+            <svg className={`${iconSize} text-white`} viewBox="0 0 20 20" fill="currentColor">
+              <rect x="5" y="9" width="10" height="2" rx="1" />
             </svg>
           )}
         </button>
@@ -135,6 +140,7 @@ const CheckBox = ({
         onMouseDown={handleInputMouseDown}
         disabled={disabled}
         ref={inputRef}
+        aria-checked={indeterminate ? 'mixed' : checked}
         className={`form-check-input ${size === 'small' ? 'scale-90' : size === 'large' ? 'scale-110' : ''} ${inputClassName}`}
       />
       {label && (

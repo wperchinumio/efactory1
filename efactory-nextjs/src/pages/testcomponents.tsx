@@ -314,7 +314,7 @@ const TestComponents = () => {
                 <CheckBox 
                   label="Disabled"
                   disabled={true}
-                  checked={checkboxStates.disabled}
+                  checked={true}
                   mode="emulated"
                 />
               </>
