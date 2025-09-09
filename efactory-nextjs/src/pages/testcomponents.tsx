@@ -7,6 +7,7 @@ import SearchBox from '../components/ui/SearchBox';
 import ComboList from '../components/ui/ComboList';
 import MultiSelect from '../components/ui/MultiSelect';
 import { GetStaticProps } from 'next';
+import { getThemePreferences, saveThemePreferences, applyThemePreferences } from '@/lib/themeStorage';
 
 const TestComponents = () => {
   const [currentTheme, setCurrentTheme] = useState('indigo');
@@ -28,6 +29,7 @@ const TestComponents = () => {
   const [comboValue, setComboValue] = useState('');
   const [multiSelectValue, setMultiSelectValue] = useState<string[]>([]);
   const [parityCompare, setParityCompare] = useState(false);
+  const [showShadcn, setShowShadcn] = useState(true);
 
   // Sample data
   const comboOptions = [
@@ -56,14 +58,22 @@ const TestComponents = () => {
     { value: 'red', label: 'Red' },
   ];
 
-  // Apply theme only (let global system handle dark/light mode)
+  // Initialize theme from stored preferences
   useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    
-    // Set theme
-    html.setAttribute('data-luno-theme', currentTheme);
-    body.setAttribute('data-luno-theme', currentTheme);
+    const prefs = getThemePreferences();
+    setCurrentTheme(prefs.lunoTheme);
+  }, []);
+
+  // Apply theme globally (same behavior as the app header)
+  useEffect(() => {
+    applyThemePreferences({
+      mode: 'light',
+      lunoTheme: currentTheme as any,
+      rtlMode: false,
+      fontFamily: 'Mulish, sans-serif',
+      sidebarAutoCollapse: false
+    });
+    saveThemePreferences({ lunoTheme: currentTheme as any });
   }, [currentTheme]);
 
   // Only handle checkbox-specific event prevention
@@ -132,7 +142,7 @@ const TestComponents = () => {
   };
 
   return (
-    <div className="min-h-screen bg-body-color" onMouseDownCapture={stopCheckboxHandlers}>
+    <div id="testcomponents-theme-root" className="min-h-screen bg-body-color" onMouseDownCapture={stopCheckboxHandlers}>
       {/* Header */}
       <div className="bg-card-color border-b border-border-color px-6 py-4">
         <div className="flex items-center justify-between">
@@ -284,6 +294,33 @@ const TestComponents = () => {
             code={`<Button type="button">Button</Button>
 <Button type="submit">Submit</Button>
 <Button type="reset">Reset</Button>`}
+          />
+        </ComponentSection>
+
+        {/* Shadcn (scoped) */}
+        <ComponentSection title="Shadcn (scoped)">
+          <ComponentDemo
+            title="Combobox + MultiSelect"
+            description="Rendered inside .shadcn-scope so it doesn't affect the site theme."
+            component={
+              <div className="shadcn-scope">
+                {/* Render only if shadcn components are present */}
+                {(() => {
+                  try {
+                    const { ShadcnPopover, ShadcnPopoverTrigger, ShadcnPopoverContent } = require('../components/shadcn');
+                    return (
+                      <div className="flex gap-4">
+                        <button className="px-3 py-2 rounded-md border">Open (placeholder)</button>
+                        <span className="text-font-color-100 text-sm">Shadcn primitives available.</span>
+                      </div>
+                    );
+                  } catch {
+                    return <div className="text-font-color-100 text-sm">Install shadcn primitives to view this demo.</div>;
+                  }
+                })()}
+              </div>
+            }
+            code={`<div className="shadcn-scope">{/* shadcn components here */}</div>`}
           />
         </ComponentSection>
 
