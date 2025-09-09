@@ -7,6 +7,7 @@ import SearchBox from '../components/ui/SearchBox';
 import ComboList from '../components/ui/ComboList';
 import MultiSelect from '../components/ui/MultiSelect';
 import { GetStaticProps } from 'next';
+import { ShadcnCheckbox as ScCheckbox, ShadcnLabel as ScLabel, ShadcnPopover as ScPopover, ShadcnPopoverTrigger as ScPopoverTrigger, ShadcnPopoverContent as ScPopoverContent, ShadcnCommand as ScCommand, ShadcnCommandInput as ScCommandInput, ShadcnCommandList as ScCommandList, ShadcnCommandEmpty as ScCommandEmpty, ShadcnCommandGroup as ScCommandGroup, ShadcnCommandItem as ScCommandItem, ShadcnScrollArea as ScScrollArea, ShadcnInput as ScInput, ShadcnTextarea as ScTextarea, ShadcnSelect as ScSelect, ShadcnSelectTrigger as ScSelectTrigger, ShadcnSelectContent as ScSelectContent, ShadcnSelectItem as ScSelectItem, ShadcnRadioGroup as ScRadioGroup, ShadcnRadioItem as ScRadioItem, ShadcnTabs as ScTabs, ShadcnTabsList as ScTabsList, ShadcnTabsTrigger as ScTabsTrigger, ShadcnTabsContent as ScTabsContent, ShadcnTooltip as ScTooltip, ShadcnTooltipProvider as ScTooltipProvider, ShadcnTooltipTrigger as ScTooltipTrigger, ShadcnTooltipContent as ScTooltipContent, ShadcnDropdown as ScDropdown, ShadcnDropdownTrigger as ScDropdownTrigger, ShadcnDropdownContent as ScDropdownContent, ShadcnDropdownItem as ScDropdownItem, ShadcnCard as ScCard, ShadcnCardHeader as ScCardHeader, ShadcnCardTitle as ScCardTitle, ShadcnCardContent as ScCardContent, ShadcnBadge as ScBadge, ShadcnCalendar as ScCalendar, ShadcnButton as ScButton } from '../components/shadcn';
 import { getThemePreferences, saveThemePreferences, applyThemePreferences } from '@/lib/themeStorage';
 
 const TestComponents = () => {
@@ -30,6 +31,18 @@ const TestComponents = () => {
   const [multiSelectValue, setMultiSelectValue] = useState<string[]>([]);
   const [parityCompare, setParityCompare] = useState(false);
   const [showShadcn, setShowShadcn] = useState(true);
+  const [activeTab, setActiveTab] = useState<'ours' | 'shadcn'>('ours');
+  const [scComboOpen, setScComboOpen] = useState(false);
+  const [scComboValue, setScComboValue] = useState<string>('');
+  const scOptions = [
+    { value: 'react', label: 'React' },
+    { value: 'next', label: 'Next.js' },
+    { value: 'vue', label: 'Vue' },
+    { value: 'svelte', label: 'Svelte' }
+  ];
+  const currentYear = new Date().getFullYear();
+  const [scCalMonth, setScCalMonth] = useState<Date>(new Date());
+  const scMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
   // Sample data
   const comboOptions = [
@@ -170,6 +183,25 @@ const TestComponents = () => {
 
       {/* Content */}
       <div className="p-6 max-w-7xl mx-auto">
+        {/* Tabs */}
+        <div className="mb-6">
+          <div className="inline-flex rounded-lg border border-border-color overflow-hidden">
+            <button
+              className={`px-4 py-2 text-sm ${activeTab === 'ours' ? 'bg-primary text-white' : 'bg-card-color text-font-color'}`}
+              onClick={() => setActiveTab('ours')}
+            >
+              Our Components
+            </button>
+            <button
+              className={`px-4 py-2 text-sm border-l border-border-color ${activeTab === 'shadcn' ? 'bg-primary text-white' : 'bg-card-color text-font-color'}`}
+              onClick={() => setActiveTab('shadcn')}
+            >
+              Shadcn Components
+            </button>
+          </div>
+        </div>
+        {/* Our Components tab content */}
+        <div hidden={activeTab !== 'ours'}>
         {/* Buttons */}
         <ComponentSection title="Buttons">
           <ComponentDemo
@@ -297,33 +329,127 @@ const TestComponents = () => {
           />
         </ComponentSection>
 
-        {/* Shadcn (scoped) */}
+        {/* Our Components wrappers continue through all sections; close after MultiSelect below */}
+        </div>
+
+        {/* Shadcn tab content */}
+        <div hidden={activeTab !== 'shadcn'}>
         <ComponentSection title="Shadcn (scoped)">
           <ComponentDemo
-            title="Combobox + MultiSelect"
+            title="Shadcn Showcase"
             description="Rendered inside .shadcn-scope so it doesn't affect the site theme."
             component={
               <div className="shadcn-scope">
-                {/* Render only if shadcn components are present */}
-                {(() => {
-                  try {
-                    const { ShadcnPopover, ShadcnPopoverTrigger, ShadcnPopoverContent } = require('../components/shadcn');
-                    return (
-                      <div className="flex gap-4">
-                        <button className="px-3 py-2 rounded-md border">Open (placeholder)</button>
-                        <span className="text-font-color-100 text-sm">Shadcn primitives available.</span>
-                      </div>
-                    );
-                  } catch {
-                    return <div className="text-font-color-100 text-sm">Install shadcn primitives to view this demo.</div>;
-                  }
-                })()}
+                {/* Inputs */}
+                <div className="flex flex-col gap-3 max-w-sm mb-6">
+                  <ScLabel htmlFor="sc-input">Text input</ScLabel>
+                  <ScInput id="sc-input" placeholder="Type here" />
+                  <ScLabel htmlFor="sc-textarea">Textarea</ScLabel>
+                  <ScTextarea id="sc-textarea" placeholder="Your notes..." />
+                </div>
+
+                {/* Combobox */}
+                <div className="flex flex-col gap-3 max-w-sm mb-6">
+                  <ScLabel htmlFor="sc-combobox">Framework</ScLabel>
+                  <ScPopover open={scComboOpen} onOpenChange={setScComboOpen}>
+                    <ScPopoverTrigger asChild>
+                      <button className="px-3 py-2 rounded-md border border-border-color bg-card-color text-left">
+                        {scOptions.find(o => o.value === scComboValue)?.label || 'Select...'}
+                      </button>
+                    </ScPopoverTrigger>
+                    <ScPopoverContent className="p-0 w-[280px] bg-card-color text-font-color border border-border-color">
+                      <ScCommand className="bg-card-color">
+                        <ScCommandInput placeholder="Search framework..." />
+                        <ScCommandEmpty>No results found.</ScCommandEmpty>
+                        <ScCommandGroup>
+                          <ScScrollArea className="max-h-[220px]">
+                            {scOptions.map(o => (
+                              <ScCommandItem key={o.value} value={o.label} onSelect={() => { setScComboValue(o.value); setScComboOpen(false); }}>
+                                {o.label}
+                              </ScCommandItem>
+                            ))}
+                          </ScScrollArea>
+                        </ScCommandGroup>
+                      </ScCommand>
+                    </ScPopoverContent>
+                  </ScPopover>
+                </div>
+                {/* Checkbox & Radio */}
+                <div className="mt-4 flex items-center gap-6 mb-6">
+                  <ScCheckbox id="sc1" />
+                  <ScLabel htmlFor="sc1">Shadcn Checkbox</ScLabel>
+                  <ScRadioGroup className="flex items-center gap-3" defaultValue="a">
+                    <div className="flex items-center gap-1">
+                      <ScRadioItem value="a" id="r1" />
+                      <ScLabel htmlFor="r1">A</ScLabel>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <ScRadioItem value="b" id="r2" />
+                      <ScLabel htmlFor="r2">B</ScLabel>
+                    </div>
+                  </ScRadioGroup>
+                </div>
+
+                {/* Buttons & Badge */}
+                <div className="flex items-center gap-3 mb-6">
+                  <ScButton>Primary</ScButton>
+                  <ScBadge>Badge</ScBadge>
+                </div>
+
+                {/* Tabs */}
+                <div className="mb-6">
+                  <ScTabs defaultValue="tab1" className="w-[300px]">
+                    <ScTabsList>
+                      <ScTabsTrigger value="tab1">Tab 1</ScTabsTrigger>
+                      <ScTabsTrigger value="tab2">Tab 2</ScTabsTrigger>
+                    </ScTabsList>
+                    <ScTabsContent value="tab1">Content 1</ScTabsContent>
+                    <ScTabsContent value="tab2">Content 2</ScTabsContent>
+                  </ScTabs>
+                </div>
+
+                {/* Tooltip & Dropdown */}
+                <ScTooltipProvider>
+                  <div className="flex items-center gap-4 mb-6">
+                    <ScTooltip>
+                      <ScTooltipTrigger asChild>
+                        <ScButton variant="outline">Hover me</ScButton>
+                      </ScTooltipTrigger>
+                      <ScTooltipContent>Tooltip text</ScTooltipContent>
+                    </ScTooltip>
+
+                    <ScDropdown>
+                      <ScDropdownTrigger asChild>
+                        <ScButton variant="outline">Menu</ScButton>
+                      </ScDropdownTrigger>
+                      <ScDropdownContent className="bg-card-color text-font-color border border-border-color">
+                        <ScDropdownItem>Item 1</ScDropdownItem>
+                        <ScDropdownItem>Item 2</ScDropdownItem>
+                      </ScDropdownContent>
+                    </ScDropdown>
+                  </div>
+                </ScTooltipProvider>
+
+                {/* Calendar */}
+                <div className="mb-6">
+                  <ScCalendar
+                    mode="single"
+                    captionLayout="dropdown"
+                    fromYear={currentYear - 10}
+                    toYear={currentYear + 5}
+                    showOutsideDays={true}
+                    className="bg-card-color text-font-color border border-border-color rounded-md"
+                  />
+                </div>
               </div>
             }
-            code={`<div className="shadcn-scope">{/* shadcn components here */}</div>`}
+            code={`<div className=\"shadcn-scope\">\n  <Input /> <Textarea />\n  <Popover>...Command...</Popover>\n  <Checkbox /> <RadioGroup />\n  <Button /> <Badge />\n  <Tabs />\n  <Tooltip /> <DropdownMenu />\n  <Calendar />\n</div>`}
           />
         </ComponentSection>
+        </div>
 
+        {/* Our Components: CheckBoxes */}
+        <div hidden={activeTab !== 'ours'}>
         {/* CheckBoxes */}
         <ComponentSection title="CheckBoxes">
           <ComponentDemo
@@ -600,6 +726,13 @@ const TestComponents = () => {
                   placeholder="Select multiple options..."
                 />
                 <MultiSelect
+                  value={multiSelectValue}
+                  onValueChange={setMultiSelectValue}
+                  options={multiSelectOptions}
+                  placeholder="Select with Apply..."
+                  applyMode={true}
+                />
+                <MultiSelect
                   options={multiSelectOptions}
                   placeholder="Without checkboxes"
                   showCheckboxes={false}
@@ -637,6 +770,7 @@ const TestComponents = () => {
 <MultiSelect size="large" options={options} />`}
           />
         </ComponentSection>
+        </div>
       </div>
     </div>
   );

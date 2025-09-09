@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import CheckBox from './CheckBox';
 import { IconChevronDown, IconCheck, IconSearch, IconX } from '@tabler/icons-react';
 
 export interface MultiSelectOption {
@@ -23,6 +24,7 @@ export interface MultiSelectProps {
   showCheckboxes?: boolean;
   maxDisplayItems?: number;
   clearable?: boolean;
+  applyMode?: boolean;
 }
 
 const MultiSelect = ({ 
@@ -39,13 +41,15 @@ const MultiSelect = ({
   showSearch = true,
   showCheckboxes = true,
   maxDisplayItems = 2,
-  clearable = true
+  clearable = true,
+  applyMode = false
 }: MultiSelectProps) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedValues, setSelectedValues] = useState<string[]>(Array.isArray(value) ? value : []);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const sizeClasses = {
     small: 'px-3 py-1.5 text-sm',
@@ -72,10 +76,13 @@ const MultiSelect = ({
       )
     : options;
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside (ignore clicks inside dropdown)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const clickedInsideTrigger = !!(containerRef.current && containerRef.current.contains(target));
+      const clickedInsideDropdown = !!(dropdownRef.current && dropdownRef.current.contains(target as Node));
+      if (!clickedInsideTrigger && !clickedInsideDropdown) {
         setIsOpen(false);
         setSearchQuery('');
       }
@@ -98,7 +105,7 @@ const MultiSelect = ({
       : [...selectedValues, optionValue];
     
     setSelectedValues(newSelectedValues);
-    onValueChange(newSelectedValues);
+    if (!applyMode) onValueChange(newSelectedValues);
   };
 
   const handleClearAll = (e?: React.MouseEvent) => {
@@ -180,6 +187,7 @@ const MultiSelect = ({
       {/* Dropdown Content */}
       {isOpen && (
         <div 
+          ref={dropdownRef}
           className="fixed mt-1 z-[99999] bg-card-color border border-border-color rounded-lg shadow-xl overflow-hidden min-w-[250px]"
           style={{
             top: (containerRef.current?.getBoundingClientRect().bottom || 0) + window.scrollY + 4,
@@ -228,20 +236,22 @@ const MultiSelect = ({
               </div>
             ) : (
               filteredOptions.map((option) => (
-                <label
+                <div
                   key={option.value}
                   className={`
-                    flex items-center gap-3 px-3 py-2 hover:bg-primary-10 cursor-pointer transition-colors
-                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                    flex items-center gap-3 px-3 py-2 hover:bg-primary-10 transition-colors
+                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                   `}
+                  onClick={() => !option.disabled && handleToggleOption(option.value)}
                 >
                   {showCheckboxes && (
-                    <input
-                      type="checkbox"
+                    <CheckBox
                       checked={selectedValues.includes(option.value)}
-                      onChange={() => !option.disabled && handleToggleOption(option.value)}
-                      disabled={option.disabled}
-                      className="w-4 h-4 text-primary bg-card-color border-border-color rounded focus:ring-primary focus:ring-2"
+                      onChange={(checked) => {
+                        if (option.disabled) return;
+                        handleToggleOption(option.value);
+                      }}
+                      mode="emulated"
                     />
                   )}
                   {option.icon && (
@@ -253,10 +263,34 @@ const MultiSelect = ({
                   {!showCheckboxes && selectedValues.includes(option.value) && (
                     <IconCheck className="w-4 h-4 text-primary flex-shrink-0" />
                   )}
-                </label>
+                </div>
               ))
             )}
           </div>
+          {applyMode && (
+            <div className="flex items-center justify-end gap-3 p-3 border-t border-border-color bg-card-color">
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm rounded-md border border-border-color"
+                onClick={() => {
+                  setSelectedValues(Array.isArray(value) ? value : []);
+                  setIsOpen(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-sm rounded-md border border-primary bg-primary text-white"
+                onClick={() => {
+                  onValueChange(selectedValues);
+                  setIsOpen(false);
+                }}
+              >
+                Apply
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
