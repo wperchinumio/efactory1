@@ -46,7 +46,7 @@ function LoginUserPageInner() {
 	const [accounts, setAccounts] = useState<AvailableAccountItem[]>([]);
 	const [sortField, setSortField] = useState<'company' | 'location' | 'edi'>('company');
 	const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-	const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+	const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
 	const [analyticsView, setAnalyticsView] = useState<'edi' | 'complexity' | 'activity'>('complexity');
 	const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -418,8 +418,8 @@ function LoginUserPageInner() {
 							<div className='bg-primary-5 border-b border-border-color px-6 py-3'>
 								<div className='grid grid-cols-12 gap-4 items-center text-[12px]/[16px] font-semibold text-font-color-100 uppercase tracking-wider'>
 									<div className='col-span-1'>#</div>
-									<div className='col-span-1'>Avatar</div>
-									<div className='col-span-3'>Company</div>
+									<div className='col-span-1'>Company Code</div>
+									<div className='col-span-3'>Account # / Company Name</div>
 									<div className='col-span-3'>Locations</div>
 									<div className='col-span-2'>Type</div>
 									<div className='col-span-2'>Actions</div>
@@ -629,7 +629,7 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 								</span>
 							))}
 							{account.location && account.location.split(',').length > 3 && (
-								<span className='px-2 py-1 rounded-md dark:bg-primary-700 text-white text-[10px]/[12px] font-medium'>
+								<span className='px-2 py-1 rounded-md bg-primary-10 text-primary text-[10px]/[12px] font-medium'>
 									+{account.location.split(',').length - 3}
 								</span>
 							)}
