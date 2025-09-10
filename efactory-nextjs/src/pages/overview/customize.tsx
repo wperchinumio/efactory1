@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/shadcn/button';
-import { IconArrowLeft, IconDeviceFloppy, IconGripVertical, IconEye, IconEyeOff } from '@tabler/icons-react';
+import { IconArrowLeft, IconDeviceFloppy, IconGripVertical, IconEye, IconEyeOff, IconRefresh, IconX } from '@tabler/icons-react';
 import { fetchDefaultOverviewLayout, saveOverviewLayout } from '@/services/api';
 import type { OverviewArea, OverviewLayout, OverviewTileName } from '@/types/api/views';
 import { useRouter } from 'next/router';
@@ -9,16 +9,18 @@ export default function CustomizeOverview() {
   const router = useRouter();
   const [layout, setLayout] = useState<OverviewLayout | null>(null);
   const [saving, setSaving] = useState(false);
+  const [working, setWorking] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
+        setWorking(true);
         const remote = await fetchDefaultOverviewLayout();
         setLayout(remote);
       } catch {
         setLayout({ areas: [] });
-      }
+      } finally { setWorking(false); }
     })();
   }, []);
 
@@ -39,6 +41,17 @@ export default function CustomizeOverview() {
     if (!entry) return;
     const visibleCount = tileArea.areas?.filter(t => t.visible).length || 0;
     entry.visible = entry.visible ? false : visibleCount < 4;
+    setLayout(next);
+  }
+
+  function moveSection(index: number, delta: number) {
+    if (!layout) return;
+    const next = JSON.parse(JSON.stringify(layout)) as OverviewLayout;
+    const arr = next.areas;
+    const newIndex = index + delta;
+    if (newIndex < 0 || newIndex >= arr.length) return;
+    const [moved] = arr.splice(index, 1);
+    arr.splice(newIndex, 0, moved);
     setLayout(next);
   }
 
@@ -66,6 +79,14 @@ export default function CustomizeOverview() {
     } finally { setSaving(false); }
   }
 
+  async function onRestoreDefault() {
+    setWorking(true);
+    try {
+      const def = await fetchDefaultOverviewLayout();
+      setLayout(def);
+    } finally { setWorking(false); }
+  }
+
   if (!layout) return null;
 
   return (
@@ -73,22 +94,34 @@ export default function CustomizeOverview() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => router.push('/overview')}>
-            <IconArrowLeft className="w-4 h-4 mr-2" /> Back
+            <IconArrowLeft className="w-4 h-4 mr-2" /> Close
           </Button>
           <h1 className="text-xl font-semibold">Customize Overview</h1>
         </div>
-        <Button disabled={saving} onClick={onSave}>
-          <IconDeviceFloppy className="w-4 h-4 mr-2" /> {saving ? 'Saving…' : 'Save Layout'}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={onRestoreDefault} disabled={working}>
+            <IconRefresh className="w-4 h-4 mr-2" /> Restore Default View
+          </Button>
+          <Button size="sm" onClick={onSave} disabled={saving}>
+            <IconDeviceFloppy className="w-4 h-4 mr-2" /> {saving ? 'Saving…' : 'Save & Close'}
+          </Button>
+        </div>
       </div>
 
-      {/* Sections visibility */}
-      <div className="grid gap-3 grid-cols-1 md:grid-cols-3 mb-6">
-        {layout.areas.map(a => (
-          <button key={a.name} onClick={() => toggleAreaVisible(a.name)} className={`rounded-lg border px-4 py-3 text-left flex items-center justify-between ${a.visible ? 'border-primary bg-primary-10' : 'border-border-color'}`}>
-            <span className="font-medium">{a.name}</span>
-            {a.visible ? <IconEye className="w-4 h-4" /> : <IconEyeOff className="w-4 h-4" />}
-          </button>
+      {/* Sections visibility + drag order */}
+      <div className="space-y-2 mb-6">
+        {(layout.areas || []).map((a, idx) => (
+          <div key={a.name} className="rounded-lg border px-3 py-2 flex items-center justify-between bg-card-color">
+            <div className="flex items-center gap-2">
+              <IconGripVertical className="w-4 h-4 text-font-color-100" />
+              <span className="font-medium capitalize">{a.name}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => moveSection(idx, -1)} disabled={idx === 0}>↑</Button>
+              <Button size="sm" variant="outline" onClick={() => moveSection(idx, 1)} disabled={idx === (layout.areas.length - 1)}>↓</Button>
+              <Button size="sm" variant={a.visible ? 'default' : 'outline'} onClick={() => toggleAreaVisible(a.name)}>{a.visible ? 'Visible' : 'Hidden'}</Button>
+            </div>
+          </div>
         ))}
       </div>
 

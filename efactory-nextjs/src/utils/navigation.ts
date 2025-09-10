@@ -2,6 +2,7 @@
 const routeAppIdsTable = {
   '/overview': 1,
   '/overview/customize-view': 1,
+  '/overview/customize': 1,
   '/announcements': 2,
   '/overview/notes': 3,
 
