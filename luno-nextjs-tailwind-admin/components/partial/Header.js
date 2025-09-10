@@ -28,7 +28,7 @@ import {
     light_version,
     rtl_version,
     font_mali,
-    font_quicksand,
+    font_roboto,
     font_mulish,
     font_jura,
     profile_av,
@@ -347,8 +347,8 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
             font: "Mali, sans-serif"
         },
         {
-            image: font_quicksand,
-            font: "Quicksand, sans-serif"
+            image: font_roboto,
+            font: "Roboto, sans-serif"
         },
         {
             image: font_mulish,

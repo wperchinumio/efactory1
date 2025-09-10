@@ -8,7 +8,7 @@ export default function Document() {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500&family=Mulish:wght@400;500&family=Quicksand:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500&family=Mulish:wght@400;500&family=Roboto:wght@400;500&display=swap"
           rel="stylesheet"
         />
         {/* Using Tabler Icons (React components) - same as Luno theme */}

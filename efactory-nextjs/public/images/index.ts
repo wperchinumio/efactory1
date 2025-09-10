@@ -3,7 +3,7 @@ import light_version from "./light_version.svg"
 import dark_version from "./dark_version.svg"
 import rtl_version from "./rtl_version.svg"
 import font_mali from "./font_mali.svg"
-import font_quicksand from "./font_quicksand.svg"
+import font_roboto from "./font_roboto.svg"
 import font_mulish from "./font_mulish.svg"
 import font_jura from "./font_jura.svg"
 import avatar1 from "./avatar1.jpg"
@@ -59,7 +59,7 @@ export {
     dark_version,
     rtl_version,
     font_mali,
-    font_quicksand,
+    font_roboto,
     font_mulish,
     font_jura,
     avatar1,
