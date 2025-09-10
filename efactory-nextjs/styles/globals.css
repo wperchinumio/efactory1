@@ -91,7 +91,7 @@ body[data-luno-theme="indigo"] {
 
 [data-theme="dark"] html[data-luno-theme="indigo"],
 [data-theme="dark"] body[data-luno-theme="indigo"] {
-  --primary: #7754b5 !important;
+  --primary: #996EEA !important;
   /*--primary-10: #cec8d71a !important;
   --secondary: #e05170 !important;
   --chart-color1: #b9b3a8 !important;
@@ -104,7 +104,7 @@ body[data-luno-theme="indigo"] {
 html[data-luno-theme="blue"],
 body[data-luno-theme="blue"] {
   --primary: #4595D2 !important;
-  --primary-10: #4c35751a !important;
+  --primary-10: #cec8d71a !important;
   --secondary: #00AC9A !important;
   --chart-color1: #2794eb !important;
   --chart-color2: #6382D8 !important;
