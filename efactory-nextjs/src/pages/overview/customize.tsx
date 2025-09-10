@@ -1,0 +1,122 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/ui/shadcn/button';
+import { IconArrowLeft, IconDeviceFloppy, IconGripVertical, IconEye, IconEyeOff } from '@tabler/icons-react';
+import { fetchDefaultOverviewLayout, saveOverviewLayout } from '@/services/api';
+import type { OverviewArea, OverviewLayout, OverviewTileName } from '@/types/api/views';
+import { useRouter } from 'next/router';
+
+export default function CustomizeOverview() {
+  const router = useRouter();
+  const [layout, setLayout] = useState<OverviewLayout | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const remote = await fetchDefaultOverviewLayout();
+        setLayout(remote);
+      } catch {
+        setLayout({ areas: [] });
+      }
+    })();
+  }, []);
+
+  const tiles = useMemo(() => layout?.areas.find(a => a.name === 'tiles') || null, [layout]);
+
+  function toggleAreaVisible(name: string) {
+    if (!layout) return;
+    const next = JSON.parse(JSON.stringify(layout)) as OverviewLayout;
+    next.areas = next.areas.map(a => a.name === name ? { ...a, visible: !a.visible } : a);
+    setLayout(next);
+  }
+
+  function toggleTile(name: OverviewTileName) {
+    if (!tiles || !layout) return;
+    const next = JSON.parse(JSON.stringify(layout)) as OverviewLayout;
+    const tileArea = next.areas.find(a => a.name === 'tiles')!;
+    const entry = tileArea.areas?.find(t => t.name === name);
+    if (!entry) return;
+    const visibleCount = tileArea.areas?.filter(t => t.visible).length || 0;
+    entry.visible = entry.visible ? false : visibleCount < 4;
+    setLayout(next);
+  }
+
+  function onDragStart(index: number) { setDragIndex(index); }
+  function onDragOver(index: number, e: React.DragEvent) {
+    e.preventDefault();
+    if (dragIndex === null || !tiles || !layout) return;
+    if (index === dragIndex) return;
+    const next = JSON.parse(JSON.stringify(layout)) as OverviewLayout;
+    const arr = next.areas.find(a => a.name === 'tiles')!.areas || [];
+    const [moved] = arr.splice(dragIndex, 1);
+    arr.splice(index, 0, moved);
+    next.areas.find(a => a.name === 'tiles')!.areas = arr;
+    setLayout(next);
+    setDragIndex(index);
+  }
+
+  async function onSave() {
+    if (!layout) return;
+    setSaving(true);
+    try {
+      const saved = await saveOverviewLayout(layout);
+      setLayout(saved);
+      router.push('/overview');
+    } finally { setSaving(false); }
+  }
+
+  if (!layout) return null;
+
+  return (
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => router.push('/overview')}>
+            <IconArrowLeft className="w-4 h-4 mr-2" /> Back
+          </Button>
+          <h1 className="text-xl font-semibold">Customize Overview</h1>
+        </div>
+        <Button disabled={saving} onClick={onSave}>
+          <IconDeviceFloppy className="w-4 h-4 mr-2" /> {saving ? 'Saving…' : 'Save Layout'}
+        </Button>
+      </div>
+
+      {/* Sections visibility */}
+      <div className="grid gap-3 grid-cols-1 md:grid-cols-3 mb-6">
+        {layout.areas.map(a => (
+          <button key={a.name} onClick={() => toggleAreaVisible(a.name)} className={`rounded-lg border px-4 py-3 text-left flex items-center justify-between ${a.visible ? 'border-primary bg-primary-10' : 'border-border-color'}`}>
+            <span className="font-medium">{a.name}</span>
+            {a.visible ? <IconEye className="w-4 h-4" /> : <IconEyeOff className="w-4 h-4" />}
+          </button>
+        ))}
+      </div>
+
+      {/* Tiles area DnD */}
+      {tiles && (
+        <div>
+          <div className="text-sm font-semibold mb-2">Key Parameter Display (drag to reorder, max 4 visible)</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {(tiles.areas || []).map((t, i) => (
+              <div key={t.name}
+                   draggable
+                   onDragStart={() => onDragStart(i)}
+                   onDragOver={(e) => onDragOver(i, e)}
+                   className={`rounded-lg border p-3 flex items-center justify-between ${t.visible ? 'border-primary bg-primary-10' : 'border-border-color'}`}>
+                <div className="flex items-center gap-2">
+                  <IconGripVertical className="w-4 h-4 text-font-color-100" />
+                  <div className="font-medium">{t.name}</div>
+                </div>
+                <Button size="sm" variant={t.visible ? 'default' : 'outline'} onClick={() => toggleTile(t.name)}>
+                  {t.visible ? 'Visible' : 'Hidden'}
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+

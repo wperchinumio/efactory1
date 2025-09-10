@@ -7,6 +7,11 @@ const nextConfig = {
   // },
   // trailingSlash: true,
   // output: 'export'
+  async rewrites() {
+    return [
+      { source: "/api/proxy/:path*", destination: "https://efactory.dclcorp.com/:path*" }
+    ];
+  }
 };
 
 export default nextConfig;
