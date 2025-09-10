@@ -1087,6 +1087,21 @@ body .apexcharts-legend-marker {
   @apply chart-theme-dark;
 }
 
+/* Make logos white in dark mode - target only logo SVGs */
+[data-theme="dark"] .sidebar-header svg path,
+[data-theme="dark"] .sidebar-header svg polygon,
+[data-theme="dark"] .sidebar-header svg text,
+[data-theme="dark"] .flex.items-center.gap-3 svg path,
+[data-theme="dark"] .flex.items-center.gap-3 svg polygon,
+[data-theme="dark"] .flex.items-center.gap-3 svg text {
+  fill: white !important;
+}
+
+/* Make mini logo white in dark mode when sidebar is collapsed */
+[data-theme="dark"] .mini-sidebar .sidebar-header img {
+  filter: brightness(0) invert(1);
+}
+
 /* Loading animation utilities */
 @keyframes fade-in {
   from {
