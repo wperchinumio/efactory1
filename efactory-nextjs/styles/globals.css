@@ -13,7 +13,7 @@
   --theme-blue: #1363DF;
   --theme-cyan: #219F94;
   --theme-green: #8CBA51;
-  --theme-orange: #FF9234;
+  --theme-orange: #e8730d;
   --theme-blush: #dd5e89;
   --theme-red: #f73859;
 
@@ -117,7 +117,7 @@ html[data-luno-theme="cyan"],
 body[data-luno-theme="cyan"] {
   --primary: #219F94 !important;
   --primary-10: #219F941a !important;
-  --secondary: #655D8A !important;
+  --secondary: #8269ff !important;
   --chart-color1: #219F94 !important;
   --chart-color2: #655D8A !important;
   --chart-color3: #C1DEAE !important;
@@ -129,7 +129,7 @@ html[data-luno-theme="green"],
 body[data-luno-theme="green"] {
   --primary: #8CBA51 !important;
   --primary-10: #8CBA511a !important;
-  --secondary: #A1DD70 !important;
+  --secondary: #5ea425 !important;
   --chart-color1: #79B989 !important;
   --chart-color2: #7E8954 !important;
   --chart-color3: #91A7FB !important;
@@ -139,9 +139,9 @@ body[data-luno-theme="green"] {
 
 html[data-luno-theme="orange"],
 body[data-luno-theme="orange"] {
-  --primary: #d47828 !important;
+  --primary: #e8730d !important;
   --primary-10: #FF92341a !important;
-  --secondary: #D8C962 !important;
+  --secondary: #ba7c24 !important;
   --chart-color1: #d47828 !important;
   --chart-color2: #FF8982 !important;
   --chart-color3: #FFC0B7 !important;
@@ -153,7 +153,7 @@ html[data-luno-theme="blush"],
 body[data-luno-theme="blush"] {
   --primary: #dd5e89 !important;
   --primary-10: #dd5e891a !important;
-  --secondary: #f7bb97 !important;
+  --secondary: #bb7d56 !important;
   --chart-color1: #dd5e89 !important;
   --chart-color2: #b45d98 !important;
   --chart-color3: #865e99 !important;
@@ -165,7 +165,7 @@ html[data-luno-theme="red"],
 body[data-luno-theme="red"] {
   --primary: #f73859 !important;
   --primary-10: #f738591a !important;
-  --secondary: #7e52b9 !important;
+  --secondary: #985fe2 !important;
   --chart-color1: #FF7171 !important;
   --chart-color2: #FFAA71 !important;
   --chart-color3: #6E6D6D !important;
