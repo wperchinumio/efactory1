@@ -1,4 +1,4 @@
-import { TopMenuConfig, SidebarConfig, MenuItem } from '../types/api/auth';
+import { TopMenuConfig, SidebarConfig, MenuItem } from '../types/api';
 import {
   IconHome,
   IconBook,
@@ -162,15 +162,15 @@ export const sidebarConfigs: Record<string, SidebarConfig> = {
         keyword: 'overview',
         iconComponent: IconHome,
         title: 'Overview',
-        route: '/overview'
-        // No appIds - always visible like legacy system
+        route: '/overview',
+        appId: 1
       },
       {
         keyword: 'notes',
         iconComponent: IconPencil,
         title: 'Personal notes',
-        route: '/overview/notes'
-        // No appIds - always visible like legacy system
+        route: '/overview/notes',
+        appId: 3
       }
     ]
   },

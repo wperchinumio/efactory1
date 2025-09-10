@@ -393,6 +393,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   // Initialize with null so the effect below runs on first mount
   const prevPageUrl = useRef<string | null>(null);
   const prevSidebarAutoCollapse = useRef<boolean | null>(null);
+  const prevActiveTopMenu = useRef<string | null>(null);
+  const prevUserApps = useRef<number[]>([]);
   
   useEffect(() => {
     // Safety check to prevent hooks errors during auth state changes
@@ -400,8 +402,11 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       const isFirstRun = prevPageUrl.current === null || prevSidebarAutoCollapse.current === null;
       const routeChanged = prevPageUrl.current !== pageUrl;
       const modeChanged = prevSidebarAutoCollapse.current !== sidebarAutoCollapse;
+      const topMenuChanged = prevActiveTopMenu.current !== activeTopMenu;
+      const userAppsChanged = JSON.stringify(prevUserApps.current) !== JSON.stringify(userApps);
       
-      if (isFirstRun || routeChanged || modeChanged) {
+      // Only run expansion logic on route changes or first run, not on every state change
+      if (isFirstRun || routeChanged || topMenuChanged || userAppsChanged) {
       if (sidebarAutoCollapse) {
         // Auto-collapse mode: find first matching menu
         let foundIndex: number | null = null;
@@ -472,7 +477,9 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         // Fallback: ensure at least the calculated menu is expanded
         if (newActiveMenus.size === 0 && calculatedActiveSidebarMenu) {
           const idx = visibleMenus.findIndex(m => m.keyword === calculatedActiveSidebarMenu);
-          if (idx >= 0) newActiveMenus.add(idx);
+          if (idx >= 0) {
+            newActiveMenus.add(idx);
+          }
         }
 
         setActiveMenus(newActiveMenus);
@@ -481,6 +488,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         // Update refs
         prevPageUrl.current = pageUrl;
         prevSidebarAutoCollapse.current = sidebarAutoCollapse;
+        prevActiveTopMenu.current = activeTopMenu;
+        prevUserApps.current = userApps;
       }
     } catch (error) {
       console.error('Error in SidebarMenu useEffect:', error);
@@ -488,7 +497,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       setMenuActive(null);
       setActiveMenus(new Set());
     }
-  }, [pageUrl, sidebarAutoCollapse, visibleMenus]);
+  }, [pageUrl, sidebarAutoCollapse, visibleMenus, activeTopMenu, userApps, calculatedActiveSidebarMenu]);
+
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

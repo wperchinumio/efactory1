@@ -108,7 +108,8 @@ export interface MenuItem {
   dropdownMenus?: DropdownMenuItem[];
   badge?: string;
   badgeClassName?: string;
-  appIds?: number[];
+  appId?: number; // Single app ID for direct routes
+  appIds?: number[]; // Array of app IDs for compatibility
 }
 
 export interface DropdownMenuItem {
