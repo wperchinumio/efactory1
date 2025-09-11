@@ -251,11 +251,11 @@ export async function deleteDrafts(order_ids: number[]): Promise<void> {
 }
 
 // Inventory modal
-export async function fetchInventoryForCart(args: Omit<InventoryStatusForCartBody, 'resource' | 'action'>): Promise<InventoryItemForCartDto[]> {
+export async function fetchInventoryForCart(args: Omit<InventoryStatusForCartBody, 'resource' | 'action'>): Promise<{ rows: InventoryItemForCartDto[]; total: number }> {
   const payload: InventoryStatusForCartBody = { resource: 'inventory-status-for-cart', action: 'read', ...args };
   // Legacy inventory uses /api/inventory with non-standard envelope; but we keep standard here
   const res = await postJson<{ rows: InventoryItemForCartDto[]; total: number }>('/api/inventory', payload as any);
   // Some legacy responses use data.rows; normalize
-  return res.data.rows;
+  return res.data;
 }
 

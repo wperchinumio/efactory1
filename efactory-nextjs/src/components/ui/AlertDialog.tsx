@@ -59,7 +59,8 @@ const AlertDialog: React.FC<AlertDialogProps> = ({ open, onOpenChange, children 
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50"
+        className="fixed inset-0"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(2px)' }}
         onClick={() => onOpenChange(false)}
       />
       {/* Content */}
@@ -74,7 +75,7 @@ const AlertDialogContent = React.forwardRef<HTMLDivElement, AlertDialogContentPr
   ({ className = '', children, style, ...props }, ref) => (
     <div
       ref={ref}
-      className={`rounded-lg shadow-lg max-w-md w-full mx-4 ${className}`}
+      className={`rounded-lg shadow-lg max-w-md w-full mx-4 p-6 ${className}`}
       style={{
         backgroundColor: 'var(--card-color)',
         border: '1px solid var(--border-color)',
@@ -92,7 +93,7 @@ const AlertDialogHeader = React.forwardRef<HTMLDivElement, AlertDialogHeaderProp
   ({ className = '', children, ...props }, ref) => (
     <div
       ref={ref}
-      className={`p-6 pb-2 ${className}`}
+      className={`pb-4 ${className}`}
       {...props}
     >
       {children}
@@ -131,7 +132,7 @@ const AlertDialogFooter = React.forwardRef<HTMLDivElement, AlertDialogFooterProp
   ({ className = '', children, ...props }, ref) => (
     <div
       ref={ref}
-      className={`p-6 pt-2 flex justify-end gap-2 ${className}`}
+      className={`pt-4 flex justify-end gap-2 ${className}`}
       {...props}
     >
       {children}

@@ -3,7 +3,7 @@ import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label } from '@/components/ui'
-import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding } from '@tabler/icons-react'
+import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
 import {
   generateOrderNumber,
@@ -63,6 +63,10 @@ export default function OrderPointsPage() {
   const [showZeroQty, setShowZeroQty] = useState(false)
   const [warehouses, setWarehouses] = useState<string>('')
   const [inventory, setInventory] = useState<Record<string, { item_number: string; description: string; qty_net: number; quantity?: number; price?: number }>>({})
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalItems, setTotalItems] = useState(0)
+  const [pageSize] = useState(100)
   // Amounts & extra fields
   const [amounts, setAmounts] = useState({
     shipping_handling: 0,
@@ -72,6 +76,7 @@ export default function OrderPointsPage() {
     insurance: 0,
     international_handling: 0,
     international_declared_value: 0,
+    balance_due_us: 0
   })
   const [extraLabels] = useState({
     header_cf_1: 'Custom Field 1',
@@ -90,8 +95,130 @@ export default function OrderPointsPage() {
   const [editLineOpen, setEditLineOpen] = useState(false)
   const [editLineIndex, setEditLineIndex] = useState<number | null>(null)
   const [editLineData, setEditLineData] = useState<Partial<OrderDetailDto>>({})
+  
+  // Edit panel modals
+  const [editBillingAddressOpen, setEditBillingAddressOpen] = useState(false)
+  const [editShippingDetailsOpen, setEditShippingDetailsOpen] = useState(false)
+  const [editAmountsOpen, setEditAmountsOpen] = useState(false)
+  const [editExtraFieldsOpen, setEditExtraFieldsOpen] = useState(false)
+  
+  // Temporary state for editing (only updated on save)
+  const [tempBillingAddress, setTempBillingAddress] = useState<AddressDto>({})
+  const [tempShippingDetails, setTempShippingDetails] = useState({
+    international_code: '',
+    shipping_carrier: '',
+    shipping_service: '',
+    freight_account: '',
+    consignee_number: '',
+    terms: '',
+    fob: '',
+    payment_type: '',
+    packing_list_type: ''
+  })
+  const [tempAmounts, setTempAmounts] = useState({
+    shipping_handling: 0,
+    sales_tax: 0,
+    discounts: 0,
+    amount_paid: 0,
+    international_handling: 0,
+    balance_due_us: 0,
+    international_declared_value: 0,
+    insurance: 0
+  })
+  const [tempExtraFields, setTempExtraFields] = useState({
+    custom_field1: '',
+    custom_field2: '',
+    custom_field3: '',
+    custom_field4: '',
+    custom_field5: ''
+  })
+
+  // Functions to handle modal opening and saving
+  const openBillingAddressModal = () => {
+    setTempBillingAddress({ ...billingAddress })
+    setEditBillingAddressOpen(true)
+  }
+  
+  const saveBillingAddress = () => {
+    setBillingAddress({ ...tempBillingAddress })
+    setEditBillingAddressOpen(false)
+  }
+  
+  const openShippingDetailsModal = () => {
+    setTempShippingDetails({
+      international_code: String(orderHeader.international_code || ''),
+      shipping_carrier: orderHeader.shipping_carrier || '',
+      shipping_service: orderHeader.shipping_service || '',
+      freight_account: orderHeader.freight_account || '',
+      consignee_number: orderHeader.consignee_number || '',
+      terms: orderHeader.terms || '',
+      fob: orderHeader.fob || '',
+      payment_type: orderHeader.payment_type || '',
+      packing_list_type: String(orderHeader.packing_list_type || '')
+    })
+    setEditShippingDetailsOpen(true)
+  }
+  
+  const saveShippingDetails = () => {
+    setOrderHeader(prev => ({
+      ...prev,
+      international_code: tempShippingDetails.international_code,
+      shipping_carrier: tempShippingDetails.shipping_carrier,
+      shipping_service: tempShippingDetails.shipping_service,
+      freight_account: tempShippingDetails.freight_account,
+      consignee_number: tempShippingDetails.consignee_number,
+      terms: tempShippingDetails.terms,
+      fob: tempShippingDetails.fob,
+      payment_type: tempShippingDetails.payment_type,
+      packing_list_type: tempShippingDetails.packing_list_type
+    }))
+    setEditShippingDetailsOpen(false)
+  }
+  
+  const openAmountsModal = () => {
+    setTempAmounts({ ...amounts })
+    setEditAmountsOpen(true)
+  }
+  
+  const saveAmounts = () => {
+    setAmounts({ ...tempAmounts })
+    setEditAmountsOpen(false)
+  }
+  
+  const openExtraFieldsModal = () => {
+    setTempExtraFields({
+      custom_field1: orderHeader.custom_field1 || '',
+      custom_field2: orderHeader.custom_field2 || '',
+      custom_field3: orderHeader.custom_field3 || '',
+      custom_field4: orderHeader.custom_field4 || '',
+      custom_field5: orderHeader.custom_field5 || ''
+    })
+    setEditExtraFieldsOpen(true)
+  }
+  
+  const saveExtraFields = () => {
+    setOrderHeader(prev => ({
+      ...prev,
+      custom_field1: tempExtraFields.custom_field1,
+      custom_field2: tempExtraFields.custom_field2,
+      custom_field3: tempExtraFields.custom_field3,
+      custom_field4: tempExtraFields.custom_field4,
+      custom_field5: tempExtraFields.custom_field5
+    }))
+    setEditExtraFieldsOpen(false)
+  }
 
   const columns = useMemo<any[]>(() => ([
+    { 
+      headerName: '', 
+      field: 'select', 
+      width: 50, 
+      sortable: false, 
+      filter: false,
+      checkboxSelection: true,
+      headerCheckboxSelection: true,
+      pinned: 'left'
+    },
     { headerName: '#', field: 'line_number', width: 60, sortable: false },
     { headerName: 'Item #', field: 'item_number', width: 120 },
     { headerName: 'Description', field: 'description', flex: 1, minWidth: 200 },
@@ -211,11 +338,12 @@ export default function OrderPointsPage() {
     // Quick add if toolbar has a value and single match exists; else open modal
     const trimmed = (findItemValue || '').trim()
     if (trimmed) {
-      const rows = await fetchInventoryForCart({
+      const response = await fetchInventoryForCart({
         page_num: 1,
         page_size: 5,
         filter: { and: [ { field: 'omit_zero_qty', oper: '=', value: true }, { field: 'name', oper: '=', value: trimmed } ] }
       } as any)
+      const rows = response.rows || []
       if (rows && rows.length === 1) {
         const first = rows[0] as NonNullable<typeof rows[number]>
         const maxLine = orderDetail.filter(l => !l.is_kit_component).reduce((m,l) => Math.max(m, l.line_number||0), 0)
@@ -265,27 +393,41 @@ export default function OrderPointsPage() {
       const auth = getAuthState() as any;
       if (!auth?.userApps) return [];
       
-      const globalApiDataStr = window.localStorage.getItem('globalApiData');
-      if (!globalApiDataStr) return [];
+      // Get warehouses data from auth token (same as legacy getUserData('warehouses'))
+      const authTokenStr = window.localStorage.getItem('authToken');
+      if (!authTokenStr) return [];
       
-      const globalApiData = JSON.parse(globalApiDataStr);
-      const warehousesData = globalApiData?.warehouses;
+      const authToken = JSON.parse(authTokenStr);
+      const warehousesData = authToken?.user_data?.warehouses;
+      
+      console.log('Warehouse Debug:', { 
+        authToken: !!authToken, 
+        userData: !!authToken?.user_data, 
+        warehouses: warehousesData,
+        warehousesType: typeof warehousesData 
+      });
+      
       if (!warehousesData || typeof warehousesData !== 'object') return [];
       
       const options: Array<{value: string, label: string}> = [];
-      Object.keys(warehousesData).forEach((loc) => {
-        const arr = warehousesData[loc] || [];
-        if (Array.isArray(arr)) {
-          arr.forEach((w: any) => {
-            if (w && typeof w === 'object') {
-              Object.keys(w).forEach((invType) => {
-                const val = `${loc}-${invType}`;
-                options.push({ value: val, label: `${loc} - ${invType}` });
+      
+      // Process warehouses exactly like legacy code
+      Object.keys(warehousesData).forEach((aWarehouse) => {
+        const branches = warehousesData[aWarehouse];
+        if (Array.isArray(branches)) {
+          branches.forEach((branchObj: any) => {
+            if (branchObj && typeof branchObj === 'object') {
+              Object.keys(branchObj).forEach((anInvType) => {
+                const optionValue = `${aWarehouse}-${anInvType}`;
+                const optionLabel = `${aWarehouse} - ${anInvType}`;
+                options.push({ value: optionValue, label: optionLabel });
               });
             }
           });
         }
       });
+      
+      console.log('Warehouse Options Generated:', options);
       return options;
     } catch (error) {
       console.error('Error loading warehouse options:', error);
@@ -293,7 +435,9 @@ export default function OrderPointsPage() {
     }
   }
 
-  async function reloadInventory() {
+  async function reloadInventory(page = currentPage) {
+    console.log('reloadInventory called with:', { page, itemFilter, warehouses, showZeroQty });
+    
     const and: any[] = []
     // Warehouse filter
     if (warehouses && typeof warehouses === 'string') {
@@ -306,19 +450,29 @@ export default function OrderPointsPage() {
     }
     and.push({ field: 'omit_zero_qty', oper: '=', value: !showZeroQty })
     if (itemFilter && typeof itemFilter === 'string') {
-      and.push({ field: 'name', oper: '=', value: itemFilter })
+      and.push({ field: 'name', oper: 'like', value: `%${itemFilter}%` })
     }
+    
+    console.log('Search filters:', and);
 
     const payload: Omit<InventoryStatusForCartBody,'resource'|'action'> = {
-      page_num: 1,
-      page_size: 100,
+      page_num: page,
+      page_size: pageSize,
       sort: [{ item_number: 'asc' } as any],
       filter: { and },
     }
-    const rows = await fetchInventoryForCart(payload)
+    const response = await fetchInventoryForCart(payload)
+    const rows = response.rows || []
+    const total = response.total || 0
+    
+    console.log('Inventory API Response:', { total, rowsCount: rows.length, page, pageSize })
+    
+    setTotalItems(total)
+    setCurrentPage(page)
+    
     const hash: any = {}
     const existing = new Map(orderDetail.map(od => [od.item_number, od]))
-    rows.forEach(r => {
+    rows.forEach((r: any) => {
       const added = existing.get(r.item_number)
       hash[r.item_number] = {
         ...r,
@@ -329,7 +483,75 @@ export default function OrderPointsPage() {
     setInventory(hash)
   }
 
-  useEffect(()=>{ if (browseOpen) reloadInventory() }, [browseOpen])
+  // Pagination functions
+  function goToPage(page: number) {
+    const totalPages = Math.ceil(totalItems / pageSize)
+    const targetPage = Math.max(1, Math.min(page, totalPages))
+    if (targetPage !== currentPage) {
+      reloadInventory(targetPage)
+    }
+  }
+
+  function goToFirstPage() { goToPage(1) }
+  function goToPrevPage() { goToPage(currentPage - 1) }
+  function goToNextPage() { goToPage(currentPage + 1) }
+  function goToLastPage() { goToPage(Math.ceil(totalItems / pageSize)) }
+
+  useEffect(()=>{ 
+    if (browseOpen) {
+      setCurrentPage(1)
+      reloadInventory(1) 
+    }
+  }, [browseOpen])
+
+  // Debug pagination state
+  useEffect(() => {
+    console.log('Pagination State:', { totalItems, pageSize, currentPage, showPagination: totalItems > pageSize })
+  }, [totalItems, pageSize, currentPage])
+
+  // Handle search input changes with debouncing
+  useEffect(() => {
+    if (!browseOpen) return;
+    
+    console.log('Search Effect Triggered:', { itemFilter, browseOpen });
+    
+    // If search is empty, reload immediately to show all items
+    if (itemFilter === '') {
+      console.log('Empty search - reloading immediately');
+      setCurrentPage(1);
+      reloadInventory(1);
+      return;
+    }
+    
+    // If search has content, use debounced search
+    console.log('Setting debounced search for:', itemFilter);
+    const timeoutId = setTimeout(() => {
+      console.log('Debounced search executing for:', itemFilter);
+      setCurrentPage(1);
+      reloadInventory(1);
+    }, 350);
+    
+    return () => {
+      console.log('Clearing timeout for:', itemFilter);
+      clearTimeout(timeoutId);
+    };
+  }, [itemFilter, browseOpen])
+
+  // Handle showZeroQty changes (immediate reload)
+  useEffect(() => {
+    if (browseOpen) {
+      setCurrentPage(1)
+      reloadInventory(1)
+    }
+  }, [showZeroQty, browseOpen])
+
+  // Handle warehouse changes (immediate reload)
+  useEffect(() => {
+    if (browseOpen) {
+      setCurrentPage(1)
+      reloadInventory(1)
+    }
+  }, [warehouses, browseOpen])
 
   function updateInventoryField(item_number: string, field: 'quantity' | 'price', value: string) {
     const v = value.trim()
@@ -414,77 +636,92 @@ export default function OrderPointsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="text-font-color-100 text-sm">Order #</Label>
-              <div className="font-mono text-font-color bg-body-color p-1 rounded border border-border-color h-8 text-sm flex items-center">
-                {orderHeader.order_number || '-'}
-              </div>
-            </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Order Status</Label>
-                      <Select value={String(orderHeader.order_status ?? 1)} onValueChange={(v: string)=>setOrderHeader(p=>({ ...p, order_status: +v }))}>
-                        <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card-color border-border-color">
-                          <SelectItem value="1" className="text-font-color hover:bg-body-color">Normal</SelectItem>
-                          <SelectItem value="2" className="text-font-color hover:bg-body-color">On Hold</SelectItem>
-                          <SelectItem value="0" className="text-font-color hover:bg-body-color">Canceled</SelectItem>
-                        </SelectContent>
-                      </Select>
+                  <div className="space-y-4">
+                    {/* Row 1: Account # - Warehouse | Order # */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-font-color-100 text-sm">Account # - Warehouse</Label>
+                        <Input 
+                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                          value={accountNumberLocation} 
+                          onChange={e=>setAccountNumberLocation(e.target.value)} 
+                          placeholder="12345.LOC" 
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-font-color-100 text-sm">Order #</Label>
+                        <div className="font-mono text-font-color bg-body-color p-1 rounded border border-border-color h-8 text-sm flex items-center">
+                          {orderHeader.order_number || '-'}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Order Date</Label>
-                      <Input 
-                        type="date" 
-                        className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                        value={orderHeader.ordered_date || ''} 
-                        onChange={e=>setOrderHeader(p=>({ ...p, ordered_date: e.target.value }))} 
-                      />
+                    
+                    {/* Row 2: Customer # | PO # */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-font-color-100 text-sm">Customer #</Label>
+                        <Input 
+                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                          value={orderHeader.customer_number || ''} 
+                          onChange={e=>setOrderHeader(p=>({ ...p, customer_number: e.target.value }))} 
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-font-color-100 text-sm">PO #</Label>
+                        <Input 
+                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                          value={orderHeader.po_number || ''} 
+                          onChange={e=>setOrderHeader(p=>({ ...p, po_number: e.target.value }))} 
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">PO #</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                        value={orderHeader.po_number || ''} 
-                        onChange={e=>setOrderHeader(p=>({ ...p, po_number: e.target.value }))} 
-                      />
+                    
+                    {/* Row 3: Order Status | PO Date */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-font-color-100 text-sm">Order Status</Label>
+                        <Select value={String(orderHeader.order_status ?? 1)} onValueChange={(v: string)=>setOrderHeader(p=>({ ...p, order_status: +v }))}>
+                          <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card-color border-border-color">
+                            <SelectItem value="1" className="text-font-color hover:bg-body-color">Normal</SelectItem>
+                            <SelectItem value="2" className="text-font-color hover:bg-body-color">On Hold</SelectItem>
+                            <SelectItem value="0" className="text-font-color hover:bg-body-color">Canceled</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-font-color-100 text-sm">PO Date</Label>
+                        <Input 
+                          type="date" 
+                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                          value={orderHeader.ordered_date || ''} 
+                          onChange={e=>setOrderHeader(p=>({ ...p, ordered_date: e.target.value }))} 
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Customer #</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                        value={orderHeader.customer_number || ''} 
-                        onChange={e=>setOrderHeader(p=>({ ...p, customer_number: e.target.value }))} 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Account# . Warehouse</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                        value={accountNumberLocation} 
-                        onChange={e=>setAccountNumberLocation(e.target.value)} 
-                        placeholder="12345.LOC" 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Shipping Instructions</Label>
-                      <Textarea 
-                        className="bg-card-color border-border-color text-font-color text-sm" 
-                        rows={2} 
-                        value={orderHeader.shipping_instructions || ''} 
-                        onChange={e=>setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value }))} 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Comments</Label>
-                      <Textarea 
-                        className="bg-card-color border-border-color text-font-color text-sm" 
-                        rows={2} 
-                        value={orderHeader.packing_list_comments || ''} 
-                        onChange={e=>setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value }))} 
-                      />
+                    
+                    {/* Row 4: Shipping Instructions | Comments */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-font-color-100 text-sm">Shipping Instructions</Label>
+                        <Textarea 
+                          className="bg-card-color border-border-color text-font-color text-sm" 
+                          rows={3} 
+                          value={orderHeader.shipping_instructions || ''} 
+                          onChange={e=>setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value }))} 
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-font-color-100 text-sm">Comments</Label>
+                        <Textarea 
+                          className="bg-card-color border-border-color text-font-color text-sm" 
+                          rows={3} 
+                          value={orderHeader.packing_list_comments || ''} 
+                          onChange={e=>setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value }))} 
+                        />
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -641,14 +878,14 @@ export default function OrderPointsPage() {
                     />
                     <Button 
                       size="small" 
-                      className="bg-primary text-white hover:bg-primary/90"
+                      className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
                       onClick={onBrowseItems}
                     >
                       Browse Items…
                     </Button>
                     <Button 
                       size="small" 
-                      className="bg-danger text-white hover:bg-danger/90"
+                      className="bg-danger text-white hover:bg-danger/90 whitespace-nowrap"
                       onClick={onRemoveSelected}
                     >
                       Remove selected
@@ -711,194 +948,130 @@ export default function OrderPointsPage() {
           <div className="xl:col-span-3 space-y-4">
           <Card className="shadow-sm border-border-color">
             <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
-              <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                <IconBuilding className="w-4 h-4" />
-                Billing Address
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
+                  <IconBuilding className="w-4 h-4" />
+                  Billing Address
+                </CardTitle>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={openBillingAddressModal}
+                >
+                  <IconEdit className="h-3 w-3 mr-1" />
+                  Edit...
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Address 1" 
-                  value={billingAddress.address1||''} 
-                  onChange={e=>setBillingAddress({...billingAddress,address1:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Address 2" 
-                  value={billingAddress.address2||''} 
-                  onChange={e=>setBillingAddress({...billingAddress,address2:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="City" 
-                  value={billingAddress.city||''} 
-                  onChange={e=>setBillingAddress({...billingAddress,city:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="State" 
-                  value={billingAddress.state_province||''} 
-                  onChange={e=>setBillingAddress({...billingAddress,state_province:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Postal Code" 
-                  value={billingAddress.postal_code||''} 
-                  onChange={e=>setBillingAddress({...billingAddress,postal_code:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Country" 
-                  value={billingAddress.country||''} 
-                  onChange={e=>setBillingAddress({...billingAddress,country:e.target.value})} 
-                />
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="font-medium">Company:</span> <span>{billingAddress.company || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Attention:</span> <span>{billingAddress.attention || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Address 1:</span> <span>{billingAddress.address1 || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Address 2:</span> <span>{billingAddress.address2 || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">City:</span> <span>{billingAddress.city || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">State/Province:</span> <span>{billingAddress.state_province || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Postal Code:</span> <span>{billingAddress.postal_code || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Country:</span> <span>{billingAddress.country || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Phone:</span> <span>{billingAddress.phone || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Email:</span> <span>{billingAddress.email || '-'}</span></div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="shadow-sm border-border-color">
             <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
-              <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                <IconTruck className="w-4 h-4" />
-                Shipping Details
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
+                  <IconTruck className="w-4 h-4" />
+                  Shipping Details
+                </CardTitle>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={openShippingDetailsModal}
+                >
+                  <IconEdit className="h-3 w-3 mr-1" />
+                  Edit...
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Carrier" 
-                  value={orderHeader.shipping_carrier||''} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, shipping_carrier: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Service" 
-                  value={orderHeader.shipping_service||''} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, shipping_service: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Freight Account" 
-                  value={orderHeader.freight_account||''} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, freight_account: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Consignee #" 
-                  value={orderHeader.consignee_number||''} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, consignee_number: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Incoterms" 
-                  value={orderHeader.fob||''} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, fob: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Terms" 
-                  value={orderHeader.terms||''} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, terms: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Payment Type" 
-                  value={orderHeader.payment_type||''} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, payment_type: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="International Code" 
-                  value={String(orderHeader.international_code ?? '')} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, international_code: e.target.value }))} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color col-span-2" 
-                  placeholder="Packing List Type" 
-                  value={String(orderHeader.packing_list_type ?? '')} 
-                  onChange={e=>setOrderHeader(p=>({ ...p, packing_list_type: e.target.value }))} 
-                />
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="font-medium">International Code:</span> <span>{orderHeader.international_code || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Shipping Carrier:</span> <span>{orderHeader.shipping_carrier || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Shipping Service:</span> <span>{orderHeader.shipping_service || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Freight Account:</span> <span>{orderHeader.freight_account || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Consignee #:</span> <span>{orderHeader.consignee_number || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Incoterms:</span> <span>{orderHeader.terms || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">FOB Location:</span> <span>{orderHeader.fob || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Payment Type:</span> <span>{orderHeader.payment_type || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">Packing List:</span> <span>{orderHeader.packing_list_type || '-'}</span></div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="shadow-sm border-border-color">
             <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
-              <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                <IconCurrency className="w-4 h-4" />
-                Amounts
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
+                  <IconCurrency className="w-4 h-4" />
+                  Amounts
+                </CardTitle>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={openAmountsModal}
+                >
+                  <IconEdit className="h-3 w-3 mr-1" />
+                  Edit...
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">Order Amount</Label>
-                  <div className="text-right font-mono font-semibold text-font-color bg-body-color p-2 rounded border border-border-color">
-                    ${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}
-                  </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-medium">Order Amount:</span>
+                  <span className="font-mono">${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">S & H</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color text-right h-8 text-sm" 
-                    type="number" 
-                    step="0.01" 
-                    value={amounts.shipping_handling} 
-                    onChange={e=>setAmounts({ ...amounts, shipping_handling: +e.target.value || 0 })} 
-                  />
+                <div className="flex justify-between">
+                  <span className="font-medium">S & H:</span>
+                  <span className="font-mono">${amounts.shipping_handling.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">Sales Taxes</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color text-right h-8 text-sm" 
-                    type="number" 
-                    step="0.01" 
-                    value={amounts.sales_tax} 
-                    onChange={e=>setAmounts({ ...amounts, sales_tax: +e.target.value || 0 })} 
-                  />
+                <div className="flex justify-between">
+                  <span className="font-medium">Sales Taxes:</span>
+                  <span className="font-mono">${amounts.sales_tax.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">Amount Paid</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color text-right h-8 text-sm" 
-                    type="number" 
-                    step="0.01" 
-                    value={amounts.amount_paid} 
-                    onChange={e=>setAmounts({ ...amounts, amount_paid: +e.target.value || 0 })} 
-                  />
+                <div className="flex justify-between">
+                  <span className="font-medium">Discount/Add. Chgs.:</span>
+                  <span className="font-mono">${amounts.international_handling.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">Intl. Handling</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color text-right h-8 text-sm" 
-                    type="number" 
-                    step="0.01" 
-                    value={amounts.international_handling} 
-                    onChange={e=>setAmounts({ ...amounts, international_handling: +e.target.value || 0 })} 
-                  />
+                <div className="flex justify-between border-t border-border-color pt-2 font-bold">
+                  <span>Total Amount:</span>
+                  <span className="font-mono">${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">Intl. Declared Value</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color text-right h-8 text-sm" 
-                    type="number" 
-                    step="0.01" 
-                    value={amounts.international_declared_value} 
-                    onChange={e=>setAmounts({ ...amounts, international_declared_value: +e.target.value || 0 })} 
-                  />
+                <div className="flex justify-between">
+                  <span className="font-medium">Amount Paid:</span>
+                  <span className="font-mono">${amounts.amount_paid.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">Insurance</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color text-right h-8 text-sm" 
-                    type="number" 
-                    step="0.01" 
-                    value={amounts.insurance} 
-                    onChange={e=>setAmounts({ ...amounts, insurance: +e.target.value || 0 })} 
-                  />
+                <div className="flex justify-between border-t-2 border-border-color pt-2 font-bold">
+                  <span>Net Due:</span>
+                  <span className="font-mono">${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Balance Due (US):</span>
+                  <span className="font-mono">${amounts.balance_due_us.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Int. Decl. Value:</span>
+                  <span className="font-mono">${amounts.international_declared_value.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">Insurance:</span>
+                  <span className="font-mono">${amounts.insurance.toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>
@@ -906,53 +1079,29 @@ export default function OrderPointsPage() {
 
           <Card className="shadow-sm border-border-color">
             <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
-              <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                <IconEdit className="w-4 h-4" />
-                Extra Fields
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
+                  <IconEdit className="w-4 h-4" />
+                  Extra Fields
+                </CardTitle>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-xs"
+                  onClick={openExtraFieldsModal}
+                >
+                  <IconEdit className="h-3 w-3 mr-1" />
+                  Edit...
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="p-4">
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_1}</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                    value={orderHeader.custom_field1||''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, custom_field1: e.target.value }))} 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_2}</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                    value={orderHeader.custom_field2||''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, custom_field2: e.target.value }))} 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_3}</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                    value={orderHeader.custom_field3||''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, custom_field3: e.target.value }))} 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_4}</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                    value={orderHeader.custom_field4||''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, custom_field4: e.target.value }))} 
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3 items-center">
-                  <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_5}</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                    value={orderHeader.custom_field5||''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, custom_field5: e.target.value }))} 
-                  />
-                </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_1}:</span> <span>{orderHeader.custom_field1 || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_2}:</span> <span>{orderHeader.custom_field2 || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_3}:</span> <span>{orderHeader.custom_field3 || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_4}:</span> <span>{orderHeader.custom_field4 || '-'}</span></div>
+                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_5}:</span> <span>{orderHeader.custom_field5 || '-'}</span></div>
               </div>
             </CardContent>
           </Card>
@@ -961,103 +1110,173 @@ export default function OrderPointsPage() {
 
       {/* Browse Items Modal */}
       <Dialog open={browseOpen} onOpenChange={setBrowseOpen}>
-        <DialogContent style={{ maxWidth: 900 }}>
-          <DialogHeader>
+        <DialogContent className="flex flex-col overflow-hidden" style={{ width: '750px', height: '600px', maxWidth: '90vw', maxHeight: '90vh', minWidth: '750px', minHeight: '600px' }}>
+          <DialogHeader className="flex-shrink-0">
             <DialogTitle>Browse Items</DialogTitle>
           </DialogHeader>
-          <div className="flex items-center gap-3 mb-3">
+          
+          {/* Filters */}
+          <div className="flex items-center justify-between gap-3 mb-3 flex-shrink-0">
             <Input
               placeholder="Search by item # or description"
               value={itemFilter}
               onChange={e=>setItemFilter(e.target.value)}
-              style={{ maxWidth: 280 }}
+              className="w-48 h-8 text-sm"
             />
-            <label className="flex items-center gap-2 text-sm text-font-color">
-              <CheckBox checked={showZeroQty} onChange={(checked)=>setShowZeroQty(checked)} />
-              Show 0 QTY
-            </label>
-            <Select value={warehouses} onValueChange={setWarehouses}>
-              <SelectTrigger className="bg-card-color border-border-color text-font-color w-48">
-                <SelectValue placeholder="Warehouse: All" />
-              </SelectTrigger>
-              <SelectContent className="bg-card-color border-border-color">
-                <SelectItem value="" className="text-font-color hover:bg-body-color">Warehouse: All</SelectItem>
-                {getWarehouseOptions().map(option => (
-                  <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button 
-              size="small" 
-              className="bg-primary text-white hover:bg-primary/90"
-              onClick={()=>reloadInventory()}
-            >
-              Refresh
-            </Button>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-sm text-font-color whitespace-nowrap">
+                <CheckBox checked={showZeroQty} onChange={(checked)=>setShowZeroQty(checked)} />
+                Show 0 QTY
+              </label>
+              <Select value={warehouses} onValueChange={setWarehouses}>
+                <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm" style={{ width: '200px' }}>
+                  <SelectValue placeholder="Warehouse: All" className="whitespace-nowrap" />
+                </SelectTrigger>
+                <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
+                  <SelectItem value="" className="text-font-color hover:bg-body-color">Warehouse: All</SelectItem>
+                  {getWarehouseOptions().map(option => (
+                    <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
+                      <span className="whitespace-nowrap">{option.label}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
+                onClick={()=>reloadInventory()}
+              >
+                Refresh
+              </Button>
+            </div>
           </div>
-          <ScrollArea style={{ maxHeight: 420 }} className="bg-card-color">
-            <table className="min-w-full text-sm">
+          
+          {/* Table Area - Flexible height */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <ScrollArea className="h-full bg-card-color overflow-hidden">
+            <table className="w-full text-sm table-fixed" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr className="border-b border-border-color">
-                  <th className="text-left p-3 text-font-color-100">#</th>
-                  <th className="text-left p-3 text-font-color-100">Item # / Description</th>
-                  <th className="text-right p-3 text-font-color-100">Qty</th>
-                  <th className="text-right p-3 text-font-color-100">Unit Price</th>
-                  <th className="text-right p-3 text-font-color-100">Net Avail</th>
+                  <th className="text-left p-3 text-font-color-100 w-12">#</th>
+                  <th className="text-left p-3 text-font-color-100 w-64">Item # / Description</th>
+                  <th className="text-right p-3 text-font-color-100 w-20">Qty</th>
+                  <th className="text-right p-3 text-font-color-100 w-24">Unit Price</th>
+                  <th className="text-right p-3 text-font-color-100 whitespace-nowrap w-20">Net Avail</th>
                 </tr>
               </thead>
               <tbody>
-                {Object.keys(inventory).map((key, idx)=>{
-                  const it = inventory[key]!
-                  return (
-                    <tr key={key} className="border-t border-border-color hover:bg-body-color">
-                      <td className="p-3 text-font-color">{idx+1}</td>
-                      <td className="p-3">
-                        <div className="font-medium text-font-color">{it.item_number}</div>
-                        <div className="text-font-color-100 text-sm">{it.description}</div>
-                      </td>
-                      <td className="p-3 text-right">
-                        <Input
-                          value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
-                          onChange={e=>updateInventoryField(it.item_number, 'quantity', e.target.value)}
-                          className="text-right bg-card-color border-border-color text-font-color w-20"
-                          type="number"
-                          min="0"
-                        />
-                      </td>
-                      <td className="p-3 text-right">
-                        <Input
-                          value={typeof it.price === 'number' ? String(it.price) : ''}
-                          onChange={e=>updateInventoryField(it.item_number, 'price', e.target.value)}
-                          className="text-right bg-card-color border-border-color text-font-color w-24"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                        />
-                      </td>
-                      <td className="p-3 text-right text-font-color font-mono">{it.qty_net}</td>
-                    </tr>
-                  )
-                })}
+                {Object.keys(inventory).length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-font-color-100">
+                      <div className="text-lg mb-2">No items found</div>
+                      <div className="text-sm">Try adjusting your search criteria or filters</div>
+                    </td>
+                  </tr>
+                ) : (
+                  Object.keys(inventory).map((key, idx)=>{
+                    const it = inventory[key]!
+                    return (
+                      <tr key={key} className="border-t border-border-color hover:bg-body-color">
+                        <td className="p-3 text-font-color w-12">{(currentPage - 1) * pageSize + idx + 1}</td>
+                        <td className="p-3 w-64">
+                          <div className="font-medium text-font-color truncate" title={it.item_number}>{it.item_number}</div>
+                          <div className="text-font-color-100 text-sm truncate" title={it.description}>{it.description}</div>
+                        </td>
+                        <td className="p-3 text-right w-20">
+                          <Input
+                            value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
+                            onChange={e=>updateInventoryField(it.item_number, 'quantity', e.target.value)}
+                            className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-sm"
+                            type="number"
+                            min="0"
+                          />
+                        </td>
+                        <td className="p-3 text-right w-24">
+                          <Input
+                            value={typeof it.price === 'number' ? String(it.price) : ''}
+                            onChange={e=>updateInventoryField(it.item_number, 'price', e.target.value)}
+                            className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-sm"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                          />
+                        </td>
+                        <td className="p-3 text-right text-font-color font-mono whitespace-nowrap w-20">{it.qty_net}</td>
+                      </tr>
+                    )
+                  })
+                )}
               </tbody>
             </table>
-          </ScrollArea>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              className="border-border-color text-font-color hover:bg-body-color"
-              onClick={()=>setBrowseOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button 
-              className="bg-primary text-white hover:bg-primary/90"
-              onClick={addSelectedItemsToOrder}
-            >
-              Add to order
-            </Button>
+            </ScrollArea>
+          </div>
+          
+          <DialogFooter className="flex-shrink-0 flex flex-col gap-4">
+            {/* Pagination Controls */}
+            {totalItems > pageSize && (
+              <div className="flex items-center justify-between p-4 border-t border-border-color">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="border-border-color text-font-color hover:bg-body-color"
+                    onClick={goToFirstPage}
+                    disabled={currentPage === 1}
+                  >
+                    <IconChevronsLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="border-border-color text-font-color hover:bg-body-color"
+                    onClick={goToPrevPage}
+                    disabled={currentPage === 1}
+                  >
+                    <IconChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-sm text-font-color px-2">
+                    Page {currentPage} of {Math.ceil(totalItems / pageSize)}
+                  </span>
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="border-border-color text-font-color hover:bg-body-color"
+                    onClick={goToNextPage}
+                    disabled={currentPage >= Math.ceil(totalItems / pageSize)}
+                  >
+                    <IconChevronRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="border-border-color text-font-color hover:bg-body-color"
+                    onClick={goToLastPage}
+                    disabled={currentPage >= Math.ceil(totalItems / pageSize)}
+                  >
+                    <IconChevronsRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="text-sm text-font-color-100">
+                  <strong>{totalItems}</strong> items on <strong>{Math.ceil(totalItems / pageSize)}</strong> pages
+                </div>
+              </div>
+            )}
+            
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline" 
+                className="border-border-color text-font-color hover:bg-body-color"
+                onClick={()=>setBrowseOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-primary text-white hover:bg-primary/90"
+                onClick={addSelectedItemsToOrder}
+              >
+                Add to order
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1175,6 +1394,364 @@ export default function OrderPointsPage() {
             <Button 
               className="bg-primary text-white hover:bg-primary/90"
               onClick={()=>{ if (editLineIndex==null) return; setOrderDetail(prev => prev.map((r,i)=> i===editLineIndex? { ...r, ...editLineData }: r)); setEditLineOpen(false) }}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Billing Address Modal */}
+      <Dialog open={editBillingAddressOpen} onOpenChange={setEditBillingAddressOpen}>
+        <DialogContent style={{ maxWidth: 600 }}>
+          <DialogHeader>
+            <DialogTitle>Edit Billing Address</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-font-color-100 text-sm">Company</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.company || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, company: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Attention</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.attention || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, attention: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Address 1</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.address1 || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, address1: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Address 2</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.address2 || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, address2: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">City</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.city || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, city: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">State/Province</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.state_province || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, state_province: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Postal Code</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.postal_code || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, postal_code: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Country</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.country || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, country: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Phone</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.phone || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Email</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempBillingAddress.email || ''}
+                  onChange={e => setTempBillingAddress(p => ({ ...p, email: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditBillingAddressOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={saveBillingAddress}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Shipping Details Modal */}
+      <Dialog open={editShippingDetailsOpen} onOpenChange={setEditShippingDetailsOpen}>
+        <DialogContent style={{ maxWidth: 600 }}>
+          <DialogHeader>
+            <DialogTitle>Edit Shipping Details</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-font-color-100 text-sm">International Code</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.international_code || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, international_code: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Shipping Carrier</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.shipping_carrier || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, shipping_carrier: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Shipping Service</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.shipping_service || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, shipping_service: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Freight Account</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.freight_account || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, freight_account: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Consignee #</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.consignee_number || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, consignee_number: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Incoterms</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.terms || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, terms: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">FOB Location</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.fob || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, fob: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Payment Type</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.payment_type || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, payment_type: e.target.value }))}
+                />
+              </div>
+              <div className="col-span-2">
+                <Label className="text-font-color-100 text-sm">Packing List Type</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempShippingDetails.packing_list_type || ''}
+                  onChange={e => setTempShippingDetails(p => ({ ...p, packing_list_type: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditShippingDetailsOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={saveShippingDetails}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Amounts Modal */}
+      <Dialog open={editAmountsOpen} onOpenChange={setEditAmountsOpen}>
+        <DialogContent style={{ maxWidth: 500 }}>
+          <DialogHeader>
+            <DialogTitle>Edit Amounts</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-font-color-100 text-sm">S & H</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  type="number"
+                  step="0.01"
+                  value={tempAmounts.shipping_handling}
+                  onChange={e => setTempAmounts(p => ({ ...p, shipping_handling: +e.target.value || 0 }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Sales Taxes</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  type="number"
+                  step="0.01"
+                  value={tempAmounts.sales_tax}
+                  onChange={e => setTempAmounts(p => ({ ...p, sales_tax: +e.target.value || 0 }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Amount Paid</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  type="number"
+                  step="0.01"
+                  value={tempAmounts.amount_paid}
+                  onChange={e => setTempAmounts(p => ({ ...p, amount_paid: +e.target.value || 0 }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Discount/Add. Chgs.</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  type="number"
+                  step="0.01"
+                  value={tempAmounts.international_handling}
+                  onChange={e => setTempAmounts(p => ({ ...p, international_handling: +e.target.value || 0 }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Balance Due (US)</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  type="number"
+                  step="0.01"
+                  value={tempAmounts.balance_due_us}
+                  onChange={e => setTempAmounts(p => ({ ...p, balance_due_us: +e.target.value || 0 }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Int. Decl. Value</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  type="number"
+                  step="0.01"
+                  value={tempAmounts.international_declared_value}
+                  onChange={e => setTempAmounts(p => ({ ...p, international_declared_value: +e.target.value || 0 }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Insurance</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  type="number"
+                  step="0.01"
+                  value={tempAmounts.insurance}
+                  onChange={e => setTempAmounts(p => ({ ...p, insurance: +e.target.value || 0 }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditAmountsOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={saveAmounts}
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Extra Fields Modal */}
+      <Dialog open={editExtraFieldsOpen} onOpenChange={setEditExtraFieldsOpen}>
+        <DialogContent style={{ maxWidth: 500 }}>
+          <DialogHeader>
+            <DialogTitle>Edit Extra Fields</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_1}</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempExtraFields.custom_field1 || ''}
+                  onChange={e => setTempExtraFields(p => ({ ...p, custom_field1: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_2}</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempExtraFields.custom_field2 || ''}
+                  onChange={e => setTempExtraFields(p => ({ ...p, custom_field2: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_3}</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempExtraFields.custom_field3 || ''}
+                  onChange={e => setTempExtraFields(p => ({ ...p, custom_field3: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_4}</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempExtraFields.custom_field4 || ''}
+                  onChange={e => setTempExtraFields(p => ({ ...p, custom_field4: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_5}</Label>
+                <Input
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  value={tempExtraFields.custom_field5 || ''}
+                  onChange={e => setTempExtraFields(p => ({ ...p, custom_field5: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditExtraFieldsOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={saveExtraFields}
             >
               Save
             </Button>
