@@ -1310,7 +1310,7 @@ export default function OrderPointsPage() {
                     />
                     <Button 
                       size="small" 
-                      className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
+                      className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap text-xs"
                       onClick={onBrowseItems}
                     >
                       Browse Items…
@@ -1547,7 +1547,7 @@ export default function OrderPointsPage() {
 
       {/* Browse Items Modal */}
       <Dialog open={browseOpen} onOpenChange={setBrowseOpen}>
-        <DialogContent className="flex flex-col overflow-hidden" style={{ width: '750px', height: '600px', maxWidth: '90vw', maxHeight: '90vh', minWidth: '750px', minHeight: '600px' }}>
+        <DialogContent className="flex flex-col overflow-hidden" style={{ width: '900px', height: '720px', maxWidth: '90vw', maxHeight: '90vh', minWidth: '900px', minHeight: '720px' }}>
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Browse Items</DialogTitle>
           </DialogHeader>
@@ -1589,15 +1589,15 @@ export default function OrderPointsPage() {
           
           {/* Table Area - Flexible height */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            <ScrollArea className="h-full bg-card-color overflow-hidden">
+            <ScrollArea className="h-full bg-card-color">
             <table className="w-full text-sm table-fixed" style={{ width: '100%', tableLayout: 'fixed' }}>
               <thead>
                 <tr className="border-b border-border-color">
-                  <th className="text-left p-3 text-font-color-100 w-12">#</th>
-                  <th className="text-left p-3 text-font-color-100 w-64">Item # / Description</th>
-                  <th className="text-right p-3 text-font-color-100 w-20">Qty</th>
-                  <th className="text-right p-3 text-font-color-100 w-24">Unit Price</th>
-                  <th className="text-right p-3 text-font-color-100 whitespace-nowrap w-20">Net Avail</th>
+                  <th className="text-left py-1 px-3 text-font-color-100 w-12">#</th>
+                  <th className="text-left py-1 px-3 text-font-color-100 w-64">Item # / Description</th>
+                  <th className="text-right py-1 px-3 text-font-color-100 w-20">Qty</th>
+                  <th className="text-right py-1 px-3 text-font-color-100 w-24">Unit Price</th>
+                  <th className="text-right py-1 px-3 text-font-color-100 whitespace-nowrap w-20">Net Avail</th>
                 </tr>
               </thead>
               <tbody>
@@ -1613,12 +1613,12 @@ export default function OrderPointsPage() {
                   const it = inventory[key]!
                   return (
                     <tr key={key} className="border-t border-border-color hover:bg-body-color">
-                        <td className="p-3 text-font-color w-12">{(currentPage - 1) * pageSize + idx + 1}</td>
-                        <td className="p-3 w-64">
+                        <td className="py-1 px-3 text-font-color w-12">{(currentPage - 1) * pageSize + idx + 1}</td>
+                        <td className="py-1 px-3 w-64">
                           <div className="font-medium text-font-color truncate" title={it.item_number}>{it.item_number}</div>
                           <div className="text-font-color-100 text-sm truncate" title={it.description}>{it.description}</div>
                       </td>
-                        <td className="p-3 text-right w-20">
+                        <td className="py-1 px-3 text-right w-20">
                         <Input
                           value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
                           onChange={e=>updateInventoryField(it.item_number, 'quantity', e.target.value)}
@@ -1628,7 +1628,7 @@ export default function OrderPointsPage() {
                           disabled={formFieldsDisabled}
                         />
                       </td>
-                        <td className="p-3 text-right w-24">
+                        <td className="py-1 px-3 text-right w-24">
                         <Input
                           value={typeof it.price === 'number' ? String(it.price) : ''}
                           onChange={e=>updateInventoryField(it.item_number, 'price', e.target.value)}
@@ -1639,7 +1639,7 @@ export default function OrderPointsPage() {
                           disabled={formFieldsDisabled}
                         />
                       </td>
-                        <td className="p-3 text-right text-font-color font-mono whitespace-nowrap w-20">{it.qty_net}</td>
+                        <td className="py-1 px-3 text-right text-font-color font-mono whitespace-nowrap w-20">{it.qty_net}</td>
                     </tr>
                   )
                   })
