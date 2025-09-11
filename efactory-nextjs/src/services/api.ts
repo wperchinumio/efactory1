@@ -2,12 +2,17 @@ import { postJson, getJson, httpRequest, postJsonRaw } from '@/lib/api/http';
 import type {
   ActivityPointDto,
   FulfillmentRowDto,
+  Get30DaysActivityBody,
   Get30DaysActivityResponse,
+  GetFulfillmentsBody,
   GetFulfillmentsResponse,
   GetInventoryBody,
   GetInventoryResponse,
+  GetLast30DaysRMAsBody,
   GetLast30DaysRMAsResponse,
+  GetLatest50OrdersReceivedBody,
   GetLatest50OrdersResponse,
+  GetLatest50OrdersShippedBody,
   InventoryFilters,
   LatestOrderDto,
   RmaActivityPointDto,
@@ -28,26 +33,32 @@ import type {
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
   // Legacy overview returns a raw object keyed by '1001'
-  const res = await postJsonRaw<Record<'1001', GetFulfillmentsResponse>>('/api/overview', [ { overview_id: 1001 } ]);
+  const body: GetFulfillmentsBody[] = [ { overview_id: 1001 } ];
+  const res = await postJsonRaw<Record<'1001', GetFulfillmentsResponse>, GetFulfillmentsBody[]>('/api/overview', body);
   return res['1001'].data;
 }
 
 export async function fetch30DaysActivity(): Promise<ActivityPointDto[]> {
-  const res = await postJsonRaw<Record<'1002', Get30DaysActivityResponse>>('/api/overview', [ { overview_id: 1002 } ]);
+  const body: Get30DaysActivityBody[] = [ { overview_id: 1002 } ];
+  const res = await postJsonRaw<Record<'1002', Get30DaysActivityResponse>, Get30DaysActivityBody[]>('/api/overview', body);
   return res['1002'].data;
 }
 
 export async function fetchLatest50Orders(type: 'received' | 'shipped' = 'received'): Promise<LatestOrderDto[]> {
-  const body = type === 'received' ? [ { overview_id: 1003 as const } ] : [ { overview_id: 1004 as const } ];
-  const res = await postJsonRaw<
-    Record<'1003' | '1004', GetLatest50OrdersResponse>
-  >('/api/overview', body as any);
-  return type === 'received' ? res['1003'].data : res['1004'].data;
+  if (type === 'received') {
+    const body: GetLatest50OrdersReceivedBody[] = [ { overview_id: 1003 } ];
+    const res = await postJsonRaw<Record<'1003', GetLatest50OrdersResponse>, GetLatest50OrdersReceivedBody[]>('/api/overview', body);
+    return res['1003'].data;
+  } else {
+    const body: GetLatest50OrdersShippedBody[] = [ { overview_id: 1004 } ];
+    const res = await postJsonRaw<Record<'1004', GetLatest50OrdersResponse>, GetLatest50OrdersShippedBody[]>('/api/overview', body);
+    return res['1004'].data;
+  }
 }
 
 export async function fetchInventory(filters: InventoryFilters): Promise<ReadonlyArray<ReturnType<typeof mapInventoryItem>>> {
   const body: GetInventoryBody[] = [ { overview_id: 1005, filters } ];
-  const res = await postJsonRaw<Record<'1005', GetInventoryResponse>>('/api/overview', body);
+  const res = await postJsonRaw<Record<'1005', GetInventoryResponse>, GetInventoryBody[]>('/api/overview', body);
   return res['1005'].data.map(mapInventoryItem);
 }
 
@@ -56,7 +67,8 @@ function mapInventoryItem(item: GetInventoryResponse['data'][number]) {
 }
 
 export async function fetchRma30Days(): Promise<RmaActivityPointDto[]> {
-  const res = await postJsonRaw<Record<'1007', GetLast30DaysRMAsResponse>>('/api/overview', [ { overview_id: 1007 } ]);
+  const body: GetLast30DaysRMAsBody[] = [ { overview_id: 1007 } ];
+  const res = await postJsonRaw<Record<'1007', GetLast30DaysRMAsResponse>, GetLast30DaysRMAsBody[]>('/api/overview', body);
   return res['1007'].data;
 }
 
@@ -64,7 +76,7 @@ export async function fetchDefaultOverviewLayout(): Promise<OverviewLayout> {
   const res = await postJson<GetOverviewLayoutResponse>('/api/views', {
     action: 'get_default_overview',
   } as GetDefaultOverviewLayoutRequest);
-  return res.data.overview_layout as any;
+  return res.data.overview_layout;
 }
 
 export async function saveOverviewLayout(layout: OverviewLayout): Promise<OverviewLayout> {
@@ -72,7 +84,7 @@ export async function saveOverviewLayout(layout: OverviewLayout): Promise<Overvi
     action: 'save_overview',
     data: { overview_layout: layout },
   } as SaveOverviewLayoutRequest);
-  return res.data.overview_layout as any;
+  return res.data.overview_layout;
 }
 
 // Notes API

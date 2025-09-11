@@ -93,7 +93,7 @@ export default function NotesPage() {
       if (fetchedNotes.length > 0 && !selectedNoteId && fetchedNotes[0]) {
         setSelectedNoteId(fetchedNotes[0].id);
       }
-      console.log('Notes loaded successfully:', fetchedNotes.length, 'notes');
+      
     } catch (error) {
       console.error('Failed to load notes:', error);
       // Silent error handling - just log to console
