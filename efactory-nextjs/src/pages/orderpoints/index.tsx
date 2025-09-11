@@ -372,52 +372,62 @@ export default function OrderPointsPage() {
 
   return (
     <div className="bg-body-color min-h-screen">
-      {/* Top Action Bar */}
-      <div className="bg-card-color border-b border-border-color p-4">
-        <div className="flex items-center gap-3">
-          <Button onClick={onNewOrderNumber} className="bg-primary text-white hover:bg-primary/90">
-            New Order
-          </Button>
-          <Button onClick={onSaveDraft} variant="outline" className="border-border-color">
-            Save Draft
-          </Button>
-          <Button onClick={onPlaceOrder} className="bg-success text-white hover:bg-success/90">
-            Place Order
-          </Button>
+      {/* Header with Title and Actions */}
+      <div className="bg-card-color border-b border-border-color px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-font-color mb-1">Order Points - Order Entry</h1>
+            <p className="text-sm text-font-color-100">Create and manage purchase orders</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button onClick={onNewOrderNumber} className="bg-primary text-white hover:bg-primary/90 px-4 py-2">
+              New Order
+            </Button>
+            <Button onClick={onSaveDraft} variant="outline" className="border-border-color px-4 py-2">
+              Save Draft
+            </Button>
+            <Button onClick={onPlaceOrder} className="bg-success text-white hover:bg-success/90 px-4 py-2">
+              Place Order
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div className="container-fluid p-4 space-y-4">
+      <div className="container-fluid p-6 space-y-6">
 
-        {/* Top row: Order Header (6) + Shipping Address (6) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-          <Card className="lg:col-span-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Order Header</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2 grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-font-color-100 text-sm">Order #</Label>
-                    <div className="font-mono text-font-color bg-body-color p-2 rounded border border-border-color">
-                      {orderHeader.order_number || '-'}
+        {/* Main Layout: Left side (9) + Right Sidebar (3) */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          <div className="xl:col-span-9 space-y-6">
+            {/* Order Header */}
+            <Card className="shadow-sm">
+              <CardHeader className="bg-card-color border-b border-border-color">
+                <CardTitle className="text-base font-medium text-font-color">
+                  Order Header
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2 grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-font-color-100 text-sm">Order #</Label>
+                      <div className="font-mono text-font-color bg-body-color p-2 rounded border border-border-color">
+                        {orderHeader.order_number || '-'}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-font-color-100 text-sm">Order Status</Label>
+                      <Select value={String(orderHeader.order_status ?? 1)} onValueChange={(v: string)=>setOrderHeader(p=>({ ...p, order_status: +v }))}>
+                        <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-card-color border-border-color">
+                          <SelectItem value="1" className="text-font-color hover:bg-body-color">Normal</SelectItem>
+                          <SelectItem value="2" className="text-font-color hover:bg-body-color">On Hold</SelectItem>
+                          <SelectItem value="0" className="text-font-color hover:bg-body-color">Canceled</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-font-color-100 text-sm">Order Status</Label>
-                    <Select value={String(orderHeader.order_status ?? 1)} onValueChange={(v: string)=>setOrderHeader(p=>({ ...p, order_status: +v }))}>
-                      <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card-color border-border-color">
-                        <SelectItem value="1" className="text-font-color hover:bg-body-color">Normal</SelectItem>
-                        <SelectItem value="2" className="text-font-color hover:bg-body-color">On Hold</SelectItem>
-                        <SelectItem value="0" className="text-font-color hover:bg-body-color">Canceled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
                 <div>
                   <Label className="text-font-color-100 text-sm">Order Date</Label>
                   <Input 
@@ -473,129 +483,182 @@ export default function OrderPointsPage() {
               </div>
             </CardContent>
           </Card>
-          <Card className="lg:col-span-6">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Shipping Address</CardTitle>
+
+            {/* Shipping Address */}
+            <Card className="shadow-sm">
+              <CardHeader className="bg-card-color border-b border-border-color">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-medium text-font-color">
+                    Shipping Address
+                  </CardTitle>
                 <div className="flex gap-2">
-                  <Button 
-                    size="small" 
-                    variant="outline" 
-                    className="border-border-color text-font-color hover:bg-body-color"
-                    onClick={()=>router.push('/orderpoints/addressbook')}
-                  >
-                    Address Book…
-                  </Button>
-                  <Button 
-                    size="small" 
-                    className="bg-primary text-white hover:bg-primary/90"
-                    onClick={onValidateAddress}
-                  >
-                    Validate
-                  </Button>
+                    <Button 
+                      size="small" 
+                      variant="outline" 
+                      className="border-border-color text-font-color hover:bg-body-color text-xs px-3 py-1"
+                      onClick={()=>router.push('/orderpoints/addressbook')}
+                    >
+                      Address Book…
+                    </Button>
+                    <Button 
+                      size="small" 
+                      className="bg-primary text-white hover:bg-primary/90 text-xs px-3 py-1"
+                      onClick={onValidateAddress}
+                    >
+                      Validate
+                    </Button>
                 </div>
               </div>
-              <p className="text-font-color-100 text-sm mt-2">Enter or choose from address book</p>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Address 1" 
-                  value={shippingAddress.address1||''} 
-                  onChange={e=>setShippingAddress({...shippingAddress,address1:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Address 2" 
-                  value={shippingAddress.address2||''} 
-                  onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="City" 
-                  value={shippingAddress.city||''} 
-                  onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="State" 
-                  value={shippingAddress.state_province||''} 
-                  onChange={e=>setShippingAddress({...shippingAddress,state_province:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Postal Code" 
-                  value={shippingAddress.postal_code||''} 
-                  onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
-                />
-                <Input 
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                  placeholder="Country" 
-                  value={shippingAddress.country||''} 
-                  onChange={e=>setShippingAddress({...shippingAddress,country:e.target.value})} 
-                />
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm">Company</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                      value={shippingAddress.company||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,company:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm">Attention</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                      value={shippingAddress.attention||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,attention:e.target.value})} 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Address 1</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Street address" 
+                      value={shippingAddress.address1||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,address1:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Address 2</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Apt, suite, etc." 
+                      value={shippingAddress.address2||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">City</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="City" 
+                      value={shippingAddress.city||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">State</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="State" 
+                      value={shippingAddress.state_province||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,state_province:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Postal Code</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="ZIP/Postal" 
+                      value={shippingAddress.postal_code||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Country</Label>
+                    <Select value={shippingAddress.country||'US'} onValueChange={(v: string)=>setShippingAddress({...shippingAddress,country:v})}>
+                      <SelectTrigger className="bg-card-color border-border-color text-font-color h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card-color border-border-color">
+                        <SelectItem value="US" className="text-font-color hover:bg-body-color">United States - US</SelectItem>
+                        <SelectItem value="CA" className="text-font-color hover:bg-body-color">Canada - CA</SelectItem>
+                        <SelectItem value="MX" className="text-font-color hover:bg-body-color">Mexico - MX</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Phone</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Phone number" 
+                      value={shippingAddress.phone||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,phone:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Email</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Email address" 
+                      type="email"
+                      value={shippingAddress.email||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,email:e.target.value})} 
+                    />
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
-      </div>
 
-        {/* Second row: Items (9) + Right Sidebar (3) */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-          <Card className="xl:col-span-9">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base">Items</CardTitle>
-                <div className="flex items-center gap-2 flex-wrap lg:flex-nowrap">
-                  <Input
-                    placeholder="Add item…"
-                    className="bg-card-color border-border-color text-font-color w-48 h-8 text-sm"
-                    value={findItemValue}
-                    onChange={e=>setFindItemValue(e.target.value)}
-                    onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
-                  />
-                  <Button 
-                    size="small" 
-                    className="bg-primary text-white hover:bg-primary/90"
-                    onClick={onBrowseItems}
-                  >
-                    Browse Items…
-                  </Button>
-                  <Button 
-                    size="small" 
-                    className="bg-danger text-white hover:bg-danger/90"
-                    onClick={onRemoveSelected}
-                  >
-                    Remove selected
-                  </Button>
-                  <Button 
-                    size="small" 
-                    variant="outline" 
-                    className="border-border-color text-font-color hover:bg-body-color"
-                    onClick={()=>setOrderDetail(prev=>renumberDraftLines(prev.map(i=>!i.is_kit_component?{...i, do_not_ship_before:new Date().toISOString().slice(0,10)}:i)))}
-                  >
-                    Don't ship before: Today
-                  </Button>
-                  <Button 
-                    size="small" 
-                    variant="outline" 
-                    className="border-border-color text-font-color hover:bg-body-color"
-                    onClick={()=>setOrderDetail(prev=>renumberDraftLines(prev.map(i=>!i.is_kit_component?{...i, ship_by:new Date(Date.now()+86400000).toISOString().slice(0,10)}:i)))}
-                  >
-                    Ship by: +1d
-                  </Button>
-                </div>
+            {/* Items */}
+            <Card className="shadow-sm">
+              <CardHeader className="bg-card-color border-b border-border-color">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-base font-medium text-font-color">
+                    Items
+                  </CardTitle>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Input
+                      placeholder="Add item…"
+                      className="bg-card-color border-border-color text-font-color w-48 h-8 text-sm"
+                      value={findItemValue}
+                      onChange={e=>setFindItemValue(e.target.value)}
+                      onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
+                    />
+                    <Button 
+                      size="small" 
+                      className="bg-primary text-white hover:bg-primary/90"
+                      onClick={onBrowseItems}
+                    >
+                      Browse Items…
+                    </Button>
+                    <Button 
+                      size="small" 
+                      className="bg-danger text-white hover:bg-danger/90"
+                      onClick={onRemoveSelected}
+                    >
+                      Remove selected
+                    </Button>
+                  </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-4">
               <div 
-                className="ag-theme-alpine w-full" 
+                className="ag-theme-alpine w-full shadow-inner" 
                 style={{ 
-                  minHeight: 250, 
-                  height: 350, 
-                  border: '1px solid var(--border-color)', 
-                  borderRadius: 6,
-                  backgroundColor: 'var(--card-color)'
+                  minHeight: 280, 
+                  height: 400, 
+                  border: '2px solid var(--border-color)', 
+                  borderRadius: 8,
+                  backgroundColor: 'var(--card-color)',
+                  overflow: 'hidden'
                 }}
               >
                 <AgGridReact
@@ -616,32 +679,36 @@ export default function OrderPointsPage() {
                   })
                 }} />
               </div>
-              <div className="mt-4 grid grid-cols-3">
-                <div></div><div></div>
-                <div className="justify-self-end space-y-2 text-sm">
-                  <div className="flex justify-between gap-4 text-font-color">
-                    <span>Total Lines:</span>
-                    <span className="font-mono font-semibold">{orderDetail.length}</span>
-                  </div>
-                  <div className="flex justify-between gap-4 text-font-color">
-                    <span>Total Qty:</span>
-                    <span className="font-mono font-semibold">{orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0), 0)}</span>
-                  </div>
-                  <div className="flex justify-between gap-4 text-font-color">
-                    <span>Total Ext Price:</span>
-                    <span className="font-mono font-semibold">${orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0)*(Number(l.price)||0), 0).toFixed(2)}</span>
+                <div className="mt-4 grid grid-cols-3">
+                  <div></div><div></div>
+                  <div className="justify-self-end space-y-2 text-sm">
+                    <div className="flex justify-between gap-4 text-font-color">
+                      <span>Total Lines:</span>
+                      <span className="font-mono font-semibold">{orderDetail.length}</span>
+                    </div>
+                    <div className="flex justify-between gap-4 text-font-color">
+                      <span>Total Qty:</span>
+                      <span className="font-mono font-semibold">{orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0), 0)}</span>
+                    </div>
+                    <div className="flex justify-between gap-4 text-font-color">
+                      <span>Total Ext Price:</span>
+                      <span className="font-mono font-semibold">${orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0)*(Number(l.price)||0), 0).toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
 
+          {/* Right Sidebar - starts from the very top */}
           <div className="xl:col-span-3 space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Billing Address</CardTitle>
+            <Card className="shadow-sm">
+              <CardHeader className="bg-card-color border-b border-border-color pb-3">
+                <CardTitle className="text-base font-medium text-font-color">
+                  Billing Address
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <div className="grid grid-cols-2 gap-3">
                   <Input 
                     className="bg-card-color border-border-color text-font-color h-8 text-sm" 
@@ -682,11 +749,13 @@ export default function OrderPointsPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Shipping</CardTitle>
+            <Card className="shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-teal-50 to-teal-100 dark:from-teal-900/20 dark:to-teal-800/20 border-b border-border-color pb-3">
+                <CardTitle className="text-base font-semibold text-teal-700 dark:text-teal-300 flex items-center gap-2">
+                  🚛 Shipping Details
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <div className="grid grid-cols-2 gap-3">
                   <Input 
                     className="bg-card-color border-border-color text-font-color h-8 text-sm" 
@@ -745,11 +814,13 @@ export default function OrderPointsPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Amounts</CardTitle>
+            <Card className="shadow-sm">
+              <CardHeader className="bg-gradient-to-r from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 border-b border-border-color pb-3">
+                <CardTitle className="text-base font-semibold text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                  💰 Amounts
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-3 items-center">
                     <Label className="text-font-color-100 text-sm">Order Amount</Label>
@@ -820,11 +891,13 @@ export default function OrderPointsPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Extra Fields</CardTitle>
+            <Card className="shadow-sm">
+              <CardHeader className="bg-card-color border-b border-border-color pb-3">
+                <CardTitle className="text-base font-medium text-font-color">
+                  Extra Fields
+                </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <div className="space-y-3">
                   <div>
                     <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_1}</Label>
