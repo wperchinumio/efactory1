@@ -24,11 +24,9 @@ export interface CreateNoteResponse {
   data: Note;
 }
 
-export interface UpdateNoteRequest {
-  id: number;
-  title?: string;
-  note?: string;
-  changed?: boolean;
+export interface UpdateNoteRequest extends Note {
+  // Extends the full Note interface to match legacy behavior
+  // Legacy code sends the entire note object with updated fields
 }
 
 export interface UpdateNoteResponse {

@@ -29,7 +29,7 @@ alwaysApply: true
      const nextConfig = {
        async rewrites() {
          return [
-           { source: "/api/:path*", destination: "https://efactory.dclcorp.com/:path*" }
+           { source: "/api/:path*", destination: "https://efactory-py.dclcorp.com/:path*" }
          ];
        }
      };

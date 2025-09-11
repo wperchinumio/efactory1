@@ -24,6 +24,8 @@ export default function NotesPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
@@ -49,19 +51,23 @@ export default function NotesPage() {
     }
   }, []);
 
+  // Handle body overflow for delete dialog
+  useEffect(() => {
+    document.body.classList[showDeleteDialog ? "add" : "remove"]("overflow-hidden");
+  }, [showDeleteDialog]);
+
   const loadNotes = async () => {
     try {
       setIsLoading(true);
       const fetchedNotes = await fetchNotes();
       setNotes(fetchedNotes);
-      if (fetchedNotes.length > 0 && !selectedNoteId) {
+      if (fetchedNotes.length > 0 && !selectedNoteId && fetchedNotes[0]) {
         setSelectedNoteId(fetchedNotes[0].id);
       }
       console.log('Notes loaded successfully:', fetchedNotes.length, 'notes');
     } catch (error) {
       console.error('Failed to load notes:', error);
-      // Show user-friendly message
-      alert('Failed to load notes. Please check your connection and try again.');
+      // Silent error handling - just log to console
     } finally {
       setIsLoading(false);
     }
@@ -73,10 +79,19 @@ export default function NotesPage() {
     try {
       setIsLoading(true);
       const newNote = await createNote({ title: newNoteTitle.trim() });
-      setNotes(prev => [newNote, ...prev]);
-      setSelectedNoteId(newNote.id);
+      
+      // Close dialog first
       setNewNoteTitle('');
       setShowCreateDialog(false);
+      
+      // Reload notes list like legacy code does
+      await loadNotes();
+      
+      // Select the new note
+      setSelectedNoteId(newNote.id);
+      
+      // Success message like legacy system
+      console.log('Note created successfully:', newNote);
     } catch (error) {
       console.error('Failed to create note:', error);
     } finally {
@@ -87,14 +102,28 @@ export default function NotesPage() {
   const handleSaveNote = async () => {
     if (!selectedNoteId) return;
 
+    const selectedNote = notes.find(n => n.id === selectedNoteId);
+    if (!selectedNote) return;
+
     try {
       setIsLoading(true);
-      const updatedNote = await updateNote({
-        id: selectedNoteId,
-        note: noteContent,
-        changed: true,
-      });
-      setNotes(prev => prev.map(n => n.id === selectedNoteId ? updatedNote : n));
+      
+      // Send the ENTIRE note object like legacy code does
+      const noteToSave = {
+        ...selectedNote,  // Spread all existing properties
+        note: noteContent, // Override the content
+        changed: true      // Mark as changed
+      };
+      
+      await updateNote(noteToSave);
+      
+      // Reload notes list like legacy code does and keep selection
+      const currentSelectedId = selectedNoteId;
+      await loadNotes();
+      setSelectedNoteId(currentSelectedId);
+      
+      // Success message like legacy system
+      console.log('Note saved successfully:', noteToSave);
     } catch (error) {
       console.error('Failed to save note:', error);
     } finally {
@@ -102,22 +131,39 @@ export default function NotesPage() {
     }
   };
 
-  const handleDeleteNote = async (noteId: number) => {
-    if (!confirm('Are you sure you want to delete this note?')) return;
+  const handleDeleteNote = (noteId: number) => {
+    setNoteToDelete(noteId);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteNote = async () => {
+    if (!noteToDelete) return;
 
     try {
       setIsLoading(true);
-      await deleteNote(noteId);
-      setNotes(prev => prev.filter(n => n.id !== noteId));
-      if (selectedNoteId === noteId) {
-        const remainingNotes = notes.filter(n => n.id !== noteId);
-        setSelectedNoteId(remainingNotes.length > 0 ? remainingNotes[0].id : null);
-      }
+      await deleteNote(noteToDelete);
+      
+      // Close dialog
+      setShowDeleteDialog(false);
+      setNoteToDelete(null);
+      
+      // Reload notes list like legacy code does
+      await loadNotes();
+      
+      // Success message like legacy system
+      console.log('Note deleted successfully:', noteToDelete);
     } catch (error) {
       console.error('Failed to delete note:', error);
+      // Even on error, reload notes like legacy code does
+      await loadNotes();
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const cancelDeleteNote = () => {
+    setShowDeleteDialog(false);
+    setNoteToDelete(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -171,10 +217,15 @@ export default function NotesPage() {
   };
 
   const filteredNotes = notes.filter(note => {
+    if (!searchFilter || searchFilter.trim() === '') return true;
+    
     const searchTerm = searchFilter.toLowerCase();
+    const title = note.title || '';
+    const content = note.note || '';
+    
     return (
-      note.title.toLowerCase().includes(searchTerm) ||
-      note.note.toLowerCase().includes(searchTerm)
+      title.toLowerCase().includes(searchTerm) ||
+      content.toLowerCase().includes(searchTerm)
     );
   });
 
@@ -583,7 +634,7 @@ export default function NotesPage() {
                 {!isPreviewMode ? (
                   <>
                     <IconInfoCircle size={14} />
-                    <span><strong>Markdown supported:</strong> **bold**, *italic*, `code`, # headers, - lists, [links](url), ```code blocks```, > quotes, tables, and more!</span>
+                    <span><strong>Markdown supported:</strong> **bold**, *italic*, `code`, # headers, - lists, [links](url), ```code blocks```, &gt; quotes, tables, and more!</span>
                   </>
                 ) : (
                   <>
@@ -632,6 +683,57 @@ export default function NotesPage() {
         )}
       </div>
 
+      {/* Delete Confirmation Dialog - Luno Style */}
+      {showDeleteDialog && (
+        <>
+          <div className="fixed p-4 w-full max-w-[500px] left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[6]">
+            <div className="bg-card-color rounded-lg overflow-hidden" style={{ boxShadow: 'var(--shadow-lg)' }}>
+              <div className="p-4 flex gap-5 justify-between border-b border-border-color">
+                <p className="text-[20px]/[26px] font-medium">
+                  Delete Note
+                </p>
+                <button onClick={cancelDeleteNote}>
+                  <IconX />
+                </button>
+              </div>
+              <div className="py-6 px-6">
+                <div className="mb-6">
+                  <p className="text-font-color-100 mb-4">
+                    Are you sure you want to delete this note? This action cannot be undone.
+                  </p>
+                  {noteToDelete && (
+                    <div className="bg-body-color p-3 rounded-md">
+                      <p className="font-medium text-sm">
+                        {notes.find(n => n.id === noteToDelete)?.title || 'Untitled Note'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-stretch gap-3">
+                  <button 
+                    onClick={cancelDeleteNote} 
+                    className="btn btn-secondary flex-1"
+                    disabled={isLoading}
+                    style={{ fontSize: '14px', padding: '8px 16px' }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={confirmDeleteNote} 
+                    className="btn btn-danger flex-1"
+                    disabled={isLoading}
+                    style={{ fontSize: '14px', padding: '8px 16px' }}
+                  >
+                    {isLoading ? 'Deleting...' : 'Delete Note'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div onClick={cancelDeleteNote} className="fixed z-[5] w-full h-full left-0 top-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(2px)' }}></div>
+        </>
+      )}
+
       {/* Create Note Dialog */}
       {showCreateDialog && (
         <div style={{
@@ -679,38 +781,25 @@ export default function NotesPage() {
                 marginBottom: '16px'
               }}
             />
-            <div style={{ 
-              display: 'flex', 
-              gap: '8px', 
-              justifyContent: 'flex-end' 
-            }}>
+            <div className="flex items-stretch gap-3">
               <button
                 onClick={() => setShowCreateDialog(false)}
-                style={{
-                  padding: '8px 16px',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '4px',
-                  backgroundColor: 'transparent',
-                  color: 'var(--font-color)',
-                  cursor: 'pointer'
-                }}
+                className="btn btn-secondary flex-1"
+                style={{ fontSize: '14px', padding: '8px 16px' }}
               >
-                CLOSE
+                Close
               </button>
               <button
                 onClick={handleCreateNote}
                 disabled={!newNoteTitle.trim() || isLoading}
-                style={{
+                className="btn btn-primary flex-1"
+                style={{ 
+                  fontSize: '14px', 
                   padding: '8px 16px',
-                  border: 'none',
-                  borderRadius: '4px',
-                  backgroundColor: 'var(--primary)',
-                  color: 'white',
-                  cursor: !newNoteTitle.trim() || isLoading ? 'not-allowed' : 'pointer',
                   opacity: !newNoteTitle.trim() || isLoading ? 0.6 : 1
                 }}
               >
-                ADD NOTE
+                {isLoading ? 'Creating...' : 'Add Note'}
               </button>
             </div>
           </div>
