@@ -149,6 +149,8 @@ export default function OverviewPage() {
   // Chart theme and animation hooks
   const { echartsThemeName } = useChartTheme();
   const { triggerDataLoadAnimation, getAnimationSettings } = useChartAnimation();
+  const chart30DaysAnimation = useChartAnimation();
+  const chartRmaAnimation = useChartAnimation();
 
   // Load layout
   useEffect(() => {
@@ -213,28 +215,26 @@ export default function OverviewPage() {
     try {
       const activityData = await fetch30DaysActivity();
       setActivity(activityData);
-      // Trigger chart animations after data load
-      triggerDataLoadAnimation();
+      chart30DaysAnimation.triggerDataLoadAnimation();
     } catch (error) {
       console.error('Error refreshing 30 days activity:', error);
     } finally {
       setIsRefreshing30Days(false);
     }
-  }, [triggerDataLoadAnimation]);
+  }, [chart30DaysAnimation]);
 
   const refreshRmaActivity = useCallback(async () => {
     setIsRefreshingRma(true);
     try {
       const rmaData = await fetchRma30Days();
       setRmaActivity(rmaData);
-      // Trigger chart animations after data load
-      triggerDataLoadAnimation();
+      chartRmaAnimation.triggerDataLoadAnimation();
     } catch (error) {
       console.error('Error refreshing RMA activity:', error);
     } finally {
       setIsRefreshingRma(false);
     }
-  }, [triggerDataLoadAnimation]);
+  }, [chartRmaAnimation]);
 
   const refreshInventory = useCallback(async () => {
     setIsRefreshingInventory(true);
@@ -497,7 +497,7 @@ export default function OverviewPage() {
       if (!activity?.length) return {};
       
       return {
-        ...getAnimationSettings(),
+        ...chart30DaysAnimation.getAnimationSettings(),
         tooltip: { 
           trigger: 'axis', 
           axisPointer: { type: 'shadow' }
@@ -587,7 +587,7 @@ export default function OverviewPage() {
           }
         ],
       };
-    }, [activity, getAnimationSettings]);
+    }, [activity, chart30DaysAnimation.getAnimationSettings]);
     
     return (
       <ReactECharts 
@@ -605,7 +605,7 @@ export default function OverviewPage() {
       if (!rmaActivity?.length) return {};
       
       return {
-        ...getAnimationSettings(),
+        ...chartRmaAnimation.getAnimationSettings(),
         tooltip: { 
           trigger: 'axis', 
           axisPointer: { type: 'shadow' }
@@ -695,7 +695,7 @@ export default function OverviewPage() {
           }
         ],
       };
-    }, [rmaActivity, getAnimationSettings]);
+    }, [rmaActivity, chartRmaAnimation.getAnimationSettings]);
     
     return (
       <ReactECharts 
