@@ -1,0 +1,86 @@
+/* AG Grid Alpine Theme Customization for Luno */
+
+.ag-theme-alpine {
+  /* Override Alpine theme with Luno colors */
+  --ag-background-color: var(--card-color);
+  --ag-foreground-color: var(--font-color);
+  --ag-border-color: var(--border-color);
+  
+  /* Header */
+  --ag-header-background-color: var(--body-color);
+  --ag-header-foreground-color: var(--font-color-100);
+  --ag-header-cell-hover-background-color: var(--body-color);
+  
+  /* Rows */
+  --ag-row-background-color: var(--card-color);
+  --ag-odd-row-background-color: var(--card-color);
+  --ag-row-hover-color: var(--body-color);
+  --ag-selected-row-background-color: var(--primary-color);
+  
+  /* Typography and sizing */
+  --ag-font-size: 13px;
+  --ag-font-family: inherit;
+  --ag-row-height: 32px;
+  --ag-header-height: 36px;
+  
+  /* Focus and selection */
+  --ag-range-selection-border-color: var(--primary-color);
+  --ag-input-focus-border-color: var(--primary-color);
+}
+
+/* Additional customizations */
+.ag-theme-alpine .ag-header-cell {
+  font-weight: 600;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.ag-theme-alpine .ag-cell {
+  font-size: 13px;
+  padding: 4px 8px;
+  line-height: 1.2;
+}
+
+.ag-theme-alpine .ag-row:hover {
+  background-color: var(--body-color) !important;
+}
+
+.ag-theme-alpine .ag-row.ag-row-selected {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.ag-theme-alpine .ag-cell-focus {
+  border: 2px solid var(--primary-color) !important;
+}
+
+.ag-theme-alpine .ag-cell-inline-editing {
+  background-color: var(--card-color) !important;
+  border: 2px solid var(--primary-color) !important;
+}
+
+/* Input styling within AG Grid */
+.ag-theme-alpine input[type="text"],
+.ag-theme-alpine input[type="number"] {
+  background-color: var(--card-color) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--font-color) !important;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+}
+
+.ag-theme-alpine input[type="text"]:focus,
+.ag-theme-alpine input[type="number"]:focus {
+  border-color: var(--primary-color) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+/* Dark mode support */
+[data-theme="dark"] .ag-theme-alpine {
+  --ag-background-color: var(--card-color);
+  --ag-header-background-color: var(--body-color);
+  --ag-odd-row-background-color: var(--card-color);
+  --ag-row-hover-color: var(--body-color);
+}

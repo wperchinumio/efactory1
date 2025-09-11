@@ -6,6 +6,7 @@ import AuthErrorBoundary from "@/components/auth/AuthErrorBoundary";
 import "../../styles/globals.css";
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import '@/styles/ag-grid-theme.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getAuthState } from '@/lib/auth/guards';

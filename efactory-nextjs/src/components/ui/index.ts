@@ -23,6 +23,8 @@ export { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { Input } from './Input';
 export { Textarea } from './Textarea';
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './Select';
+export { Label } from './Label';
 export { toast, useToast } from './use-toast';
 
 // Export types
@@ -36,4 +38,6 @@ export type { CardProps, CardContentProps, CardHeaderProps, CardTitleProps } fro
 export type { BadgeProps } from './Badge';
 export type { InputProps } from './Input';
 export type { TextareaProps } from './Textarea';
+export type { SelectProps, SelectTriggerProps, SelectContentProps, SelectItemProps, SelectValueProps } from './Select';
+export type { LabelProps } from './Label';
 
