@@ -42,6 +42,13 @@ export default function NotesPage() {
     }
   }, [selectedNoteId, notes]);
 
+  // Initialize line numbers scroll behavior
+  useEffect(() => {
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.style.scrollBehavior = 'auto';
+    }
+  }, []);
+
   const loadNotes = async () => {
     try {
       setIsLoading(true);
@@ -123,8 +130,44 @@ export default function NotesPage() {
 
   const handleTextareaScroll = () => {
     if (textareaRef.current && lineNumbersRef.current) {
+      // Instant scroll sync - no animation, no smooth behavior
+      lineNumbersRef.current.style.scrollBehavior = 'auto';
       lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
     }
+  };
+
+  // Calculate line height and ensure perfect sync
+  const getLineCount = () => {
+    if (!noteContent) return 1;
+    return noteContent.split('\n').length;
+  };
+
+  const lineHeight = 21; // 14px font * 1.5 line-height = 21px
+
+  // Instant sync after content changes - no delays
+  useEffect(() => {
+    if (textareaRef.current && lineNumbersRef.current) {
+      // Force immediate scroll sync with no smooth behavior
+      lineNumbersRef.current.style.scrollBehavior = 'auto';
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  }, [noteContent]);
+
+  // Handle paste events for instant sync
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    // Prevent any scroll animation during paste
+    if (lineNumbersRef.current) {
+      lineNumbersRef.current.style.scrollBehavior = 'auto';
+    }
+    
+    // Let the default paste happen first
+    setTimeout(() => {
+      if (textareaRef.current && lineNumbersRef.current) {
+        // Force immediate sync after paste - no animation
+        lineNumbersRef.current.style.scrollBehavior = 'auto';
+        lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+      }
+    }, 0);
   };
 
   const filteredNotes = notes.filter(note => {
@@ -138,19 +181,23 @@ export default function NotesPage() {
   const selectedNote = notes.find(n => n.id === selectedNoteId);
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      height: 'calc(100vh - 120px)', 
-      backgroundColor: 'var(--body-color)',
-      overflow: 'hidden'
-    }}>
-      {/* Sidebar */}
-      <div style={{ 
-        width: '320px', 
-        borderRight: '1px solid var(--border-color)',
-        display: 'flex',
-        flexDirection: 'column'
+    <div 
+      className="notes-container"
+      style={{ 
+        display: 'flex', 
+        height: 'calc(100vh - 120px)', 
+        backgroundColor: 'var(--body-color)',
+        overflow: 'hidden'
       }}>
+      {/* Sidebar */}
+      <div 
+        className="notes-sidebar"
+        style={{ 
+          width: '320px', 
+          borderRight: '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
         {/* Header */}
         <div style={{ 
           padding: '16px', 
@@ -299,7 +346,9 @@ export default function NotesPage() {
       </div>
 
       {/* Main Content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div 
+        className="notes-main-content"
+        style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {selectedNote ? (
           <>
             {/* Content Header */}
@@ -329,12 +378,14 @@ export default function NotesPage() {
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {/* Edit/Preview Toggle */}
-                <div style={{ 
-                  display: 'flex', 
-                  border: '1px solid var(--border-color)', 
-                  borderRadius: '4px',
-                  overflow: 'hidden'
-                }}>
+                <div 
+                  className="edit-preview-toggle"
+                  style={{ 
+                    display: 'flex', 
+                    border: '1px solid var(--border-color)', 
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
                   <button
                     onClick={() => setIsPreviewMode(false)}
                     style={{
@@ -395,15 +446,17 @@ export default function NotesPage() {
             </div>
 
             {/* Content Area */}
-            <div style={{ 
-              flex: 1, 
-              padding: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '500px',
-              maxHeight: 'calc(100vh - 200px)',
-              overflow: 'hidden'
-            }}>
+            <div 
+              className="notes-content-area"
+              style={{ 
+                flex: 1, 
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '500px',
+                maxHeight: 'calc(100vh - 200px)',
+                overflow: 'hidden'
+              }}>
               {!isPreviewMode ? (
                 <div style={{
                   width: '100%',
@@ -417,11 +470,14 @@ export default function NotesPage() {
                   {/* Line Numbers */}
                   <div 
                     ref={lineNumbersRef}
+                    className="line-numbers"
                     style={{
                       width: '50px',
                       backgroundColor: 'var(--font-color-200)',
                       borderRight: '1px solid var(--border-color)',
-                      padding: '12px 8px',
+                      padding: '12px 0',
+                      paddingLeft: '8px',
+                      paddingRight: '8px',
                       fontFamily: 'monospace',
                       fontSize: '14px',
                       color: 'var(--font-color-100)',
@@ -432,28 +488,27 @@ export default function NotesPage() {
                       position: 'relative',
                       flexShrink: 0
                     }}>
-                    {noteContent.split('\n').map((_, index) => (
-                      <div key={index + 1} style={{ 
-                        height: '21px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        paddingRight: '4px'
-                      }}>
-                        {index + 1}
-                      </div>
-                    ))}
-                    {noteContent === '' && (
-                      <div style={{ 
-                        height: '21px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        paddingRight: '4px'
-                      }}>
-                        1
-                      </div>
-                    )}
+                    <div style={{
+                      paddingRight: '4px'
+                    }}>
+                      {Array.from({ length: getLineCount() }, (_, index) => (
+                        <div 
+                          key={index + 1}
+                          style={{ 
+                            height: `${lineHeight}px`,
+                            lineHeight: `${lineHeight}px`,
+                            fontSize: '14px',
+                            textAlign: 'right',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            minHeight: `${lineHeight}px`
+                          }}
+                        >
+                          {index + 1}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                   
                   {/* Textarea */}
@@ -462,6 +517,7 @@ export default function NotesPage() {
                     value={noteContent}
                     onChange={(e) => setNoteContent(e.target.value)}
                     onScroll={handleTextareaScroll}
+                    onPaste={handlePaste}
                     placeholder="Type your note here... (Markdown supported)"
                     className="scroll-area"
                     style={{
@@ -473,9 +529,11 @@ export default function NotesPage() {
                       color: 'var(--font-color)',
                       fontFamily: 'monospace',
                       fontSize: '14px',
-                      lineHeight: '1.5',
+                      lineHeight: `${lineHeight}px`,
                       resize: 'none',
-                      outline: 'none'
+                      outline: 'none',
+                      whiteSpace: 'pre-wrap',
+                      wordWrap: 'break-word'
                     }}
                   />
                 </div>
