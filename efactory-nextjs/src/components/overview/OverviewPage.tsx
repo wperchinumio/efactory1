@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/shadcn/button';
-import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox, IconWand, IconRefresh } from '@tabler/icons-react';
+import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox, IconWand, IconRefresh, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import { Checkbox } from '@/components/ui/shadcn/checkbox';
 import { useChartAnimation } from '@/hooks/useChartAnimation';
 import { useChartTheme } from '@/hooks/useChartTheme';
@@ -15,6 +15,68 @@ import { useRouter } from 'next/router';
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
 type CountersMap = Record<OverviewTileName, boolean>;
+
+const ITEMS_PER_PAGE = 10;
+const MAX_ITEMS = 50;
+
+interface PaginationProps {
+  currentPage: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+}
+
+function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: PaginationProps) {
+  const totalPages = Math.ceil(Math.min(totalItems, MAX_ITEMS) / itemsPerPage);
+  
+  if (totalPages <= 1) return null;
+
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    pages.push(i);
+  }
+
+  return (
+    <div className="flex items-center justify-between px-4 py-3 bg-card-color border-t border-border-color">
+      <div className="flex items-center text-sm text-font-color-100">
+        Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)} to{' '}
+        {Math.min(currentPage * itemsPerPage, totalItems, MAX_ITEMS)} of{' '}
+        {Math.min(totalItems, MAX_ITEMS)} results
+      </div>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="px-2"
+        >
+          <IconChevronLeft className="w-4 h-4" />
+        </Button>
+        {pages.map((page) => (
+          <Button
+            key={page}
+            variant={page === currentPage ? "default" : "outline"}
+            size="sm"
+            onClick={() => onPageChange(page)}
+            className="px-3"
+          >
+            {page}
+          </Button>
+        ))}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="px-2"
+        >
+          <IconChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function getDefaultLayout(): OverviewLayout {
   return {
@@ -72,6 +134,10 @@ export default function OverviewPage() {
   const [orders, setOrders] = useState<LatestOrderDto[]>([]);
   const [isRefreshing30Days, setIsRefreshing30Days] = useState(false);
   const [isRefreshingRma, setIsRefreshingRma] = useState(false);
+  const [isRefreshingInventory, setIsRefreshingInventory] = useState(false);
+  const [isRefreshingOrders, setIsRefreshingOrders] = useState(false);
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const [ordersPage, setOrdersPage] = useState(1);
   const [ordersTab, setOrdersTab] = useState<'received' | 'shipped'>('received');
   const [invFilters, setInvFilters] = useState<InventoryFilters>({ hasKey: true, isShort: false, needReorder: false });
   const [isSavingLayout, setIsSavingLayout] = useState(false);
@@ -105,6 +171,18 @@ export default function OverviewPage() {
     const area = layout?.areas.find(a => a.name === 'tiles');
     return (area?.areas || []).filter(a => a.visible).slice(0, 4).map(a => a.name);
   }, [layout]);
+
+  const paginatedInventory = useMemo(() => {
+    const startIndex = (inventoryPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return inventory.slice(startIndex, endIndex);
+  }, [inventory, inventoryPage]);
+
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (ordersPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return orders.slice(startIndex, endIndex);
+  }, [orders, ordersPage]);
 
   const refreshAll = useCallback(async () => {
     setIsRefreshing(true);
@@ -156,6 +234,30 @@ export default function OverviewPage() {
     }
   }, [triggerDataLoadAnimation]);
 
+  const refreshInventory = useCallback(async () => {
+    setIsRefreshingInventory(true);
+    try {
+      const inventoryData = await fetchInventory(invFilters);
+      setInventory(inventoryData as any);
+    } catch (error) {
+      console.error('Error refreshing inventory:', error);
+    } finally {
+      setIsRefreshingInventory(false);
+    }
+  }, [invFilters]);
+
+  const refreshOrders = useCallback(async () => {
+    setIsRefreshingOrders(true);
+    try {
+      const ordersData = await fetchLatest50Orders(ordersTab);
+      setOrders(ordersData);
+    } catch (error) {
+      console.error('Error refreshing orders:', error);
+    } finally {
+      setIsRefreshingOrders(false);
+    }
+  }, [ordersTab]);
+
   useEffect(() => {
     if (!layout) return;
     refreshAll();
@@ -165,14 +267,32 @@ export default function OverviewPage() {
   // Inventory filters change
   useEffect(() => {
     (async () => {
-      const data = await fetchInventory(invFilters);
-      setInventory(data as any);
+      try {
+        const data = await fetchInventory(invFilters);
+        setInventory(data as any);
+        setInventoryPage(1); // Reset to first page when filters change
+      } catch (error) {
+        console.error('Error fetching inventory:', error);
+      } finally {
+        setIsRefreshingInventory(false);
+      }
     })();
   }, [invFilters]);
 
   // Latest orders tab change
   useEffect(() => {
-    (async () => setOrders(await fetchLatest50Orders(ordersTab)))();
+    (async () => {
+      setIsRefreshingOrders(true);
+      try {
+        const ordersData = await fetchLatest50Orders(ordersTab);
+        setOrders(ordersData);
+        setOrdersPage(1); // Reset to first page when switching tabs
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setIsRefreshingOrders(false);
+      }
+    })();
   }, [ordersTab]);
 
   function toggleTile(name: OverviewTileName) {
@@ -753,7 +873,10 @@ export default function OverviewPage() {
               <Checkbox 
                 id="hasKey"
                 checked={invFilters.hasKey} 
-                onCheckedChange={(checked) => setInvFilters(v => ({ ...v, hasKey: !!checked }))} 
+                onCheckedChange={(checked) => {
+                  setInvFilters(v => ({ ...v, hasKey: !!checked }));
+                  setIsRefreshingInventory(true);
+                }} 
               />
               <label htmlFor="hasKey" className="text-sm font-medium text-font-color-100 cursor-pointer">Key</label>
             </div>
@@ -761,7 +884,10 @@ export default function OverviewPage() {
               <Checkbox 
                 id="needReorder"
                 checked={invFilters.needReorder} 
-                onCheckedChange={(checked) => setInvFilters(v => ({ ...v, needReorder: !!checked }))} 
+                onCheckedChange={(checked) => {
+                  setInvFilters(v => ({ ...v, needReorder: !!checked }));
+                  setIsRefreshingInventory(true);
+                }} 
               />
               <label htmlFor="needReorder" className="text-sm font-medium text-font-color-100 cursor-pointer">Reorder</label>
             </div>
@@ -769,15 +895,14 @@ export default function OverviewPage() {
               <Checkbox 
                 id="isShort"
                 checked={invFilters.isShort} 
-                onCheckedChange={(checked) => setInvFilters(v => ({ ...v, isShort: !!checked }))} 
+                onCheckedChange={(checked) => {
+                  setInvFilters(v => ({ ...v, isShort: !!checked }));
+                  setIsRefreshingInventory(true);
+                }} 
               />
               <label htmlFor="isShort" className="text-sm font-medium text-font-color-100 cursor-pointer">Short</label>
             </div>
           </div>
-          <Button size="sm" variant="outline" onClick={refreshAll} title="Refresh Inventory">
-            <IconRefresh className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
         </div>
         
         <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
@@ -803,9 +928,9 @@ export default function OverviewPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-color">
-              {inventory.slice(0, 10).map((it, idx) => (
+              {paginatedInventory.map((it, idx) => (
                 <tr key={idx} className="hover:bg-primary-5 transition-colors duration-200">
-                  <td className="px-4 py-3 text-font-color-100">{idx + 1}</td>
+                  <td className="px-4 py-3 text-font-color-100">{(inventoryPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
                   <td className="px-4 py-3 text-center font-bold text-font-color">{it.warehouse}</td>
                   <td className="px-4 py-3 font-bold text-font-color">
                     <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
@@ -835,6 +960,12 @@ export default function OverviewPage() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            currentPage={inventoryPage}
+            totalItems={inventory.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setInventoryPage}
+          />
         </div>
       </div>
     );
@@ -883,9 +1014,9 @@ export default function OverviewPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-color">
-              {orders.slice(0, 10).map((o, idx) => (
+              {paginatedOrders.map((o, idx) => (
                 <tr key={idx} className="hover:bg-primary-5 transition-colors duration-200">
-                  <td className="px-4 py-3 text-font-color-100">{idx + 1}</td>
+                  <td className="px-4 py-3 text-font-color-100">{(ordersPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
                   <td className="px-4 py-3 font-bold text-font-color">
                     <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
                       {o.order_number}
@@ -912,6 +1043,12 @@ export default function OverviewPage() {
               ))}
             </tbody>
           </table>
+          <Pagination
+            currentPage={ordersPage}
+            totalItems={orders.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setOrdersPage}
+          />
         </div>
       </div>
     );
@@ -982,7 +1119,18 @@ export default function OverviewPage() {
       {/* Inventory */}
       {layout.areas.find(a => a.name === 'inventory')?.visible && (
         <Card className="mt-6 border-border-color">
-          <CardHeader><CardTitle>Inventory</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>Inventory</CardTitle>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={refreshInventory}
+              disabled={isRefreshingInventory}
+              title="Refresh Inventory"
+            >
+              <IconRefresh className={`w-4 h-4 ${isRefreshingInventory ? 'animate-spin' : ''}`} />
+            </Button>
+          </CardHeader>
           <CardContent><InventoryTable /></CardContent>
         </Card>
       )}
@@ -990,7 +1138,18 @@ export default function OverviewPage() {
       {/* Latest 50 Orders */}
       {layout.areas.find(a => a.name === '50orders')?.visible && (
         <Card className="mt-6 border-border-color">
-          <CardHeader><CardTitle>Latest 50 Orders</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>Latest 50 Orders</CardTitle>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={refreshOrders}
+              disabled={isRefreshingOrders}
+              title="Refresh Latest Orders"
+            >
+              <IconRefresh className={`w-4 h-4 ${isRefreshingOrders ? 'animate-spin' : ''}`} />
+            </Button>
+          </CardHeader>
           <CardContent><LatestOrders /></CardContent>
         </Card>
       )}
