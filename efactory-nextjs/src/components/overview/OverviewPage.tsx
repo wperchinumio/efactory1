@@ -70,6 +70,8 @@ export default function OverviewPage() {
   const [rmaActivity, setRmaActivity] = useState<RmaActivityPointDto[]>([]);
   const [inventory, setInventory] = useState<InventoryItemDto[]>([]);
   const [orders, setOrders] = useState<LatestOrderDto[]>([]);
+  const [isRefreshing30Days, setIsRefreshing30Days] = useState(false);
+  const [isRefreshingRma, setIsRefreshingRma] = useState(false);
   const [ordersTab, setOrdersTab] = useState<'received' | 'shipped'>('received');
   const [invFilters, setInvFilters] = useState<InventoryFilters>({ hasKey: true, isShort: false, needReorder: false });
   const [isSavingLayout, setIsSavingLayout] = useState(false);
@@ -125,6 +127,34 @@ export default function OverviewPage() {
       setIsRefreshing(false);
     }
   }, [invFilters, ordersTab, triggerDataLoadAnimation]);
+
+  const refresh30DaysActivity = useCallback(async () => {
+    setIsRefreshing30Days(true);
+    try {
+      const activityData = await fetch30DaysActivity();
+      setActivity(activityData);
+      // Trigger chart animations after data load
+      triggerDataLoadAnimation();
+    } catch (error) {
+      console.error('Error refreshing 30 days activity:', error);
+    } finally {
+      setIsRefreshing30Days(false);
+    }
+  }, [triggerDataLoadAnimation]);
+
+  const refreshRmaActivity = useCallback(async () => {
+    setIsRefreshingRma(true);
+    try {
+      const rmaData = await fetchRma30Days();
+      setRmaActivity(rmaData);
+      // Trigger chart animations after data load
+      triggerDataLoadAnimation();
+    } catch (error) {
+      console.error('Error refreshing RMA activity:', error);
+    } finally {
+      setIsRefreshingRma(false);
+    }
+  }, [triggerDataLoadAnimation]);
 
   useEffect(() => {
     if (!layout) return;
@@ -933,7 +963,18 @@ export default function OverviewPage() {
       {/* 30 Days Activity */}
       {layout.areas.find(a => a.name === '30days')?.visible && (
         <Card className="mt-6 border-border-color">
-          <CardHeader><CardTitle>30 Days Activity</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>30 Days Activity</CardTitle>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={refresh30DaysActivity}
+              disabled={isRefreshing30Days}
+              title="Refresh 30 Days Activity"
+            >
+              <IconRefresh className={`w-4 h-4 ${isRefreshing30Days ? 'animate-spin' : ''}`} />
+            </Button>
+          </CardHeader>
           <CardContent><Chart30Days /></CardContent>
         </Card>
       )}
@@ -957,7 +998,18 @@ export default function OverviewPage() {
       {/* 30 Days RMA Activity */}
       {layout.areas.find(a => a.name === '30days_rmas')?.visible && (
         <Card className="mt-6 mb-10 border-border-color">
-          <CardHeader><CardTitle>30 Days RMA Activity</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle>30 Days RMA Activity</CardTitle>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={refreshRmaActivity}
+              disabled={isRefreshingRma}
+              title="Refresh RMA Activity"
+            >
+              <IconRefresh className={`w-4 h-4 ${isRefreshingRma ? 'animate-spin' : ''}`} />
+            </Button>
+          </CardHeader>
           <CardContent><ChartRma30Days /></CardContent>
         </Card>
       )}
