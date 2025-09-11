@@ -5,7 +5,6 @@ import { Checkbox } from '@/components/ui/shadcn/checkbox';
 import { useChartAnimation } from '@/hooks/useChartAnimation';
 import { useChartTheme } from '@/hooks/useChartTheme';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/shadcn/dropdown-menu';
 import dynamic from 'next/dynamic';
 import { fetch30DaysActivity, fetchFulfillments, fetchInventory, fetchLatest50Orders, fetchRma30Days, fetchDefaultOverviewLayout, saveOverviewLayout } from '@/services/api';
 import type { ActivityPointDto, FulfillmentRowDto, InventoryFilters, InventoryItemDto, LatestOrderDto, RmaActivityPointDto } from '@/types/api/overview';
@@ -56,10 +55,14 @@ function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: Pag
         {pages.map((page) => (
           <Button
             key={page}
-            variant={page === currentPage ? "default" : "outline"}
+            variant="outline"
             size="sm"
             onClick={() => onPageChange(page)}
-            className="px-3"
+            className={`px-3 ${
+              page === currentPage 
+                ? 'bg-primary text-white border-primary hover:bg-primary hover:text-white' 
+                : 'bg-card-color text-font-color-100 hover:bg-primary-10'
+            }`}
           >
             {page}
           </Button>
@@ -140,7 +143,6 @@ export default function OverviewPage() {
   const [ordersPage, setOrdersPage] = useState(1);
   const [ordersTab, setOrdersTab] = useState<'received' | 'shipped'>('received');
   const [invFilters, setInvFilters] = useState<InventoryFilters>({ hasKey: true, isShort: false, needReorder: false });
-  const [isSavingLayout, setIsSavingLayout] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hideZeroQty, setHideZeroQty] = useState(true);
 
@@ -307,17 +309,6 @@ export default function OverviewPage() {
     setLayout(next);
   }
 
-  async function onSaveLayout() {
-    if (!layout) return;
-    setIsSavingLayout(true);
-    try {
-      const saved = await saveOverviewLayout(layout);
-      setLayout(saved);
-      saveLayoutToStorage(saved);
-    } finally {
-      setIsSavingLayout(false);
-    }
-  }
 
   // COUNTERS: aggregate from fulfillments
   const totals = useMemo(() => {
@@ -553,6 +544,9 @@ export default function OverviewPage() {
             label: {
               show: true,
               position: 'inside',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 'bold',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           },
@@ -565,6 +559,9 @@ export default function OverviewPage() {
             label: {
               show: true,
               position: 'inside',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 'bold',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           }
@@ -635,6 +632,9 @@ export default function OverviewPage() {
             label: {
               show: true,
               position: 'inside',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 'bold',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           },
@@ -647,6 +647,9 @@ export default function OverviewPage() {
             label: {
               show: true,
               position: 'inside',
+              color: '#ffffff',
+              fontSize: 12,
+              fontWeight: 'bold',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           }
@@ -735,9 +738,8 @@ export default function OverviewPage() {
             </button>
           </div>
           <div>
-            <Button size="sm" variant="outline" onClick={() => fetchFulfillments().then(setFulfillments)} title="Refresh Fulfillment" className="hover:bg-primary/10">
-              <IconRefresh className="w-4 h-4 mr-2" />
-              Refresh
+            <Button size="sm" variant="outline" onClick={() => fetchFulfillments().then(setFulfillments)} title="Refresh Fulfillment" className="bg-primary text-white border-primary hover:bg-primary hover:text-white">
+              <IconRefresh className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -1064,19 +1066,9 @@ export default function OverviewPage() {
           <Button size="sm" variant="outline" onClick={() => router.push('/overview/customize')}>
             <IconWand className="w-4 h-4 mr-2" /> Customize
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button size="sm" variant="default" disabled={isRefreshing}>
-                {isRefreshing ? 'Refreshing…' : 'Refresh'}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={refreshAll}>Refresh Now</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem disabled={isSavingLayout} onClick={onSaveLayout}>{isSavingLayout ? 'Saving…' : 'Save Layout'}</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button size="sm" variant="outline" onClick={refreshAll} disabled={isRefreshing} className="bg-primary text-white border-primary hover:bg-primary hover:text-white">
+            {isRefreshing ? 'Refreshing…' : 'Refresh'}
+          </Button>
         </div>
       </div>
 
@@ -1108,6 +1100,7 @@ export default function OverviewPage() {
               onClick={refresh30DaysActivity}
               disabled={isRefreshing30Days}
               title="Refresh 30 Days Activity"
+              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
             >
               <IconRefresh className={`w-4 h-4 ${isRefreshing30Days ? 'animate-spin' : ''}`} />
             </Button>
@@ -1127,6 +1120,7 @@ export default function OverviewPage() {
               onClick={refreshInventory}
               disabled={isRefreshingInventory}
               title="Refresh Inventory"
+              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
             >
               <IconRefresh className={`w-4 h-4 ${isRefreshingInventory ? 'animate-spin' : ''}`} />
             </Button>
@@ -1146,6 +1140,7 @@ export default function OverviewPage() {
               onClick={refreshOrders}
               disabled={isRefreshingOrders}
               title="Refresh Latest Orders"
+              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
             >
               <IconRefresh className={`w-4 h-4 ${isRefreshingOrders ? 'animate-spin' : ''}`} />
             </Button>
@@ -1165,6 +1160,7 @@ export default function OverviewPage() {
               onClick={refreshRmaActivity}
               disabled={isRefreshingRma}
               title="Refresh RMA Activity"
+              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
             >
               <IconRefresh className={`w-4 h-4 ${isRefreshingRma ? 'animate-spin' : ''}`} />
             </Button>
