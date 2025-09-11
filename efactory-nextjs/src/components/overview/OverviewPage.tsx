@@ -398,15 +398,25 @@ export default function OverviewPage() {
             name: 'Received', 
             type: 'bar', 
             stack: 'orders', 
-            data: activity.map(p => p.received),
-            emphasis: { focus: 'series' }
+            data: activity.map(p => p.received || null),
+            emphasis: { focus: 'series' },
+            label: {
+              show: true,
+              position: 'inside',
+              formatter: (params: any) => params.value > 0 ? params.value : ''
+            }
           },
           { 
             name: 'Shipped', 
             type: 'bar', 
             stack: 'orders', 
-            data: activity.map(p => p.shipped),
-            emphasis: { focus: 'series' }
+            data: activity.map(p => p.shipped || null),
+            emphasis: { focus: 'series' },
+            label: {
+              show: true,
+              position: 'inside',
+              formatter: (params: any) => params.value > 0 ? params.value : ''
+            }
           }
         ],
       };
@@ -434,7 +444,7 @@ export default function OverviewPage() {
           axisPointer: { type: 'shadow' }
         },
         legend: { 
-          data: ['Authorized', 'Closed', 'Total'], 
+          data: ['Authorized', 'Closed'], 
           top: 0
         },
         grid: { 
@@ -470,25 +480,25 @@ export default function OverviewPage() {
             name: 'Authorized', 
             type: 'bar', 
             stack: 'rma', 
-            data: rmaActivity.map(p => p.issued),
-            emphasis: { focus: 'series' }
+            data: rmaActivity.map(p => p.issued || null),
+            emphasis: { focus: 'series' },
+            label: {
+              show: true,
+              position: 'inside',
+              formatter: (params: any) => params.value > 0 ? params.value : ''
+            }
           },
           { 
             name: 'Closed', 
             type: 'bar', 
             stack: 'rma', 
-            data: rmaActivity.map(p => p.closed),
-            emphasis: { focus: 'series' }
-          },
-          {
-            name: 'Total', 
-            type: 'line', 
-            smooth: true, 
-            symbol: 'circle', 
-            symbolSize: 6,
-            data: rmaActivity.map(p => (p.issued || 0) + (p.closed || 0)),
-            lineStyle: { width: 3 },
-            emphasis: { focus: 'series' }
+            data: rmaActivity.map(p => p.closed || null),
+            emphasis: { focus: 'series' },
+            label: {
+              show: true,
+              position: 'inside',
+              formatter: (params: any) => params.value > 0 ? params.value : ''
+            }
           }
         ],
       };
