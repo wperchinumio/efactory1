@@ -64,13 +64,6 @@ export default function CustomizeOverview() {
     return titleMap[name] || name;
   };
 
-  function toggleAreaVisible(name: string) {
-    if (!layout) return;
-    const next = JSON.parse(JSON.stringify(layout)) as OverviewLayout;
-    next.areas = next.areas.map(a => a.name === name ? { ...a, visible: !a.visible } : a);
-    setLayout(next);
-  }
-
   function toggleTile(name: OverviewTileName) {
     if (!tiles || !layout) return;
     const next = JSON.parse(JSON.stringify(layout)) as OverviewLayout;
@@ -79,17 +72,6 @@ export default function CustomizeOverview() {
     if (!entry) return;
     const visibleCount = tileArea.areas?.filter(t => t.visible).length || 0;
     entry.visible = entry.visible ? false : visibleCount < 4;
-    setLayout(next);
-  }
-
-  function moveSection(index: number, delta: number) {
-    if (!layout) return;
-    const next = JSON.parse(JSON.stringify(layout)) as OverviewLayout;
-    const arr = next.areas;
-    const newIndex = index + delta;
-    if (newIndex < 0 || newIndex >= arr.length) return;
-    const moved = arr.splice(index, 1)[0];
-    if (moved) arr.splice(newIndex, 0, moved);
     setLayout(next);
   }
 
@@ -134,7 +116,7 @@ export default function CustomizeOverview() {
           <Button variant="outline" size="sm" onClick={() => router.push('/overview')}>
             <IconArrowLeft className="w-4 h-4 mr-2" /> Close
           </Button>
-          <h1 className="text-xl font-semibold">Customize Overview</h1>
+          <h1 className="text-xl font-semibold">Customize Counters</h1>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={onRestoreDefault} disabled={working} className="bg-primary text-white border-primary hover:bg-primary hover:text-white">
@@ -146,34 +128,37 @@ export default function CustomizeOverview() {
         </div>
       </div>
 
-      {/* Sections visibility + drag order */}
-      <div className="space-y-2 mb-6">
-        {(layout.areas || []).map((a, idx) => (
-          <div key={a.name} className="rounded-lg border border-border-color px-3 py-2 flex items-center justify-between bg-card-color">
-            <div className="flex items-center gap-2">
-              <IconGripVertical className="w-4 h-4 text-font-color-100" />
-              <span className="font-medium">{getSectionTitle(a.name)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => moveSection(idx, -1)} disabled={idx === 0}>↑</Button>
-              <Button size="sm" variant="outline" onClick={() => moveSection(idx, 1)} disabled={idx === (layout.areas.length - 1)}>↓</Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => toggleAreaVisible(a.name)}
-                className={a.visible ? 'bg-primary text-white border-primary hover:bg-primary hover:text-white' : 'bg-card-color text-font-color-100 hover:bg-primary-10'}
-              >
-                {a.visible ? 'Visible' : 'Hidden'}
-              </Button>
-            </div>
+      {/* Overview sections info */}
+      <div className="mb-6 p-4 bg-card-color border border-border-color rounded-lg">
+        <h2 className="text-lg font-semibold mb-2 text-font-color">Overview Layout</h2>
+        <p className="text-sm text-font-color-100 mb-3">
+          The overview page displays sections in a fixed, optimized order for the best user experience:
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-font-color-100">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <span>Key Performance Counters</span>
           </div>
-        ))}
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <span>Fulfillment Summary</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <span>Activity Charts (side-by-side)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-primary rounded-full"></div>
+            <span>Inventory & Latest Orders</span>
+          </div>
+        </div>
       </div>
 
-      {/* Tiles area DnD */}
+      {/* Counter Selection */}
       {tiles && (
         <div>
-          <div className="text-sm font-semibold mb-2">Key Parameter Display (drag to reorder, max 4 visible)</div>
+          <h2 className="text-lg font-semibold mb-3 text-font-color">Select Key Performance Counters</h2>
+          <p className="text-sm text-font-color-100 mb-4">Choose which counters to display on your overview page. You can drag to reorder and select up to 4 counters to show.</p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
             {(tiles.areas || []).map((t, i) => (
               <div key={t.name}

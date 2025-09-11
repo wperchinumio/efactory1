@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/shadcn/button';
-import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox, IconWand, IconRefresh, IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
-import { Checkbox } from '@/components/ui/shadcn/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/shadcn/dropdown-menu';
+import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox, IconWand, IconRefresh, IconChevronLeft, IconChevronRight, IconChevronDown } from '@tabler/icons-react';
 import { useChartAnimation } from '@/hooks/useChartAnimation';
 import { useChartTheme } from '@/hooks/useChartTheme';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
@@ -713,7 +713,7 @@ export default function OverviewPage() {
     function ClickableCell({ value, className = "" }: { value: number; className?: string }) {
       return (
         <button 
-          className={`text-primary hover:text-primary-600 font-semibold transition-colors duration-200 hover:underline ${className}`}
+          className={`text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-semibold transition-colors duration-200 hover:underline ${className}`}
           onClick={() => {
             // TODO: Add navigation logic here
             console.log('Navigate to filtered view with value:', value);
@@ -730,24 +730,19 @@ export default function OverviewPage() {
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-font-color-100">Hide zero qty</span>
             <button
-              className={`inline-flex items-center h-6 w-11 rounded-full transition-all duration-300 ${hideZeroQty ? 'bg-primary shadow-lg' : 'bg-border-color'} shadow-inner`}
+              className={`inline-flex items-center h-6 w-11 rounded-full transition-all duration-300 ${hideZeroQty ? 'bg-primary shadow-lg' : 'bg-slate-300 dark:bg-slate-600'} shadow-inner`}
               onClick={() => setHideZeroQty(v => !v)}
               aria-label="Hide zero quantity"
             >
-              <span className={`inline-block h-5 w-5 bg-card-color rounded-full transform transition-transform duration-300 shadow-md ${hideZeroQty ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              <span className={`inline-block h-5 w-5 bg-white dark:bg-slate-200 rounded-full transform transition-transform duration-300 shadow-md ${hideZeroQty ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
-          </div>
-          <div>
-            <Button size="sm" variant="outline" onClick={() => fetchFulfillments().then(setFulfillments)} title="Refresh Fulfillment" className="bg-primary text-white border-primary hover:bg-primary hover:text-white">
-              <IconRefresh className="w-4 h-4" />
-            </Button>
           </div>
         </div>
         
         <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-primary-10 border-b border-border-color">
+              <tr className="bg-primary-10 dark:bg-primary-900/20 border-b border-border-color">
                 <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">ACCOUNT #</th>
                 <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">GROUP</th>
                 <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">WAREHOUSE</th>
@@ -767,7 +762,7 @@ export default function OverviewPage() {
               {visibleFulfillments.map((row, idx) => (
                 <tr 
                   key={idx} 
-                  className="hover:bg-primary-5 transition-colors duration-200"
+                  className="hover:bg-primary-5 dark:hover:bg-primary-900/10 transition-colors duration-200"
                 >
                   <td className="px-4 py-3 font-bold text-font-color">{row.account_number}</td>
                   <td className="px-4 py-3 text-center font-semibold text-font-color-100">{row.group}</td>
@@ -809,22 +804,22 @@ export default function OverviewPage() {
               
               {/* Totals Row - Only show if there are multiple fulfillments */}
               {visibleFulfillments.length > 1 && (
-                <tr className="bg-primary-20 border-t border-border-color font-bold">
+                <tr className="bg-primary-20 dark:bg-primary-800/30 border-t border-border-color font-bold">
                   <td className="px-4 py-3 font-bold text-font-color"></td>
                   <td className="px-4 py-3 text-center font-bold text-font-color"></td>
                   <td className="px-4 py-3 text-center font-bold text-font-color"></td>
                   <td className="px-4 py-3 text-center">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.orders_today)}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.back_orders)}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.ff_hold)}
                     </button>
                   </td>
@@ -832,22 +827,22 @@ export default function OverviewPage() {
                     {formatNumber(fulfillmentTotals.in_process)}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.total_open_orders)}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.total_open_qty)}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.shipped_today)}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.ship_today_units)}
                     </button>
                   </td>
@@ -871,38 +866,44 @@ export default function OverviewPage() {
       <div>
         <div className="flex items-center gap-6 mb-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Checkbox 
+            <div className="form-check">
+              <input
+                type="checkbox"
                 id="hasKey"
-                checked={invFilters.hasKey} 
-                onCheckedChange={(checked) => {
-                  setInvFilters(v => ({ ...v, hasKey: !!checked }));
+                checked={invFilters.hasKey}
+                onChange={(e) => {
+                  setInvFilters(v => ({ ...v, hasKey: e.target.checked }));
                   setIsRefreshingInventory(true);
-                }} 
+                }}
+                className="form-check-input"
               />
-              <label htmlFor="hasKey" className="text-sm font-medium text-font-color-100 cursor-pointer">Key</label>
+              <label htmlFor="hasKey" className="form-check-label">Key</label>
             </div>
-            <div className="flex items-center gap-2">
-              <Checkbox 
+            <div className="form-check">
+              <input
+                type="checkbox"
                 id="needReorder"
-                checked={invFilters.needReorder} 
-                onCheckedChange={(checked) => {
-                  setInvFilters(v => ({ ...v, needReorder: !!checked }));
+                checked={invFilters.needReorder}
+                onChange={(e) => {
+                  setInvFilters(v => ({ ...v, needReorder: e.target.checked }));
                   setIsRefreshingInventory(true);
-                }} 
+                }}
+                className="form-check-input"
               />
-              <label htmlFor="needReorder" className="text-sm font-medium text-font-color-100 cursor-pointer">Reorder</label>
+              <label htmlFor="needReorder" className="form-check-label">Reorder</label>
             </div>
-            <div className="flex items-center gap-2">
-              <Checkbox 
+            <div className="form-check">
+              <input
+                type="checkbox"
                 id="isShort"
-                checked={invFilters.isShort} 
-                onCheckedChange={(checked) => {
-                  setInvFilters(v => ({ ...v, isShort: !!checked }));
+                checked={invFilters.isShort}
+                onChange={(e) => {
+                  setInvFilters(v => ({ ...v, isShort: e.target.checked }));
                   setIsRefreshingInventory(true);
-                }} 
+                }}
+                className="form-check-input"
               />
-              <label htmlFor="isShort" className="text-sm font-medium text-font-color-100 cursor-pointer">Short</label>
+              <label htmlFor="isShort" className="form-check-label">Short</label>
             </div>
           </div>
         </div>
@@ -910,7 +911,7 @@ export default function OverviewPage() {
         <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-primary-10 border-b border-border-color">
+              <tr className="bg-primary-10 dark:bg-primary-900/20 border-b border-border-color">
                 <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">#</th>
                 <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Warehouse</th>
                 <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Item #</th>
@@ -931,11 +932,11 @@ export default function OverviewPage() {
             </thead>
             <tbody className="divide-y divide-border-color">
               {paginatedInventory.map((it, idx) => (
-                <tr key={idx} className="hover:bg-primary-5 transition-colors duration-200">
+                <tr key={idx} className="hover:bg-primary-5 dark:hover:bg-primary-900/10 transition-colors duration-200">
                   <td className="px-4 py-3 text-font-color-100">{(inventoryPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
                   <td className="px-4 py-3 text-center font-bold text-font-color">{it.warehouse}</td>
                   <td className="px-4 py-3 font-bold text-font-color">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {it.item_number}
                     </button>
                   </td>
@@ -1005,7 +1006,7 @@ export default function OverviewPage() {
         <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="bg-primary-10 border-b border-border-color">
+              <tr className="bg-primary-10 dark:bg-primary-900/20 border-b border-border-color">
                 <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">#</th>
                 <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Order #</th>
                 <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Received</th>
@@ -1017,10 +1018,10 @@ export default function OverviewPage() {
             </thead>
             <tbody className="divide-y divide-border-color">
               {paginatedOrders.map((o, idx) => (
-                <tr key={idx} className="hover:bg-primary-5 transition-colors duration-200">
+                <tr key={idx} className="hover:bg-primary-5 dark:hover:bg-primary-900/10 transition-colors duration-200">
                   <td className="px-4 py-3 text-font-color-100">{(ordersPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
                   <td className="px-4 py-3 font-bold text-font-color">
-                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {o.order_number}
                     </button>
                   </td>
@@ -1059,116 +1060,170 @@ export default function OverviewPage() {
   if (!layout) return null;
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Overview</h1>
-        <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => router.push('/overview/customize')}>
-            <IconWand className="w-4 h-4 mr-2" /> Customize
-          </Button>
-          <Button size="sm" variant="outline" onClick={refreshAll} disabled={isRefreshing} className="bg-primary text-white border-primary hover:bg-primary hover:text-white">
-            {isRefreshing ? 'Refreshing…' : 'Refresh'}
-          </Button>
+    <div className="p-6 max-w-full mx-auto">
+        {/* Header Section */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-font-color mb-1">Overview</h1>
+            <p className="text-font-color-100">Monitor your key performance metrics and activities</p>
+          </div>
+          <div className="flex items-center gap-0">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={refreshAll}
+              disabled={isRefreshing}
+              className="bg-primary text-white border-primary hover:bg-primary hover:text-white shadow-lg rounded-r-none border-r-0"
+            >
+              <IconRefresh className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing…' : 'Refresh'}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  disabled={isRefreshing}
+                  className="bg-primary text-white border-primary hover:bg-primary hover:text-white shadow-lg rounded-l-none px-2"
+                >
+                  <IconChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 bg-card-color border-border-color">
+                <DropdownMenuItem onClick={refreshAll} disabled={isRefreshing} className="text-font-color hover:bg-primary-10">
+                  <IconRefresh className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  Refresh All Data
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-border-color" />
+                <DropdownMenuItem onClick={() => router.push('/overview/customize')} className="text-font-color hover:bg-primary-10">
+                  <IconWand className="w-4 h-4 mr-2" />
+                  Customize Layout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Key Performance Counters */}
+        {layout.areas.find(a => a.name === 'tiles')?.visible && (
+          <div className="mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {visibleTiles.map(t => (
+                <div key={t} className="transform hover:scale-105 transition-transform duration-200">
+                  {renderTile(t)}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fulfillment Section - Full Width */}
+        {layout.areas.find(a => a.name === 'fulfillment')?.visible && (
+          <Card className="mb-8 border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300 w-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
+              <CardTitle className="text-xl font-semibold text-font-color">Fulfillment Summary</CardTitle>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => fetchFulfillments().then(setFulfillments)}
+                title="Refresh Fulfillment"
+                className="bg-primary text-white border-primary hover:bg-primary hover:text-white shadow-md"
+              >
+                <IconRefresh className="w-4 h-4" />
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6 overflow-x-auto"><FulfillmentTable /></CardContent>
+          </Card>
+        )}
+
+        {/* Activity Charts Section */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 30 Days Activity */}
+            {layout.areas.find(a => a.name === '30days')?.visible && (
+              <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
+                  <CardTitle className="text-lg font-semibold text-font-color">30 Days Activity</CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={refresh30DaysActivity}
+                    disabled={isRefreshing30Days}
+                    title="Refresh 30 Days Activity"
+                    className="bg-primary text-white border-primary hover:bg-primary hover:text-white shadow-md"
+                  >
+                    <IconRefresh className={`w-4 h-4 ${isRefreshing30Days ? 'animate-spin' : ''}`} />
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-6"><Chart30Days /></CardContent>
+              </Card>
+            )}
+
+            {/* 30 Days RMA Activity */}
+            {layout.areas.find(a => a.name === '30days_rmas')?.visible && (
+              <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
+                  <CardTitle className="text-lg font-semibold text-font-color">30 Days RMA Activity</CardTitle>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={refreshRmaActivity}
+                    disabled={isRefreshingRma}
+                    title="Refresh RMA Activity"
+                    className="bg-primary text-white border-primary hover:bg-primary hover:text-white shadow-md"
+                  >
+                    <IconRefresh className={`w-4 h-4 ${isRefreshingRma ? 'animate-spin' : ''}`} />
+                  </Button>
+                </CardHeader>
+                <CardContent className="p-6"><ChartRma30Days /></CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {/* Data Tables Section - Full Width */}
+        <div className="space-y-8 mb-10">
+          {/* Inventory */}
+          {layout.areas.find(a => a.name === 'inventory')?.visible && (
+            <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
+                <CardTitle className="text-lg font-semibold text-font-color">Inventory Overview</CardTitle>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={refreshInventory}
+                  disabled={isRefreshingInventory}
+                  title="Refresh Inventory"
+                  className="bg-primary text-white border-primary hover:bg-primary hover:text-white shadow-md"
+                >
+                  <IconRefresh className={`w-4 h-4 ${isRefreshingInventory ? 'animate-spin' : ''}`} />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-6 overflow-x-auto"><InventoryTable /></CardContent>
+            </Card>
+          )}
+
+          {/* Latest 50 Orders */}
+          {layout.areas.find(a => a.name === '50orders')?.visible && (
+            <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
+                <CardTitle className="text-lg font-semibold text-font-color">Latest Orders</CardTitle>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={refreshOrders}
+                  disabled={isRefreshingOrders}
+                  title="Refresh Latest Orders"
+                  className="bg-primary text-white border-primary hover:bg-primary hover:text-white shadow-md"
+                >
+                  <IconRefresh className={`w-4 h-4 ${isRefreshingOrders ? 'animate-spin' : ''}`} />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-6 overflow-x-auto"><LatestOrders /></CardContent>
+            </Card>
+          )}
         </div>
       </div>
-
-      {/* Counters */}
-      {layout.areas.find(a => a.name === 'tiles')?.visible && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
-          {visibleTiles.map(t => (
-            <div key={t}>{renderTile(t)}</div>
-          ))}
-        </div>
-      )}
-
-      {/* Fulfillment */}
-      {layout.areas.find(a => a.name === 'fulfillment')?.visible && (
-        <Card className="mt-6 border-border-color">
-          <CardHeader><CardTitle>Fulfillment</CardTitle></CardHeader>
-          <CardContent><FulfillmentTable /></CardContent>
-        </Card>
-      )}
-
-      {/* 30 Days Activity */}
-      {layout.areas.find(a => a.name === '30days')?.visible && (
-        <Card className="mt-6 border-border-color">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>30 Days Activity</CardTitle>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={refresh30DaysActivity}
-              disabled={isRefreshing30Days}
-              title="Refresh 30 Days Activity"
-              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
-            >
-              <IconRefresh className={`w-4 h-4 ${isRefreshing30Days ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardHeader>
-          <CardContent><Chart30Days /></CardContent>
-        </Card>
-      )}
-
-      {/* Inventory */}
-      {layout.areas.find(a => a.name === 'inventory')?.visible && (
-        <Card className="mt-6 border-border-color">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Inventory</CardTitle>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={refreshInventory}
-              disabled={isRefreshingInventory}
-              title="Refresh Inventory"
-              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
-            >
-              <IconRefresh className={`w-4 h-4 ${isRefreshingInventory ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardHeader>
-          <CardContent><InventoryTable /></CardContent>
-        </Card>
-      )}
-
-      {/* Latest 50 Orders */}
-      {layout.areas.find(a => a.name === '50orders')?.visible && (
-        <Card className="mt-6 border-border-color">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>Latest 50 Orders</CardTitle>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={refreshOrders}
-              disabled={isRefreshingOrders}
-              title="Refresh Latest Orders"
-              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
-            >
-              <IconRefresh className={`w-4 h-4 ${isRefreshingOrders ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardHeader>
-          <CardContent><LatestOrders /></CardContent>
-        </Card>
-      )}
-
-      {/* 30 Days RMA Activity */}
-      {layout.areas.find(a => a.name === '30days_rmas')?.visible && (
-        <Card className="mt-6 mb-10 border-border-color">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle>30 Days RMA Activity</CardTitle>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={refreshRmaActivity}
-              disabled={isRefreshingRma}
-              title="Refresh RMA Activity"
-              className="bg-primary text-white border-primary hover:bg-primary hover:text-white"
-            >
-              <IconRefresh className={`w-4 h-4 ${isRefreshingRma ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardHeader>
-          <CardContent><ChartRma30Days /></CardContent>
-        </Card>
-      )}
-    </div>
   );
 }
 
