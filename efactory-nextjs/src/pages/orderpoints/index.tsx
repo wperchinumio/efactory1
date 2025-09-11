@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label } from '@/components/ui'
+import { toast } from '@/components/ui/use-toast'
 import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
 import {
@@ -10,8 +11,9 @@ import {
   saveDraft,
   saveEntry,
   fetchInventoryForCart,
+  readOrderPointsSettings,
 } from '@/services/api'
-import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto } from '@/types/api/orderpoints'
+import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto } from '@/types/api/orderpoints'
 
 // AG Grid must be client-only in Next.js
 const AgGridReact = dynamic(() => 
@@ -54,8 +56,11 @@ export default function OrderPointsPage() {
   const [orderDetail, setOrderDetail] = useState<OrderDetailDto[]>([])
   const [accountNumberLocation, setAccountNumberLocation] = useState('')
   const [accountDisplayLabel, setAccountDisplayLabel] = useState('')
+  const [orderStatusDisplayLabel, setOrderStatusDisplayLabel] = useState('')
   const [shippingAddress, setShippingAddress] = useState<AddressDto>({ country: 'US' })
   const [billingAddress, setBillingAddress] = useState<AddressDto>({})
+  // Shipping settings state
+  const [shippingSettings, setShippingSettings] = useState<OrderPointsSettingsDto['shipping'] | null>(null)
   const [findItemValue, setFindItemValue] = useState('')
   const gridRef = useRef<any>(null)
   // Browse Items modal state
@@ -64,6 +69,12 @@ export default function OrderPointsPage() {
   const [showZeroQty, setShowZeroQty] = useState(false)
   const [warehouses, setWarehouses] = useState<string>('')
   const [inventory, setInventory] = useState<Record<string, { item_number: string; description: string; qty_net: number; quantity?: number; price?: number }>>({})
+  const [matchedWarehouse, setMatchedWarehouse] = useState('')
+  
+  // Determine if form fields should be disabled based on warehouse matching
+  const formFieldsDisabled = warehouses === '' || 
+                           matchedWarehouse === '' ||
+                           matchedWarehouse !== warehouses
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
@@ -79,7 +90,7 @@ export default function OrderPointsPage() {
     international_declared_value: 0,
     balance_due_us: 0
   })
-  const [extraLabels] = useState({
+  const [extraLabels, setExtraLabels] = useState({
     header_cf_1: 'Custom Field 1',
     header_cf_2: 'Custom Field 2',
     header_cf_3: 'Custom Field 3',
@@ -133,6 +144,70 @@ export default function OrderPointsPage() {
     custom_field4: '',
     custom_field5: ''
   })
+
+  // Load shipping settings on component mount
+  useEffect(() => {
+    const loadShippingSettings = async () => {
+      try {
+        const settings = await readOrderPointsSettings()
+        setShippingSettings(settings.shipping)
+        
+        // Update custom field labels
+        if (settings.custom_fields) {
+          setExtraLabels(prev => ({
+            ...prev,
+            header_cf_1: settings.custom_fields.header_cf_1 || 'Custom Field 1',
+            header_cf_2: settings.custom_fields.header_cf_2 || 'Custom Field 2',
+            header_cf_3: settings.custom_fields.header_cf_3 || 'Custom Field 3',
+            header_cf_4: settings.custom_fields.header_cf_4 || 'Custom Field 4',
+            header_cf_5: settings.custom_fields.header_cf_5 || 'Custom Field 5',
+            detail_cf_1: settings.custom_fields.detail_cf_1 || 'Custom Field 1',
+            detail_cf_2: settings.custom_fields.detail_cf_2 || 'Custom Field 2',
+            detail_cf_5: settings.custom_fields.detail_cf_5 || 'Custom Field 5'
+          }))
+        }
+      } catch (error) {
+        console.error('Failed to load shipping settings:', error)
+      }
+    }
+    loadShippingSettings()
+  }, [])
+
+  // Pre-populate shipping details when country changes
+  useEffect(() => {
+    if (!shippingSettings) return
+
+    const country = shippingAddress.country?.toUpperCase() || ''
+    const isDomestic = country === 'US' || country === 'USA' || country === 'UNITED STATES' || country === 'UNITED_STATES'
+    
+    const whichShipping = isDomestic ? shippingSettings.domestic : shippingSettings.international
+    
+    if (whichShipping) {
+      const {
+        carrier: shipping_carrier,
+        service: shipping_service,
+        packing_list_type,
+        freight_account,
+        consignee_number,
+        terms,
+        int_code: international_code,
+        comments = ''
+      } = whichShipping
+
+      // Update order header with shipping details
+      setOrderHeader(prev => ({
+        ...prev,
+        shipping_carrier,
+        shipping_service,
+        packing_list_type,
+        freight_account,
+        consignee_number,
+        terms,
+        international_code,
+        packing_list_comments: comments.trim().length > 0 ? comments : (prev.packing_list_comments || '')
+      }))
+    }
+  }, [shippingAddress.country, shippingSettings])
 
   // Functions to handle modal opening and saving
   const openBillingAddressModal = () => {
@@ -396,21 +471,94 @@ export default function OrderPointsPage() {
   }
 
   async function onNewOrderNumber() {
-    const number = await generateOrderNumber()
-    const safeNumber: string = typeof number === 'string' ? number : String(number ?? '')
-    setOrderHeader({ ...orderHeader, order_number: safeNumber })
+    try {
+      const number = await generateOrderNumber()
+      const safeNumber: string = typeof number === 'string' ? number : String(number ?? '')
+      setOrderHeader({ ...orderHeader, order_number: safeNumber })
+      
+      // Show success toaster for new order number
+      toast({
+        title: "New Order Created",
+        description: `Order #${safeNumber} has been generated.`,
+        variant: "default",
+      })
+    } catch (error: any) {
+      // Show error toaster with error message
+      const errorMessage = error?.error_message || error?.message || "An error occurred while generating order number."
+      toast({
+        title: "Order Generation Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
   }
 
   async function onSaveDraft() {
-    const header = buildOrderHeaderForSubmit(true)
-    const res = await saveDraft(header, orderDetail)
-    if (res?.order_number) setOrderHeader({ ...orderHeader, order_number: res.order_number })
+    try {
+      const header = buildOrderHeaderForSubmit(true)
+      const res = await saveDraft(header, orderDetail)
+      
+      if (res?.order_number) {
+        // Show success toaster for draft save
+        toast({
+          title: "Draft Saved Successfully!",
+          description: `Draft #${res.order_number} has been saved.`,
+          variant: "default",
+        })
+        
+        // Update order header with new order number
+        setOrderHeader({ ...orderHeader, order_number: res.order_number })
+      } else {
+        // Show error toaster if no order number returned
+        toast({
+          title: "Draft Save Failed",
+          description: "Failed to save draft. Please try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
+      // Show error toaster with error message
+      const errorMessage = error?.error_message || error?.message || "An error occurred while saving the draft."
+      toast({
+        title: "Draft Save Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
   }
 
   async function onPlaceOrder() {
-    const header = buildOrderHeaderForSubmit(false)
-    const res = await saveEntry(header, orderDetail)
-    if (res?.order_number) router.push(`/orders/${res.order_number}`)
+    try {
+      const header = buildOrderHeaderForSubmit(false)
+      const res = await saveEntry(header, orderDetail)
+      
+      if (res?.order_number) {
+        // Show success toaster with order number
+        toast({
+          title: "Order Placed Successfully!",
+          description: `Order #${res.order_number} has been placed successfully.`,
+          variant: "default",
+        })
+        
+        // Navigate to order details
+        router.push(`/orders/${res.order_number}`)
+      } else {
+        // Show error toaster if no order number returned
+        toast({
+          title: "Order Placement Failed",
+          description: "Failed to place order. Please try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (error: any) {
+      // Show error toaster with error message
+      const errorMessage = error?.error_message || error?.message || "An error occurred while placing the order."
+      toast({
+        title: "Order Placement Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
   }
 
   function buildOrderHeaderForSubmit(toDraft: boolean): OrderHeaderDto {
@@ -465,6 +613,50 @@ export default function OrderPointsPage() {
   }
 
   async function onBrowseItems() {
+    // Determine matched warehouse based on Order Header account location
+    let matchedWarehouseValue = ''
+    if (orderHeader.account_number && orderHeader.location) {
+      try {
+        const authTokenStr = window.localStorage.getItem('authToken')
+        if (authTokenStr) {
+          const authToken = JSON.parse(authTokenStr)
+          const warehousesData = authToken?.user_data?.warehouses || {}
+          
+          // Find matching warehouse based on account_number.location format
+          const locationDerived = orderHeader.location
+          const accountDerived = orderHeader.account_number
+          
+          // Look for matching warehouse
+          const matchedLocation = Object.keys(warehousesData).find(
+            w => w.toLowerCase() === locationDerived.toLowerCase()
+          )
+          
+          if (matchedLocation) {
+            // Find matching branch within the warehouse
+            const warehouse = warehousesData[matchedLocation]
+            for (const branch of warehouse) {
+              for (const [branchKey, accounts] of Object.entries(branch)) {
+                if (Array.isArray(accounts) && accounts.includes(accountDerived)) {
+                  matchedWarehouseValue = `${matchedLocation}-${branchKey}`
+                  break
+                }
+              }
+              if (matchedWarehouseValue) break
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error determining matched warehouse:', error)
+      }
+    }
+    
+    setMatchedWarehouse(matchedWarehouseValue)
+    
+    // Set the warehouse filter to match the Order Header warehouse
+    if (matchedWarehouseValue) {
+      setWarehouses(matchedWarehouseValue)
+    }
+    
     // Quick add if toolbar has a value and single match exists; else open modal
     const trimmed = (findItemValue || '').trim()
     if (trimmed) {
@@ -570,17 +762,17 @@ export default function OrderPointsPage() {
     try {
       const authTokenStr = window.localStorage.getItem('authToken');
       if (!authTokenStr) return [];
-      
+
       const authToken = JSON.parse(authTokenStr);
       const calcAccountRegions = authToken?.user_data?.calc_account_regions || {};
-      
+
       const accountKeys = Object.keys(calcAccountRegions);
       accountKeys.sort((a, b) => {
         if (a < b) return -1;
         if (a > b) return 1;
         return 0;
       });
-      
+
       return accountKeys.map(key => ({
         value: key,
         label: calcAccountRegions[key]
@@ -589,6 +781,14 @@ export default function OrderPointsPage() {
       console.error('Error loading account options:', error);
       return [];
     }
+  }
+
+  function getOrderStatusOptions(): Array<{value: string, label: string}> {
+    return [
+      { value: '1', label: 'Normal' },
+      { value: '2', label: 'On Hold' },
+      { value: '0', label: 'Canceled' }
+    ];
   }
 
   function handleAccountLocationChange(value: string) {
@@ -615,6 +815,18 @@ export default function OrderPointsPage() {
         location: ''
       }));
     }
+  }
+
+  function handleOrderStatusChange(value: string) {
+    setOrderHeader(prev => ({
+      ...prev,
+      order_status: +value
+    }));
+
+    // Find and set the display label
+    const orderStatusOptions = getOrderStatusOptions();
+    const selectedOption = orderStatusOptions.find(opt => opt.value === value);
+    setOrderStatusDisplayLabel(selectedOption ? selectedOption.label : '');
   }
 
   async function reloadInventory(page = currentPage) {
@@ -696,13 +908,20 @@ export default function OrderPointsPage() {
     if (orderHeader.account_number && orderHeader.location) {
       const accountLocation = `${orderHeader.account_number}.${orderHeader.location}`;
       setAccountNumberLocation(accountLocation);
-      
+
       // Also set the display label
       const accountOptions = getAccountOptions();
       const selectedOption = accountOptions.find(opt => opt.value === accountLocation);
       setAccountDisplayLabel(selectedOption ? selectedOption.label : '');
     }
   }, [orderHeader.account_number, orderHeader.location]);
+
+  useEffect(() => {
+    // Initialize order status display label
+    const orderStatusOptions = getOrderStatusOptions();
+    const selectedOption = orderStatusOptions.find(opt => opt.value === String(orderHeader.order_status ?? 1));
+    setOrderStatusDisplayLabel(selectedOption ? selectedOption.label : '');
+  }, [orderHeader.order_status]);
 
   // Handle search input changes with debouncing
   useEffect(() => {
@@ -823,26 +1042,26 @@ export default function OrderPointsPage() {
           <div className="xl:col-span-9 space-y-6">
             {/* Order Header and Shipping Address on same row */}
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              {/* Order Header */}
+            {/* Order Header */}
               <Card className="shadow-sm border-border-color">
                 <CardHeader className="bg-primary-10 border-b border-border-color">
-                  <CardTitle className="text-base font-medium text-font-color">
-                    Order Header
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
+                <CardTitle className="text-base font-medium text-font-color">
+                  Order Header
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4">
                   <div className="space-y-4">
                     {/* Row 1: Account # - Warehouse | Order # */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
                         <Label className="text-font-color-100 text-sm">Account # - Warehouse</Label>
                         <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
-                          <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
+                        <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
                             <span className="truncate">
                               {accountDisplayLabel || "Select Account - Warehouse"}
                             </span>
-                          </SelectTrigger>
-                          <SelectContent className="bg-card-color border-border-color">
+                        </SelectTrigger>
+                        <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
                               Select Account - Warehouse
                             </SelectItem>
@@ -851,87 +1070,91 @@ export default function OrderPointsPage() {
                                 <span className="whitespace-nowrap">{option.label}</span>
                               </SelectItem>
                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                        </SelectContent>
+                      </Select>
+                    </div>
                       <div>
                         <Label className="text-font-color-100 text-sm">Order #</Label>
                         <div className="font-mono text-font-color bg-body-color p-1 rounded border border-border-color h-8 text-sm flex items-center">
                           {orderHeader.order_number || '-'}
-                        </div>
+                  </div>
                       </div>
                     </div>
                     
                     {/* Row 2: Customer # | PO # */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
+                <div>
                         <Label className="text-font-color-100 text-sm">Customer #</Label>
-                        <Input 
-                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                  <Input 
+                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
                           value={orderHeader.customer_number || ''} 
                           onChange={e=>setOrderHeader(p=>({ ...p, customer_number: e.target.value }))} 
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-font-color-100 text-sm">PO #</Label>
-                        <Input 
-                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                          value={orderHeader.po_number || ''} 
-                          onChange={e=>setOrderHeader(p=>({ ...p, po_number: e.target.value }))} 
-                        />
-                      </div>
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">PO #</Label>
+                  <Input 
+                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                    value={orderHeader.po_number || ''} 
+                    onChange={e=>setOrderHeader(p=>({ ...p, po_number: e.target.value }))} 
+                  />
+                </div>
                     </div>
                     
                     {/* Row 3: Order Status | PO Date */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
+                <div>
                         <Label className="text-font-color-100 text-sm">Order Status</Label>
-                        <Select value={String(orderHeader.order_status ?? 1)} onValueChange={(v: string)=>setOrderHeader(p=>({ ...p, order_status: +v }))}>
+                        <Select value={String(orderHeader.order_status ?? 1)} onValueChange={handleOrderStatusChange}>
                           <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
-                            <SelectValue />
+                            <span className="truncate">
+                              {orderStatusDisplayLabel || "Select Order Status"}
+                            </span>
                           </SelectTrigger>
                           <SelectContent className="bg-card-color border-border-color">
-                            <SelectItem value="1" className="text-font-color hover:bg-body-color">Normal</SelectItem>
-                            <SelectItem value="2" className="text-font-color hover:bg-body-color">On Hold</SelectItem>
-                            <SelectItem value="0" className="text-font-color hover:bg-body-color">Canceled</SelectItem>
+                            {getOrderStatusOptions().map(option => (
+                              <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
+                                {option.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                      <div>
+                </div>
+                <div>
                         <Label className="text-font-color-100 text-sm">PO Date</Label>
-                        <Input 
+                  <Input 
                           type="date" 
-                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
                           value={orderHeader.ordered_date || ''} 
                           onChange={e=>setOrderHeader(p=>({ ...p, ordered_date: e.target.value }))} 
-                        />
-                      </div>
+                  />
+                </div>
                     </div>
                     
                     {/* Row 4: Shipping Instructions | Comments */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-font-color-100 text-sm">Shipping Instructions</Label>
-                        <Textarea 
-                          className="bg-card-color border-border-color text-font-color text-sm" 
+                  <Label className="text-font-color-100 text-sm">Shipping Instructions</Label>
+                  <Textarea 
+                    className="bg-card-color border-border-color text-font-color text-sm" 
                           rows={3} 
-                          value={orderHeader.shipping_instructions || ''} 
-                          onChange={e=>setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value }))} 
-                        />
-                      </div>
+                    value={orderHeader.shipping_instructions || ''} 
+                    onChange={e=>setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value }))} 
+                  />
+                </div>
                       <div>
-                        <Label className="text-font-color-100 text-sm">Comments</Label>
-                        <Textarea 
-                          className="bg-card-color border-border-color text-font-color text-sm" 
+                  <Label className="text-font-color-100 text-sm">Comments</Label>
+                  <Textarea 
+                    className="bg-card-color border-border-color text-font-color text-sm" 
                           rows={3} 
-                          value={orderHeader.packing_list_comments || ''} 
-                          onChange={e=>setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value }))} 
-                        />
+                    value={orderHeader.packing_list_comments || ''} 
+                    onChange={e=>setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value }))} 
+                  />
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
               {/* Shipping Address - SAME ROW as Order Header */}
             <Card className="shadow-sm border-border-color">
@@ -940,7 +1163,7 @@ export default function OrderPointsPage() {
                   <CardTitle className="text-base font-medium text-font-color">
                     Shipping Address
                   </CardTitle>
-                  <div className="flex gap-2">
+                <div className="flex gap-2">
                     <Button 
                       size="small" 
                       variant="outline" 
@@ -956,115 +1179,115 @@ export default function OrderPointsPage() {
                     >
                       Validate
                     </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm">Company</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                      value={shippingAddress.company||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,company:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm">Attention</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                      value={shippingAddress.attention||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,attention:e.target.value})} 
+                    />
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Company</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                        value={shippingAddress.company||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,company:e.target.value})} 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm">Attention</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                        value={shippingAddress.attention||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,attention:e.target.value})} 
-                      />
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Address 1</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Street address" 
+                      value={shippingAddress.address1||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,address1:e.target.value})} 
+                    />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">Address 1</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                        placeholder="Street address" 
-                        value={shippingAddress.address1||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,address1:e.target.value})} 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">Address 2</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                        placeholder="Apt, suite, etc." 
-                        value={shippingAddress.address2||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">City</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                        placeholder="City" 
-                        value={shippingAddress.city||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">State</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                        placeholder="State" 
-                        value={shippingAddress.state_province||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,state_province:e.target.value})} 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">Postal Code</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                        placeholder="ZIP/Postal" 
-                        value={shippingAddress.postal_code||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
-                      />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">Country</Label>
-                      <Select value={shippingAddress.country||'US'} onValueChange={(v: string)=>setShippingAddress({...shippingAddress,country:v})}>
-                        <SelectTrigger className="bg-card-color border-border-color text-font-color h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card-color border-border-color">
-                          <SelectItem value="US" className="text-font-color hover:bg-body-color">United States - US</SelectItem>
-                          <SelectItem value="CA" className="text-font-color hover:bg-body-color">Canada - CA</SelectItem>
-                          <SelectItem value="MX" className="text-font-color hover:bg-body-color">Mexico - MX</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">Phone</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                        placeholder="Phone number" 
-                        value={shippingAddress.phone||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,phone:e.target.value})} 
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-font-color-100 text-sm font-medium">Email</Label>
-                      <Input 
-                        className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                        placeholder="Email address" 
-                        type="email"
-                        value={shippingAddress.email||''} 
-                        onChange={e=>setShippingAddress({...shippingAddress,email:e.target.value})} 
-                      />
-                    </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Address 2</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Apt, suite, etc." 
+                      value={shippingAddress.address2||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
+                    />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">City</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="City" 
+                      value={shippingAddress.city||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">State</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="State" 
+                      value={shippingAddress.state_province||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,state_province:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Postal Code</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="ZIP/Postal" 
+                      value={shippingAddress.postal_code||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Country</Label>
+                    <Select value={shippingAddress.country||'US'} onValueChange={(v: string)=>setShippingAddress({...shippingAddress,country:v})}>
+                      <SelectTrigger className="bg-card-color border-border-color text-font-color h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-card-color border-border-color">
+                        <SelectItem value="US" className="text-font-color hover:bg-body-color">United States - US</SelectItem>
+                        <SelectItem value="CA" className="text-font-color hover:bg-body-color">Canada - CA</SelectItem>
+                        <SelectItem value="MX" className="text-font-color hover:bg-body-color">Mexico - MX</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Phone</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Phone number" 
+                      value={shippingAddress.phone||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,phone:e.target.value})} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium">Email</Label>
+                    <Input 
+                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      placeholder="Email address" 
+                      type="email"
+                      value={shippingAddress.email||''} 
+                      onChange={e=>setShippingAddress({...shippingAddress,email:e.target.value})} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
             </div>
 
             {/* Items */}
@@ -1097,8 +1320,8 @@ export default function OrderPointsPage() {
                       Remove selected
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
+              </div>
+            </CardHeader>
             <CardContent className="p-4">
               <div 
                 className="ag-theme-alpine w-full shadow-inner" 
@@ -1155,169 +1378,170 @@ export default function OrderPointsPage() {
             </Card>
           </div>
 
-          {/* Right Sidebar - All 4 panels stacked vertically */}
-          <div className="xl:col-span-3 space-y-4">
+           {/* Right Sidebar - All 4 panels stacked vertically */}
+           <div className="xl:col-span-3 space-y-3">
+           <Card className="shadow-sm border-border-color">
+             <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+               <div className="flex justify-between items-center">
+                 <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                   <IconTruck className="w-3.5 h-3.5" />
+                   SHIPPING
+                 </CardTitle>
+                 <Button
+                   size="small"
+                   variant="outline"
+                   className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                   onClick={openShippingDetailsModal}
+                 >
+                   <IconEdit className="h-3 w-3 mr-1" />
+                   Edit...
+                 </Button>
+               </div>
+               </CardHeader>
+               <CardContent className="p-3">
+               <div className="space-y-1 text-xs">
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">International:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(orderHeader.international_code || '0')}>{orderHeader.international_code || '0'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Code:</span> <span className="text-font-color text-right truncate max-w-[120px]" title="-">-</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Shipping Carrier:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.shipping_carrier || '-'}>{orderHeader.shipping_carrier || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Shipping Service:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.shipping_service || '-'}>{orderHeader.shipping_service || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Freight Account:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.freight_account || '-'}>{orderHeader.freight_account || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Consignee #:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.consignee_number || '-'}>{orderHeader.consignee_number || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Incoterms:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.terms || '-'}>{orderHeader.terms || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">FOB Location:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.fob || '-'}>{orderHeader.fob || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Payment Type:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.payment_type || '-'}>{orderHeader.payment_type || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Packing List:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(orderHeader.packing_list_type || '100')}>{orderHeader.packing_list_type || '100'}</span></div>
+                 </div>
+               </CardContent>
+             </Card>
+
           <Card className="shadow-sm border-border-color">
-            <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
+            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                  <IconBuilding className="w-4 h-4" />
-                  Billing Address
+                <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                  <IconBuilding className="w-3.5 h-3.5" />
+                  BILLING ADDRESS
                 </CardTitle>
                 <Button
                   size="small"
                   variant="outline"
-                  className="text-xs"
+                  className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={openBillingAddressModal}
                 >
                   <IconEdit className="h-3 w-3 mr-1" />
                   Edit...
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="font-medium">Company:</span> <span>{billingAddress.company || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Attention:</span> <span>{billingAddress.attention || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Address 1:</span> <span>{billingAddress.address1 || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Address 2:</span> <span>{billingAddress.address2 || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">City:</span> <span>{billingAddress.city || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">State/Province:</span> <span>{billingAddress.state_province || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Postal Code:</span> <span>{billingAddress.postal_code || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Country:</span> <span>{billingAddress.country || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Phone:</span> <span>{billingAddress.phone || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Email:</span> <span>{billingAddress.email || '-'}</span></div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="p-3">
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Company:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.company || '-'}>{billingAddress.company || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Attention:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.attention || '-'}>{billingAddress.attention || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 1:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.address1 || '-'}>{billingAddress.address1 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 2:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.address2 || '-'}>{billingAddress.address2 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">City:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.city || '-'}>{billingAddress.city || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">State/Province:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.state_province || '-'}>{billingAddress.state_province || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Postal Code:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.postal_code || '-'}>{billingAddress.postal_code || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Country:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.country || '-'}>{billingAddress.country || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Phone:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.phone || '-'}>{billingAddress.phone || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Email:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.email || '-'}>{billingAddress.email || '-'}</span></div>
+                </div>
+              </CardContent>
+            </Card>
 
           <Card className="shadow-sm border-border-color">
-            <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
+            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                  <IconTruck className="w-4 h-4" />
-                  Shipping Details
+                <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                  <IconCurrency className="w-3.5 h-3.5" />
+                  AMOUNTS
                 </CardTitle>
                 <Button
                   size="small"
                   variant="outline"
-                  className="text-xs"
-                  onClick={openShippingDetailsModal}
-                >
-                  <IconEdit className="h-3 w-3 mr-1" />
-                  Edit...
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="font-medium">International Code:</span> <span>{orderHeader.international_code || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Shipping Carrier:</span> <span>{orderHeader.shipping_carrier || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Shipping Service:</span> <span>{orderHeader.shipping_service || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Freight Account:</span> <span>{orderHeader.freight_account || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Consignee #:</span> <span>{orderHeader.consignee_number || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Incoterms:</span> <span>{orderHeader.terms || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">FOB Location:</span> <span>{orderHeader.fob || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Payment Type:</span> <span>{orderHeader.payment_type || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">Packing List:</span> <span>{orderHeader.packing_list_type || '-'}</span></div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm border-border-color">
-            <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                  <IconCurrency className="w-4 h-4" />
-                  Amounts
-                </CardTitle>
-                <Button
-                  size="small"
-                  variant="outline"
-                  className="text-xs"
+                  className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={openAmountsModal}
                 >
                   <IconEdit className="h-3 w-3 mr-1" />
                   Edit...
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="font-medium">Order Amount:</span>
-                  <span className="font-mono">${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
+              </CardHeader>
+              <CardContent className="p-3">
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">Order Amount:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}`}>${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
+                    </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.shipping_handling.toFixed(2)}`}>${amounts.shipping_handling.toFixed(2)}</span>
+                  </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">Sales Taxes:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.sales_tax.toFixed(2)}`}>${amounts.sales_tax.toFixed(2)}</span>
+                  </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">Discount/Add. Chgs.:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.international_handling.toFixed(2)}`}>${amounts.international_handling.toFixed(2)}</span>
+                  </div>
+                <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
+                  <span className="text-font-color whitespace-nowrap">Total Amount:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}`}>${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
+                  </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.amount_paid.toFixed(2)}`}>${amounts.amount_paid.toFixed(2)}</span>
+                  </div>
+                <div className="flex justify-between items-center py-0.5 border-t-2 border-border-color pt-1 font-bold">
+                  <span className="text-font-color whitespace-nowrap">Net Due:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}`}>${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
+                  </div>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.balance_due_us.toFixed(2)}`}>${amounts.balance_due_us.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">S & H:</span>
-                  <span className="font-mono">${amounts.shipping_handling.toFixed(2)}</span>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">Int. Decl. Value:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.international_declared_value.toFixed(2)}`}>${amounts.international_declared_value.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Sales Taxes:</span>
-                  <span className="font-mono">${amounts.sales_tax.toFixed(2)}</span>
+                <div className="flex justify-between items-center py-0.5">
+                  <span className="font-medium text-font-color-100 whitespace-nowrap">Insurance:</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.insurance.toFixed(2)}`}>${amounts.insurance.toFixed(2)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Discount/Add. Chgs.:</span>
-                  <span className="font-mono">${amounts.international_handling.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between border-t border-border-color pt-2 font-bold">
-                  <span>Total Amount:</span>
-                  <span className="font-mono">${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Amount Paid:</span>
-                  <span className="font-mono">${amounts.amount_paid.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between border-t-2 border-border-color pt-2 font-bold">
-                  <span>Net Due:</span>
-                  <span className="font-mono">${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Balance Due (US):</span>
-                  <span className="font-mono">${amounts.balance_due_us.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Int. Decl. Value:</span>
-                  <span className="font-mono">${amounts.international_declared_value.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-medium">Insurance:</span>
-                  <span className="font-mono">${amounts.insurance.toFixed(2)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
           <Card className="shadow-sm border-border-color">
-            <CardHeader className="bg-primary-10 border-b border-border-color pb-3">
+            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-base font-medium text-font-color flex items-center gap-2">
-                  <IconEdit className="w-4 h-4" />
-                  Extra Fields
+                <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                  <IconEdit className="w-3.5 h-3.5" />
+                  EXTRA FIELDS
                 </CardTitle>
                 <Button
                   size="small"
                   variant="outline"
-                  className="text-xs"
+                  className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={openExtraFieldsModal}
                 >
                   <IconEdit className="h-3 w-3 mr-1" />
                   Edit...
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_1}:</span> <span>{orderHeader.custom_field1 || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_2}:</span> <span>{orderHeader.custom_field2 || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_3}:</span> <span>{orderHeader.custom_field3 || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_4}:</span> <span>{orderHeader.custom_field4 || '-'}</span></div>
-                <div className="flex justify-between"><span className="font-medium">{extraLabels.header_cf_5}:</span> <span>{orderHeader.custom_field5 || '-'}</span></div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="p-3">
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_1}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field1 || '-'}>{orderHeader.custom_field1 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_2}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field2 || '-'}>{orderHeader.custom_field2 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_3}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field3 || '-'}>{orderHeader.custom_field3 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_4}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field4 || '-'}>{orderHeader.custom_field4 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_5}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field5 || '-'}>{orderHeader.custom_field5 || '-'}</span></div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
 
       {/* Browse Items Modal */}
       <Dialog open={browseOpen} onOpenChange={setBrowseOpen}>
@@ -1336,29 +1560,29 @@ export default function OrderPointsPage() {
             />
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 text-sm text-font-color whitespace-nowrap">
-                <CheckBox checked={showZeroQty} onChange={(checked)=>setShowZeroQty(checked)} />
-                Show 0 QTY
-              </label>
-              <Select value={warehouses} onValueChange={setWarehouses}>
+              <CheckBox checked={showZeroQty} onChange={(checked)=>setShowZeroQty(checked)} />
+              Show 0 QTY
+            </label>
+            <Select value={warehouses} onValueChange={setWarehouses}>
                 <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm" style={{ width: '200px' }}>
-                  <SelectValue placeholder="Warehouse: All" />
-                </SelectTrigger>
+                <SelectValue placeholder="Warehouse: All" />
+              </SelectTrigger>
                 <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
-                  <SelectItem value="" className="text-font-color hover:bg-body-color">Warehouse: All</SelectItem>
-                  {getWarehouseOptions().map(option => (
-                    <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
+                <SelectItem value="" className="text-font-color hover:bg-body-color">Warehouse: All</SelectItem>
+                {getWarehouseOptions().map(option => (
+                  <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
                       <span className="whitespace-nowrap">{option.label}</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button 
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button 
                 className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
-                onClick={()=>reloadInventory()}
-              >
-                Refresh
-              </Button>
-            </div>
+              onClick={()=>reloadInventory()}
+            >
+              Refresh
+            </Button>
+          </div>
           </div>
           
           {/* Table Area - Flexible height */}
@@ -1384,41 +1608,43 @@ export default function OrderPointsPage() {
                   </tr>
                 ) : (
                   Object.keys(inventory).map((key, idx)=>{
-                    const it = inventory[key]!
-                    return (
-                      <tr key={key} className="border-t border-border-color hover:bg-body-color">
+                  const it = inventory[key]!
+                  return (
+                    <tr key={key} className="border-t border-border-color hover:bg-body-color">
                         <td className="p-3 text-font-color w-12">{(currentPage - 1) * pageSize + idx + 1}</td>
                         <td className="p-3 w-64">
                           <div className="font-medium text-font-color truncate" title={it.item_number}>{it.item_number}</div>
                           <div className="text-font-color-100 text-sm truncate" title={it.description}>{it.description}</div>
-                        </td>
+                      </td>
                         <td className="p-3 text-right w-20">
-                          <Input
-                            value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
-                            onChange={e=>updateInventoryField(it.item_number, 'quantity', e.target.value)}
+                        <Input
+                          value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
+                          onChange={e=>updateInventoryField(it.item_number, 'quantity', e.target.value)}
                             className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-sm"
-                            type="number"
-                            min="0"
-                          />
-                        </td>
+                          type="number"
+                          min="0"
+                          disabled={formFieldsDisabled}
+                        />
+                      </td>
                         <td className="p-3 text-right w-24">
-                          <Input
-                            value={typeof it.price === 'number' ? String(it.price) : ''}
-                            onChange={e=>updateInventoryField(it.item_number, 'price', e.target.value)}
+                        <Input
+                          value={typeof it.price === 'number' ? String(it.price) : ''}
+                          onChange={e=>updateInventoryField(it.item_number, 'price', e.target.value)}
                             className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-sm"
-                            type="number"
-                            step="0.01"
-                            min="0"
-                          />
-                        </td>
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          disabled={formFieldsDisabled}
+                        />
+                      </td>
                         <td className="p-3 text-right text-font-color font-mono whitespace-nowrap w-20">{it.qty_net}</td>
-                      </tr>
-                    )
+                    </tr>
+                  )
                   })
                 )}
               </tbody>
             </table>
-            </ScrollArea>
+          </ScrollArea>
           </div>
           
           <DialogFooter className="flex-shrink-0 flex flex-col gap-4">
@@ -1474,19 +1700,19 @@ export default function OrderPointsPage() {
             
             {/* Action Buttons */}
             <div className="flex justify-end gap-3">
-              <Button 
-                variant="outline" 
-                className="border-border-color text-font-color hover:bg-body-color"
-                onClick={()=>setBrowseOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button 
-                className="bg-primary text-white hover:bg-primary/90"
-                onClick={addSelectedItemsToOrder}
-              >
-                Add to order
-              </Button>
+            <Button 
+              variant="outline" 
+              className="border-border-color text-font-color hover:bg-body-color"
+              onClick={()=>setBrowseOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={addSelectedItemsToOrder}
+            >
+              Add to order
+            </Button>
             </div>
           </DialogFooter>
         </DialogContent>
@@ -1969,7 +2195,7 @@ export default function OrderPointsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
     </div>
   )
 }

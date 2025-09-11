@@ -3,6 +3,7 @@ import Layout from "@/components/layout/Layout";
 import AuthLayout from "@/components/layout/AuthLayout";
 import AuthGuard from "@/components/auth/AuthGuard";
 import AuthErrorBoundary from "@/components/auth/AuthErrorBoundary";
+import { ToastContainer } from "@/components/ui/Toast";
 import "../../styles/globals.css";
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -69,6 +70,7 @@ export default function App({ Component, pageProps }: AppProps) {
             )
           }
         </AuthGuard>
+        <ToastContainer />
       </AuthErrorBoundary>
     </>
   );

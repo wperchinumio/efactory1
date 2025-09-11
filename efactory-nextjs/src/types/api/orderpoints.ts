@@ -261,4 +261,48 @@ export interface ListDraftsResponse {
 
 export type ApiEnvelope<T> = ApiResponse<T>;
 
+// OrderPoints Settings
+export interface ShippingSettingsDto {
+  carrier: string;
+  service: string;
+  packing_list_type: string;
+  freight_account: string;
+  consignee_number: string;
+  terms: string;
+  int_code: string;
+  comments?: string;
+}
+
+export interface CustomFieldsSettingsDto {
+  header_cf_1: string;
+  header_cf_2: string;
+  header_cf_3: string;
+  header_cf_4: string;
+  header_cf_5: string;
+  detail_cf_1: string;
+  detail_cf_2: string;
+  detail_cf_5: string;
+}
+
+export interface OrderSettingsDto {
+  // Add specific order settings properties as needed
+  [key: string]: any;
+}
+
+export interface OrderPointsSettingsDto {
+  shipping: {
+    domestic: ShippingSettingsDto;
+    international: ShippingSettingsDto;
+  };
+  custom_fields: CustomFieldsSettingsDto;
+  order: OrderSettingsDto[];
+}
+
+// API Request/Response types
+export interface ReadOrderPointsSettingsRequest {
+  action: 'read_settings';
+}
+
+export type ReadOrderPointsSettingsResponse = ApiResponse<OrderPointsSettingsDto>;
+
 

@@ -49,11 +49,14 @@ import type {
   ListDraftsResponse,
   OrderDetailDto,
   OrderHeaderDto,
+  OrderPointsSettingsDto,
   OrderReadResponse,
   PutOnHoldBody,
   ReadAddressesBody,
   ReadAddressesResponse,
   ReadOrderPointsBody,
+  ReadOrderPointsSettingsRequest,
+  ReadOrderPointsSettingsResponse,
   SaveEntryResponse,
   ToggleTemplateBody,
   TransferOrderBody,
@@ -257,5 +260,15 @@ export async function fetchInventoryForCart(args: Omit<InventoryStatusForCartBod
   const res = await postJson<{ rows: InventoryItemForCartDto[]; total: number }>('/api/inventory', payload as any);
   // Some legacy responses use data.rows; normalize
   return res.data;
+}
+
+// Order Points Settings
+export async function readOrderPointsSettings(): Promise<OrderPointsSettingsDto> {
+  const request: ReadOrderPointsSettingsRequest = {
+    action: 'read_settings'
+  };
+  
+  const response = await postJson<ReadOrderPointsSettingsResponse>('/api/orderpoints', request);
+  return (response.data as unknown) as OrderPointsSettingsDto;
 }
 

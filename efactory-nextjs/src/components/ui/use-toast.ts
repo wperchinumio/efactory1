@@ -1,28 +1,81 @@
+import React from 'react';
+
 export interface ToastProps {
   title: string;
   description?: string;
-  variant?: 'default' | 'destructive';
+  variant?: 'default' | 'destructive' | 'success';
+  duration?: number;
 }
 
-// Simple toast implementation using console for now
-export const toast = (props: ToastProps) => {
-  // For now, just log to console - in a real app you'd use a proper toast system
-  if (props.variant === 'destructive') {
-    console.error(`${props.title}${props.description ? ': ' + props.description : ''}`);
-  } else {
-    console.log(`${props.title}${props.description ? ': ' + props.description : ''}`);
-  }
-  
-  // You could also show a browser notification
-  if ('Notification' in window && Notification.permission === 'granted') {
-    const options: NotificationOptions = {
-      ...(props.description ? { body: props.description } as NotificationOptions : {}),
-      icon: '/favicon.ico'
+interface Toast extends ToastProps {
+  id: string;
+  timestamp: number;
+}
+
+class ToastManager {
+  private toasts: Toast[] = [];
+  private listeners: ((toasts: Toast[]) => void)[] = [];
+
+  addToast(toast: ToastProps): string {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast: Toast = {
+      ...toast,
+      id,
+      timestamp: Date.now(),
+      duration: toast.duration || (toast.variant === 'destructive' ? 5000 : 3000)
     };
-    new Notification(props.title, options);
+
+    this.toasts.push(newToast);
+    this.notifyListeners();
+
+    // Auto remove toast after duration
+    setTimeout(() => {
+      this.removeToast(id);
+    }, newToast.duration);
+
+    return id;
   }
+
+  removeToast(id: string): void {
+    this.toasts = this.toasts.filter(toast => toast.id !== id);
+    this.notifyListeners();
+  }
+
+  clearAll(): void {
+    this.toasts = [];
+    this.notifyListeners();
+  }
+
+  subscribe(listener: (toasts: Toast[]) => void): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter(l => l !== listener);
+    };
+  }
+
+  private notifyListeners(): void {
+    this.listeners.forEach(listener => listener([...this.toasts]));
+  }
+}
+
+const toastManager = new ToastManager();
+
+export const toast = (props: ToastProps): string => {
+  return toastManager.addToast(props);
 };
 
 export const useToast = () => {
-  return { toast };
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
+
+  React.useEffect(() => {
+    const unsubscribe = toastManager.subscribe(setToasts);
+    return unsubscribe;
+  }, []);
+
+  return {
+    toast,
+    toasts,
+    dismiss: (id: string) => toastManager.removeToast(id),
+    dismissAll: () => toastManager.clearAll()
+  };
 };
