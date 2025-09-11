@@ -734,7 +734,7 @@ export default function OverviewPage() {
 
       {/* Fulfillment */}
       {layout.areas.find(a => a.name === 'fulfillment')?.visible && (
-        <Card className="mt-6">
+        <Card className="mt-6 border-border-color">
           <CardHeader><CardTitle>Fulfillment</CardTitle></CardHeader>
           <CardContent><FulfillmentTable /></CardContent>
         </Card>
@@ -742,7 +742,7 @@ export default function OverviewPage() {
 
       {/* 30 Days Activity */}
       {layout.areas.find(a => a.name === '30days')?.visible && (
-        <Card className="mt-6">
+        <Card className="mt-6 border-border-color">
           <CardHeader><CardTitle>30 Days Activity</CardTitle></CardHeader>
           <CardContent><Chart30Days /></CardContent>
         </Card>
@@ -750,7 +750,7 @@ export default function OverviewPage() {
 
       {/* Inventory */}
       {layout.areas.find(a => a.name === 'inventory')?.visible && (
-        <Card className="mt-6">
+        <Card className="mt-6 border-border-color">
           <CardHeader><CardTitle>Inventory</CardTitle></CardHeader>
           <CardContent><InventoryTable /></CardContent>
         </Card>
@@ -758,7 +758,7 @@ export default function OverviewPage() {
 
       {/* Latest 50 Orders */}
       {layout.areas.find(a => a.name === '50orders')?.visible && (
-        <Card className="mt-6">
+        <Card className="mt-6 border-border-color">
           <CardHeader><CardTitle>Latest 50 Orders</CardTitle></CardHeader>
           <CardContent><LatestOrders /></CardContent>
         </Card>
@@ -766,7 +766,7 @@ export default function OverviewPage() {
 
       {/* 30 Days RMA Activity */}
       {layout.areas.find(a => a.name === '30days_rmas')?.visible && (
-        <Card className="mt-6 mb-10">
+        <Card className="mt-6 mb-10 border-border-color">
           <CardHeader><CardTitle>30 Days RMA Activity</CardTitle></CardHeader>
           <CardContent><ChartRma30Days /></CardContent>
         </Card>
