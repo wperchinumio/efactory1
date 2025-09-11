@@ -4,6 +4,8 @@ import AuthLayout from "@/components/layout/AuthLayout";
 import AuthGuard from "@/components/auth/AuthGuard";
 import AuthErrorBoundary from "@/components/auth/AuthErrorBoundary";
 import "../../styles/globals.css";
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { getAuthState } from '@/lib/auth/guards';
