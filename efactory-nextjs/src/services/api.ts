@@ -29,6 +29,38 @@ import type {
   CreateNoteRequest,
   UpdateNoteRequest,
 } from '@/types/api/notes';
+import type {
+  AddressDto,
+  AddressValidationResult,
+  CancelOrderBody,
+  CloneOrderBody,
+  CloneTemplateBody,
+  CreateAddressBody,
+  CreateOrderPointsBody,
+  CreateOrderPointsResponse,
+  DeleteAddressBody,
+  DeleteDraftsBody,
+  DraftOrderReadResponse,
+  GenerateOrderNumberBody,
+  GenerateOrderNumberResponse,
+  InventoryItemForCartDto,
+  InventoryStatusForCartBody,
+  ListDraftsBody,
+  ListDraftsResponse,
+  OrderDetailDto,
+  OrderHeaderDto,
+  OrderReadResponse,
+  PutOnHoldBody,
+  ReadAddressesBody,
+  ReadAddressesResponse,
+  ReadOrderPointsBody,
+  SaveEntryResponse,
+  ToggleTemplateBody,
+  TransferOrderBody,
+  UpdateAddressBody,
+  UpdateOrderPointsBody,
+  ValidateAddressBody,
+} from '@/types/api/orderpoints';
 
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
@@ -114,4 +146,116 @@ export async function deleteNote(noteId: number): Promise<void> {
   });
 }
 
+
+// ==========================
+// OrderPoints API
+// ==========================
+
+// Order number
+export async function generateOrderNumber(): Promise<string> {
+  const body: GenerateOrderNumberBody = { action: 'generate_number' };
+  const res = await postJson<GenerateOrderNumberResponse>('/api/orderpoints', body as any);
+  return (res.data as any).number;
+}
+
+// Create draft or place order
+export async function createOrderPoints(payload: CreateOrderPointsBody): Promise<CreateOrderPointsResponse> {
+  const res = await postJson<CreateOrderPointsResponse>('/api/orderpoints', payload as any);
+  return res.data;
+}
+
+export async function saveEntry(order_header: OrderHeaderDto, order_detail: OrderDetailDto[]): Promise<SaveEntryResponse> {
+  const body: CreateOrderPointsBody = {
+    action: 'create',
+    to_draft: false,
+    data: { order_header, order_detail },
+  };
+  const res = await postJson<SaveEntryResponse>('/api/orderpoints', body as any);
+  return res.data;
+}
+
+export async function saveDraft(order_header: OrderHeaderDto, order_detail: OrderDetailDto[]): Promise<CreateOrderPointsResponse> {
+  const body: CreateOrderPointsBody = {
+    action: 'create',
+    to_draft: true,
+    version: 2,
+    data: { order_header, order_detail },
+  };
+  const res = await postJson<CreateOrderPointsResponse>('/api/orderpoints', body as any);
+  return res.data;
+}
+
+export async function readOrderPoints(params: ReadOrderPointsBody): Promise<OrderReadResponse | DraftOrderReadResponse> {
+  const res = await postJson<OrderReadResponse | DraftOrderReadResponse>('/api/orderpoints', params as any);
+  return res.data;
+}
+
+export async function updateOrderPoints(body: UpdateOrderPointsBody): Promise<OrderReadResponse> {
+  const res = await postJson<OrderReadResponse>('/api/orderpoints', body as any);
+  return res.data;
+}
+
+export async function cancelOrder(body: CancelOrderBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function putOnHold(body: PutOnHoldBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function transferOrder(body: TransferOrderBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function cloneTemplate(body: CloneTemplateBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function cloneOrder(body: CloneOrderBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+// Address Book
+export async function createAddress(body: CreateAddressBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function updateAddress(body: UpdateAddressBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function deleteAddress(body: DeleteAddressBody): Promise<void> {
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function readAddresses(body: ReadAddressesBody): Promise<ReadAddressesResponse> {
+  const res = await postJson<ReadAddressesResponse>('/api/orderpoints', body as any);
+  return res.data;
+}
+
+export async function validateAddress(body: ValidateAddressBody): Promise<AddressValidationResult> {
+  const res = await postJson<AddressValidationResult>('/api/orderpoints', body as any);
+  return res.data;
+}
+
+// Drafts
+export async function listDrafts(): Promise<ListDraftsResponse> {
+  const body: ListDraftsBody = { action: 'list_drafts' };
+  const res = await postJson<ListDraftsResponse>('/api/orderpoints', body as any);
+  return res.data;
+}
+
+export async function deleteDrafts(order_ids: number[]): Promise<void> {
+  const body: DeleteDraftsBody = { action: 'delete_draft', order_ids };
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+// Inventory modal
+export async function fetchInventoryForCart(args: Omit<InventoryStatusForCartBody, 'resource' | 'action'>): Promise<InventoryItemForCartDto[]> {
+  const payload: InventoryStatusForCartBody = { resource: 'inventory-status-for-cart', action: 'read', ...args };
+  // Legacy inventory uses /api/inventory with non-standard envelope; but we keep standard here
+  const res = await postJson<{ rows: InventoryItemForCartDto[]; total: number }>('/api/inventory', payload as any);
+  // Some legacy responses use data.rows; normalize
+  return res.data.rows;
+}
 
