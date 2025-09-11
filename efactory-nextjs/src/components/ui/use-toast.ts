@@ -15,10 +15,11 @@ export const toast = (props: ToastProps) => {
   
   // You could also show a browser notification
   if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(props.title, {
-      body: props.description,
+    const options: NotificationOptions = {
+      ...(props.description ? { body: props.description } as NotificationOptions : {}),
       icon: '/favicon.ico'
-    });
+    };
+    new Notification(props.title, options);
   }
 };
 

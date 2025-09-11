@@ -245,7 +245,8 @@ export default function NotesPage() {
     }, 0);
   };
 
-  const filteredNotes = notes.filter(note => {
+  const safeNotes = Array.isArray(notes) ? notes : [];
+  const filteredNotes = safeNotes.filter(note => {
     if (!searchFilter || searchFilter.trim() === '') return true;
     
     const searchTerm = searchFilter.toLowerCase();

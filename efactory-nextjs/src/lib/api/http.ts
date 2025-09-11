@@ -89,3 +89,65 @@ export function postJson<TResponse = unknown, TBody = unknown>(
 export function getJson<TResponse = unknown>(path: string, headers?: Record<string, string>) {
 	return httpRequest<TResponse>({ method: 'get', path, headers: headers || {} });
 }
+
+// Raw variants for endpoints that do NOT return the common { data: ... } envelope
+export async function httpRequestRaw<TResponse = unknown, TBody = unknown>(
+	options: HttpRequestOptions<TBody>,
+): Promise<TResponse> {
+	const base = getBaseUrl();
+	const path = options.path.startsWith('/') ? options.path.substring(1) : options.path;
+	const url = `${base}/${path}`;
+
+	const headers: Record<string, string> = {
+		Accept: 'application/json',
+		'Content-Type': 'application/json',
+		...(options.headers ?? {}),
+	};
+
+	const token = getAccessToken();
+	if (token) headers['X-Access-Token'] = token;
+
+	const res = await fetch(url, {
+		method: options.method.toUpperCase(),
+		headers,
+		body: options.body ? JSON.stringify(options.body) : null,
+		credentials: 'include',
+	});
+
+	const isJson = res.headers.get('content-type')?.includes('application/json');
+	const payload = isJson ? await res.json() : undefined;
+
+	if (!res.ok) {
+		const error = payload ?? {
+			error_message: `Request failed with status ${res.status}`,
+			status: res.status,
+		};
+
+		if (res.status === 401 && typeof window === 'undefined') {
+			// noop on server
+		}
+		if (res.status === 401 && typeof window !== 'undefined') {
+			import('../auth/storage').then(({ clearAuthToken }) => clearAuthToken());
+			if (!window.location.pathname.includes('/auth')) {
+				window.location.href = '/auth/sign-in';
+			}
+		}
+
+		(error as any).status = res.status;
+		throw error;
+	}
+
+	return payload as TResponse;
+}
+
+export function postJsonRaw<TResponse = unknown, TBody = unknown>(
+	path: string,
+	body: TBody,
+	headers?: Record<string, string>,
+) {
+	return httpRequestRaw<TResponse, TBody>({ method: 'post', path, body, headers: headers || {} });
+}
+
+export function getJsonRaw<TResponse = unknown>(path: string, headers?: Record<string, string>) {
+	return httpRequestRaw<TResponse>({ method: 'get', path, headers: headers || {} });
+}

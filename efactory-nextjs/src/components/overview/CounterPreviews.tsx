@@ -1,6 +1,7 @@
 import React from 'react';
 import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox } from '@tabler/icons-react';
-import type { FulfillmentRowDto, OverviewTileName } from '@/types/api/overview';
+import type { FulfillmentRowDto } from '@/types/api/overview';
+import type { OverviewTileName } from '@/types/api/views';
 
 interface CounterPreviewProps {
   name: OverviewTileName;

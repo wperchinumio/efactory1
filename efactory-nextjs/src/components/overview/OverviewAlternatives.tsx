@@ -495,7 +495,7 @@ export function OverviewAlternative4({ layout, totals, visibleTiles, renderTile,
       {/* Masonry Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 auto-rows-max">
         {/* KPI Tiles */}
-        {layout.areas.find((a: any) => a.name === 'tiles')?.visible && visibleTiles.map(t => (
+        {layout.areas.find((a: any) => a.name === 'tiles')?.visible && visibleTiles.map((t: any) => (
           <div key={t} className="transform hover:scale-105 transition-all duration-300 hover:z-10 relative">
             {renderTile(t)}
           </div>

@@ -19,15 +19,21 @@ export default class AuthErrorBoundary extends Component<Props, State> {
 
   static getDerivedStateFromError(error: Error): State {
     // Check if this is an auth-related error
-    const isAuthError = 
+    const isAuthError =
       error.message.includes('hooks') ||
       error.message.includes('authentication') ||
       error.message.includes('session') ||
       error.message.includes('token');
 
-    return { 
-      hasError: true, 
-      error: isAuthError ? error : undefined 
+    if (isAuthError) {
+      return {
+        hasError: true,
+        error
+      };
+    }
+
+    return {
+      hasError: true
     };
   }
 

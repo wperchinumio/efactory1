@@ -37,10 +37,7 @@ export interface GetLast30DaysRMAsBody extends OverviewPostBodyBase {
 }
 
 // Responses are returned in an envelope keyed by the overview id as string
-export interface OverviewEnvelope<T, K extends string = string> {
-  [key: string]: any;
-  [id: K]: T;
-}
+export type OverviewEnvelope<K extends string, T> = Record<K, T> & { [key: string]: unknown };
 
 // 1001: Fulfillments summary rows per account/warehouse
 export interface FulfillmentRowDto {
@@ -65,6 +62,25 @@ export interface FulfillmentRowDto {
   risk?: number;
   op_drafts?: number;
   rma_drafts?: number;
+  // Additional fields observed in legacy dashboard counters
+  recv_today_lines?: number;
+  recv_today_units?: number;
+  ship_today_lines?: number;
+  issued_rmas_today?: number;
+  received_rmas_today?: number;
+  rma_units_auth?: number;
+  rma_units_recv?: number;
+  rma_units_open?: number;
+  total_open_lines?: number;
+  total_back_orders?: number;
+  total_back_lines?: number;
+  back_qty?: number;
+  subtotal_received_today?: number;
+  subtotal_shipped_today?: number;
+  subtotal_open?: number;
+  sh_received_today?: number;
+  sh_shipped_today?: number;
+  sh_open?: number;
 }
 
 export interface GetFulfillmentsResponse {
