@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/shadcn/button';
-import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox, IconWand } from '@tabler/icons-react';
+import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox, IconWand, IconRefresh } from '@tabler/icons-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/shadcn/dropdown-menu';
 import dynamic from 'next/dynamic';
@@ -190,9 +190,12 @@ export default function OverviewPage() {
       sh_open: 0,
     } as Record<string, number>;
     return fulfillments.reduce((acc, it) => {
+      if (!it) return acc;
       Object.keys(acc).forEach(k => {
         const v = (it as any)[k];
-        if (typeof v === 'number') acc[k] += v;
+        if (typeof v === 'number' && !isNaN(v)) {
+          acc[k] = (acc[k] || 0) + v;
+        }
       });
       return acc;
     }, initial);
@@ -209,7 +212,8 @@ export default function OverviewPage() {
       slate: { from: 'from-slate-500', to: 'to-slate-200', border: 'border-slate-500' },
       red: { from: 'from-rose-500', to: 'to-rose-200', border: 'border-rose-500' },
     };
-    const v = variantMap[variant];
+    const v = variantMap[variant] || variantMap.primary;
+    if (!v) return null;
     return (
       <div className={`card bg-gradient-to-br ${v.from} ${v.to} rounded-xl p-3 md:p-4 border ${v.border} h-[110px]`}>
         <div className="flex items-center justify-between">
@@ -238,9 +242,9 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="flex items-center justify-between divide-x divide-white/20 h-[58px]">
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.orders_today)}</div><div className="text-[11px] text-white/80">Orders</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.recv_today_lines)}</div><div className="text-[11px] text-white/80">Lines</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.recv_today_units)}</div><div className="text-[11px] text-white/80">Units</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.orders_today || 0)}</div><div className="text-[11px] text-white/80">Orders</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.recv_today_lines || 0)}</div><div className="text-[11px] text-white/80">Lines</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.recv_today_units || 0)}</div><div className="text-[11px] text-white/80">Units</div></div>
             </div>
           </div>
         );
@@ -255,16 +259,16 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="flex items-center justify-between divide-x divide-white/20 h-[58px]">
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.shipped_today)}</div><div className="text-[11px] text-white/80">Orders</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.ship_today_lines)}</div><div className="text-[11px] text-white/80">Lines</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.ship_today_units)}</div><div className="text-[11px] text-white/80">Units</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.shipped_today || 0)}</div><div className="text-[11px] text-white/80">Orders</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.ship_today_lines || 0)}</div><div className="text-[11px] text-white/80">Lines</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.ship_today_units || 0)}</div><div className="text-[11px] text-white/80">Units</div></div>
             </div>
           </div>
         );
       case 'back_orders':
-        return <CounterTile title="Backorders (orders)" value={totals.back_orders} variant="warning" icon={<IconAlertTriangle className="w-[14px] h-[14px]" />} />;
+        return <CounterTile title="Backorders (orders)" value={totals.back_orders || 0} variant="warning" icon={<IconAlertTriangle className="w-[14px] h-[14px]" />} />;
       case 'open_rma':
-        return <CounterTile title="Open RMAs" value={totals.open_rmas} variant="amber" icon={<IconTags className="w-[14px] h-[14px]" />} />;
+        return <CounterTile title="Open RMAs" value={totals.open_rmas || 0} variant="amber" icon={<IconTags className="w-[14px] h-[14px]" />} />;
       case 'multi_open_orders':
         return (
           <div className="card bg-gradient-to-br from-slate-500 to-slate-200 rounded-xl p-3 md:p-4 border border-slate-500 h-[110px]">
@@ -275,9 +279,9 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="flex items-center justify-between divide-x divide-white/20 h-[58px]">
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_open_orders)}</div><div className="text-[11px] text-white/80">Orders</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_open_lines)}</div><div className="text-[11px] text-white/80">Lines</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_open_qty)}</div><div className="text-[11px] text-white/80">Units</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_open_orders || 0)}</div><div className="text-[11px] text-white/80">Orders</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_open_lines || 0)}</div><div className="text-[11px] text-white/80">Lines</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_open_qty || 0)}</div><div className="text-[11px] text-white/80">Units</div></div>
             </div>
           </div>
         );
@@ -291,16 +295,16 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="flex items-center justify-between divide-x divide-white/20 h-[58px]">
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_back_orders)}</div><div className="text-[11px] text-white/80">Orders</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_back_lines)}</div><div className="text-[11px] text-white/80">Lines</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.back_qty)}</div><div className="text-[11px] text-white/80">Units</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_back_orders || 0)}</div><div className="text-[11px] text-white/80">Orders</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.total_back_lines || 0)}</div><div className="text-[11px] text-white/80">Lines</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.back_qty || 0)}</div><div className="text-[11px] text-white/80">Units</div></div>
             </div>
           </div>
         );
       case 'multi_subtotal':
-        return <CounterTile title="Order Value Open ($)" value={totals.subtotal_open} variant="primary" icon={<IconClipboardList className="w-[14px] h-[14px]" />} />;
+        return <CounterTile title="Order Value Open ($)" value={totals.subtotal_open || 0} variant="primary" icon={<IconClipboardList className="w-[14px] h-[14px]" />} />;
       case 'multi_sh':
-        return <CounterTile title="Order S & H ($) Open" value={totals.sh_open} variant="red" icon={<IconPackage className="w-[14px] h-[14px]" />} />;
+        return <CounterTile title="Order S & H ($) Open" value={totals.sh_open || 0} variant="red" icon={<IconPackage className="w-[14px] h-[14px]" />} />;
       case 'multi_rmas_today':
         return (
           <div className="card bg-gradient-to-br from-amber-500 to-amber-300 rounded-xl p-3 md:p-4 border border-amber-500 h-[110px]">
@@ -311,9 +315,9 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="flex items-center justify-between divide-x divide-white/20 h-[58px]">
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.issued_rmas_today)}</div><div className="text-[11px] text-white/80">Authorized</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.received_rmas_today)}</div><div className="text-[11px] text-white/80">Received</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.open_rmas)}</div><div className="text-[11px] text-white/80">Total Open</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.issued_rmas_today || 0)}</div><div className="text-[11px] text-white/80">Authorized</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.received_rmas_today || 0)}</div><div className="text-[11px] text-white/80">Received</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.open_rmas || 0)}</div><div className="text-[11px] text-white/80">Total Open</div></div>
             </div>
           </div>
         );
@@ -327,9 +331,9 @@ export default function OverviewPage() {
               </div>
             </div>
             <div className="flex items-center justify-between divide-x divide-white/20 h-[58px]">
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.rma_units_auth)}</div><div className="text-[11px] text-white/80">Authorized</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.rma_units_recv)}</div><div className="text-[11px] text-white/80">Received</div></div>
-              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.rma_units_open)}</div><div className="text-[11px] text-white/80">Total Open</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.rma_units_auth || 0)}</div><div className="text-[11px] text-white/80">Authorized</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.rma_units_recv || 0)}</div><div className="text-[11px] text-white/80">Received</div></div>
+              <div className="flex-1 text-center px-2"><div className="text-white text-lg md:text-xl font-bold leading-6">{Intl.NumberFormat().format(totals.rma_units_open || 0)}</div><div className="text-[11px] text-white/80">Total Open</div></div>
             </div>
           </div>
         );
@@ -407,63 +411,190 @@ export default function OverviewPage() {
       ) > 0);
     }, [fulfillments, hideZeroQty]);
 
+    // Calculate totals for the summary row
+    const fulfillmentTotals = useMemo(() => {
+      return visibleFulfillments.reduce((acc, row) => ({
+        orders_today: acc.orders_today + (row.orders_today || 0),
+        back_orders: acc.back_orders + (row.back_orders || 0),
+        ff_hold: acc.ff_hold + (row.ff_hold || 0),
+        in_process: acc.in_process + ((row.pre_release || 0) + (row.ready_to_print || 0) + (row.ready_to_release || 0) + (row.ready_to_ship || 0)),
+        total_open_orders: acc.total_open_orders + (row.total_open_orders || 0),
+        total_open_qty: acc.total_open_qty + (row.total_open_qty || 0),
+        shipped_today: acc.shipped_today + (row.shipped_today || 0),
+        ship_today_units: acc.ship_today_units + (row.ship_today_units || 0),
+        shipped_others: acc.shipped_others + (row.shipped_others || 0),
+        shipped_units_others: acc.shipped_units_others + (row.shipped_units_others || 0),
+      }), {
+        orders_today: 0,
+        back_orders: 0,
+        ff_hold: 0,
+        in_process: 0,
+        total_open_orders: 0,
+        total_open_qty: 0,
+        shipped_today: 0,
+        ship_today_units: 0,
+        shipped_others: 0,
+        shipped_units_others: 0,
+      });
+    }, [visibleFulfillments]);
+
+    function formatNumber(num: number): string {
+      return Intl.NumberFormat().format(num || 0);
+    }
+
+    function ClickableCell({ value, className = "" }: { value: number; className?: string }) {
+      return (
+        <button 
+          className={`text-primary hover:text-primary-600 font-semibold transition-colors duration-200 hover:underline ${className}`}
+          onClick={() => {
+            // TODO: Add navigation logic here
+            console.log('Navigate to filtered view with value:', value);
+          }}
+        >
+          {formatNumber(value)}
+        </button>
+      );
+    }
+
     return (
       <div className="overflow-x-auto">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs md:text-sm font-medium text-muted-foreground">Hide zero qty</span>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-font-color-100">Hide zero qty</span>
             <button
-              className={`inline-flex items-center h-5 w-9 rounded-full transition-colors ${hideZeroQty ? 'bg-primary' : 'bg-muted'} shadow-inner`}
+              className={`inline-flex items-center h-6 w-11 rounded-full transition-all duration-300 ${hideZeroQty ? 'bg-primary shadow-lg' : 'bg-border-color'} shadow-inner`}
               onClick={() => setHideZeroQty(v => !v)}
               aria-label="Hide zero quantity"
             >
-              <span className={`inline-block h-4 w-4 bg-white rounded-full transform transition-transform ${hideZeroQty ? 'translate-x-4' : 'translate-x-1'}`} />
+              <span className={`inline-block h-5 w-5 bg-card-color rounded-full transform transition-transform duration-300 shadow-md ${hideZeroQty ? 'translate-x-5' : 'translate-x-0.5'}`} />
             </button>
           </div>
           <div>
-            <Button size="sm" variant="outline" onClick={() => fetchFulfillments().then(setFulfillments)} title="Refresh Fulfillment">
+            <Button size="sm" variant="outline" onClick={() => fetchFulfillments().then(setFulfillments)} title="Refresh Fulfillment" className="hover:bg-primary/10">
+              <IconRefresh className="w-4 h-4 mr-2" />
               Refresh
             </Button>
           </div>
         </div>
-        <table className="min-w-full text-sm">
-          <thead className="text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2 text-left">Account #</th>
-              <th className="px-3 py-2">Group</th>
-              <th className="px-3 py-2">Warehouse</th>
-              <th className="px-3 py-2">Orders Today</th>
-              <th className="px-3 py-2">Back Orders</th>
-              <th className="px-3 py-2">Hold</th>
-              <th className="px-3 py-2">In Process</th>
-              <th className="px-3 py-2">Total Open</th>
-              <th className="px-3 py-2">Total Open Units</th>
-              <th className="px-3 py-2">Shipped Today</th>
-              <th className="px-3 py-2">Shipped Today Units</th>
-              <th className="px-3 py-2">Others</th>
-              <th className="px-3 py-2">Others Units</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibleFulfillments.map((row, idx) => (
-              <tr key={idx} className="odd:bg-muted/40">
-                <td className="px-3 py-2 font-medium">{row.account_number}</td>
-                <td className="px-3 py-2 text-center">{row.group}</td>
-                <td className="px-3 py-2 text-center">{row.region}</td>
-                <td className="px-3 py-2 text-center">{row.orders_today}</td>
-                <td className="px-3 py-2 text-center">{row.back_orders}</td>
-                <td className="px-3 py-2 text-center">{row.ff_hold}</td>
-                <td className="px-3 py-2 text-center">{row.pre_release + row.ready_to_print + row.ready_to_release + row.ready_to_ship}</td>
-                <td className="px-3 py-2 text-center">{row.total_open_orders}</td>
-                <td className="px-3 py-2 text-center">{row.total_open_qty}</td>
-                <td className="px-3 py-2 text-center">{row.shipped_today}</td>
-                <td className="px-3 py-2 text-center">{row.ship_today_units}</td>
-                <td className="px-3 py-2 text-center">{row.shipped_others}</td>
-                <td className="px-3 py-2 text-center">{row.shipped_units_others}</td>
+        
+        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="bg-primary-10 border-b border-border-color">
+                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">ACCOUNT #</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">GROUP</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">WAREHOUSE</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">ORDERS TODAY</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">BACK ORDERS</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">HOLD</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">IN PROCESS</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">TOTAL OPEN</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">TOTAL OPEN UNITS</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">SHIPPED TODAY</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">SHIPPED TODAY UNITS</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">OTHERS</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">OTHERS UNITS</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border-color">
+              {visibleFulfillments.map((row, idx) => (
+                <tr 
+                  key={idx} 
+                  className="hover:bg-primary-5 transition-colors duration-200"
+                >
+                  <td className="px-4 py-3 font-bold text-font-color">{row.account_number}</td>
+                  <td className="px-4 py-3 text-center font-semibold text-font-color-100">{row.group}</td>
+                  <td className="px-4 py-3 text-center font-semibold text-font-color-100">{row.region}</td>
+                  <td className="px-4 py-3 text-center">
+                    <ClickableCell value={row.orders_today || 0} />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ClickableCell value={row.back_orders || 0} />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ClickableCell value={row.ff_hold || 0} />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="font-semibold text-font-color-100">
+                      {formatNumber((row.pre_release || 0) + (row.ready_to_print || 0) + (row.ready_to_release || 0) + (row.ready_to_ship || 0))}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ClickableCell value={row.total_open_orders || 0} />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ClickableCell value={row.total_open_qty || 0} />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ClickableCell value={row.shipped_today || 0} />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <ClickableCell value={row.ship_today_units || 0} />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="font-semibold text-font-color-100">{formatNumber(row.shipped_others || 0)}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="font-semibold text-font-color-100">{formatNumber(row.shipped_units_others || 0)}</span>
+                  </td>
+                </tr>
+              ))}
+              
+              {/* Totals Row - Only show if there are multiple fulfillments */}
+              {visibleFulfillments.length > 1 && (
+                <tr className="bg-primary-20 border-t border-border-color font-bold">
+                  <td className="px-4 py-3 font-bold text-font-color"></td>
+                  <td className="px-4 py-3 text-center font-bold text-font-color"></td>
+                  <td className="px-4 py-3 text-center font-bold text-font-color"></td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {formatNumber(fulfillmentTotals.orders_today)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {formatNumber(fulfillmentTotals.back_orders)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {formatNumber(fulfillmentTotals.ff_hold)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center font-bold text-font-color">
+                    {formatNumber(fulfillmentTotals.in_process)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {formatNumber(fulfillmentTotals.total_open_orders)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {formatNumber(fulfillmentTotals.total_open_qty)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {formatNumber(fulfillmentTotals.shipped_today)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {formatNumber(fulfillmentTotals.ship_today_units)}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center font-bold text-font-color">
+                    {formatNumber(fulfillmentTotals.shipped_others)}
+                  </td>
+                  <td className="px-4 py-3 text-center font-bold text-font-color">
+                    {formatNumber(fulfillmentTotals.shipped_units_others)}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
