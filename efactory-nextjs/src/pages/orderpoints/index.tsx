@@ -53,6 +53,7 @@ export default function OrderPointsPage() {
   const [orderHeader, setOrderHeader] = useState<OrderHeaderDto>({ order_status: 1, ordered_date: new Date().toISOString().slice(0,10) })
   const [orderDetail, setOrderDetail] = useState<OrderDetailDto[]>([])
   const [accountNumberLocation, setAccountNumberLocation] = useState('')
+  const [accountDisplayLabel, setAccountDisplayLabel] = useState('')
   const [shippingAddress, setShippingAddress] = useState<AddressDto>({ country: 'US' })
   const [billingAddress, setBillingAddress] = useState<AddressDto>({})
   const [findItemValue, setFindItemValue] = useState('')
@@ -215,21 +216,129 @@ export default function OrderPointsPage() {
       width: 50, 
       sortable: false, 
       filter: false,
-      checkboxSelection: true,
-      headerCheckboxSelection: true,
-      pinned: 'left'
+      pinned: 'left',
+      cellClass: 'ag-cell-checkbox',
+      headerClass: 'ag-header-checkbox',
+      cellRenderer: (params: any) => {
+        const isSelected = params.node.isSelected();
+        return (
+          <div className="flex items-center justify-center h-full">
+            <CheckBox
+              checked={isSelected}
+              onChange={(checked) => {
+                if (checked) {
+                  params.node.setSelected(true);
+                } else {
+                  params.node.setSelected(false);
+                }
+                // Force grid refresh to update header checkbox
+                params.api.refreshCells({ force: true });
+              }}
+              size="normal"
+              mode="emulated"
+            />
+          </div>
+        );
+      },
+      headerComponent: (params: any) => {
+        const displayedRows = params.api.getDisplayedRowCount();
+        const selectedRows = params.api.getSelectedRows().length;
+        const allSelected = displayedRows > 0 && selectedRows === displayedRows;
+        const someSelected = selectedRows > 0 && selectedRows < displayedRows;
+        
+        return (
+          <div className="flex items-center justify-center h-full">
+            <CheckBox
+              checked={allSelected}
+              indeterminate={someSelected}
+              onChange={(checked) => {
+                if (checked) {
+                  params.api.selectAll();
+                } else {
+                  params.api.deselectAll();
+                }
+                // Force grid refresh to update all checkboxes
+                params.api.refreshCells({ force: true });
+              }}
+              size="normal"
+              mode="emulated"
+            />
+          </div>
+        );
+      }
     },
-    { headerName: '#', field: 'line_number', width: 60, sortable: false },
-    { headerName: 'Item #', field: 'item_number', width: 120 },
-    { headerName: 'Description', field: 'description', flex: 1, minWidth: 200 },
-    { headerName: 'Qty', field: 'quantity', width: 80, editable: (p:any) => !p.data?.is_kit_component && !p.data?.voided, cellClass: (p:any)=> p.data?.is_kit_component? 'ag-disabled': '' },
-    { headerName: 'Unit Price', field: 'price', width: 100, editable: true, valueFormatter: (params:any) => params.value ? `$${Number(params.value).toFixed(2)}` : '' },
-    { headerName: 'Ext Price', valueGetter: (params:any) => (params.data.quantity || 0) * (params.data.price || 0), width: 100, valueFormatter: (params:any) => `$${Number(params.value || 0).toFixed(2)}` },
-    { headerName: "Don't Ship", field: 'do_not_ship_before', width: 100, editable: (p:any)=> !p.data?.is_kit_component },
-    { headerName: 'Ship By', field: 'ship_by', width: 100, editable: (p:any)=> !p.data?.is_kit_component },
-    { headerName: '', width: 70, cellRenderer: (p:any)=> (
+    { 
+      headerName: '#', 
+      field: 'line_number', 
+      width: 60, 
+      sortable: false,
+      cellClass: 'ag-cell-center',
+      headerClass: 'ag-header-center'
+    },
+    { 
+      headerName: 'Item #', 
+      field: 'item_number', 
+      width: 120,
+      cellClass: 'ag-cell-left',
+      headerClass: 'ag-header-left'
+    },
+    { 
+      headerName: 'Description', 
+      field: 'description', 
+      flex: 1, 
+      minWidth: 200,
+      cellClass: 'ag-cell-left',
+      headerClass: 'ag-header-left'
+    },
+    { 
+      headerName: 'Qty', 
+      field: 'quantity', 
+      width: 80, 
+      editable: (p:any) => !p.data?.is_kit_component && !p.data?.voided, 
+      cellClass: (p:any)=> p.data?.is_kit_component? 'ag-disabled ag-cell-center' : 'ag-cell-center',
+      headerClass: 'ag-header-center'
+    },
+    { 
+      headerName: 'Unit Price', 
+      field: 'price', 
+      width: 100, 
+      editable: true, 
+      valueFormatter: (params:any) => params.value ? `$${Number(params.value).toFixed(2)}` : '',
+      cellClass: 'ag-cell-right',
+      headerClass: 'ag-header-right'
+    },
+    { 
+      headerName: 'Ext Price', 
+      valueGetter: (params:any) => (params.data.quantity || 0) * (params.data.price || 0), 
+      width: 100, 
+      valueFormatter: (params:any) => `$${Number(params.value || 0).toFixed(2)}`,
+      cellClass: 'ag-cell-right',
+      headerClass: 'ag-header-right'
+    },
+    { 
+      headerName: "Don't Ship", 
+      field: 'do_not_ship_before', 
+      width: 100, 
+      editable: (p:any)=> !p.data?.is_kit_component,
+      cellClass: 'ag-cell-center',
+      headerClass: 'ag-header-center'
+    },
+    { 
+      headerName: 'Ship By', 
+      field: 'ship_by', 
+      width: 100, 
+      editable: (p:any)=> !p.data?.is_kit_component,
+      cellClass: 'ag-cell-center',
+      headerClass: 'ag-header-center'
+    },
+    { 
+      headerName: '', 
+      width: 70, 
+      cellRenderer: (p:any)=> (
         <Button size="small" variant="outline" className="text-xs px-2 py-1" onClick={()=>{ setEditLineIndex(p.rowIndex); setEditLineData({ custom_field1: p.data.custom_field1||'', custom_field2: p.data.custom_field2||'', custom_field5: p.data.custom_field5||'', comments: p.data.comments||'' }); setEditLineOpen(true); }}>Edit</Button>
-      )
+      ),
+      cellClass: 'ag-cell-center',
+      headerClass: 'ag-header-center'
     }
   ]), [])
 
@@ -238,6 +347,27 @@ export default function OrderPointsPage() {
     sortable: true,
     filter: false,
     menuTabs: [],
+    cellStyle: (params: any) => {
+      const baseStyle = {
+        display: 'flex',
+        alignItems: 'center',
+        height: '100%',
+        padding: '8px 12px'
+      };
+      
+      // Force white text for selected rows
+      if (params.node.isSelected()) {
+        return {
+          ...baseStyle,
+          color: 'white !important',
+          backgroundColor: 'transparent'
+        };
+      }
+      
+      return baseStyle;
+    },
+    headerClass: 'ag-header-cell-label',
+    cellClass: 'ag-cell-value'
   }), [])
 
   function renumberDraftLines(lines: OrderDetailDto[]): OrderDetailDto[] {
@@ -435,6 +565,58 @@ export default function OrderPointsPage() {
     }
   }
 
+  // Helper function to get account options from calc_account_regions
+  function getAccountOptions(): Array<{value: string, label: string}> {
+    try {
+      const authTokenStr = window.localStorage.getItem('authToken');
+      if (!authTokenStr) return [];
+      
+      const authToken = JSON.parse(authTokenStr);
+      const calcAccountRegions = authToken?.user_data?.calc_account_regions || {};
+      
+      const accountKeys = Object.keys(calcAccountRegions);
+      accountKeys.sort((a, b) => {
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      });
+      
+      return accountKeys.map(key => ({
+        value: key,
+        label: calcAccountRegions[key]
+      }));
+    } catch (error) {
+      console.error('Error loading account options:', error);
+      return [];
+    }
+  }
+
+  function handleAccountLocationChange(value: string) {
+    setAccountNumberLocation(value);
+    
+    // Find and set the display label
+    const accountOptions = getAccountOptions();
+    const selectedOption = accountOptions.find(opt => opt.value === value);
+    setAccountDisplayLabel(selectedOption ? selectedOption.label : '');
+    
+    if (value) {
+      // Parse account_number.location format (e.g., "123.ABC" -> account_number: "123", location: "ABC")
+      const accountNumber = value.replace(/\.\w+/, '');
+      const location = value.replace(/\d+\./, '');
+      setOrderHeader(prev => ({
+        ...prev,
+        account_number: accountNumber,
+        location: location
+      }));
+    } else {
+      setOrderHeader(prev => ({
+        ...prev,
+        account_number: '',
+        location: ''
+      }));
+    }
+  }
+
   async function reloadInventory(page = currentPage) {
     console.log('reloadInventory called with:', { page, itemFilter, warehouses, showZeroQty });
     
@@ -509,12 +691,25 @@ export default function OrderPointsPage() {
     console.log('Pagination State:', { totalItems, pageSize, currentPage, showPagination: totalItems > pageSize })
   }, [totalItems, pageSize, currentPage])
 
+  // Initialize accountNumberLocation from orderHeader
+  useEffect(() => {
+    if (orderHeader.account_number && orderHeader.location) {
+      const accountLocation = `${orderHeader.account_number}.${orderHeader.location}`;
+      setAccountNumberLocation(accountLocation);
+      
+      // Also set the display label
+      const accountOptions = getAccountOptions();
+      const selectedOption = accountOptions.find(opt => opt.value === accountLocation);
+      setAccountDisplayLabel(selectedOption ? selectedOption.label : '');
+    }
+  }, [orderHeader.account_number, orderHeader.location]);
+
   // Handle search input changes with debouncing
   useEffect(() => {
     if (!browseOpen) return;
-    
+
     console.log('Search Effect Triggered:', { itemFilter, browseOpen });
-    
+
     // If search is empty, reload immediately to show all items
     if (itemFilter === '') {
       console.log('Empty search - reloading immediately');
@@ -522,7 +717,7 @@ export default function OrderPointsPage() {
       reloadInventory(1);
       return;
     }
-    
+
     // If search has content, use debounced search
     console.log('Setting debounced search for:', itemFilter);
     const timeoutId = setTimeout(() => {
@@ -530,7 +725,7 @@ export default function OrderPointsPage() {
       setCurrentPage(1);
       reloadInventory(1);
     }, 350);
-    
+
     return () => {
       console.log('Clearing timeout for:', itemFilter);
       clearTimeout(timeoutId);
@@ -641,12 +836,23 @@ export default function OrderPointsPage() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <Label className="text-font-color-100 text-sm">Account # - Warehouse</Label>
-                        <Input 
-                          className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                          value={accountNumberLocation} 
-                          onChange={e=>setAccountNumberLocation(e.target.value)} 
-                          placeholder="12345.LOC" 
-                        />
+                        <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
+                          <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
+                            <span className="truncate">
+                              {accountDisplayLabel || "Select Account - Warehouse"}
+                            </span>
+                          </SelectTrigger>
+                          <SelectContent className="bg-card-color border-border-color">
+                            <SelectItem value="" className="text-font-color hover:bg-body-color">
+                              Select Account - Warehouse
+                            </SelectItem>
+                            {getAccountOptions().map(option => (
+                              <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
+                                <span className="whitespace-nowrap">{option.label}</span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div>
                         <Label className="text-font-color-100 text-sm">Order #</Label>
@@ -915,6 +1121,11 @@ export default function OrderPointsPage() {
                   suppressRowClickSelection={true}
                   isRowSelectable={(params: any) => !params.data?.is_kit_component && !params.data?.voided}
                   overlayNoRowsTemplate={'<span class="ag-no-rows">No items in cart</span>'}
+                  rowHeight={40}
+                  headerHeight={40}
+                  suppressRowHoverHighlight={false}
+                  rowClass="ag-row-custom"
+                  suppressColumnVirtualisation={true}
                   onCellValueChanged={(e:any)=>{
                   const idx = e.node.rowIndex
                   setOrderDetail(prev => {
@@ -1130,7 +1341,7 @@ export default function OrderPointsPage() {
               </label>
               <Select value={warehouses} onValueChange={setWarehouses}>
                 <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm" style={{ width: '200px' }}>
-                  <SelectValue placeholder="Warehouse: All" className="whitespace-nowrap" />
+                  <SelectValue placeholder="Warehouse: All" />
                 </SelectTrigger>
                 <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
                   <SelectItem value="" className="text-font-color hover:bg-body-color">Warehouse: All</SelectItem>

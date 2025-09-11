@@ -84,3 +84,260 @@
   --ag-odd-row-background-color: var(--card-color);
   --ag-row-hover-color: var(--body-color);
 }
+
+/* Dark mode support for legacy theme */
+[data-theme="dark"] .ag-theme-legacy {
+  --ag-background-color: var(--card-color);
+  --ag-foreground-color: var(--font-color);
+  --ag-border-color: var(--border-color);
+  --ag-header-background-color: var(--body-color);
+  --ag-header-foreground-color: var(--font-color-100);
+  --ag-row-background-color: var(--card-color);
+  --ag-odd-row-background-color: var(--card-color);
+  --ag-row-hover-color: var(--body-color);
+  --ag-selected-row-background-color: var(--primary-color);
+  --ag-selected-row-foreground-color: white;
+}
+
+/* Light mode specific adjustments */
+[data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+[data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell {
+  color: white !important;
+}
+
+[data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell * {
+  color: white !important;
+}
+
+[data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell input {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell-value {
+  color: white !important;
+}
+
+[data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell-wrapper {
+  color: white !important;
+}
+
+[data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell-text {
+  color: white !important;
+}
+
+/* Dark mode specific adjustments */
+[data-theme="dark"] .ag-theme-legacy .ag-row.ag-row-selected {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+[data-theme="dark"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell {
+  color: white !important;
+}
+
+[data-theme="dark"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell * {
+  color: white !important;
+}
+
+[data-theme="dark"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell input {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="dark"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell-value {
+  color: white !important;
+}
+
+[data-theme="dark"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell-wrapper {
+  color: white !important;
+}
+
+[data-theme="dark"] .ag-theme-legacy .ag-row.ag-row-selected .ag-cell-text {
+  color: white !important;
+}
+
+/* Legacy theme customizations */
+.ag-theme-legacy {
+  /* Override legacy theme with Luno colors */
+  --ag-background-color: var(--card-color);
+  --ag-foreground-color: var(--font-color);
+  --ag-border-color: var(--border-color);
+  
+  /* Header */
+  --ag-header-background-color: var(--body-color);
+  --ag-header-foreground-color: var(--font-color-100);
+  --ag-header-cell-hover-background-color: var(--body-color);
+  
+  /* Rows */
+  --ag-row-background-color: var(--card-color);
+  --ag-odd-row-background-color: var(--card-color);
+  --ag-row-hover-color: var(--body-color);
+  --ag-selected-row-background-color: var(--primary-color);
+  --ag-selected-row-foreground-color: white;
+  
+  /* Typography and sizing */
+  --ag-font-size: 13px;
+  --ag-font-family: inherit;
+  --ag-row-height: 40px;
+  --ag-header-height: 40px;
+}
+
+/* Force selected row text to be white - SIMPLE APPROACH */
+.ag-theme-legacy .ag-row.ag-row-selected {
+  color: white !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell {
+  color: white !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell * {
+  color: white !important;
+}
+
+/* Legacy theme cell styling */
+.ag-theme-legacy .ag-header-cell {
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.ag-theme-legacy .ag-cell {
+  font-size: 13px;
+  padding: 8px 12px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.ag-theme-legacy .ag-row {
+  height: 40px;
+}
+
+.ag-theme-legacy .ag-row:hover {
+  background-color: var(--body-color) !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected {
+  background-color: var(--primary-color) !important;
+  color: white !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell {
+  color: white !important;
+  background-color: transparent !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell * {
+  color: white !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell input {
+  color: white !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell input:focus {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Force white text for all content in selected rows - HIGH SPECIFICITY */
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell-value {
+  color: white !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell-wrapper {
+  color: white !important;
+}
+
+.ag-theme-legacy .ag-row.ag-row-selected .ag-cell-text {
+  color: white !important;
+}
+
+
+/* Custom checkbox styling for AG Grid - using site's Checkbox component */
+.ag-theme-legacy .ag-cell-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.ag-theme-legacy .ag-header-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Cell alignment classes */
+.ag-cell-center {
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.ag-cell-left {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
+.ag-cell-right {
+  text-align: right !important;
+  justify-content: flex-end !important;
+}
+
+.ag-header-center {
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.ag-header-left {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
+.ag-header-right {
+  text-align: right !important;
+  justify-content: flex-end !important;
+}
+
+/* Custom row styling */
+.ag-row-custom {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ag-row-custom:hover {
+  background-color: var(--body-color) !important;
+}
+
+/* Input styling within AG Grid legacy theme */
+.ag-theme-legacy input[type="text"],
+.ag-theme-legacy input[type="number"] {
+  background-color: var(--card-color) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--font-color) !important;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  height: 28px;
+}
+
+.ag-theme-legacy input[type="text"]:focus,
+.ag-theme-legacy input[type="number"]:focus {
+  border-color: var(--primary-color) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
