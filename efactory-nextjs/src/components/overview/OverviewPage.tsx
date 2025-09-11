@@ -504,7 +504,11 @@ export default function OverviewPage() {
         },
         legend: { 
           data: ['Received', 'Shipped'], 
-          top: 0
+          top: 0,
+          textStyle: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          }
         },
         grid: { 
           left: '3%', 
@@ -519,6 +523,14 @@ export default function OverviewPage() {
           name: 'Day of Month',
           nameLocation: 'middle',
           nameGap: 30,
+          nameTextStyle: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
+          axisLabel: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
           splitLine: {
             show: false
           }
@@ -526,6 +538,14 @@ export default function OverviewPage() {
         yAxis: {
           type: 'value',
           name: 'Orders',
+          nameTextStyle: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
+          axisLabel: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
           splitLine: {
             show: true,
             lineStyle: {
@@ -545,8 +565,8 @@ export default function OverviewPage() {
               show: true,
               position: 'inside',
               color: '#ffffff',
-              fontSize: 12,
-              fontWeight: 'bold',
+              fontSize: 10,
+              fontWeight: 'normal',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           },
@@ -560,8 +580,8 @@ export default function OverviewPage() {
               show: true,
               position: 'inside',
               color: '#ffffff',
-              fontSize: 12,
-              fontWeight: 'bold',
+              fontSize: 10,
+              fontWeight: 'normal',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           }
@@ -592,7 +612,11 @@ export default function OverviewPage() {
         },
         legend: { 
           data: ['Authorized', 'Closed'], 
-          top: 0
+          top: 0,
+          textStyle: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          }
         },
         grid: { 
           left: '3%', 
@@ -607,6 +631,14 @@ export default function OverviewPage() {
           name: 'Day of Month',
           nameLocation: 'middle',
           nameGap: 30,
+          nameTextStyle: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
+          axisLabel: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
           splitLine: {
             show: false
           }
@@ -614,6 +646,14 @@ export default function OverviewPage() {
         yAxis: {
           type: 'value',
           name: 'RMAs',
+          nameTextStyle: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
+          axisLabel: {
+            fontSize: 10,
+            fontWeight: 'normal'
+          },
           splitLine: {
             show: true,
             lineStyle: {
@@ -633,8 +673,8 @@ export default function OverviewPage() {
               show: true,
               position: 'inside',
               color: '#ffffff',
-              fontSize: 12,
-              fontWeight: 'bold',
+              fontSize: 10,
+              fontWeight: 'normal',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           },
@@ -648,8 +688,8 @@ export default function OverviewPage() {
               show: true,
               position: 'inside',
               color: '#ffffff',
-              fontSize: 12,
-              fontWeight: 'bold',
+              fontSize: 10,
+              fontWeight: 'normal',
               formatter: (params: any) => params.value > 0 ? params.value : ''
             }
           }
@@ -1060,12 +1100,12 @@ export default function OverviewPage() {
   if (!layout) return null;
 
   return (
-    <div className="p-6 max-w-full mx-auto">
+    <div className="p-4 w-full">
         {/* Header Section */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-font-color mb-1">Overview</h1>
-            <p className="text-font-color-100">Monitor your key performance metrics and activities</p>
+            <h1 className="text-2xl font-semibold text-font-color mb-0.5">Overview</h1>
+            <p className="text-sm text-font-color-100">Monitor your key performance metrics and activities</p>
           </div>
           <div className="flex items-center gap-0">
             <Button 
@@ -1106,8 +1146,8 @@ export default function OverviewPage() {
 
         {/* Key Performance Counters */}
         {layout.areas.find(a => a.name === 'tiles')?.visible && (
-          <div className="mb-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {visibleTiles.map(t => (
                 <div key={t} className="transform hover:scale-105 transition-transform duration-200">
                   {renderTile(t)}
@@ -1119,9 +1159,9 @@ export default function OverviewPage() {
 
         {/* Fulfillment Section - Full Width */}
         {layout.areas.find(a => a.name === 'fulfillment')?.visible && (
-          <Card className="mb-8 border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300 w-full">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
-              <CardTitle className="text-xl font-semibold text-font-color">Fulfillment Summary</CardTitle>
+          <Card className="mb-4 border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300 w-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+              <CardTitle className="text-lg font-medium text-font-color">Fulfillment Summary</CardTitle>
               <Button 
                 size="sm" 
                 variant="outline" 
@@ -1137,13 +1177,13 @@ export default function OverviewPage() {
         )}
 
         {/* Activity Charts Section */}
-        <div className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="mb-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* 30 Days Activity */}
             {layout.areas.find(a => a.name === '30days')?.visible && (
               <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
-                  <CardTitle className="text-lg font-semibold text-font-color">30 Days Activity</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+                  <CardTitle className="text-base font-medium text-font-color">30 Days Activity</CardTitle>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1162,8 +1202,8 @@ export default function OverviewPage() {
             {/* 30 Days RMA Activity */}
             {layout.areas.find(a => a.name === '30days_rmas')?.visible && (
               <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
-                  <CardTitle className="text-lg font-semibold text-font-color">30 Days RMA Activity</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+                  <CardTitle className="text-base font-medium text-font-color">30 Days RMA Activity</CardTitle>
                   <Button 
                     size="sm" 
                     variant="outline" 
@@ -1182,12 +1222,12 @@ export default function OverviewPage() {
         </div>
 
         {/* Data Tables Section - Full Width */}
-        <div className="space-y-8 mb-10">
+        <div className="space-y-4 mb-6">
           {/* Inventory */}
           {layout.areas.find(a => a.name === 'inventory')?.visible && (
             <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
-                <CardTitle className="text-lg font-semibold text-font-color">Inventory Overview</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+                <CardTitle className="text-base font-medium text-font-color">Inventory Overview</CardTitle>
                 <Button 
                   size="sm" 
                   variant="outline" 
@@ -1206,8 +1246,8 @@ export default function OverviewPage() {
           {/* Latest 50 Orders */}
           {layout.areas.find(a => a.name === '50orders')?.visible && (
             <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4 bg-primary-10 rounded-t-lg">
-                <CardTitle className="text-lg font-semibold text-font-color">Latest Orders</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+                <CardTitle className="text-base font-medium text-font-color">Latest Orders</CardTitle>
                 <Button 
                   size="sm" 
                   variant="outline" 
