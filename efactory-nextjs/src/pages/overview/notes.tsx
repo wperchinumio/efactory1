@@ -26,6 +26,7 @@ export default function NotesPage() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<number | null>(null);
+  const [useFullHeight, setUseFullHeight] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
@@ -43,6 +44,34 @@ export default function NotesPage() {
       setNoteContent('');
     }
   }, [selectedNoteId, notes]);
+
+  // Check if browser height is <= 400px and disable height calculations
+  // Also check if height is in middle range (400px-612px) and adjust accordingly
+  useEffect(() => {
+    const checkHeight = () => {
+      const height = window.innerHeight;
+      if (height <= 400) {
+        setUseFullHeight(true); // Use full height for small screens
+      } else if (height <= 612) {
+        setUseFullHeight(true); // Use full height for middle range too
+      } else {
+        setUseFullHeight(false); // Use calculated heights for large screens
+      }
+    };
+    
+    checkHeight();
+    window.addEventListener('resize', checkHeight);
+    return () => window.removeEventListener('resize', checkHeight);
+  }, []);
+
+  // Auto-resize textarea when in full height mode
+  useEffect(() => {
+    if (useFullHeight && textareaRef.current) {
+      const textarea = textareaRef.current;
+      textarea.style.height = 'auto';
+      textarea.style.height = textarea.scrollHeight + 'px';
+    }
+  }, [noteContent, useFullHeight]);
 
   // Initialize line numbers scroll behavior
   useEffect(() => {
@@ -236,9 +265,9 @@ export default function NotesPage() {
       className="notes-container"
       style={{ 
         display: 'flex', 
-        height: 'calc(100vh - 120px)', 
+        height: useFullHeight ? 'auto' : 'calc(100vh - 80px)', 
         backgroundColor: 'var(--body-color)',
-        overflow: 'hidden'
+        overflow: useFullHeight ? 'visible' : 'hidden'
       }}>
       {/* Sidebar */}
       <div 
@@ -310,7 +339,8 @@ export default function NotesPage() {
           style={{ 
             flex: 1, 
             padding: '8px',
-            maxHeight: 'calc(100vh - 240px)'
+            maxHeight: useFullHeight ? 'none' : 'calc(100vh - 200px)',
+            overflow: useFullHeight ? 'visible' : 'auto'
           }}>
           {filteredNotes.length === 0 ? (
             <div style={{ 
@@ -504,19 +534,22 @@ export default function NotesPage() {
                 padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
-                minHeight: '500px',
-                maxHeight: 'calc(100vh - 200px)',
-                overflow: 'hidden'
+                minHeight: '400px',
+                maxHeight: useFullHeight ? 'none' : 'calc(100vh - 160px)',
+                overflow: useFullHeight ? 'visible' : 'hidden'
               }}>
               {!isPreviewMode ? (
                 <div style={{
                   width: '100%',
-                  flex: 1,
+                  flex: useFullHeight ? 'none' : 1,
                   border: '1px solid var(--border-color)',
                   borderRadius: '4px',
                   backgroundColor: 'var(--card-color)',
                   display: 'flex',
-                  overflow: 'hidden'
+                  flexDirection: 'row',
+                  overflow: useFullHeight ? 'visible' : 'hidden',
+                  height: useFullHeight ? 'auto' : 'auto',
+                  maxHeight: useFullHeight ? 'none' : 'auto'
                 }}>
                   {/* Line Numbers */}
                   <div 
@@ -535,9 +568,14 @@ export default function NotesPage() {
                       textAlign: 'right',
                       lineHeight: '1.5',
                       userSelect: 'none',
-                      overflow: 'hidden',
+                      overflow: useFullHeight ? 'visible' : 'hidden',
                       position: 'relative',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      flexGrow: 0,
+                      flexBasis: '50px',
+                      height: useFullHeight ? 'auto' : '100%',
+                      maxHeight: useFullHeight ? 'none' : 'none',
+                      minHeight: useFullHeight ? 'auto' : 'auto'
                     }}>
                     <div style={{
                       paddingRight: '4px'
@@ -570,10 +608,13 @@ export default function NotesPage() {
                     onScroll={handleTextareaScroll}
                     onPaste={handlePaste}
                     placeholder="Type your note here... (Markdown supported)"
-                    className="scroll-area"
+                    className={useFullHeight ? "" : "scroll-area"}
                     style={{
-                      flex: 1,
-                      height: '100%',
+                      flex: useFullHeight ? 1 : 1,
+                      width: '100%',
+                      height: useFullHeight ? 'auto' : '100%',
+                      minHeight: useFullHeight ? 'auto' : 'auto',
+                      maxHeight: useFullHeight ? 'none' : 'auto',
                       padding: '12px',
                       border: 'none',
                       backgroundColor: 'transparent',
@@ -584,7 +625,10 @@ export default function NotesPage() {
                       resize: 'none',
                       outline: 'none',
                       whiteSpace: 'pre-wrap',
-                      wordWrap: 'break-word'
+                      wordWrap: 'break-word',
+                      overflow: useFullHeight ? 'visible' : 'auto',
+                      scrollbarWidth: useFullHeight ? 'none' : 'auto',
+                      msOverflowStyle: useFullHeight ? 'none' : 'auto'
                     }}
                   />
                 </div>

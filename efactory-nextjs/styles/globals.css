@@ -1749,3 +1749,56 @@ html:has(body[data-luno-theme="dynamic"]) {
     padding-left: 12px !important;
   }
 }
+
+/* Override scroll-area when using full height - NUCLEAR OPTION */
+.notes-container.force-no-scrollbars .scroll-area {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.notes-container.force-no-scrollbars .scroll-area::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* NUCLEAR: Force textarea to never have scrollbars when in full height mode */
+.notes-container.force-no-scrollbars textarea {
+  overflow: visible !important;
+  max-height: none !important;
+  height: auto !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  flex: none !important;
+  flex-grow: 1 !important;
+  flex-shrink: 0 !important;
+  flex-basis: auto !important;
+  /* Prevent any scrolling behavior */
+  scroll-behavior: auto !important;
+  overscroll-behavior: none !important;
+}
+
+.notes-container.force-no-scrollbars textarea::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* NUCLEAR: Force line numbers to extend fully when in full height mode */
+.notes-container.force-no-scrollbars .line-numbers {
+  height: auto !important;
+  max-height: none !important;
+  min-height: auto !important;
+  overflow: visible !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.notes-container.force-no-scrollbars .line-numbers::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
