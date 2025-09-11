@@ -1,4 +1,4 @@
-import { postJson } from '@/lib/api/http';
+import { postJson, getJson, httpRequest } from '@/lib/api/http';
 import type {
   ActivityPointDto,
   FulfillmentRowDto,
@@ -19,6 +19,15 @@ import type {
   OverviewLayout,
   SaveOverviewLayoutRequest,
 } from '@/types/api/views';
+import type {
+  Note,
+  GetNotesResponse,
+  CreateNoteRequest,
+  CreateNoteResponse,
+  UpdateNoteRequest,
+  UpdateNoteResponse,
+  DeleteNoteResponse,
+} from '@/types/api/notes';
 
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
@@ -67,6 +76,33 @@ export async function saveOverviewLayout(layout: OverviewLayout): Promise<Overvi
     data: { overview_layout: layout },
   } as SaveOverviewLayoutRequest);
   return res.data.overview_layout;
+}
+
+// Notes API
+export async function fetchNotes(): Promise<Note[]> {
+  const res = await getJson<GetNotesResponse>('/api/notes');
+  return res.data;
+}
+
+export async function createNote(noteData: CreateNoteRequest): Promise<Note> {
+  const res = await postJson<CreateNoteResponse>('/api/notes', noteData);
+  return res.data;
+}
+
+export async function updateNote(noteData: UpdateNoteRequest): Promise<Note> {
+  const res = await httpRequest<UpdateNoteResponse>({
+    method: 'put',
+    path: `/api/notes/${noteData.id}`,
+    body: noteData
+  });
+  return res.data;
+}
+
+export async function deleteNote(noteId: number): Promise<void> {
+  await httpRequest({
+    method: 'delete',
+    path: `/api/notes/${noteId}`
+  });
 }
 
 

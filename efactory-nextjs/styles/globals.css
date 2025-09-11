@@ -1300,3 +1300,324 @@ html:has(body[data-luno-theme="dynamic"]) {
   --chart-color4: #D97706 !important;
   --chart-color5: #2563EB !important;
 }
+
+/* ========================================
+   Notes Page - Markdown Styling
+   ======================================== */
+
+/* Markdown content styling for both light and dark themes */
+.prose {
+  color: var(--font-color);
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: var(--font-color);
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 { font-size: 1.875rem; line-height: 2.25rem; }
+.prose h2 { font-size: 1.5rem; line-height: 2rem; }
+.prose h3 { font-size: 1.25rem; line-height: 1.75rem; }
+.prose h4 { font-size: 1.125rem; line-height: 1.75rem; }
+
+.prose p {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  line-height: 1.625;
+}
+
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  color: var(--secondary);
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose code {
+  background-color: var(--border-color);
+  color: var(--font-color);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  font-family: 'Courier New', Consolas, monospace;
+}
+
+.prose pre {
+  background-color: var(--border-color);
+  color: var(--font-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1em 0;
+  font-style: italic;
+  color: var(--font-color-100);
+}
+
+.prose ul, .prose ol {
+  margin: 1em 0;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin: 0.25em 0;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.prose th, .prose td {
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.prose th {
+  background-color: var(--border-color);
+  font-weight: 600;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 2em 0;
+}
+
+/* Dark theme specific adjustments */
+[data-theme="dark"] .prose {
+  color: var(--font-color);
+}
+
+[data-theme="dark"] .prose code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .prose pre {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .prose th {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Highlight.js theme adjustments for dark mode */
+[data-theme="dark"] .hljs {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--font-color) !important;
+}
+
+/* Line clamp utility for note previews */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* CSS Custom Properties for UI Components */
+:root {
+  --card-color: var(--white);
+  --border-color: var(--grey);
+  --font-color: var(--primary);
+  --font-color-100: var(--grey);
+  --font-color-200: #EEEEEE;
+}
+
+[data-theme="light"] {
+  --card-color: var(--white);
+  --border-color: #e7e7e7;
+  --font-color: #363535;
+  --font-color-100: #9399a1;
+  --font-color-200: #EEEEEE;
+}
+
+[data-theme="dark"] {
+  --card-color: #24282e;
+  --border-color: #4c4c4c;
+  --font-color: #E0E0E0;
+  --font-color-100: #9399a1;
+  --font-color-200: #424242;
+}
+
+/* Markdown styles */
+.prose {
+  max-width: none;
+  color: var(--font-color);
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: var(--font-color);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 { font-size: 2em; font-weight: 700; }
+.prose h2 { font-size: 1.5em; font-weight: 600; }
+.prose h3 { font-size: 1.25em; font-weight: 600; }
+.prose h4 { font-size: 1.125em; font-weight: 600; }
+
+.prose p {
+  margin-bottom: 1em;
+  line-height: 1.6;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--font-color);
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose code {
+  background-color: var(--card-color);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  border: 1px solid var(--border-color);
+}
+
+.prose pre {
+  background-color: var(--card-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+.prose ul, .prose ol {
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin-bottom: 0.25em;
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1em 0;
+  font-style: italic;
+  color: var(--font-color-100);
+}
+
+.prose a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  text-decoration: none;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.prose th, .prose td {
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.prose th {
+  background-color: var(--card-color);
+  font-weight: 600;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 2em 0;
+}
+
+/* Syntax highlighting for code blocks */
+.prose .hljs {
+  background: var(--card-color) !important;
+  color: var(--font-color) !important;
+}
+
+.prose .hljs-comment,
+.prose .hljs-quote {
+  color: var(--font-color-100);
+  font-style: italic;
+}
+
+.prose .hljs-keyword,
+.prose .hljs-selector-tag,
+.prose .hljs-type {
+  color: #c678dd;
+}
+
+.prose .hljs-string,
+.prose .hljs-attr {
+  color: #98c379;
+}
+
+.prose .hljs-number,
+.prose .hljs-literal {
+  color: #d19a66;
+}
+
+.prose .hljs-function,
+.prose .hljs-title {
+  color: #61afef;
+}
+
+.prose .hljs-variable,
+.prose .hljs-name {
+  color: #e06c75;
+}
+
+/* Dark theme adjustments */
+[data-theme="dark"] .prose {
+  color: var(--font-color);
+}
+
+[data-theme="dark"] .prose code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .prose pre {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .prose .hljs {
+  background: rgba(255, 255, 255, 0.05) !important;
+}

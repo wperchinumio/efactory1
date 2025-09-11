@@ -13,6 +13,18 @@ export { default as DatePicker } from './DatePicker';
 export { default as DateRangeCombobox } from './DateRangeCombobox';
 export { default as Calculator } from './Calculator';
 
+// Export new UI components for Notes
+export { Card, CardContent, CardHeader, CardTitle } from './Card';
+export { Badge } from './Badge';
+export { Separator } from './Separator';
+export { ScrollArea } from './ScrollArea';
+export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './Dialog';
+export { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction, AlertDialogCancel } from './AlertDialog';
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
+export { Input } from './Input';
+export { Textarea } from './Textarea';
+export { toast, useToast } from './use-toast';
+
 // Export types
 export type { ButtonProps } from './Button';
 export type { CheckBoxProps } from './CheckBox';
@@ -20,4 +32,8 @@ export type { RadioButtonProps } from './RadioButton';
 export type { SearchBoxProps } from './SearchBox';
 export type { ComboListProps, ComboListOption } from './ComboList';
 export type { MultiSelectProps, MultiSelectOption } from './MultiSelect';
+export type { CardProps, CardContentProps, CardHeaderProps, CardTitleProps } from './Card';
+export type { BadgeProps } from './Badge';
+export type { InputProps } from './Input';
+export type { TextareaProps } from './Textarea';
 
