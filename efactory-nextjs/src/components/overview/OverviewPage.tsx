@@ -753,7 +753,7 @@ export default function OverviewPage() {
     function ClickableCell({ value, className = "" }: { value: number; className?: string }) {
       return (
         <button 
-          className={`text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-semibold transition-colors duration-200 hover:underline ${className}`}
+          className={`text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline ${className}`}
           onClick={() => {
             // TODO: Add navigation logic here
             console.log('Navigate to filtered view with value:', value);
@@ -765,37 +765,37 @@ export default function OverviewPage() {
     }
 
     return (
-      <div className="overflow-x-auto">
-        <div className="flex items-center justify-between mb-4">
+      <div className="p-6 overflow-x-auto">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-font-color-100">Hide zero qty</span>
             <button
-              className={`inline-flex items-center h-6 w-11 rounded-full transition-all duration-300 ${hideZeroQty ? 'bg-primary shadow-lg' : 'bg-slate-300 dark:bg-slate-600'} shadow-inner`}
+              className={`inline-flex items-center h-5 w-9 rounded-full transition-all duration-300 ${hideZeroQty ? 'bg-primary shadow-lg' : 'bg-slate-300 dark:bg-slate-600'} shadow-inner`}
               onClick={() => setHideZeroQty(v => !v)}
               aria-label="Hide zero quantity"
             >
-              <span className={`inline-block h-5 w-5 bg-white dark:bg-slate-200 rounded-full transform transition-transform duration-300 shadow-md ${hideZeroQty ? 'translate-x-5' : 'translate-x-0.5'}`} />
+              <span className={`inline-block h-4 w-4 bg-white dark:bg-slate-200 rounded-full transform transition-transform duration-300 shadow-md ${hideZeroQty ? 'translate-x-4' : 'translate-x-0.5'}`} />
             </button>
           </div>
         </div>
         
-        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
-          <table className="min-w-full text-sm">
+        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden shadow-sm">
+          <table className="min-w-full text-sm table-fixed">
             <thead>
               <tr className="bg-primary-10 dark:bg-primary-900/20 border-b border-border-color">
-                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">ACCOUNT #</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">GROUP</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">WAREHOUSE</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">ORDERS TODAY</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">BACK ORDERS</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">HOLD</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">IN PROCESS</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">TOTAL OPEN</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">TOTAL OPEN UNITS</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">SHIPPED TODAY</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">SHIPPED TODAY UNITS</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">OTHERS</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">OTHERS UNITS</th>
+                <th className="px-3 py-3 text-left font-semibold tracking-wider text-font-color uppercase text-xs">ACCOUNT #</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">GROUP</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">WAREHOUSE</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">ORDERS TODAY</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">BACK ORDERS</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">HOLD</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">IN PROCESS</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">TOTAL OPEN</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">TOTAL OPEN UNITS</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">SHIPPED TODAY</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">SHIPPED TODAY UNITS</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">OTHERS</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">OTHERS UNITS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-color">
@@ -804,39 +804,39 @@ export default function OverviewPage() {
                   key={idx} 
                   className="hover:bg-primary-5 dark:hover:bg-primary-900/10 transition-colors duration-200"
                 >
-                  <td className="px-4 py-3 font-bold text-font-color">{row.account_number}</td>
-                  <td className="px-4 py-3 text-center font-semibold text-font-color-100">{row.group}</td>
-                  <td className="px-4 py-3 text-center font-semibold text-font-color-100">{row.region}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 font-bold text-font-color">{row.account_number}</td>
+                  <td className="px-3 py-2 text-center font-medium text-font-color-100">{row.group}</td>
+                  <td className="px-3 py-2 text-center font-medium text-font-color-100">{row.region}</td>
+                  <td className="px-3 py-2 text-center">
                     <ClickableCell value={row.orders_today || 0} />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <ClickableCell value={row.back_orders || 0} />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <ClickableCell value={row.ff_hold || 0} />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <span className="font-semibold text-font-color-100">
                       {formatNumber((row.pre_release || 0) + (row.ready_to_print || 0) + (row.ready_to_release || 0) + (row.ready_to_ship || 0))}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <ClickableCell value={row.total_open_orders || 0} />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <ClickableCell value={row.total_open_qty || 0} />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <ClickableCell value={row.shipped_today || 0} />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <ClickableCell value={row.ship_today_units || 0} />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <span className="font-semibold text-font-color-100">{formatNumber(row.shipped_others || 0)}</span>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <span className="font-semibold text-font-color-100">{formatNumber(row.shipped_units_others || 0)}</span>
                   </td>
                 </tr>
@@ -848,17 +848,17 @@ export default function OverviewPage() {
                   <td className="px-4 py-3 font-bold text-font-color"></td>
                   <td className="px-4 py-3 text-center font-bold text-font-color"></td>
                   <td className="px-4 py-3 text-center font-bold text-font-color"></td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.orders_today)}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.back_orders)}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.ff_hold)}
                     </button>
@@ -866,22 +866,22 @@ export default function OverviewPage() {
                   <td className="px-4 py-3 text-center font-bold text-font-color">
                     {formatNumber(fulfillmentTotals.in_process)}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.total_open_orders)}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.total_open_qty)}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.shipped_today)}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
                       {formatNumber(fulfillmentTotals.ship_today_units)}
                     </button>
@@ -903,8 +903,8 @@ export default function OverviewPage() {
 
   function InventoryTable() {
     return (
-      <div>
-        <div className="flex items-center gap-6 mb-4">
+      <div className="p-6">
+        <div className="flex items-center gap-6 mb-6">
           <div className="flex items-center gap-4">
             <div className="form-check">
               <input
@@ -948,15 +948,15 @@ export default function OverviewPage() {
           </div>
         </div>
         
-        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
-          <table className="min-w-full text-sm">
+        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden shadow-sm">
+          <table className="min-w-full text-sm table-fixed">
             <thead>
               <tr className="bg-primary-10 dark:bg-primary-900/20 border-b border-border-color">
-                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">#</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Warehouse</th>
-                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Item #</th>
-                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Description</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Flags</th>
+                <th className="px-3 py-3 text-left font-semibold tracking-wider text-font-color uppercase text-xs">#</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">Warehouse</th>
+                <th className="px-3 py-3 text-left font-semibold tracking-wider text-font-color uppercase text-xs">Item #</th>
+                <th className="px-3 py-3 text-left font-semibold tracking-wider text-font-color uppercase text-xs">Description</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">Flags</th>
                 <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">On Hand</th>
                 <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">On Hold</th>
                 <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">Comm</th>
@@ -981,7 +981,7 @@ export default function OverviewPage() {
                     </button>
                   </td>
                   <td className="px-4 py-3 text-font-color-100">{it.description}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     {it.flags && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-10 text-warning">
                         {it.flags}
@@ -1016,8 +1016,8 @@ export default function OverviewPage() {
 
   function LatestOrders() {
     return (
-      <div>
-        <div className="flex items-center gap-2 mb-4">
+      <div className="p-6">
+        <div className="flex items-center gap-2 mb-6">
           <div className="flex border border-border-color rounded-lg overflow-hidden">
             <button
               onClick={() => setOrdersTab('received')}
@@ -1043,17 +1043,17 @@ export default function OverviewPage() {
           </div>
         </div>
         
-        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
-          <table className="min-w-full text-sm">
+        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden shadow-sm">
+          <table className="min-w-full text-sm table-fixed">
             <thead>
               <tr className="bg-primary-10 dark:bg-primary-900/20 border-b border-border-color">
-                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">#</th>
-                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Order #</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Received</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Order Stage</th>
-                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Ship To</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Shipped</th>
-                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Carrier</th>
+                <th className="px-3 py-3 text-left font-semibold tracking-wider text-font-color uppercase text-xs">#</th>
+                <th className="px-3 py-3 text-left font-semibold tracking-wider text-font-color uppercase text-xs">Order #</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">Received</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">Order Stage</th>
+                <th className="px-3 py-3 text-left font-semibold tracking-wider text-font-color uppercase text-xs">Ship To</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">Shipped</th>
+                <th className="px-3 py-3 text-center font-semibold tracking-wider text-font-color uppercase text-xs">Carrier</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-color">
@@ -1066,7 +1066,7 @@ export default function OverviewPage() {
                     </button>
                   </td>
                   <td className="px-4 py-3 text-center text-font-color-100">{o.received || '—'}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-10 text-primary">
                       {o.stage_description || o.order_stage}
                     </span>
@@ -1076,7 +1076,7 @@ export default function OverviewPage() {
                     <div className="text-xs text-font-color-100 mt-1">{o.ship_address}</div>
                   </td>
                   <td className="px-4 py-3 text-center text-font-color-100">{o.shipped || '—'}</td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-3 py-2 text-center">
                     <div className="text-font-color-100">
                       <div className="font-medium">{o.carrier}</div>
                       {o.service && <div className="text-xs">{o.service}</div>}
@@ -1172,7 +1172,7 @@ export default function OverviewPage() {
                 <IconRefresh className="w-4 h-4" />
               </Button>
             </CardHeader>
-            <CardContent className="p-6 overflow-x-auto"><FulfillmentTable /></CardContent>
+            <CardContent className="p-0 overflow-x-auto"><FulfillmentTable /></CardContent>
           </Card>
         )}
 
@@ -1239,7 +1239,7 @@ export default function OverviewPage() {
                   <IconRefresh className={`w-4 h-4 ${isRefreshingInventory ? 'animate-spin' : ''}`} />
                 </Button>
               </CardHeader>
-              <CardContent className="p-6 overflow-x-auto"><InventoryTable /></CardContent>
+              <CardContent className="p-0 overflow-x-auto"><InventoryTable /></CardContent>
             </Card>
           )}
 
@@ -1259,7 +1259,7 @@ export default function OverviewPage() {
                   <IconRefresh className={`w-4 h-4 ${isRefreshingOrders ? 'animate-spin' : ''}`} />
                 </Button>
               </CardHeader>
-              <CardContent className="p-6 overflow-x-auto"><LatestOrders /></CardContent>
+              <CardContent className="p-0 overflow-x-auto"><LatestOrders /></CardContent>
             </Card>
           )}
         </div>
