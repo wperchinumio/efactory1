@@ -149,7 +149,7 @@ export default function CustomizeOverview() {
       {/* Sections visibility + drag order */}
       <div className="space-y-2 mb-6">
         {(layout.areas || []).map((a, idx) => (
-          <div key={a.name} className="rounded-lg border px-3 py-2 flex items-center justify-between bg-card-color">
+          <div key={a.name} className="rounded-lg border border-border-color px-3 py-2 flex items-center justify-between bg-card-color">
             <div className="flex items-center gap-2">
               <IconGripVertical className="w-4 h-4 text-font-color-100" />
               <span className="font-medium">{getSectionTitle(a.name)}</span>
