@@ -48,7 +48,7 @@ function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: Pag
           size="sm"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="px-2"
+          className="px-2 border-border-color"
         >
           <IconChevronLeft className="w-4 h-4" />
         </Button>
@@ -61,7 +61,7 @@ function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: Pag
             className={`px-3 ${
               page === currentPage 
                 ? 'bg-primary text-white border-primary hover:bg-primary hover:text-white' 
-                : 'bg-card-color text-font-color-100 hover:bg-primary-10'
+                : 'bg-card-color text-font-color-100 border-border-color hover:bg-primary-10'
             }`}
           >
             {page}
@@ -72,7 +72,7 @@ function Pagination({ currentPage, totalItems, itemsPerPage, onPageChange }: Pag
           size="sm"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="px-2"
+          className="px-2 border-border-color"
         >
           <IconChevronRight className="w-4 h-4" />
         </Button>
