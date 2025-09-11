@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label } from '@/components/ui'
 import { toast } from '@/components/ui/use-toast'
-import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from '@tabler/icons-react'
+import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconFileText, IconShoppingCart } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
 import {
   generateOrderNumber,
@@ -1015,10 +1015,10 @@ export default function OrderPointsPage() {
   return (
     <div className="bg-body-color min-h-screen">
       {/* Header with Title and Actions */}
-      <div className="bg-card-color border-b border-border-color px-6 py-4">
+      <div className="bg-card-color border-b border-border-color px-6 py-2">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-font-color mb-1">Order Points - Order Entry</h1>
+            <h1 className="text-xl font-semibold text-font-color mb-0.5">OrderPoints - Order Entry</h1>
             <p className="text-sm text-font-color-100">Create and manage purchase orders</p>
           </div>
           <div className="flex items-center gap-3">
@@ -1035,24 +1035,25 @@ export default function OrderPointsPage() {
         </div>
       </div>
 
-      <div className="container-fluid p-6 space-y-6">
+      <div className="w-full max-w-7xl mx-auto p-6 space-y-6" style={{ maxWidth: '1600px' }}>
 
         {/* Main Layout: Left side (9) + Right Sidebar (3) */}
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-9 space-y-6">
+          <div className="xl:col-span-9 space-y-4">
             {/* Order Header and Shipping Address on same row */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {/* Order Header */}
               <Card className="shadow-sm border-border-color">
-                <CardHeader className="bg-primary-10 border-b border-border-color">
-                <CardTitle className="text-base font-medium text-font-color">
-                  Order Header
+                <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+                <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                  <IconFileText className="w-3.5 h-3.5" />
+                  ORDER HEADER
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4">
-                  <div className="space-y-4">
+              <CardContent className="p-3">
+                  <div className="space-y-3">
                     {/* Row 1: Account # - Warehouse | Order # */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                     <div>
                         <Label className="text-font-color-100 text-sm">Account # - Warehouse</Label>
                         <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
@@ -1082,7 +1083,7 @@ export default function OrderPointsPage() {
                     </div>
                     
                     {/* Row 2: Customer # | PO # */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                 <div>
                         <Label className="text-font-color-100 text-sm">Customer #</Label>
                   <Input 
@@ -1102,7 +1103,7 @@ export default function OrderPointsPage() {
                     </div>
                     
                     {/* Row 3: Order Status | PO Date */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-2">
                 <div>
                         <Label className="text-font-color-100 text-sm">Order Status</Label>
                         <Select value={String(orderHeader.order_status ?? 1)} onValueChange={handleOrderStatusChange}>
@@ -1158,10 +1159,11 @@ export default function OrderPointsPage() {
 
               {/* Shipping Address - SAME ROW as Order Header */}
             <Card className="shadow-sm border-border-color">
-              <CardHeader className="bg-primary-10 border-b border-border-color">
+              <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-base font-medium text-font-color">
-                    Shipping Address
+                  <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                    <IconTruck className="w-3.5 h-3.5" />
+                    SHIPPING ADDRESS
                   </CardTitle>
                 <div className="flex gap-2">
                     <Button 
@@ -1182,9 +1184,9 @@ export default function OrderPointsPage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+            <CardContent className="p-3">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-font-color-100 text-sm">Company</Label>
                     <Input 
@@ -1202,7 +1204,7 @@ export default function OrderPointsPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-font-color-100 text-sm font-medium">Address 1</Label>
                     <Input 
@@ -1222,7 +1224,7 @@ export default function OrderPointsPage() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
                   <div>
                     <Label className="text-font-color-100 text-sm font-medium">City</Label>
                     <Input 
@@ -1292,10 +1294,11 @@ export default function OrderPointsPage() {
 
             {/* Items */}
             <Card className="shadow-sm border-border-color">
-              <CardHeader className="bg-primary-10 border-b border-border-color">
+              <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
                 <div className="flex justify-between items-center">
-                  <CardTitle className="text-base font-medium text-font-color">
-                    Items
+                  <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                    <IconShoppingCart className="w-3.5 h-3.5" />
+                    ITEMS
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <Input
@@ -1400,15 +1403,14 @@ export default function OrderPointsPage() {
                </CardHeader>
                <CardContent className="p-3">
                <div className="space-y-1 text-xs">
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">International:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(orderHeader.international_code || '0')}>{orderHeader.international_code || '0'}</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Code:</span> <span className="text-font-color text-right truncate max-w-[120px]" title="-">-</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Shipping Carrier:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.shipping_carrier || '-'}>{orderHeader.shipping_carrier || '-'}</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Shipping Service:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.shipping_service || '-'}>{orderHeader.shipping_service || '-'}</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Freight Account:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.freight_account || '-'}>{orderHeader.freight_account || '-'}</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Consignee #:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.consignee_number || '-'}>{orderHeader.consignee_number || '-'}</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Incoterms:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.terms || '-'}>{orderHeader.terms || '-'}</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">FOB Location:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.fob || '-'}>{orderHeader.fob || '-'}</span></div>
-                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Payment Type:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.payment_type || '-'}>{orderHeader.payment_type || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Int. Code:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(orderHeader.international_code || '0')}>{orderHeader.international_code || '0'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Shipping Carrier:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.shipping_carrier ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.shipping_carrier || '-'}>{orderHeader.shipping_carrier || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Shipping Service:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.shipping_service ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.shipping_service || '-'}>{orderHeader.shipping_service || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Freight Account:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.freight_account ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.freight_account || '-'}>{orderHeader.freight_account || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Consignee #:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.consignee_number ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.consignee_number || '-'}>{orderHeader.consignee_number || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Incoterms:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.terms ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.terms || '-'}>{orderHeader.terms || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">FOB Location:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.fob ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.fob || '-'}>{orderHeader.fob || '-'}</span></div>
+                 <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Payment Type:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.payment_type ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.payment_type || '-'}>{orderHeader.payment_type || '-'}</span></div>
                  <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Packing List:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(orderHeader.packing_list_type || '100')}>{orderHeader.packing_list_type || '100'}</span></div>
                  </div>
                </CardContent>
@@ -1434,16 +1436,16 @@ export default function OrderPointsPage() {
               </CardHeader>
               <CardContent className="p-3">
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Company:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.company || '-'}>{billingAddress.company || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Attention:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.attention || '-'}>{billingAddress.attention || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 1:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.address1 || '-'}>{billingAddress.address1 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 2:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.address2 || '-'}>{billingAddress.address2 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">City:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.city || '-'}>{billingAddress.city || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">State/Province:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.state_province || '-'}>{billingAddress.state_province || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Postal Code:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.postal_code || '-'}>{billingAddress.postal_code || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Country:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.country || '-'}>{billingAddress.country || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Phone:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.phone || '-'}>{billingAddress.phone || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Email:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={billingAddress.email || '-'}>{billingAddress.email || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Company:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.company ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.company || '-'}>{billingAddress.company || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Attention:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.attention ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.attention || '-'}>{billingAddress.attention || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 1:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.address1 ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.address1 || '-'}>{billingAddress.address1 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 2:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.address2 ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.address2 || '-'}>{billingAddress.address2 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">City:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.city ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.city || '-'}>{billingAddress.city || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">State/Province:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.state_province ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.state_province || '-'}>{billingAddress.state_province || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Postal Code:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.postal_code ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.postal_code || '-'}>{billingAddress.postal_code || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Country:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.country ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.country || '-'}>{billingAddress.country || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Phone:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.phone ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.phone || '-'}>{billingAddress.phone || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Email:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.email ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.email || '-'}>{billingAddress.email || '-'}</span></div>
                 </div>
               </CardContent>
             </Card>
@@ -1474,15 +1476,15 @@ export default function OrderPointsPage() {
                     </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.shipping_handling.toFixed(2)}`}>${amounts.shipping_handling.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.shipping_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.shipping_handling.toFixed(2)}`}>${amounts.shipping_handling.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Sales Taxes:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.sales_tax.toFixed(2)}`}>${amounts.sales_tax.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.sales_tax > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.sales_tax.toFixed(2)}`}>${amounts.sales_tax.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Discount/Add. Chgs.:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.international_handling.toFixed(2)}`}>${amounts.international_handling.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.international_handling.toFixed(2)}`}>${amounts.international_handling.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
                   <span className="text-font-color whitespace-nowrap">Total Amount:</span>
@@ -1490,7 +1492,7 @@ export default function OrderPointsPage() {
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.amount_paid.toFixed(2)}`}>${amounts.amount_paid.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.amount_paid > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.amount_paid.toFixed(2)}`}>${amounts.amount_paid.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5 border-t-2 border-border-color pt-1 font-bold">
                   <span className="text-font-color whitespace-nowrap">Net Due:</span>
@@ -1498,15 +1500,15 @@ export default function OrderPointsPage() {
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.balance_due_us.toFixed(2)}`}>${amounts.balance_due_us.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.balance_due_us > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.balance_due_us.toFixed(2)}`}>${amounts.balance_due_us.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Int. Decl. Value:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.international_declared_value.toFixed(2)}`}>${amounts.international_declared_value.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_declared_value > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.international_declared_value.toFixed(2)}`}>${amounts.international_declared_value.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Insurance:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${amounts.insurance.toFixed(2)}`}>${amounts.insurance.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.insurance > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.insurance.toFixed(2)}`}>${amounts.insurance.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1532,11 +1534,11 @@ export default function OrderPointsPage() {
               </CardHeader>
               <CardContent className="p-3">
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_1}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field1 || '-'}>{orderHeader.custom_field1 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_2}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field2 || '-'}>{orderHeader.custom_field2 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_3}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field3 || '-'}>{orderHeader.custom_field3 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_4}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field4 || '-'}>{orderHeader.custom_field4 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_5}:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={orderHeader.custom_field5 || '-'}>{orderHeader.custom_field5 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_1}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field1 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field1 || '-'}>{orderHeader.custom_field1 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_2}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field2 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field2 || '-'}>{orderHeader.custom_field2 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_3}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field3 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field3 || '-'}>{orderHeader.custom_field3 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_4}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field4 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field4 || '-'}>{orderHeader.custom_field4 || '-'}</span></div>
+                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_5}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field5 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field5 || '-'}>{orderHeader.custom_field5 || '-'}</span></div>
                 </div>
               </CardContent>
             </Card>
