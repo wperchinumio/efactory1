@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/shadcn/button';
 import { IconShoppingCart, IconTruck, IconAlertTriangle, IconTags, IconClipboardList, IconPackage, IconBox, IconWand, IconRefresh } from '@tabler/icons-react';
+import { Checkbox } from '@/components/ui/shadcn/checkbox';
+import { useChartAnimation } from '@/hooks/useChartAnimation';
+import { useChartTheme } from '@/hooks/useChartTheme';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/shadcn/dropdown-menu';
 import dynamic from 'next/dynamic';
@@ -73,6 +76,10 @@ export default function OverviewPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hideZeroQty, setHideZeroQty] = useState(true);
 
+  // Chart theme and animation hooks
+  const { echartsThemeName } = useChartTheme();
+  const { triggerDataLoadAnimation, getAnimationSettings } = useChartAnimation();
+
   // Load layout
   useEffect(() => {
     (async () => {
@@ -112,10 +119,12 @@ export default function OverviewPage() {
       setRmaActivity(r);
       setInventory(i as any);
       setOrders(o);
+      // Trigger chart animations after data load
+      triggerDataLoadAnimation();
     } finally {
       setIsRefreshing(false);
     }
-  }, [invFilters, ordersTab]);
+  }, [invFilters, ordersTab, triggerDataLoadAnimation]);
 
   useEffect(() => {
     if (!layout) return;
@@ -343,61 +352,157 @@ export default function OverviewPage() {
   }
 
   function Chart30Days() {
-    const option = useMemo(() => ({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { data: ['Received', 'Shipped'], top: 0 },
-      grid: { left: 36, right: 20, bottom: 40, top: 36, containLabel: true },
-      xAxis: {
-        type: 'category',
-        data: activity.map(p => new Date(p.date).getDate()),
-        name: 'Day',
-        nameLocation: 'middle',
-        nameGap: 24,
-      },
-      yAxis: {
-        type: 'value',
-        name: 'Orders',
-      },
-      series: [
-        { name: 'Received', type: 'bar', stack: 'orders', data: activity.map(p => p.received), itemStyle: { color: '#a3d5ff' } },
-        { name: 'Shipped', type: 'bar', stack: 'orders', data: activity.map(p => p.shipped), itemStyle: { color: '#34d399' } },
-        {
-          name: 'Total', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
-          data: activity.map(p => (p.received || 0) + (p.shipped || 0)),
-          itemStyle: { color: '#6b7280' }, lineStyle: { width: 2, color: '#6b7280' }
-        }
-      ],
-    }), [activity]);
-    return <ReactECharts style={{ height: 240 }} option={option} />;
+    const option = useMemo(() => {
+      if (!activity?.length) return {};
+      
+      return {
+        ...getAnimationSettings(),
+        tooltip: { 
+          trigger: 'axis', 
+          axisPointer: { type: 'shadow' }
+        },
+        legend: { 
+          data: ['Received', 'Shipped'], 
+          top: 0
+        },
+        grid: { 
+          left: '3%', 
+          right: '4%', 
+          bottom: '15%', 
+          top: '15%', 
+          containLabel: true 
+        },
+        xAxis: {
+          type: 'category',
+          data: activity.map(p => new Date(p.date).getDate()),
+          name: 'Day of Month',
+          nameLocation: 'middle',
+          nameGap: 30,
+          splitLine: {
+            show: false
+          }
+        },
+        yAxis: {
+          type: 'value',
+          name: 'Orders',
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: ['rgba(128, 128, 128, 0.3)'],
+              type: 'solid'
+            }
+          }
+        },
+        series: [
+          { 
+            name: 'Received', 
+            type: 'bar', 
+            stack: 'orders', 
+            data: activity.map(p => p.received),
+            emphasis: { focus: 'series' }
+          },
+          { 
+            name: 'Shipped', 
+            type: 'bar', 
+            stack: 'orders', 
+            data: activity.map(p => p.shipped),
+            emphasis: { focus: 'series' }
+          }
+        ],
+      };
+    }, [activity, getAnimationSettings]);
+    
+    return (
+      <ReactECharts 
+        style={{ height: 280 }} 
+        option={option} 
+        theme={echartsThemeName}
+        key={`activity-chart-${echartsThemeName}`}
+        opts={{ renderer: 'canvas' }}
+      />
+    );
   }
 
   function ChartRma30Days() {
-    const option = useMemo(() => ({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { data: ['Authorized', 'Closed', 'Total'], top: 0 },
-      grid: { left: 36, right: 20, bottom: 40, top: 36, containLabel: true },
-      xAxis: {
-        type: 'category',
-        data: rmaActivity.map(p => new Date(p.date).getDate()),
-        name: 'Day',
-        nameLocation: 'middle',
-        nameGap: 24,
-      },
-      yAxis: {
-        type: 'value',
-        name: 'RMAs',
-      },
-      series: [
-        { name: 'Authorized', type: 'bar', stack: 'rma', data: rmaActivity.map(p => p.issued), itemStyle: { color: '#fde68a' } },
-        { name: 'Closed', type: 'bar', stack: 'rma', data: rmaActivity.map(p => p.closed), itemStyle: { color: '#f59e0b' } },
-        {
-          name: 'Total', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
-          data: rmaActivity.map(p => (p.issued || 0) + (p.closed || 0)),
-          itemStyle: { color: '#6b7280' }, lineStyle: { width: 2, color: '#6b7280' }
-        }
-      ],
-    }), [rmaActivity]);
-    return <ReactECharts style={{ height: 280 }} option={option} />;
+    const option = useMemo(() => {
+      if (!rmaActivity?.length) return {};
+      
+      return {
+        ...getAnimationSettings(),
+        tooltip: { 
+          trigger: 'axis', 
+          axisPointer: { type: 'shadow' }
+        },
+        legend: { 
+          data: ['Authorized', 'Closed', 'Total'], 
+          top: 0
+        },
+        grid: { 
+          left: '3%', 
+          right: '4%', 
+          bottom: '15%', 
+          top: '15%', 
+          containLabel: true 
+        },
+        xAxis: {
+          type: 'category',
+          data: rmaActivity.map(p => new Date(p.date).getDate()),
+          name: 'Day of Month',
+          nameLocation: 'middle',
+          nameGap: 30,
+          splitLine: {
+            show: false
+          }
+        },
+        yAxis: {
+          type: 'value',
+          name: 'RMAs',
+          splitLine: {
+            show: true,
+            lineStyle: {
+              color: ['rgba(128, 128, 128, 0.3)'],
+              type: 'solid'
+            }
+          }
+        },
+        series: [
+          { 
+            name: 'Authorized', 
+            type: 'bar', 
+            stack: 'rma', 
+            data: rmaActivity.map(p => p.issued),
+            emphasis: { focus: 'series' }
+          },
+          { 
+            name: 'Closed', 
+            type: 'bar', 
+            stack: 'rma', 
+            data: rmaActivity.map(p => p.closed),
+            emphasis: { focus: 'series' }
+          },
+          {
+            name: 'Total', 
+            type: 'line', 
+            smooth: true, 
+            symbol: 'circle', 
+            symbolSize: 6,
+            data: rmaActivity.map(p => (p.issued || 0) + (p.closed || 0)),
+            lineStyle: { width: 3 },
+            emphasis: { focus: 'series' }
+          }
+        ],
+      };
+    }, [rmaActivity, getAnimationSettings]);
+    
+    return (
+      <ReactECharts 
+        style={{ height: 300 }} 
+        option={option} 
+        theme={echartsThemeName}
+        key={`rma-chart-${echartsThemeName}`}
+        opts={{ renderer: 'canvas' }}
+      />
+    );
   }
 
   function FulfillmentTable() {
@@ -601,57 +706,96 @@ export default function OverviewPage() {
 
   function InventoryTable() {
     return (
-      <div className="overflow-x-auto">
-        <div className="flex items-center gap-3 mb-3">
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={invFilters.hasKey} onChange={e => setInvFilters(v => ({ ...v, hasKey: e.target.checked }))} /> Key</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={invFilters.needReorder} onChange={e => setInvFilters(v => ({ ...v, needReorder: e.target.checked }))} /> Reorder</label>
-          <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={invFilters.isShort} onChange={e => setInvFilters(v => ({ ...v, isShort: e.target.checked }))} /> Short</label>
-          <Button size="icon" variant="ghost" onClick={refreshAll} title="Refresh"><i className="icon-reload" /></Button>
+      <div>
+        <div className="flex items-center gap-6 mb-4">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="hasKey"
+                checked={invFilters.hasKey} 
+                onCheckedChange={(checked) => setInvFilters(v => ({ ...v, hasKey: !!checked }))} 
+              />
+              <label htmlFor="hasKey" className="text-sm font-medium text-font-color-100 cursor-pointer">Key</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="needReorder"
+                checked={invFilters.needReorder} 
+                onCheckedChange={(checked) => setInvFilters(v => ({ ...v, needReorder: !!checked }))} 
+              />
+              <label htmlFor="needReorder" className="text-sm font-medium text-font-color-100 cursor-pointer">Reorder</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox 
+                id="isShort"
+                checked={invFilters.isShort} 
+                onCheckedChange={(checked) => setInvFilters(v => ({ ...v, isShort: !!checked }))} 
+              />
+              <label htmlFor="isShort" className="text-sm font-medium text-font-color-100 cursor-pointer">Short</label>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" onClick={refreshAll} title="Refresh Inventory">
+            <IconRefresh className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
         </div>
-        <table className="min-w-full text-sm">
-          <thead className="text-xs uppercase text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2">#</th>
-              <th className="px-3 py-2">Warehouse</th>
-              <th className="px-3 py-2">Item #</th>
-              <th className="px-3 py-2">Description</th>
-              <th className="px-3 py-2">Flags</th>
-              <th className="px-3 py-2 text-right">On Hand</th>
-              <th className="px-3 py-2 text-right">On Hold</th>
-              <th className="px-3 py-2 text-right">Comm</th>
-              <th className="px-3 py-2 text-right">Proc</th>
-              <th className="px-3 py-2 text-right">FF</th>
-              <th className="px-3 py-2 text-right">Net</th>
-              <th className="px-3 py-2 text-right">Min</th>
-              <th className="px-3 py-2 text-right">DCL</th>
-              <th className="px-3 py-2 text-right">WO</th>
-              <th className="px-3 py-2 text-right">PO</th>
-              <th className="px-3 py-2 text-right">RMA</th>
-            </tr>
-          </thead>
-          <tbody>
-            {inventory.slice(0, 10).map((it, idx) => (
-              <tr key={idx} className="odd:bg-muted/40">
-                <td className="px-3 py-2">{idx + 1}</td>
-                <td className="px-3 py-2 text-center font-medium">{it.warehouse}</td>
-                <td className="px-3 py-2 font-medium">{it.item_number}</td>
-                <td className="px-3 py-2">{it.description}</td>
-                <td className="px-3 py-2 text-center">{it.flags}</td>
-                <td className="px-3 py-2 text-right">{it.qty_onhand}</td>
-                <td className="px-3 py-2 text-right">{it.qty_onhold}</td>
-                <td className="px-3 py-2 text-right">{it.qty_committed}</td>
-                <td className="px-3 py-2 text-right">{it.qty_inproc}</td>
-                <td className="px-3 py-2 text-right">{it.qty_onff}</td>
-                <td className="px-3 py-2 text-right font-semibold">{it.qty_net}</td>
-                <td className="px-3 py-2 text-right">{it.qty_min}</td>
-                <td className="px-3 py-2 text-right">{it.qty_dcl}</td>
-                <td className="px-3 py-2 text-right">{it.qty_openwo}</td>
-                <td className="px-3 py-2 text-right">{it.qty_openpo}</td>
-                <td className="px-3 py-2 text-right">{it.qty_openrma}</td>
+        
+        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="bg-primary-10 border-b border-border-color">
+                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">#</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Warehouse</th>
+                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Item #</th>
+                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Description</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Flags</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">On Hand</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">On Hold</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">Comm</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">Proc</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">FF</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">Net</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">Min</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">DCL</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">WO</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">PO</th>
+                <th className="px-4 py-3 text-right font-semibold tracking-wide text-font-color uppercase text-xs">RMA</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border-color">
+              {inventory.slice(0, 10).map((it, idx) => (
+                <tr key={idx} className="hover:bg-primary-5 transition-colors duration-200">
+                  <td className="px-4 py-3 text-font-color-100">{idx + 1}</td>
+                  <td className="px-4 py-3 text-center font-bold text-font-color">{it.warehouse}</td>
+                  <td className="px-4 py-3 font-bold text-font-color">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {it.item_number}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-font-color-100">{it.description}</td>
+                  <td className="px-4 py-3 text-center">
+                    {it.flags && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-10 text-warning">
+                        {it.flags}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right font-semibold text-font-color">{it.qty_onhand || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_onhold || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_committed || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_inproc || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_onff || 0}</td>
+                  <td className="px-4 py-3 text-right font-bold text-primary">{it.qty_net || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_min || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_dcl || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_openwo || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_openpo || 0}</td>
+                  <td className="px-4 py-3 text-right text-font-color-100">{it.qty_openrma || 0}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
@@ -659,35 +803,71 @@ export default function OverviewPage() {
   function LatestOrders() {
     return (
       <div>
-        <div className="flex items-center gap-2 mb-3">
-          <div className="btn-group">
-            <Button variant={ordersTab === 'received' ? 'default' : 'outline'} size="sm" onClick={() => setOrdersTab('received')}>Received</Button>
-            <Button variant={ordersTab === 'shipped' ? 'default' : 'outline'} size="sm" onClick={() => setOrdersTab('shipped')}>Shipped</Button>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex border border-border-color rounded-lg overflow-hidden">
+            <button
+              onClick={() => setOrdersTab('received')}
+              className={`px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                ordersTab === 'received' 
+                  ? 'bg-primary text-white' 
+                  : 'bg-card-color text-font-color-100 hover:bg-primary-10'
+              }`}
+            >
+              Received
+            </button>
+            <div className="w-px h-6 bg-border-color opacity-50 self-center"></div>
+            <button
+              onClick={() => setOrdersTab('shipped')}
+              className={`px-4 py-2 text-sm font-medium transition-colors duration-200 ${
+                ordersTab === 'shipped' 
+                  ? 'bg-primary text-white' 
+                  : 'bg-card-color text-font-color-100 hover:bg-primary-10'
+              }`}
+            >
+              Shipped
+            </button>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        
+        <div className="bg-card-color border border-border-color rounded-xl overflow-hidden">
           <table className="min-w-full text-sm">
-            <thead className="text-xs uppercase text-muted-foreground">
-              <tr>
-                <th className="px-3 py-2">#</th>
-                <th className="px-3 py-2 text-left">Order #</th>
-                <th className="px-3 py-2">Received</th>
-                <th className="px-3 py-2">Order Stage</th>
-                <th className="px-3 py-2 text-left">Ship To</th>
-                <th className="px-3 py-2">Shipped</th>
-                <th className="px-3 py-2">Carrier</th>
+            <thead>
+              <tr className="bg-primary-10 border-b border-border-color">
+                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">#</th>
+                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Order #</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Received</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Order Stage</th>
+                <th className="px-4 py-3 text-left font-semibold tracking-wide text-font-color uppercase text-xs">Ship To</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Shipped</th>
+                <th className="px-4 py-3 text-center font-semibold tracking-wide text-font-color uppercase text-xs">Carrier</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border-color">
               {orders.slice(0, 10).map((o, idx) => (
-                <tr key={idx} className="odd:bg-muted/40">
-                  <td className="px-3 py-2">{idx + 1}</td>
-                  <td className="px-3 py-2 font-medium">{o.order_number}</td>
-                  <td className="px-3 py-2">{o.received || ''}</td>
-                  <td className="px-3 py-2">{o.stage_description || o.order_stage}</td>
-                  <td className="px-3 py-2">{o.ship_to}<br/><span className="text-xs text-muted-foreground">{o.ship_address}</span></td>
-                  <td className="px-3 py-2">{o.shipped || ''}</td>
-                  <td className="px-3 py-2">{o.carrier} {o.service}</td>
+                <tr key={idx} className="hover:bg-primary-5 transition-colors duration-200">
+                  <td className="px-4 py-3 text-font-color-100">{idx + 1}</td>
+                  <td className="px-4 py-3 font-bold text-font-color">
+                    <button className="text-primary hover:text-primary-600 font-bold transition-colors duration-200 hover:underline">
+                      {o.order_number}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3 text-center text-font-color-100">{o.received || '—'}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-10 text-primary">
+                      {o.stage_description || o.order_stage}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="text-font-color font-medium">{o.ship_to}</div>
+                    <div className="text-xs text-font-color-100 mt-1">{o.ship_address}</div>
+                  </td>
+                  <td className="px-4 py-3 text-center text-font-color-100">{o.shipped || '—'}</td>
+                  <td className="px-4 py-3 text-center">
+                    <div className="text-font-color-100">
+                      <div className="font-medium">{o.carrier}</div>
+                      {o.service && <div className="text-xs">{o.service}</div>}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
