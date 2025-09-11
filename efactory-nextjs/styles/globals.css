@@ -1621,3 +1621,28 @@ html:has(body[data-luno-theme="dynamic"]) {
 [data-theme="dark"] .prose .hljs {
   background: rgba(255, 255, 255, 0.05) !important;
 }
+
+/* Custom scroll area */
+.scroll-area {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+}
+
+.scroll-area::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-area::-webkit-scrollbar-thumb {
+  background-color: var(--border-color);
+  border-radius: 4px;
+}
+
+.scroll-area::-webkit-scrollbar-thumb:hover {
+  background-color: var(--font-color-100);
+}

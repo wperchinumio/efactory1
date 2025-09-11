@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchNotes, createNote, updateNote, deleteNote } from '@/services/api';
 import type { Note } from '@/types/api/notes';
 import ReactMarkdown from 'react-markdown';
@@ -24,6 +24,8 @@ export default function NotesPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState('');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = useRef<HTMLDivElement>(null);
 
   // Load notes on mount
   useEffect(() => {
@@ -119,6 +121,12 @@ export default function NotesPage() {
     });
   };
 
+  const handleTextareaScroll = () => {
+    if (textareaRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
+
   const filteredNotes = notes.filter(note => {
     const searchTerm = searchFilter.toLowerCase();
     return (
@@ -133,7 +141,8 @@ export default function NotesPage() {
     <div style={{ 
       display: 'flex', 
       height: 'calc(100vh - 120px)', 
-      backgroundColor: 'var(--body-color)' 
+      backgroundColor: 'var(--body-color)',
+      overflow: 'hidden'
     }}>
       {/* Sidebar */}
       <div style={{ 
@@ -198,7 +207,13 @@ export default function NotesPage() {
         </div>
 
         {/* Notes List */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
+        <div 
+          className="scroll-area"
+          style={{ 
+            flex: 1, 
+            padding: '8px',
+            maxHeight: 'calc(100vh - 240px)'
+          }}>
           {filteredNotes.length === 0 ? (
             <div style={{ 
               textAlign: 'center', 
@@ -380,37 +395,102 @@ export default function NotesPage() {
             </div>
 
             {/* Content Area */}
-            <div style={{ flex: 1, padding: '16px' }}>
+            <div style={{ 
+              flex: 1, 
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '500px',
+              maxHeight: 'calc(100vh - 200px)',
+              overflow: 'hidden'
+            }}>
               {!isPreviewMode ? (
-                <textarea
-                  value={noteContent}
-                  onChange={(e) => setNoteContent(e.target.value)}
-                  placeholder="Type your note here... (Markdown supported)"
+                <div style={{
+                  width: '100%',
+                  flex: 1,
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '4px',
+                  backgroundColor: 'var(--card-color)',
+                  display: 'flex',
+                  overflow: 'hidden'
+                }}>
+                  {/* Line Numbers */}
+                  <div 
+                    ref={lineNumbersRef}
+                    style={{
+                      width: '50px',
+                      backgroundColor: 'var(--font-color-200)',
+                      borderRight: '1px solid var(--border-color)',
+                      padding: '12px 8px',
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      color: 'var(--font-color-100)',
+                      textAlign: 'right',
+                      lineHeight: '1.5',
+                      userSelect: 'none',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      flexShrink: 0
+                    }}>
+                    {noteContent.split('\n').map((_, index) => (
+                      <div key={index + 1} style={{ 
+                        height: '21px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        paddingRight: '4px'
+                      }}>
+                        {index + 1}
+                      </div>
+                    ))}
+                    {noteContent === '' && (
+                      <div style={{ 
+                        height: '21px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        paddingRight: '4px'
+                      }}>
+                        1
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Textarea */}
+                  <textarea
+                    ref={textareaRef}
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    onScroll={handleTextareaScroll}
+                    placeholder="Type your note here... (Markdown supported)"
+                    className="scroll-area"
+                    style={{
+                      flex: 1,
+                      height: '100%',
+                      padding: '12px',
+                      border: 'none',
+                      backgroundColor: 'transparent',
+                      color: 'var(--font-color)',
+                      fontFamily: 'monospace',
+                      fontSize: '14px',
+                      lineHeight: '1.5',
+                      resize: 'none',
+                      outline: 'none'
+                    }}
+                  />
+                </div>
+              ) : (
+                <div 
+                  className="scroll-area"
                   style={{
                     width: '100%',
-                    height: '100%',
+                    flex: 1,
                     padding: '12px',
                     border: '1px solid var(--border-color)',
                     borderRadius: '4px',
                     backgroundColor: 'var(--card-color)',
-                    color: 'var(--font-color)',
-                    fontFamily: 'monospace',
-                    fontSize: '14px',
-                    resize: 'none',
-                    outline: 'none'
-                  }}
-                />
-              ) : (
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  padding: '12px',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '4px',
-                  backgroundColor: 'var(--card-color)',
-                  color: 'var(--font-color)',
-                  overflow: 'auto'
-                }}>
+                    color: 'var(--font-color)'
+                  }}>
                   {noteContent.trim() ? (
                     <div className="prose">
                       <ReactMarkdown
