@@ -99,10 +99,10 @@ export default function CustomizeOverview() {
           <h1 className="text-xl font-semibold">Customize Overview</h1>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onRestoreDefault} disabled={working}>
+          <Button variant="outline" size="sm" onClick={onRestoreDefault} disabled={working} className="bg-primary text-white border-primary hover:bg-primary hover:text-white">
             <IconRefresh className="w-4 h-4 mr-2" /> Restore Default View
           </Button>
-          <Button size="sm" onClick={onSave} disabled={saving}>
+          <Button size="sm" variant="outline" onClick={onSave} disabled={saving} className="bg-primary text-white border-primary hover:bg-primary hover:text-white">
             <IconDeviceFloppy className="w-4 h-4 mr-2" /> {saving ? 'Saving…' : 'Save & Close'}
           </Button>
         </div>
@@ -119,7 +119,14 @@ export default function CustomizeOverview() {
             <div className="flex items-center gap-2">
               <Button size="sm" variant="outline" onClick={() => moveSection(idx, -1)} disabled={idx === 0}>↑</Button>
               <Button size="sm" variant="outline" onClick={() => moveSection(idx, 1)} disabled={idx === (layout.areas.length - 1)}>↓</Button>
-              <Button size="sm" variant={a.visible ? 'default' : 'outline'} onClick={() => toggleAreaVisible(a.name)}>{a.visible ? 'Visible' : 'Hidden'}</Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => toggleAreaVisible(a.name)}
+                className={a.visible ? 'bg-primary text-white border-primary hover:bg-primary hover:text-white' : 'bg-card-color text-font-color-100 hover:bg-primary-10'}
+              >
+                {a.visible ? 'Visible' : 'Hidden'}
+              </Button>
             </div>
           </div>
         ))}
@@ -140,7 +147,12 @@ export default function CustomizeOverview() {
                   <IconGripVertical className="w-4 h-4 text-font-color-100" />
                   <div className="font-medium">{t.name}</div>
                 </div>
-                <Button size="sm" variant={t.visible ? 'default' : 'outline'} onClick={() => toggleTile(t.name)}>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => toggleTile(t.name)}
+                  className={t.visible ? 'bg-primary text-white border-primary hover:bg-primary hover:text-white' : 'bg-card-color text-font-color-100 hover:bg-primary-10'}
+                >
                   {t.visible ? 'Visible' : 'Hidden'}
                 </Button>
               </div>
