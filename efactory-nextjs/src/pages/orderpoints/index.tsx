@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
-import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label } from '@/components/ui'
+import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label, DatePicker } from '@/components/ui'
 import { toast } from '@/components/ui/use-toast'
-import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconFileText, IconShoppingCart, IconMessageCircle } from '@tabler/icons-react'
+import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconFileText, IconShoppingCart, IconMessageCircle, IconCalendar } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
 import {
   generateOrderNumber,
@@ -21,6 +21,393 @@ function isFiniteNumber(v: any): v is number {
   return Number.isFinite(n)
 }
 
+// Editable DatePicker component
+const EditableDatePicker = ({ value, onChange, placeholder = "Select date", className = "", disabled = false }: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [inputValue, setInputValue] = useState(value);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Update input value when prop value changes
+  useEffect(() => {
+    if (value) {
+      // If value is in ISO format (YYYY-MM-DD), convert to native format without timezone issues
+      if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Parse ISO date components directly to avoid timezone conversion
+        const parts = value.split('-').map(Number);
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+          const [year, month, day] = parts;
+          const date = new Date(year, month - 1, day); // month is 0-indexed
+          setInputValue(date.toLocaleDateString());
+        } else {
+          setInputValue(value);
+        }
+      } else {
+        // Value is already in native format
+        setInputValue(value);
+      }
+    } else {
+      setInputValue('');
+    }
+  }, [value]);
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Initialize current month based on value
+  useEffect(() => {
+    if (value) {
+      setCurrentMonth(new Date(value));
+    }
+  }, [value]);
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      // If it's already in native format, return as is
+      if (!dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return dateStr;
+      }
+      // If it's ISO format, convert to native
+      const date = new Date(dateStr);
+      return date.toLocaleDateString(); // Use browser's native format
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    
+    // Close calendar when user starts typing
+    if (isOpen) {
+      setIsOpen(false);
+    }
+    
+    // Only update parent state if input is empty
+    if (newValue === '') {
+      onChange('');
+    }
+    // Don't try to parse while typing - let user finish typing first
+  };
+
+  const handleInputBlur = () => {
+    // When user finishes typing, try to parse and format the date
+    if (inputValue.trim() === '') {
+      onChange('');
+      return;
+    }
+    
+    try {
+      // Parse the date in local timezone to avoid timezone issues
+      const dateParts = inputValue.split('/');
+      if (dateParts.length === 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
+        const month = parseInt(dateParts[0], 10) - 1; // Month is 0-indexed
+        const day = parseInt(dateParts[1], 10);
+        const year = parseInt(dateParts[2], 10);
+        
+        if (month >= 0 && month <= 11 && day >= 1 && day <= 31 && year > 1900) {
+          const date = new Date(year, month, day);
+          if (date.getFullYear() === year && date.getMonth() === month && date.getDate() === day) {
+            // Create ISO date string directly without timezone conversion
+            const isoDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            onChange(isoDate);
+            // Format the input value using native format
+            setInputValue(date.toLocaleDateString());
+            return;
+          }
+        }
+      }
+      
+      // Fallback to regular parsing if the manual parsing fails
+      const date = new Date(inputValue);
+      if (!isNaN(date.getTime()) && date.getFullYear() > 1900) {
+        const isoDate = date.toISOString().split('T')[0];
+        onChange(isoDate || '');
+        // Format the input value using native format
+        setInputValue(date.toLocaleDateString());
+      }
+    } catch {
+      // If parsing fails, keep the input value as is
+    }
+  };
+
+  const handleDateSelect = (date: Date) => {
+    // Create ISO date string directly without timezone conversion
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // Month is 0-indexed, so add 1
+    const day = date.getDate();
+    const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
+    onChange(isoDate);
+    setInputValue(date.toLocaleDateString()); // Use native format for display
+    setIsOpen(false);
+  };
+
+  const handleIconClick = () => {
+    // Try to parse the current input value to set the calendar date
+    let calendarDate = new Date();
+    
+    if (inputValue.trim()) {
+      try {
+        // Try manual parsing first to avoid timezone issues
+        const dateParts = inputValue.split('/');
+        if (dateParts.length === 3 && dateParts[0] && dateParts[1] && dateParts[2]) {
+          const month = parseInt(dateParts[0], 10) - 1; // Month is 0-indexed
+          const day = parseInt(dateParts[1], 10);
+          const year = parseInt(dateParts[2], 10);
+          
+          if (month >= 0 && month <= 11 && day >= 1 && day <= 31 && year > 1900) {
+            const parsedDate = new Date(year, month, day);
+            if (parsedDate.getFullYear() === year && parsedDate.getMonth() === month && parsedDate.getDate() === day) {
+              calendarDate = parsedDate;
+              // Set the calendar to show the month of the parsed date
+              setCurrentMonth(new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1));
+            }
+          }
+        } else {
+          // Fallback to regular parsing
+          const parsedDate = new Date(inputValue);
+          if (!isNaN(parsedDate.getTime()) && parsedDate.getFullYear() > 1900) {
+            calendarDate = parsedDate;
+            // Set the calendar to show the month of the parsed date
+            setCurrentMonth(new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1));
+          }
+        }
+      } catch {
+        // If parsing fails, use current date
+      }
+    }
+    
+    // Open calendar
+    setIsOpen(true);
+  };
+
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDayOfWeek = firstDay.getDay();
+
+    const days = [];
+    
+    // Add empty cells for days before the first day of the month
+    for (let i = 0; i < startingDayOfWeek; i++) {
+      days.push(null);
+    }
+    
+    // Add days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      days.push(new Date(year, month, day));
+    }
+    
+    return days;
+  };
+
+  const navigateMonth = (direction: number) => {
+    setCurrentMonth(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(prev.getMonth() + direction);
+      return newDate;
+    });
+  };
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return date && 
+           date.getDate() === today.getDate() &&
+           date.getMonth() === today.getMonth() &&
+           date.getFullYear() === today.getFullYear();
+  };
+
+  const isSelected = (date: Date) => {
+    if (!value || !date) return false;
+    
+    // If value is in ISO format, parse it safely without timezone issues
+    if (value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      try {
+        const parts = value.split('-').map(Number);
+        if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
+          const [year, month, day] = parts;
+          const selectedDate = new Date(year, month - 1, day); // month is 0-indexed
+          
+          return date.getDate() === selectedDate.getDate() &&
+                 date.getMonth() === selectedDate.getMonth() &&
+                 date.getFullYear() === selectedDate.getFullYear();
+        }
+      } catch {
+        return false;
+      }
+    }
+    
+    // Fallback to regular parsing for non-ISO formats
+    try {
+      const selectedDate = new Date(value);
+      if (isNaN(selectedDate.getTime())) {
+        return false;
+      }
+      
+      return date.getDate() === selectedDate.getDate() &&
+             date.getMonth() === selectedDate.getMonth() &&
+             date.getFullYear() === selectedDate.getFullYear();
+    } catch {
+      return false;
+    }
+  };
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <div className={`relative ${className}`} ref={containerRef}>
+      {/* Input Field */}
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="text"
+          value={inputValue}
+          placeholder={placeholder}
+          disabled={disabled}
+          onChange={handleInputChange}
+          onBlur={handleInputBlur}
+          className={`
+            w-full pl-2.5 pr-3 py-2 bg-card-color border border-border-color rounded-lg 
+            text-font-color placeholder:text-font-color-100 cursor-text
+            focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20
+            transition-all duration-200 hover:shadow-md
+            ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+            ${isOpen ? 'border-primary ring-2 ring-primary ring-opacity-20' : ''}
+          `}
+          style={{ textIndent: '1.75rem' }}
+        />
+        <IconCalendar 
+          className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-font-color-100 cursor-pointer z-10" 
+          onClick={handleIconClick}
+        />
+      </div>
+
+      {/* Calendar Dropdown */}
+      {isOpen && (
+        <div 
+          className="absolute top-full left-0 mt-2 z-[99999] bg-card-color border border-border-color rounded-xl shadow-2xl overflow-hidden min-w-[320px]"
+          style={{ zIndex: 99999 }}
+        >
+          {/* Calendar Header */}
+          <div className="bg-primary-10 px-4 py-3 border-b border-border-color">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => navigateMonth(-1)}
+                className="w-8 h-8 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
+              >
+                <IconChevronLeft className="w-4 h-4 text-font-color" />
+              </button>
+              
+              <div className="flex items-center gap-2">
+                <h3 className="text-[15px] font-bold text-font-color">
+                  {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+                </h3>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => navigateMonth(1)}
+                className="w-8 h-8 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
+              >
+                <IconChevronRight className="w-4 h-4 text-font-color" />
+              </button>
+            </div>
+          </div>
+
+          {/* Calendar Body */}
+          <div className="p-4">
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {dayNames.map(day => (
+                <div key={day} className="text-center text-[11px] font-semibold text-font-color-100 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            {/* Calendar Days */}
+            <div className="grid grid-cols-7 gap-1">
+              {getDaysInMonth(currentMonth).map((date, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  disabled={!date}
+                  onClick={() => date && handleDateSelect(date)}
+                  className={`
+                    w-8 h-8 rounded-lg text-[13px] font-medium transition-all duration-200
+                    flex items-center justify-center
+                    ${!date ? 'invisible' : ''}
+                    ${date && isSelected(date)
+                      ? 'bg-primary text-white shadow-lg'
+                      : date && isToday(date)
+                      ? 'bg-primary-20 text-primary font-bold'
+                      : 'text-font-color hover:bg-primary-10 hover:text-primary'
+                    }
+                  `}
+                >
+                  {date?.getDate()}
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mt-4 pt-3 border-t border-border-color">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleDateSelect(new Date())}
+                  className="text-[12px] text-primary hover:text-primary-dark font-medium transition-colors"
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange('');
+                    setInputValue('');
+                    setIsOpen(false);
+                  }}
+                  className="text-[12px] text-font-color-100 hover:text-font-color transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function OrderPointsPage() {
   // Guard: redirect handled globally; here ensure auth exists
   const auth = getAuthState()
@@ -29,7 +416,7 @@ export default function OrderPointsPage() {
   }
   const router = useRouter()
 
-  const [orderHeader, setOrderHeader] = useState<OrderHeaderDto>({ order_status: 1, ordered_date: new Date().toISOString().slice(0,10) })
+  const [orderHeader, setOrderHeader] = useState<OrderHeaderDto>({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
   const [orderDetail, setOrderDetail] = useState<OrderDetailDto[]>([])
   const [accountNumberLocation, setAccountNumberLocation] = useState('')
   const [accountDisplayLabel, setAccountDisplayLabel] = useState('')
@@ -290,9 +677,9 @@ export default function OrderPointsPage() {
 
   async function onNewOrderNumber() {
     try {
-      const number = await generateOrderNumber()
-      const safeNumber: string = typeof number === 'string' ? number : String(number ?? '')
-      setOrderHeader({ ...orderHeader, order_number: safeNumber })
+    const number = await generateOrderNumber()
+    const safeNumber: string = typeof number === 'string' ? number : String(number ?? '')
+    setOrderHeader({ ...orderHeader, order_number: safeNumber })
       
       // Show success toaster for new order number
       toast({
@@ -313,8 +700,8 @@ export default function OrderPointsPage() {
 
   async function onSaveDraft() {
     try {
-      const header = buildOrderHeaderForSubmit(true)
-      const res = await saveDraft(header, orderDetail)
+    const header = buildOrderHeaderForSubmit(true)
+    const res = await saveDraft(header, orderDetail)
       
       if (res?.order_number) {
         // Show success toaster for draft save
@@ -347,8 +734,8 @@ export default function OrderPointsPage() {
 
   async function onPlaceOrder() {
     try {
-      const header = buildOrderHeaderForSubmit(false)
-      const res = await saveEntry(header, orderDetail)
+    const header = buildOrderHeaderForSubmit(false)
+    const res = await saveEntry(header, orderDetail)
       
       if (res?.order_number) {
         // Show success toaster with order number
@@ -494,8 +881,8 @@ export default function OrderPointsPage() {
           description: first.description,
           quantity: 1,
           price: 0,
-          do_not_ship_before: new Date().toISOString().slice(0,10),
-          ship_by: new Date(Date.now() + 86400000).toISOString().slice(0,10),
+          do_not_ship_before: new Date().toLocaleDateString(),
+          ship_by: new Date(Date.now() + 86400000).toLocaleDateString(),
           voided: false,
         }
         setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
@@ -829,8 +1216,8 @@ export default function OrderPointsPage() {
           description: it.description,
           quantity: ((it as any).quantity as number) || 1,
           price: (isFiniteNumber((it as any).price) ? (it.price as number) : 0),
-          do_not_ship_before: new Date().toISOString().slice(0,10),
-          ship_by: new Date(Date.now() + 86400000).toISOString().slice(0,10),
+          do_not_ship_before: new Date().toLocaleDateString(),
+          ship_by: new Date(Date.now() + 86400000).toLocaleDateString(),
           voided: false,
         })
       }
@@ -950,11 +1337,11 @@ export default function OrderPointsPage() {
                 </div>
                 <div>
                         <Label className="text-font-color-100 text-sm">PO Date</Label>
-                  <Input 
-                          type="date" 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                  <EditableDatePicker 
                           value={orderHeader.ordered_date || ''} 
-                          onChange={e=>setOrderHeader(p=>({ ...p, ordered_date: e.target.value }))} 
+                          onChange={value=>setOrderHeader(p=>({ ...p, ordered_date: value }))} 
+                          placeholder="Select PO date"
+                          className="h-8"
                   />
                 </div>
                     </div>
@@ -1314,26 +1701,26 @@ export default function OrderPointsPage() {
             </Card>
           </div>
 
-           {/* Right Sidebar - All 4 panels stacked vertically */}
+          {/* Right Sidebar - All 4 panels stacked vertically */}
            <div className="xl:col-span-3 space-y-3">
-           <Card className="shadow-sm border-border-color">
+          <Card className="shadow-sm border-border-color">
              <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
-               <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center">
                  <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                    <IconTruck className="w-3.5 h-3.5" />
                    SHIPPING
-                 </CardTitle>
-                 <Button
-                   size="small"
-                   variant="outline"
+                </CardTitle>
+                <Button
+                  size="small"
+                  variant="outline"
                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
                    onClick={openShippingDetailsModal}
-                 >
-                   <IconEdit className="h-3 w-3 mr-1" />
-                   Edit...
-                 </Button>
-               </div>
-               </CardHeader>
+                >
+                  <IconEdit className="h-3 w-3 mr-1" />
+                  Edit...
+                </Button>
+              </div>
+              </CardHeader>
                <CardContent className="p-3">
                <div className="space-y-1 text-xs">
                  <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Int. Code:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(orderHeader.international_code || '0')}>{orderHeader.international_code || '0'}</span></div>
@@ -1345,9 +1732,9 @@ export default function OrderPointsPage() {
                  <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">FOB Location:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.fob ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.fob || '-'}>{orderHeader.fob || '-'}</span></div>
                  <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Payment Type:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.payment_type ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.payment_type || '-'}>{orderHeader.payment_type || '-'}</span></div>
                  <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Packing List:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(orderHeader.packing_list_type || '100')}>{orderHeader.packing_list_type || '100'}</span></div>
-                 </div>
-               </CardContent>
-             </Card>
+                </div>
+              </CardContent>
+            </Card>
 
           <Card className="shadow-sm border-border-color">
             <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
@@ -1766,50 +2153,50 @@ export default function OrderPointsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label className="text-font-color-100 text-sm">Don't Ship Before</Label>
-                <Input 
-                  type="date"
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                <EditableDatePicker 
                   value={editLineData.do_not_ship_before || ''} 
-                  onChange={e=>setEditLineData(d=>({ ...d, do_not_ship_before: e.target.value }))} 
+                  onChange={value=>setEditLineData(d=>({ ...d, do_not_ship_before: value }))} 
+                  placeholder="Select date"
+                  className="mt-1"
                 />
               </div>
               <div>
                 <Label className="text-font-color-100 text-sm">Ship By</Label>
-                <Input 
-                  type="date"
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                <EditableDatePicker 
                   value={editLineData.ship_by || ''} 
-                  onChange={e=>setEditLineData(d=>({ ...d, ship_by: e.target.value }))} 
+                  onChange={value=>setEditLineData(d=>({ ...d, ship_by: value }))} 
+                  placeholder="Select date"
+                  className="mt-1"
                 />
               </div>
             </div>
 
             {/* Custom Fields Row */}
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-font-color-100 text-sm">Custom Field 1</Label>
-                <Input 
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+            <div>
+              <Label className="text-font-color-100 text-sm">Custom Field 1</Label>
+              <Input 
+                className="bg-card-color border-border-color text-font-color mt-1" 
                   value={editLineData.custom_field1 || ''} 
-                  onChange={e=>setEditLineData(d=>({ ...d, custom_field1: e.target.value }))} 
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Custom Field 2</Label>
-                <Input 
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                onChange={e=>setEditLineData(d=>({ ...d, custom_field1: e.target.value }))} 
+              />
+            </div>
+            <div>
+              <Label className="text-font-color-100 text-sm">Custom Field 2</Label>
+              <Input 
+                className="bg-card-color border-border-color text-font-color mt-1" 
                   value={editLineData.custom_field2 || ''} 
-                  onChange={e=>setEditLineData(d=>({ ...d, custom_field2: e.target.value }))} 
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Custom Field 5</Label>
-                <Input 
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                onChange={e=>setEditLineData(d=>({ ...d, custom_field2: e.target.value }))} 
+              />
+            </div>
+            <div>
+              <Label className="text-font-color-100 text-sm">Custom Field 5</Label>
+              <Input 
+                className="bg-card-color border-border-color text-font-color mt-1" 
                   value={editLineData.custom_field5 || ''} 
-                  onChange={e=>setEditLineData(d=>({ ...d, custom_field5: e.target.value }))} 
-                />
-              </div>
+                onChange={e=>setEditLineData(d=>({ ...d, custom_field5: e.target.value }))} 
+              />
+            </div>
             </div>
 
             <div>
