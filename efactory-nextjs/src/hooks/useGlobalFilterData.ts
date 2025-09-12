@@ -455,7 +455,7 @@ export function useGlobalFilterData(): GlobalFilterData & { getFilterOptions: ()
 		const getCountryOptions = (): FilterOption[] => {
 			const countries = data.countries || {};
 
-			// Create options with US and CA first, with ISO2 prefix
+			// Create options with US, CA, and AU first, with ISO2 prefix
 			const priorityCountries = [];
 			if (countries['US']) {
 				priorityCountries.push({ value: 'US', label: `US - ${countries['US']}` });
@@ -463,10 +463,13 @@ export function useGlobalFilterData(): GlobalFilterData & { getFilterOptions: ()
 			if (countries['CA']) {
 				priorityCountries.push({ value: 'CA', label: `CA - ${countries['CA']}` });
 			}
+			if (countries['AU']) {
+				priorityCountries.push({ value: 'AU', label: `AU - ${countries['AU']}` });
+			}
 
 			// Get remaining countries alphabetically with ISO2 prefix
 			const otherCountries = Object.keys(countries)
-				.filter(code => code !== 'US' && code !== 'CA')
+				.filter(code => code !== 'US' && code !== 'CA' && code !== 'AU')
 				.sort((a, b) => (countries[a] || '').localeCompare(countries[b] || ''))
 				.map(code => ({
 					value: code,

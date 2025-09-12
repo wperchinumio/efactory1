@@ -2600,9 +2600,9 @@ export default function OrderPointsPage() {
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Browse Items</DialogTitle>
             {!accountNumberLocation && (
-              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
-                <p className="text-sm text-blue-800">
-                  <strong>Information:</strong> Please select an Account # - Warehouse to enable order entry and browse items for that specific account.
+              <div className="bg-orange-50 border border-orange-200 rounded-md p-3 mt-2">
+                <p className="text-sm text-orange-800">
+                  <strong>Warning:</strong> Please select an Account # - Warehouse to enable order entry and browse items for that specific account.
                 </p>
               </div>
             )}
