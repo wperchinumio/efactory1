@@ -12,6 +12,7 @@ import {
   generateOrderNumber,
   saveDraft,
   saveEntry,
+  readGeneralSettings,
   fetchInventoryForCart,
   readOrderPointsSettings,
   readAddresses,
@@ -532,6 +533,7 @@ export default function OrderPointsPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [showNewOrderConfirm, setShowNewOrderConfirm] = useState(false)
+  const [orderSettings, setOrderSettings] = useState({ manual: true }) // Default to manual mode
   const [showAddressBook, setShowAddressBook] = useState(false)
   const [showAddToAddressBook, setShowAddToAddressBook] = useState(false)
   const [addressBookTitle, setAddressBookTitle] = useState('')
@@ -1002,6 +1004,52 @@ export default function OrderPointsPage() {
 
   function closeCommentsDialog() {
     setCommentsDialog(false)
+  }
+
+  // Load order settings on component mount
+  useEffect(() => {
+    async function loadOrderSettings() {
+      try {
+        const settings = await readGeneralSettings()
+        setOrderSettings({ manual: settings.manual })
+      } catch (error) {
+        console.error('Error loading order settings:', error)
+        // Default to manual mode if loading fails
+        setOrderSettings({ manual: true })
+      }
+    }
+    loadOrderSettings()
+  }, [])
+
+  async function onGenerateOrderNumber() {
+    try {
+      const response = await generateOrderNumber()
+      console.log('Generated order number response:', response)
+      // The response is directly the order number string, not an object with .number property
+      if (response) {
+        console.log('Setting order number to:', response)
+        setOrderHeader(prev => {
+          const updated = { ...prev, order_number: response }
+          console.log('Updated order header:', updated)
+          return updated
+        })
+        markAsChanged()
+        
+        // Show success message
+        toast({
+          title: "Order Number Generated",
+          description: `Order #${response} has been assigned.`,
+          variant: "default",
+        })
+      }
+    } catch (error) {
+      console.error('Error generating order number:', error)
+      toast({
+        title: "Error",
+        description: "Failed to generate order number. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   async function onSaveDraft() {
@@ -1726,9 +1774,42 @@ export default function OrderPointsPage() {
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Order #
                         </Label>
-                        <div className="font-mono text-font-color bg-body-color p-1 rounded border border-border-color h-9 text-sm flex items-center mt-1">
-                          {orderHeader.order_number || '-'}
-                  </div>
+                        {orderSettings.manual === false ? (
+                          // Auto-generation mode: special styling with generate button
+                          <div className="flex mt-1">
+                            <div className="flex-1 relative">
+                              <Input
+                                value={orderHeader.order_number || ''}
+                                readOnly
+                                className={`font-mono h-9 text-sm rounded-r-none border-r-0 ${
+                                  !orderHeader.order_number 
+                                    ? 'bg-primary-10' 
+                                    : 'bg-card-color'
+                                } ${orderHeader.order_number ? 'font-medium' : ''}`}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={onGenerateOrderNumber}
+                              disabled={!!orderHeader.order_number}
+                              className={`px-3 py-2 rounded-r-lg rounded-l-none border border-l-0 border-border-color h-9 text-sm font-medium transition-colors ${
+                                orderHeader.order_number 
+                                  ? 'bg-body-color text-font-color-100 cursor-not-allowed opacity-50' 
+                                  : 'bg-primary text-white hover:bg-primary-20 cursor-pointer'
+                              }`}
+                              title={orderHeader.order_number ? "Order number already assigned" : "Assign Next Order #"}
+                            >
+                              &gt;&gt;
+                            </button>
+                          </div>
+                        ) : (
+                          // Manual mode: standard input field
+                          <Input 
+                            className={`h-9 text-sm mt-1 ${orderHeader.order_number ? 'font-medium' : ''}`} 
+                            value={orderHeader.order_number || ''} 
+                            onChange={e=>{setOrderHeader(p=>({ ...p, order_number: e.target.value })); markAsChanged()}} 
+                          />
+                        )}
                       </div>
                     </div>
                     

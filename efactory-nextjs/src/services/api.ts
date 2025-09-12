@@ -63,6 +63,8 @@ import type {
   UpdateAddressBody,
   UpdateOrderPointsBody,
   ValidateAddressBody,
+  ReadGeneralSettingsRequest,
+  ReadGeneralSettingsResponse,
 } from '@/types/api/orderpoints';
 import type {
   FeedbackSubmissionRequest,
@@ -304,7 +306,7 @@ export async function submitFeedback(feedback: FeedbackSubmissionRequest): Promi
 export async function fetchTeamMembers(): Promise<ListTeamMembersResponse> {
   const body: ListTeamMembersRequest = { action: 'list' };
   const res = await postJson<ListTeamMembersResponse>('/api/member', body as any);
-  return res.data as unknown as ListTeamMembersResponse;
+  return res.data;
 }
 
 // ==========================
@@ -316,6 +318,15 @@ export async function updateUserEmail(email: string): Promise<UpdateEmailRespons
     email
   };
   const res = await postJson<UpdateEmailResponse>('/api/profile', body);
+  return res.data;
+}
+
+// ==========================
+// OrderPoints Settings API
+// ==========================
+export async function readGeneralSettings(): Promise<ReadGeneralSettingsResponse> {
+  const body: ReadGeneralSettingsRequest = { action: 'read_general' };
+  const res = await postJson<ReadGeneralSettingsResponse>('/api/orderpoints', body as any);
   return res.data;
 }
 

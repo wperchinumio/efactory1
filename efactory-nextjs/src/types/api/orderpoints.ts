@@ -263,6 +263,26 @@ export interface ListDraftsResponse {
 export type ApiEnvelope<T> = ApiResponse<T>;
 
 // OrderPoints Settings
+export interface OrderSettingsDto {
+  manual: boolean;
+  prefix: string;
+  suffix: string;
+  starting_number: number;
+  minimum_number_of_digits: number;
+}
+
+export interface ReadGeneralSettingsRequest {
+  action: 'read_general';
+}
+
+export interface ReadGeneralSettingsResponse {
+  manual: boolean;
+  prefix: string;
+  suffix: string;
+  starting_number: number;
+  minimum_number_of_digits: number;
+}
+
 export interface ShippingSettingsDto {
   carrier: string;
   service: string;
