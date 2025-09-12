@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
@@ -12,7 +12,6 @@ import {
   generateOrderNumber,
   saveDraft,
   saveEntry,
-  readGeneralSettings,
   fetchInventoryForCart,
   readOrderPointsSettings,
   readAddresses,
@@ -479,6 +478,8 @@ export default function OrderPointsPage() {
   const [warehouses, setWarehouses] = useState<string>('')
   const [inventory, setInventory] = useState<Record<string, { item_number: string; description: string; qty_net: number; quantity?: number; price?: number }>>({})
   const [matchedWarehouse, setMatchedWarehouse] = useState('')
+  const [searchingItems, setSearchingItems] = useState(false)
+  const [browsingItems, setBrowsingItems] = useState(false)
   
   // Determine if form fields should be disabled based on warehouse matching
   const formFieldsDisabled = warehouses === '' || 
@@ -533,7 +534,8 @@ export default function OrderPointsPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [showNewOrderConfirm, setShowNewOrderConfirm] = useState(false)
-  const [orderSettings, setOrderSettings] = useState({ manual: true }) // Default to manual mode
+  const [orderSettings, setOrderSettings] = useState({ manual: true, prefix: '', suffix: '', starting_number: 1, minimum_number_of_digits: 4 })
+  
   const [showAddressBook, setShowAddressBook] = useState(false)
   const [showAddToAddressBook, setShowAddToAddressBook] = useState(false)
   const [addressBookTitle, setAddressBookTitle] = useState('')
@@ -639,6 +641,40 @@ export default function OrderPointsPage() {
     }
   }, [hasUnsavedChanges])
   
+  // Reset form function - defined before useEffect that uses it
+  const resetForm = useCallback(() => {
+    setOrderHeader({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
+    setOrderDetail([])
+    setShippingAddress({ country: 'US' })
+    setBillingAddress({})
+    setAmounts({
+      shipping_handling: 0,
+      sales_tax: 0,
+      discounts: 0,
+      amount_paid: 0,
+      insurance: 0,
+      international_handling: 0,
+      international_declared_value: 0,
+      balance_due_us: 0
+    })
+    setAccountNumberLocation('')
+    setAccountDisplayLabel('')
+    setOrderStatusDisplayLabel('')
+    setFindItemValue('')
+    setSelectedRows([])
+    setSelectedRowsCount(0)
+    
+    // Reset unsaved changes state
+    markAsClean()
+    
+    // Show success toaster
+    toast({
+      title: "New Order Started",
+      description: "Form has been reset for a new order.",
+      variant: "default",
+    })
+  }, [])
+  
   // Handle Next.js router navigation to warn about unsaved changes
   useEffect(() => {
     const handleRouteChange = (url: string) => {
@@ -647,6 +683,10 @@ export default function OrderPointsPage() {
         if (!confirmed) {
           // Prevent navigation by throwing an error
           throw 'Route change aborted by user'
+        } else {
+          // User confirmed, reset the form and clear unsaved changes
+          resetForm()
+          setHasUnsavedChanges(false)
         }
       }
     }
@@ -657,7 +697,7 @@ export default function OrderPointsPage() {
     return () => {
       router.events.off('routeChangeStart', handleRouteChange)
     }
-  }, [hasUnsavedChanges, router])
+  }, [hasUnsavedChanges, router, resetForm])
   
   // Temporary state for editing (only updated on save)
   const [tempBillingAddress, setTempBillingAddress] = useState<AddressDto>({})
@@ -690,12 +730,19 @@ export default function OrderPointsPage() {
     custom_field5: ''
   })
 
-  // Load shipping settings on component mount
+  // Load all settings on component mount (like legacy - single API call)
   useEffect(() => {
-    const loadShippingSettings = async () => {
+    const loadAllSettings = async () => {
       try {
         const settings = await readOrderPointsSettings()
+        
+        // Set shipping settings
         setShippingSettings(settings.shipping)
+        
+        // Set order settings (it's an object, not an array)
+        if (settings.order && typeof settings.order === 'object') {
+          setOrderSettings(settings.order)
+        }
         
         // Update custom field labels
         if (settings.custom_fields) {
@@ -712,10 +759,10 @@ export default function OrderPointsPage() {
           }))
         }
       } catch (error) {
-        console.error('Failed to load shipping settings:', error)
+        console.error('Failed to load settings:', error)
       }
     }
-    loadShippingSettings()
+    loadAllSettings()
   }, [])
 
   // Pre-populate shipping details when country changes
@@ -866,38 +913,6 @@ export default function OrderPointsPage() {
     resetForm()
   }
 
-  function resetForm() {
-    setOrderHeader({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
-    setOrderDetail([])
-    setShippingAddress({ country: 'US' })
-    setBillingAddress({})
-    setAmounts({
-      shipping_handling: 0,
-      sales_tax: 0,
-      discounts: 0,
-      amount_paid: 0,
-      insurance: 0,
-      international_handling: 0,
-      international_declared_value: 0,
-      balance_due_us: 0
-    })
-    setAccountNumberLocation('')
-    setAccountDisplayLabel('')
-    setOrderStatusDisplayLabel('')
-    setFindItemValue('')
-    setSelectedRows([])
-    setSelectedRowsCount(0)
-    
-    // Reset unsaved changes state
-    markAsClean()
-    
-    // Show success toaster
-    toast({
-      title: "New Order Started",
-      description: "Form has been reset for a new order.",
-      variant: "default",
-    })
-  }
 
   function handleNewOrderConfirm() {
     setShowNewOrderConfirm(false)
@@ -1006,33 +1021,14 @@ export default function OrderPointsPage() {
     setCommentsDialog(false)
   }
 
-  // Load order settings on component mount
-  useEffect(() => {
-    async function loadOrderSettings() {
-      try {
-        const settings = await readGeneralSettings()
-        setOrderSettings({ manual: settings.manual })
-      } catch (error) {
-        console.error('Error loading order settings:', error)
-        // Default to manual mode if loading fails
-        setOrderSettings({ manual: true })
-      }
-    }
-    loadOrderSettings()
-  }, [])
+
 
   async function onGenerateOrderNumber() {
     try {
       const response = await generateOrderNumber()
-      console.log('Generated order number response:', response)
       // The response is directly the order number string, not an object with .number property
       if (response) {
-        console.log('Setting order number to:', response)
-        setOrderHeader(prev => {
-          const updated = { ...prev, order_number: response }
-          console.log('Updated order header:', updated)
-          return updated
-        })
+        setOrderHeader(prev => ({ ...prev, order_number: response }))
         markAsChanged()
         
         // Show success message
@@ -1322,32 +1318,58 @@ export default function OrderPointsPage() {
     // Quick add if toolbar has a value and single match exists; else open modal
     const trimmed = (findItemValue || '').trim()
     if (trimmed) {
-      const response = await fetchInventoryForCart({
-        page_num: 1,
-        page_size: 5,
-        filter: { and: [ { field: 'omit_zero_qty', oper: '=', value: true }, { field: 'name', oper: '=', value: trimmed } ] }
-      } as any)
-      const rows = response.rows || []
-      if (rows && rows.length === 1) {
-        const first = rows[0] as NonNullable<typeof rows[number]>
-        const maxLine = orderDetail.filter(l => !l.is_kit_component).reduce((m,l) => Math.max(m, l.line_number||0), 0)
-        const newLine: OrderDetailDto = {
-          detail_id: 0,
-          line_number: maxLine + 1,
-          item_number: first.item_number,
-          description: first.description,
-          quantity: 1,
-          price: 0,
-          do_not_ship_before: new Date().toLocaleDateString(),
-          ship_by: new Date(Date.now() + 86400000).toLocaleDateString(),
-          voided: false,
+      // Show loading state for search
+      setSearchingItems(true)
+      
+      // Call API to search for items (no cache)
+      try {
+        const response = await fetchInventoryForCart({
+          page_num: 1,
+          page_size: 5,
+          filter: { and: [ { field: 'omit_zero_qty', oper: '=', value: true }, { field: 'name', oper: '=', value: trimmed } ] }
+        } as any)
+        const rows = response.rows || []
+        
+        if (rows.length === 1) {
+          const first = rows[0] as NonNullable<typeof rows[number]>
+          
+          // Check if item already exists in cart
+          const itemExists = orderDetail.some(item => item.item_number === first.item_number && !item.voided)
+          if (itemExists) {
+            setFindItemValue('')
+            setSearchingItems(false)
+            return
+          }
+          
+          const maxLine = orderDetail.filter(l => !l.is_kit_component).reduce((m,l) => Math.max(m, l.line_number||0), 0)
+          const newLine: OrderDetailDto = {
+            detail_id: 0,
+            line_number: maxLine + 1,
+            item_number: first.item_number,
+            description: first.description,
+            quantity: 1,
+            price: 0,
+            do_not_ship_before: new Date().toLocaleDateString(),
+            ship_by: new Date(Date.now() + 86400000).toLocaleDateString(),
+            voided: false,
+          }
+          setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
+          setFindItemValue('')
+          markAsChanged()
+          setSearchingItems(false)
+          return
         }
-        setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
-        setFindItemValue('')
-        markAsChanged()
-        return
+      } catch (error) {
+        console.error('Error searching for items:', error)
+      } finally {
+        setSearchingItems(false)
       }
     }
+    
+    // Load fresh inventory data and open dialog (no cache)
+    setBrowsingItems(true)
+    await reloadInventory(1)
+    setBrowsingItems(false)
     setBrowseOpen(true)
   }
 
@@ -2120,22 +2142,36 @@ export default function OrderPointsPage() {
                     ITEMS
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Add item…"
-                      className="w-48 h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                      value={findItemValue}
-                      onChange={e=>setFindItemValue(e.target.value)}
-                      onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
-                      disabled={isPlacingOrder || isSavingDraft}
-                    />
-                    <Button 
-                      size="small" 
+                    <div className="relative w-48 sm:w-64 md:w-72 lg:w-80 xl:w-96">
+                      <Input
+                        placeholder="Add item…"
+                        className="h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed w-full"
+                        value={findItemValue}
+                        onChange={e=>setFindItemValue(e.target.value)}
+                        onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
+                        disabled={isPlacingOrder || isSavingDraft || !accountNumberLocation || searchingItems}
+                      />
+                      {searchingItems && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-blue-600"></div>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      size="small"
                       variant="outline"
                       className="border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={onBrowseItems}
-                      disabled={isPlacingOrder || isSavingDraft}
+                      disabled={isPlacingOrder || isSavingDraft || browsingItems}
                     >
-                      Browse Items…
+                      {browsingItems ? (
+                        <div className="flex items-center gap-1">
+                          <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-blue-600"></div>
+                          <span>Loading...</span>
+                        </div>
+                      ) : (
+                        'Browse Items…'
+                      )}
                     </Button>
                     <Button
                       size="small"
@@ -2318,11 +2354,11 @@ export default function OrderPointsPage() {
                 <Button
                   size="small"
                   variant="outline"
-                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
-                   onClick={openShippingDetailsModal}
+                  className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
+                  onClick={openShippingDetailsModal}
+                  title="Edit"
                 >
-                  <IconEdit className="h-3 w-3 mr-1" />
-                  Edit...
+                  <IconEdit className="h-3 w-3" />
                 </Button>
               </div>
               </CardHeader>
@@ -2349,24 +2385,24 @@ export default function OrderPointsPage() {
                   BILLING ADDRESS
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button
-                    size="small"
-                    variant="outline"
-                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
-                    onClick={() => setBillingExpanded(!billingExpanded)}
-                  >
-                    <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${billingExpanded ? 'rotate-180' : ''}`} />
-                    {billingExpanded ? 'Collapse' : 'Expand'}
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outline"
-                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
-                    onClick={openBillingAddressModal}
-                  >
-                    <IconEdit className="h-3 w-3 mr-1" />
-                    Edit...
-                  </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
+                  onClick={() => setBillingExpanded(!billingExpanded)}
+                  title={billingExpanded ? 'Collapse' : 'Expand'}
+                >
+                  <IconChevronDown className={`h-3 w-3 transition-transform ${billingExpanded ? 'rotate-180' : ''}`} />
+                </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
+                  onClick={openBillingAddressModal}
+                  title="Edit"
+                >
+                  <IconEdit className="h-3 w-3" />
+                </Button>
                 </div>
               </div>
               </CardHeader>
@@ -2411,24 +2447,24 @@ export default function OrderPointsPage() {
                   AMOUNTS
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button
-                    size="small"
-                    variant="outline"
-                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
-                    onClick={() => setAmountsExpanded(!amountsExpanded)}
-                  >
-                    <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${amountsExpanded ? 'rotate-180' : ''}`} />
-                    {amountsExpanded ? 'Collapse' : 'Expand'}
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outline"
-                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
-                    onClick={openAmountsModal}
-                  >
-                    <IconEdit className="h-3 w-3 mr-1" />
-                    Edit...
-                  </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
+                  onClick={() => setAmountsExpanded(!amountsExpanded)}
+                  title={amountsExpanded ? 'Collapse' : 'Expand'}
+                >
+                  <IconChevronDown className={`h-3 w-3 transition-transform ${amountsExpanded ? 'rotate-180' : ''}`} />
+                </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
+                  onClick={openAmountsModal}
+                  title="Edit"
+                >
+                  <IconEdit className="h-3 w-3" />
+                </Button>
                 </div>
               </div>
               </CardHeader>
@@ -2499,24 +2535,24 @@ export default function OrderPointsPage() {
                   EXTRA FIELDS
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button
-                    size="small"
-                    variant="outline"
-                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
-                    onClick={() => setExtraFieldsExpanded(!extraFieldsExpanded)}
-                  >
-                    <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${extraFieldsExpanded ? 'rotate-180' : ''}`} />
-                    {extraFieldsExpanded ? 'Collapse' : 'Expand'}
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outline"
-                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
-                    onClick={openExtraFieldsModal}
-                  >
-                    <IconEdit className="h-3 w-3 mr-1" />
-                    Edit...
-                  </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
+                  onClick={() => setExtraFieldsExpanded(!extraFieldsExpanded)}
+                  title={extraFieldsExpanded ? 'Collapse' : 'Expand'}
+                >
+                  <IconChevronDown className={`h-3 w-3 transition-transform ${extraFieldsExpanded ? 'rotate-180' : ''}`} />
+                </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
+                  onClick={openExtraFieldsModal}
+                  title="Edit"
+                >
+                  <IconEdit className="h-3 w-3" />
+                </Button>
                 </div>
               </div>
               </CardHeader>
@@ -2555,6 +2591,13 @@ export default function OrderPointsPage() {
         <DialogContent className="flex flex-col overflow-hidden" style={{ width: '900px', height: '720px', maxWidth: '90vw', maxHeight: '90vh', minWidth: '900px', minHeight: '720px' }}>
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Browse Items</DialogTitle>
+            {!accountNumberLocation && (
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mt-2">
+                <p className="text-sm text-blue-800">
+                  <strong>Information:</strong> Please select an Account # - Warehouse to enable order entry and browse items for that specific account.
+                </p>
+              </div>
+            )}
           </DialogHeader>
           
           {/* Filters */}
@@ -2627,7 +2670,7 @@ export default function OrderPointsPage() {
                         <Input
                           value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
                           onChange={e=>updateInventoryField(it.item_number, 'quantity', e.target.value)}
-                            className="text-right bg-card-color border-border-color text-font-color w-full h-9 text-sm"
+                            className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
                           type="number"
                           min="0"
                           disabled={formFieldsDisabled}
@@ -2637,7 +2680,7 @@ export default function OrderPointsPage() {
                         <Input
                           value={typeof it.price === 'number' ? String(it.price) : ''}
                           onChange={e=>updateInventoryField(it.item_number, 'price', e.target.value)}
-                            className="text-right bg-card-color border-border-color text-font-color w-full h-9 text-sm"
+                            className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
                           type="number"
                           step="0.01"
                           min="0"

@@ -306,8 +306,12 @@ export interface CustomFieldsSettingsDto {
 }
 
 export interface OrderSettingsDto {
-  // Add specific order settings properties as needed
-  [key: string]: any;
+  manual: boolean;
+  prefix: string;
+  suffix: string;
+  starting_number: number;
+  minimum_number_of_digits: number;
+  ack_email?: string;
 }
 
 export interface OrderPointsSettingsDto {
@@ -316,7 +320,7 @@ export interface OrderPointsSettingsDto {
     international: ShippingSettingsDto;
   };
   custom_fields: CustomFieldsSettingsDto;
-  order: OrderSettingsDto[];
+  order: OrderSettingsDto; // It's an object, not an array
 }
 
 // API Request/Response types
