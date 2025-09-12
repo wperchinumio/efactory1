@@ -479,7 +479,7 @@ export default function OrderPointsPage() {
   const [inventory, setInventory] = useState<Record<string, { item_number: string; description: string; qty_net: number; quantity?: number; price?: number }>>({})
   const [matchedWarehouse, setMatchedWarehouse] = useState('')
   const [searchingItems, setSearchingItems] = useState(false)
-  const [browsingItems, setBrowsingItems] = useState(false)
+  const [browseItemsLoading, setBrowseItemsLoading] = useState(false)
   
   // Determine if form fields should be disabled based on warehouse matching
   const formFieldsDisabled = warehouses === '' || 
@@ -1366,11 +1366,23 @@ export default function OrderPointsPage() {
       }
     }
     
-    // Load fresh inventory data and open dialog (no cache)
-    setBrowsingItems(true)
-    await reloadInventory(1)
-    setBrowsingItems(false)
+    // Open dialog immediately and load fresh inventory data inside
     setBrowseOpen(true)
+    setBrowseItemsLoading(true)
+    
+    // Add timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setBrowseItemsLoading(false)
+    }, 10000) // 10 second timeout
+    
+    try {
+      await reloadInventory(1)
+    } catch (error) {
+      console.error('Error loading inventory:', error)
+    } finally {
+      clearTimeout(timeoutId)
+      setBrowseItemsLoading(false)
+    }
   }
 
 
@@ -2162,16 +2174,9 @@ export default function OrderPointsPage() {
                       variant="outline"
                       className="border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={onBrowseItems}
-                      disabled={isPlacingOrder || isSavingDraft || browsingItems}
+                      disabled={isPlacingOrder || isSavingDraft}
                     >
-                      {browsingItems ? (
-                        <div className="flex items-center gap-1">
-                          <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-blue-600"></div>
-                          <span>Loading...</span>
-                        </div>
-                      ) : (
-                        'Browse Items…'
-                      )}
+                      Browse Items…
                     </Button>
                     <Button
                       size="small"
@@ -2587,7 +2592,12 @@ export default function OrderPointsPage() {
         </div>
 
       {/* Browse Items Modal */}
-      <Dialog open={browseOpen} onOpenChange={setBrowseOpen}>
+      <Dialog open={browseOpen} onOpenChange={(open) => {
+        setBrowseOpen(open)
+        if (!open) {
+          setBrowseItemsLoading(false) // Reset loading state when dialog closes
+        }
+      }}>
         <DialogContent className="flex flex-col overflow-hidden" style={{ width: '900px', height: '720px', maxWidth: '90vw', maxHeight: '90vh', minWidth: '900px', minHeight: '720px' }}>
           <DialogHeader className="flex-shrink-0">
             <DialogTitle>Browse Items</DialogTitle>
@@ -2649,7 +2659,16 @@ export default function OrderPointsPage() {
                 </tr>
               </thead>
               <tbody>
-                {Object.keys(inventory).length === 0 ? (
+                {browseItemsLoading ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-font-color-100">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600"></div>
+                        <div>Loading items...</div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : Object.keys(inventory).length === 0 ? (
                   <tr>
                     <td colSpan={5} className="p-8 text-center text-font-color-100">
                       <div className="text-lg mb-2">No items found</div>
