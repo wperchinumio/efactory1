@@ -323,6 +323,12 @@
   background-color: var(--body-color) !important;
 }
 
+/* Disabled cells styling */
+.ag-theme-legacy .ag-disabled {
+  color: var(--font-color-100) !important;
+  cursor: default !important;
+}
+
 /* Input styling within AG Grid legacy theme */
 .ag-theme-legacy input[type="text"],
 .ag-theme-legacy input[type="number"] {

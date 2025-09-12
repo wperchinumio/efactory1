@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label } from '@/components/ui'
 import { toast } from '@/components/ui/use-toast'
-import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconFileText, IconShoppingCart } from '@tabler/icons-react'
+import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconFileText, IconShoppingCart, IconMessageCircle } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
 import {
   generateOrderNumber,
@@ -15,29 +15,6 @@ import {
 } from '@/services/api'
 import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto } from '@/types/api/orderpoints'
 
-// AG Grid must be client-only in Next.js
-const AgGridReact = dynamic(() => 
-  import('ag-grid-react').then(async (mod) => {
-    // Register AG Grid modules and suppress console warnings
-    const { ModuleRegistry, AllCommunityModule } = await import('ag-grid-community')
-    ModuleRegistry.registerModules([AllCommunityModule])
-    
-    // Suppress deprecation warnings in development
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      const originalWarn = console.warn;
-      console.warn = (...args) => {
-        if (args[0]?.includes?.('AG Grid:') && args[0]?.includes?.('deprecated')) {
-          return; // Suppress AG Grid deprecation warnings
-        }
-        originalWarn.apply(console, args);
-      };
-    }
-    
-    return { default: mod.AgGridReact }
-  }), { 
-  ssr: false,
-  loading: () => <div className="flex items-center justify-center h-96 text-font-color">Loading grid...</div>
-}) as any
 
 function isFiniteNumber(v: any): v is number {
   const n = +v
@@ -62,7 +39,6 @@ export default function OrderPointsPage() {
   // Shipping settings state
   const [shippingSettings, setShippingSettings] = useState<OrderPointsSettingsDto['shipping'] | null>(null)
   const [findItemValue, setFindItemValue] = useState('')
-  const gridRef = useRef<any>(null)
   // Browse Items modal state
   const [browseOpen, setBrowseOpen] = useState(false)
   const [itemFilter, setItemFilter] = useState('')
@@ -107,6 +83,8 @@ export default function OrderPointsPage() {
   const [editLineOpen, setEditLineOpen] = useState(false)
   const [editLineIndex, setEditLineIndex] = useState<number | null>(null)
   const [editLineData, setEditLineData] = useState<Partial<OrderDetailDto>>({})
+  const [selectedRowsCount, setSelectedRowsCount] = useState(0)
+  const [selectedRows, setSelectedRows] = useState<number[]>([])
   
   // Edit panel modals
   const [editBillingAddressOpen, setEditBillingAddressOpen] = useState(false)
@@ -284,166 +262,6 @@ export default function OrderPointsPage() {
     setEditExtraFieldsOpen(false)
   }
 
-  const columns = useMemo<any[]>(() => ([
-    { 
-      headerName: '', 
-      field: 'select', 
-      width: 50, 
-      sortable: false, 
-      filter: false,
-      pinned: 'left',
-      cellClass: 'ag-cell-checkbox',
-      headerClass: 'ag-header-checkbox',
-      cellRenderer: (params: any) => {
-        const isSelected = params.node.isSelected();
-        return (
-          <div className="flex items-center justify-center h-full">
-            <CheckBox
-              checked={isSelected}
-              onChange={(checked) => {
-                if (checked) {
-                  params.node.setSelected(true);
-                } else {
-                  params.node.setSelected(false);
-                }
-                // Force grid refresh to update header checkbox
-                params.api.refreshCells({ force: true });
-              }}
-              size="normal"
-              mode="emulated"
-            />
-          </div>
-        );
-      },
-      headerComponent: (params: any) => {
-        const displayedRows = params.api.getDisplayedRowCount();
-        const selectedRows = params.api.getSelectedRows().length;
-        const allSelected = displayedRows > 0 && selectedRows === displayedRows;
-        const someSelected = selectedRows > 0 && selectedRows < displayedRows;
-        
-        return (
-          <div className="flex items-center justify-center h-full">
-            <CheckBox
-              checked={allSelected}
-              indeterminate={someSelected}
-              onChange={(checked) => {
-                if (checked) {
-                  params.api.selectAll();
-                } else {
-                  params.api.deselectAll();
-                }
-                // Force grid refresh to update all checkboxes
-                params.api.refreshCells({ force: true });
-              }}
-              size="normal"
-              mode="emulated"
-            />
-          </div>
-        );
-      }
-    },
-    { 
-      headerName: '#', 
-      field: 'line_number', 
-      width: 60, 
-      sortable: false,
-      cellClass: 'ag-cell-center',
-      headerClass: 'ag-header-center'
-    },
-    { 
-      headerName: 'Item #', 
-      field: 'item_number', 
-      width: 120,
-      cellClass: 'ag-cell-left',
-      headerClass: 'ag-header-left'
-    },
-    { 
-      headerName: 'Description', 
-      field: 'description', 
-      flex: 1, 
-      minWidth: 200,
-      cellClass: 'ag-cell-left',
-      headerClass: 'ag-header-left'
-    },
-    { 
-      headerName: 'Qty', 
-      field: 'quantity', 
-      width: 80, 
-      editable: (p:any) => !p.data?.is_kit_component && !p.data?.voided, 
-      cellClass: (p:any)=> p.data?.is_kit_component? 'ag-disabled ag-cell-center' : 'ag-cell-center',
-      headerClass: 'ag-header-center'
-    },
-    { 
-      headerName: 'Unit Price', 
-      field: 'price', 
-      width: 100, 
-      editable: true, 
-      valueFormatter: (params:any) => params.value ? `$${Number(params.value).toFixed(2)}` : '',
-      cellClass: 'ag-cell-right',
-      headerClass: 'ag-header-right'
-    },
-    { 
-      headerName: 'Ext Price', 
-      valueGetter: (params:any) => (params.data.quantity || 0) * (params.data.price || 0), 
-      width: 100, 
-      valueFormatter: (params:any) => `$${Number(params.value || 0).toFixed(2)}`,
-      cellClass: 'ag-cell-right',
-      headerClass: 'ag-header-right'
-    },
-    { 
-      headerName: "Don't Ship", 
-      field: 'do_not_ship_before', 
-      width: 100, 
-      editable: (p:any)=> !p.data?.is_kit_component,
-      cellClass: 'ag-cell-center',
-      headerClass: 'ag-header-center'
-    },
-    { 
-      headerName: 'Ship By', 
-      field: 'ship_by', 
-      width: 100, 
-      editable: (p:any)=> !p.data?.is_kit_component,
-      cellClass: 'ag-cell-center',
-      headerClass: 'ag-header-center'
-    },
-    { 
-      headerName: '', 
-      width: 70, 
-      cellRenderer: (p:any)=> (
-        <Button size="small" variant="outline" className="text-xs px-2 py-1" onClick={()=>{ setEditLineIndex(p.rowIndex); setEditLineData({ custom_field1: p.data.custom_field1||'', custom_field2: p.data.custom_field2||'', custom_field5: p.data.custom_field5||'', comments: p.data.comments||'' }); setEditLineOpen(true); }}>Edit</Button>
-      ),
-      cellClass: 'ag-cell-center',
-      headerClass: 'ag-header-center'
-    }
-  ]), [])
-
-  const defaultColDef = useMemo(() => ({
-    resizable: true,
-    sortable: true,
-    filter: false,
-    menuTabs: [],
-    cellStyle: (params: any) => {
-      const baseStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        height: '100%',
-        padding: '8px 12px'
-      };
-      
-      // Force white text for selected rows
-      if (params.node.isSelected()) {
-        return {
-          ...baseStyle,
-          color: 'white !important',
-          backgroundColor: 'transparent'
-        };
-      }
-      
-      return baseStyle;
-    },
-    headerClass: 'ag-header-cell-label',
-    cellClass: 'ag-cell-value'
-  }), [])
 
   function renumberDraftLines(lines: OrderDetailDto[]): OrderDetailDto[] {
     // Re-sequence master lines 1..N and kit components 1001/2001 under their parent
@@ -688,16 +506,22 @@ export default function OrderPointsPage() {
     setBrowseOpen(true)
   }
 
-  function onRemoveSelected() {
-    const api = gridRef.current?.api
-    if (!api) return
-    const selected = api.getSelectedRows() as OrderDetailDto[]
-    if (!selected.length) return
 
-    // Remove selected master rows; include their kit components
-    const selectedKeys = new Set(selected.map(r => `${r.item_number}#${r.line_number}`))
-    const selectedParentLines = new Set(selected.filter(r => !r.is_kit_component).map(r => r.line_number))
-    const remaining = orderDetail.filter(r => {
+  function onRemoveSelected() {
+    if (selectedRows.length === 0) return
+
+    // Remove selected rows; include their kit components
+    const selectedItems = selectedRows.map(index => orderDetail[index]).filter(Boolean)
+    const selectedKeys = new Set(selectedItems.map(r => `${r?.item_number || ''}#${r?.line_number || ''}`))
+    const selectedParentLines = new Set(selectedItems.filter(r => !r?.is_kit_component).map(r => r?.line_number || 0))
+    
+    const remaining = orderDetail.filter((r, index) => {
+      // Don't remove if not selected
+      if (!selectedRows.includes(index)) return true
+      
+      // Don't remove voided items (they should stay but be crossed out)
+      if (r.voided) return true
+      
       const key = `${r.item_number}#${r.line_number}`
       if (selectedKeys.has(key)) return false
       if (r.is_kit_component) {
@@ -706,7 +530,10 @@ export default function OrderPointsPage() {
       }
       return true
     })
+    
     setOrderDetail(renumberDraftLines(remaining))
+    setSelectedRows([])
+    setSelectedRowsCount(0)
   }
 
   // Helper function to safely get warehouse options
@@ -1317,48 +1144,154 @@ export default function OrderPointsPage() {
                     </Button>
                     <Button 
                       size="small" 
-                      className="bg-danger text-white hover:bg-danger/90 whitespace-nowrap"
+                      className={`whitespace-nowrap ${
+                        selectedRowsCount > 0 
+                          ? 'bg-red-600 text-white hover:bg-red-700' 
+                          : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                      }`}
                       onClick={onRemoveSelected}
+                      disabled={selectedRowsCount === 0}
                     >
-                      Remove selected
+                      Remove selected {selectedRowsCount > 0 && `(${selectedRowsCount})`}
                     </Button>
                   </div>
               </div>
             </CardHeader>
             <CardContent className="p-4">
-              <div 
-                className="ag-theme-alpine w-full shadow-inner" 
-                style={{ 
-                  minHeight: 280, 
-                  height: 400, 
-                  border: '2px solid var(--border-color)', 
-                  borderRadius: 8,
-                  backgroundColor: 'var(--card-color)',
-                  overflow: 'hidden'
-                }}
-              >
-                <AgGridReact
-                  ref={gridRef as any}
-                  theme="legacy"
-                  columnDefs={columns as any}
-                  rowData={orderDetail}
-                  defaultColDef={defaultColDef}
-                  rowSelection="multiple"
-                  suppressRowClickSelection={true}
-                  isRowSelectable={(params: any) => !params.data?.is_kit_component && !params.data?.voided}
-                  overlayNoRowsTemplate={'<span class="ag-no-rows">No items in cart</span>'}
-                  rowHeight={40}
-                  headerHeight={40}
-                  suppressRowHoverHighlight={false}
-                  rowClass="ag-row-custom"
-                  suppressColumnVirtualisation={true}
-                  onCellValueChanged={(e:any)=>{
-                  const idx = e.node.rowIndex
-                  setOrderDetail(prev => {
-                    const updated = prev.map((r,i)=> i===idx? { ...r, [e.colDef.field!]: Number.isFinite(+e.newValue)? +e.newValue : e.newValue }: r)
-                    return renumberDraftLines(updated)
-                  })
-                }} />
+              <div className="overflow-x-auto">
+                {orderDetail.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No items in cart
+                  </div>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border-color bg-body-color">
+                        <th className="text-left p-2 w-8">
+                          <CheckBox
+                            checked={selectedRowsCount === orderDetail.filter(r => !r.is_kit_component && !r.voided).length && orderDetail.filter(r => !r.is_kit_component && !r.voided).length > 0}
+                            onChange={(checked) => {
+                              if (checked) {
+                                const selectableIndices = orderDetail.map((r, i) => !r.is_kit_component && !r.voided ? i : -1).filter(i => i !== -1)
+                                setSelectedRows(selectableIndices)
+                                setSelectedRowsCount(selectableIndices.length)
+                              } else {
+                                setSelectedRows([])
+                                setSelectedRowsCount(0)
+                              }
+                            }}
+                            size="normal"
+                            mode="emulated"
+                          />
+                        </th>
+                        <th className="text-center p-2 font-medium text-font-color-100">#</th>
+                        <th className="text-left p-2 font-medium text-font-color-100">Item #</th>
+                        <th className="text-left p-2 font-medium text-font-color-100">Description</th>
+                        <th className="text-center p-2 font-medium text-font-color-100">Qty</th>
+                        <th className="text-right p-2 font-medium text-font-color-100">Unit Price</th>
+                        <th className="text-right p-2 font-medium text-font-color-100">Ext Price</th>
+                        <th className="text-center p-2 font-medium text-font-color-100">Don't Ship</th>
+                        <th className="text-center p-2 font-medium text-font-color-100">Ship By</th>
+                        <th className="text-center p-2 font-medium text-font-color-100">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orderDetail.map((item, index) => {
+                        const isSelectable = !item.is_kit_component && !item.voided
+                        const isSelected = selectedRows.includes(index)
+                        const isBundleComponent = item.is_kit_component
+                        const isVoided = item.voided
+                        
+                        return (
+                          <tr 
+                            key={`${item.item_number}-${item.line_number}`}
+                            className={`border-b border-border-color hover:bg-body-color ${
+                              isBundleComponent ? 'bg-gray-50 text-gray-500' : ''
+                            } ${isVoided ? 'line-through opacity-60' : ''}`}
+                          >
+                            <td className="p-2">
+                              {isSelectable && (
+                                <CheckBox
+                                  checked={isSelected}
+                                  onChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedRows([...selectedRows, index])
+                                      setSelectedRowsCount(selectedRowsCount + 1)
+                                    } else {
+                                      setSelectedRows(selectedRows.filter(i => i !== index))
+                                      setSelectedRowsCount(selectedRowsCount - 1)
+                                    }
+                                  }}
+                                  size="normal"
+                                  mode="emulated"
+                                />
+                              )}
+                            </td>
+                            <td className="p-2 text-center text-font-color">
+                              <div className="flex items-center justify-center gap-1">
+                                <span>{item.line_number}</span>
+                                {(item.comments || item.custom_field1 || item.custom_field2 || item.custom_field5) && (
+                                  <IconMessageCircle className="w-3 h-3 text-gray-400" />
+                                )}
+                              </div>
+                            </td>
+                            <td className="p-2 text-font-color">
+                              {isBundleComponent && <span className="text-gray-400 mr-2">└─</span>}
+                              {item.item_number}
+                            </td>
+                            <td className="p-2 text-font-color">
+                              {isBundleComponent && <span className="text-gray-400 mr-2">└─</span>}
+                              {item.description}
+                            </td>
+                            <td className="p-2 text-center text-font-color">{item.quantity}</td>
+                            <td className="p-2 text-right text-font-color">{item.price ? Number(item.price).toFixed(2) : ''}</td>
+                            <td className="p-2 text-right text-font-color">
+                              {((item.quantity || 0) * (item.price || 0)).toFixed(2)}
+                            </td>
+                            <td className="p-2 text-center text-font-color">
+                              {item.do_not_ship_before ? new Date(item.do_not_ship_before).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : ''}
+                            </td>
+                            <td className="p-2 text-center text-font-color">
+                              {item.ship_by ? new Date(item.ship_by).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }) : ''}
+                            </td>
+                            <td className="p-2 text-center">
+                              {!isBundleComponent && !isVoided && (
+                                <Button 
+                                  size="small" 
+                                  variant="outline" 
+                                  className="text-xs px-2 py-1" 
+                                  onClick={() => { 
+                                    setEditLineIndex(index); 
+                                    setEditLineData({ 
+                                      description: item.description || '', 
+                                      quantity: item.quantity || 0, 
+                                      price: item.price || 0, 
+                                      do_not_ship_before: item.do_not_ship_before || '', 
+                                      ship_by: item.ship_by || '',
+                                      custom_field1: item.custom_field1 || '', 
+                                      custom_field2: item.custom_field2 || '', 
+                                      custom_field5: item.custom_field5 || '', 
+                                      comments: item.comments || '' 
+                                    }); 
+                                    setEditLineOpen(true); 
+                                  }}
+                                >
+                                  Edit
+                                </Button>
+                              )}
+                              {isBundleComponent && (
+                                <span className="text-xs text-gray-400">Component</span>
+                              )}
+                              {isVoided && (
+                                <span className="text-xs text-gray-400">Voided</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
                 <div className="mt-4 grid grid-cols-3">
                   <div></div><div></div>
@@ -1373,7 +1306,7 @@ export default function OrderPointsPage() {
                     </div>
                     <div className="flex justify-between gap-4 text-font-color">
                       <span>Total Ext Price:</span>
-                      <span className="font-mono font-semibold">${orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0)*(Number(l.price)||0), 0).toFixed(2)}</span>
+                      <span className="font-mono font-semibold">{orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0)*(Number(l.price)||0), 0).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -1472,43 +1405,43 @@ export default function OrderPointsPage() {
               <div className="space-y-1 text-xs">
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Order Amount:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}`}>${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}`}>{orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
                     </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.shipping_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.shipping_handling.toFixed(2)}`}>${amounts.shipping_handling.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.shipping_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.shipping_handling.toFixed(2)}`}>{amounts.shipping_handling.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Sales Taxes:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.sales_tax > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.sales_tax.toFixed(2)}`}>${amounts.sales_tax.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.sales_tax > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.sales_tax.toFixed(2)}`}>{amounts.sales_tax.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Discount/Add. Chgs.:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.international_handling.toFixed(2)}`}>${amounts.international_handling.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.international_handling.toFixed(2)}`}>{amounts.international_handling.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
                   <span className="text-font-color whitespace-nowrap">Total Amount:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}`}>${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.amount_paid > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.amount_paid.toFixed(2)}`}>${amounts.amount_paid.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.amount_paid > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.amount_paid.toFixed(2)}`}>{amounts.amount_paid.toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5 border-t-2 border-border-color pt-1 font-bold">
                   <span className="text-font-color whitespace-nowrap">Net Due:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`$${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}`}>${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
+                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
                   </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.balance_due_us > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.balance_due_us.toFixed(2)}`}>${amounts.balance_due_us.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.balance_due_us > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.balance_due_us.toFixed(2)}`}>{amounts.balance_due_us.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Int. Decl. Value:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_declared_value > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.international_declared_value.toFixed(2)}`}>${amounts.international_declared_value.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_declared_value > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.international_declared_value.toFixed(2)}`}>{amounts.international_declared_value.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center py-0.5">
                   <span className="font-medium text-font-color-100 whitespace-nowrap">Insurance:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.insurance > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`$${amounts.insurance.toFixed(2)}`}>${amounts.insurance.toFixed(2)}</span>
+                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.insurance > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.insurance.toFixed(2)}`}>{amounts.insurance.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1783,41 +1716,108 @@ export default function OrderPointsPage() {
 
       {/* Edit Line Modal */}
       <Dialog open={editLineOpen} onOpenChange={setEditLineOpen}>
-        <DialogContent style={{ maxWidth: 600 }}>
+        <DialogContent style={{ maxWidth: 800 }}>
           <DialogHeader>
             <DialogTitle>Edit Line Details</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label className="text-font-color-100 text-sm">Custom Field 1</Label>
-              <Input 
-                className="bg-card-color border-border-color text-font-color mt-1" 
-                value={editLineData.custom_field1 as any || ''} 
-                onChange={e=>setEditLineData(d=>({ ...d, custom_field1: e.target.value }))} 
-              />
+            {/* Main Fields Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-font-color-100 text-sm">Description</Label>
+                <Input 
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.description || ''} 
+                  onChange={e=>setEditLineData(d=>({ ...d, description: e.target.value }))} 
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Quantity</Label>
+                <Input 
+                  type="number"
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.quantity || 0} 
+                  onChange={e=>setEditLineData(d=>({ ...d, quantity: Number(e.target.value) }))} 
+                />
+              </div>
             </div>
-            <div>
-              <Label className="text-font-color-100 text-sm">Custom Field 2</Label>
-              <Input 
-                className="bg-card-color border-border-color text-font-color mt-1" 
-                value={editLineData.custom_field2 as any || ''} 
-                onChange={e=>setEditLineData(d=>({ ...d, custom_field2: e.target.value }))} 
-              />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-font-color-100 text-sm">Unit Price</Label>
+                <Input 
+                  type="number"
+                  step="0.01"
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.price || 0} 
+                  onChange={e=>setEditLineData(d=>({ ...d, price: Number(e.target.value) }))} 
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Extended Price</Label>
+                <Input 
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={((editLineData.quantity || 0) * (editLineData.price || 0)).toFixed(2)}
+                  disabled
+                />
+              </div>
             </div>
-            <div>
-              <Label className="text-font-color-100 text-sm">Custom Field 5</Label>
-              <Input 
-                className="bg-card-color border-border-color text-font-color mt-1" 
-                value={editLineData.custom_field5 as any || ''} 
-                onChange={e=>setEditLineData(d=>({ ...d, custom_field5: e.target.value }))} 
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-font-color-100 text-sm">Don't Ship Before</Label>
+                <Input 
+                  type="date"
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.do_not_ship_before || ''} 
+                  onChange={e=>setEditLineData(d=>({ ...d, do_not_ship_before: e.target.value }))} 
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Ship By</Label>
+                <Input 
+                  type="date"
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.ship_by || ''} 
+                  onChange={e=>setEditLineData(d=>({ ...d, ship_by: e.target.value }))} 
+                />
+              </div>
             </div>
+
+            {/* Custom Fields Row */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label className="text-font-color-100 text-sm">Custom Field 1</Label>
+                <Input 
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.custom_field1 || ''} 
+                  onChange={e=>setEditLineData(d=>({ ...d, custom_field1: e.target.value }))} 
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Custom Field 2</Label>
+                <Input 
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.custom_field2 || ''} 
+                  onChange={e=>setEditLineData(d=>({ ...d, custom_field2: e.target.value }))} 
+                />
+              </div>
+              <div>
+                <Label className="text-font-color-100 text-sm">Custom Field 5</Label>
+                <Input 
+                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  value={editLineData.custom_field5 || ''} 
+                  onChange={e=>setEditLineData(d=>({ ...d, custom_field5: e.target.value }))} 
+                />
+              </div>
+            </div>
+
             <div>
               <Label className="text-font-color-100 text-sm">Comments</Label>
               <Textarea 
                 className="bg-card-color border-border-color text-font-color mt-1" 
                 rows={4} 
-                value={editLineData.comments as any || ''} 
+                value={editLineData.comments || ''} 
                 onChange={e=>setEditLineData(d=>({ ...d, comments: e.target.value }))} 
               />
             </div>
