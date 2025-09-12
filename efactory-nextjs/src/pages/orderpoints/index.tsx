@@ -1211,8 +1211,12 @@ export default function OrderPointsPage() {
       // Auto-update address on success (no warnings/errors)
       const corrected = { ...res.correct_address, country: 'US' }
       setShippingAddress(prev => ({ ...prev, ...corrected }))
-      // Show success toast
-      // Note: You may want to add a toast notification here
+      // Show success toast (matching legacy behavior)
+      toast({
+        title: 'Address Validated Successfully!',
+        description: 'The address has been validated and updated automatically.',
+        variant: 'success'
+      })
     }
   }
 
