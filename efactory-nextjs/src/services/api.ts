@@ -67,6 +67,9 @@ import type {
 import type {
   FeedbackSubmissionRequest,
   FeedbackSubmissionResponse,
+  UserProfileData,
+  UpdateEmailRequest,
+  UpdateEmailResponse,
 } from '@/types/api';
 import type { ListTeamMembersRequest, ListTeamMembersResponse } from '@/types/api/team';
 
@@ -302,5 +305,17 @@ export async function fetchTeamMembers(): Promise<ListTeamMembersResponse> {
   const body: ListTeamMembersRequest = { action: 'list' };
   const res = await postJson<ListTeamMembersResponse>('/api/member', body as any);
   return res.data as unknown as ListTeamMembersResponse;
+}
+
+// ==========================
+// User Profile API
+// ==========================
+export async function updateUserEmail(email: string): Promise<UpdateEmailResponse> {
+  const body: UpdateEmailRequest = {
+    func: 'update_email',
+    email
+  };
+  const res = await postJson<UpdateEmailResponse>('/api/profile', body);
+  return res.data;
 }
 

@@ -24,6 +24,7 @@ import {
     IconArrowBigLeftFilled,
 } from '@tabler/icons-react';
 import ContactForm from '../common/ContactForm';
+import UserProfileModal from '../common/UserProfileModal';
 import {
     dark_version,
     light_version,
@@ -48,7 +49,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { clearAuthToken, getAuthToken, performLogout, setAuthToken } from '@/lib/auth/storage';
-import type { AuthToken } from '@/types/api';
+import type { AuthToken, UserProfileData } from '@/types/api';
 import { loadAccounts } from '@/lib/api/auth';
 import { 
     getThemePreferences, 
@@ -138,6 +139,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
     }
     const closeUserProfile = () => {
         setUserProfileOpen(false)
+    }
+
+    // user profile modal
+    const [userProfileModalOpen, setUserProfileModalOpen] = useState(false)
+    const toggleUserProfileModal = () => {
+        setUserProfileModalOpen(!userProfileModalOpen)
+        setUserProfileOpen(false) // Close dropdown when opening modal
     }
 
     // color setting - initialize from localStorage
@@ -474,6 +482,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
     // Avoid reading localStorage during SSR to prevent hydration mismatch
     const [isAdmin, setIsAdmin] = useState(false)
     const [userInfo, setUserInfo] = useState({ username: '', email: '' })
+    const [userProfileData, setUserProfileData] = useState<UserProfileData | null>(null)
     
     useEffect(() => {
         const auth = getAuthToken();
@@ -500,6 +509,26 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                 username: String(username || ''),
                 email: showAdminUser ? '' : String(auth.user_data.email || '')
             });
+
+            // Build user profile data for the modal
+            if (!showAdminUser) {
+                // Calculate accounts visibility like legacy system
+                const calc_account_regions = auth.user_data.calc_account_regions || {};
+                const accountRegions = Object.values(calc_account_regions);
+                const accounts_visibility = Array.isArray(accountRegions) ? accountRegions.join(', ') : '';
+
+                const profileData: UserProfileData = {
+                    username: String(auth.user_data.name || auth.user_data.username || auth.user_data.login || ''),
+                    company_name: String(auth.user_data.company_name || ''),
+                    company_code: String(auth.user_data.company_code || ''),
+                    policy_code: String(auth.user_data.policy_code || ''),
+                    policy_account: String(auth.user_data.account || ''),
+                    policy_region: String(auth.user_data.region || ''),
+                    accounts_visibility: accounts_visibility,
+                    email: String(auth.user_data.email || '')
+                };
+                setUserProfileData(profileData);
+            }
         }
     }, [userApps]) // Re-run when userApps changes (impersonation state)
 
@@ -539,13 +568,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                             <button onClick={toggleUserProfile} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
                                 <IconUser className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
                             </button>
-                            <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[240px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
+                            <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[320px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
                                 <div className='p-4 border-b border-border-color'>
                                     <div className='font-semibold'>
                                         {userInfo.username}
                                     </div>
                                     {userInfo.email && (
-                                        <div className='text-font-color-100'>
+                                        <div className='text-font-color-100 text-xs break-words'>
                                             {userInfo.email}
                                         </div>
                                     )}
@@ -554,10 +583,10 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                     {/* Show My Profile, Team Members, and Leave Feedback only for regular users or admin impersonating */}
                                     {(!isAdmin || (isAdmin && userApps.length > 0)) ? (
                                         <>
-                                            <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                            <button onClick={() => { closeUserProfile(); toggleUserProfileModal(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
                                                 <IconUser className='w-[16px] h-[16px]' />
                                                 My Profile
-                                            </Link>
+                                            </button>
                                             <Link href="/team-members" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                                 <IconUsersGroup className='w-[16px] h-[16px]' />
                                                 Team Members
@@ -744,6 +773,15 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                     document.body.classList.remove("overflow-hidden");
                 }} 
             />
+
+            {/* User Profile Modal */}
+            {userProfileData && (
+                <UserProfileModal
+                    open={userProfileModalOpen}
+                    onOpenChange={setUserProfileModalOpen}
+                    userData={userProfileData}
+                />
+            )}
         </>
     )
 }

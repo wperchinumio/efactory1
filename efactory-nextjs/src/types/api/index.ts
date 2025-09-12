@@ -62,6 +62,9 @@ export interface UserData {
   username?: string;
   login?: string;
   email?: string;
+  company_name?: string;
+  company_code?: string;
+  policy_code?: string;
 }
 
 export interface AuthToken {
@@ -308,6 +311,31 @@ export interface FeedbackApiError {
   success: false;
   message: string;
   error?: string;
+}
+
+// ============================================================================
+// USER PROFILE TYPES
+// ============================================================================
+
+export interface UserProfileData {
+  username: string;
+  company_name: string;
+  company_code: string;
+  policy_code: string;
+  policy_account: string;
+  policy_region: string;
+  accounts_visibility: string;
+  email?: string;
+}
+
+export interface UpdateEmailRequest {
+  func: 'update_email';
+  email: string;
+}
+
+export interface UpdateEmailResponse {
+  success: boolean;
+  message: string;
 }
 
 // ============================================================================
