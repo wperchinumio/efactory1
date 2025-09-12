@@ -74,6 +74,28 @@ import type {
   UpdateEmailResponse,
 } from '@/types/api';
 import type { ListTeamMembersRequest, ListTeamMembersResponse } from '@/types/api/team';
+import type {
+  AddressDto as RmaAddressDto,
+  DeleteRmaDraftsRequest,
+  GenerateRmaNumberRequest,
+  GenerateRmaNumberResponse,
+  ListRmaDraftsRequest,
+  ListRmaDraftsResponse,
+  ReadRmaEntryRequest,
+  ReadRmaEntryResponse,
+  ReadRmaFromOrderRequest,
+  ReadRmaGeneralSettingsRequest,
+  ReadRmaSettingsRequest,
+  ReadRmaSettingsResponse,
+  RmaAuthItemDto,
+  RmaHeaderDto,
+  RmaHeaderSaveDto,
+  RmaReadResponse,
+  RmaSettingsDto,
+  RmaShipItemDto,
+  SaveRmaEntryRequest,
+  SaveRmaEntryResponse,
+} from '@/types/api/returntrak';
 
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
@@ -328,5 +350,60 @@ export async function readGeneralSettings(): Promise<ReadGeneralSettingsResponse
   const body: ReadGeneralSettingsRequest = { action: 'read_general' };
   const res = await postJson<ReadGeneralSettingsResponse>('/api/orderpoints', body as any);
   return res.data;
+}
+
+// ==========================
+// ReturnTrak API
+// ==========================
+
+export async function readReturnTrakSettings(): Promise<RmaSettingsDto> {
+  const body: ReadRmaSettingsRequest = { action: 'read_settings' };
+  const res = await postJson<ReadRmaSettingsResponse>('/api/returntrak', body as any);
+  return (res.data as unknown) as RmaSettingsDto;
+}
+
+export async function readReturnTrakGeneralSettings(): Promise<any> {
+  const body: ReadRmaGeneralSettingsRequest = { action: 'read_general' } as any;
+  const res = await postJson<any>('/api/returntrak', body);
+  return res.data;
+}
+
+export async function generateRmaNumber(): Promise<string> {
+  const body: GenerateRmaNumberRequest = { action: 'generate_number' };
+  const res = await postJson<GenerateRmaNumberResponse>('/api/returntrak', body as any);
+  return (res.data as any).number;
+}
+
+export async function readRmaEntry(rma_id: number): Promise<RmaReadResponse> {
+  const body: ReadRmaEntryRequest = { action: 'read', rma_id } as any;
+  const res = await postJson<ReadRmaEntryResponse>('/api/returntrak', body);
+  return res.data as any;
+}
+
+export async function readRmaFromOrder(account_number: string, order_number: string): Promise<RmaReadResponse> {
+  const body: ReadRmaFromOrderRequest = { action: 'read_from_order', order_number, account_number } as any;
+  const res = await postJson<ReadRmaEntryResponse>('/api/returntrak', body);
+  return res.data as any;
+}
+
+export async function saveRma(
+  rma_header: RmaHeaderSaveDto,
+  to_receive: RmaAuthItemDto[],
+  to_ship: RmaShipItemDto[],
+): Promise<SaveRmaEntryResponse> {
+  const body: SaveRmaEntryRequest = { action: 'save', data: { rma_header, to_receive, to_ship } } as any;
+  const res = await postJson<SaveRmaEntryResponse>('/api/returntrak', body);
+  return res.data as any;
+}
+
+export async function listRmaDrafts(): Promise<ListRmaDraftsResponse['data']> {
+  const body: ListRmaDraftsRequest = { action: 'list_drafts' } as any;
+  const res = await postJson<ListRmaDraftsResponse>('/api/returntrak', body);
+  return res.data as any;
+}
+
+export async function deleteRmaDrafts(rma_ids: number[]): Promise<void> {
+  const body: DeleteRmaDraftsRequest = { action: 'delete_draft', rma_ids } as any;
+  await postJson<Record<string, never>>('/api/returntrak', body);
 }
 
