@@ -17,6 +17,7 @@ import {
   readAddresses,
   createAddress,
 } from '@/services/api'
+import { inventoryCache } from '@/services/inventoryCache'
 import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto, ReadAddressesResponse } from '@/types/api/orderpoints'
 
 
@@ -1271,9 +1272,8 @@ export default function OrderPointsPage() {
     setValidateOpen(false)
   }
 
-  async function onBrowseItems() {
-    // Determine matched warehouse based on Order Header account location
-    let matchedWarehouseValue = ''
+  // Helper function to get matched warehouse value
+  function getMatchedWarehouseValue(): string {
     if (orderHeader.account_number && orderHeader.location) {
       try {
         const authTokenStr = window.localStorage.getItem('authToken')
@@ -1296,11 +1296,9 @@ export default function OrderPointsPage() {
             for (const branch of warehouse) {
               for (const [branchKey, accounts] of Object.entries(branch)) {
                 if (Array.isArray(accounts) && accounts.includes(accountDerived)) {
-                  matchedWarehouseValue = `${matchedLocation}-${branchKey}`
-                  break
+                  return `${matchedLocation}-${branchKey}`
                 }
               }
-              if (matchedWarehouseValue) break
             }
           }
         }
@@ -1308,6 +1306,119 @@ export default function OrderPointsPage() {
         console.error('Error determining matched warehouse:', error)
       }
     }
+    return ''
+  }
+
+  // New function for "Add item" - uses cache on second+ calls
+  async function onAddItem() {
+    const trimmed = (findItemValue || '').trim()
+    if (!trimmed) return
+
+    // Get matched warehouse value
+    const matchedWarehouseValue = getMatchedWarehouseValue()
+
+    // Check if we have valid cache - if yes, search in cache only
+    if (inventoryCache.hasValidCache(matchedWarehouseValue)) {
+      const matches = inventoryCache.searchInCache(matchedWarehouseValue, trimmed)
+      
+      if (matches.length === 1) {
+        const first = matches[0]
+        if (!first) return
+        
+        // Check if item already exists in cart
+        const itemExists = orderDetail.some(item => item.item_number === first.item_number && !item.voided)
+        if (itemExists) {
+          setFindItemValue('')
+          return
+        }
+        
+        const maxLine = orderDetail.filter(l => !l.is_kit_component).reduce((m,l) => Math.max(m, l.line_number||0), 0)
+        const newLine: OrderDetailDto = {
+          detail_id: 0,
+          line_number: maxLine + 1,
+          item_number: first.item_number,
+          description: first.description,
+          quantity: 1,
+          price: 0,
+          do_not_ship_before: new Date().toLocaleDateString(),
+          ship_by: new Date(Date.now() + 86400000).toLocaleDateString(),
+          voided: false,
+        }
+        setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
+        setFindItemValue('')
+        markAsChanged()
+        return
+      } else if (matches.length > 1) {
+        // Multiple matches - open browse modal
+        setBrowseOpen(true)
+        return
+      } else {
+        // No matches in cache - clear input
+        setFindItemValue('')
+        return
+      }
+    }
+
+    // No cache available - make API call and cache the result
+    setSearchingItems(true)
+    
+    try {
+      const data = await inventoryCache.getInventoryData(matchedWarehouseValue, false)
+      
+      // Search in the fresh data
+      const matches = data.filter((item: any) => {
+        const itemNumber = item.item_number.toLowerCase()
+        const searchTerm = trimmed.toLowerCase()
+        return itemNumber === searchTerm || itemNumber.startsWith(searchTerm)
+      })
+      
+      if (matches.length === 1) {
+        const first = matches[0]
+        if (!first) {
+          setSearchingItems(false)
+          return
+        }
+        
+        // Check if item already exists in cart
+        const itemExists = orderDetail.some(item => item.item_number === first.item_number && !item.voided)
+        if (itemExists) {
+          setFindItemValue('')
+          setSearchingItems(false)
+          return
+        }
+        
+        const maxLine = orderDetail.filter(l => !l.is_kit_component).reduce((m,l) => Math.max(m, l.line_number||0), 0)
+        const newLine: OrderDetailDto = {
+          detail_id: 0,
+          line_number: maxLine + 1,
+          item_number: first.item_number,
+          description: first.description,
+          quantity: 1,
+          price: 0,
+          do_not_ship_before: new Date().toLocaleDateString(),
+          ship_by: new Date(Date.now() + 86400000).toLocaleDateString(),
+          voided: false,
+        }
+        setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
+        setFindItemValue('')
+        markAsChanged()
+      } else if (matches.length > 1) {
+        // Multiple matches - open browse modal
+        setBrowseOpen(true)
+      } else {
+        // No matches - clear input
+        setFindItemValue('')
+      }
+    } catch (error) {
+      console.error('Error searching for items:', error)
+    } finally {
+      setSearchingItems(false)
+    }
+  }
+
+  async function onBrowseItems() {
+    // Get matched warehouse value
+    const matchedWarehouseValue = getMatchedWarehouseValue()
     
     setMatchedWarehouse(matchedWarehouseValue)
     
@@ -1319,47 +1430,21 @@ export default function OrderPointsPage() {
     // Quick add if toolbar has a value and single match exists; else open modal
     const trimmed = (findItemValue || '').trim()
     if (trimmed) {
-      // Show loading state for search
-      setSearchingItems(true)
+      // Check if we have cache - if yes, search immediately, then refresh in background
+      const hasCache = inventoryCache.hasValidCache(matchedWarehouseValue)
       
-      try {
-        // Call API to search for items (no cache) - use "starts with" logic
-        const and: any[] = []
-        
-        // Add warehouse filter if available
-        if (warehouses && typeof warehouses === 'string') {
-          const parts = warehouses.split('-')
-          if (parts.length >= 2) {
-            const [inv_region, inv_type] = parts
-            and.push({ field: 'inv_type', oper: '=', value: inv_type })
-            and.push({ field: 'inv_region', oper: '=', value: inv_region })
-          }
-        }
-        
-        and.push({ field: 'omit_zero_qty', oper: '=', value: true })
-        
-        const response = await fetchInventoryForCart({
-          page_num: 1,
-          page_size: 100, // Get more results to search through
-          filter: { and }
-        } as any)
-        const rows = response.rows || []
-        
-        // Filter results to find items that match exactly OR start with the typed text
-        const matches = rows.filter((item: any) => {
-          const itemNumber = item.item_number.toLowerCase()
-          const searchTerm = trimmed.toLowerCase()
-          return itemNumber === searchTerm || itemNumber.startsWith(searchTerm)
-        })
+      if (hasCache) {
+        // Show results immediately from cache
+        const matches = inventoryCache.searchInCache(matchedWarehouseValue, trimmed)
         
         if (matches.length === 1) {
           const first = matches[0]
+          if (!first) return
           
           // Check if item already exists in cart
           const itemExists = orderDetail.some(item => item.item_number === first.item_number && !item.voided)
           if (itemExists) {
             setFindItemValue('')
-            setSearchingItems(false)
             return
           }
           
@@ -1378,9 +1463,78 @@ export default function OrderPointsPage() {
           setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
           setFindItemValue('')
           markAsChanged()
-          setSearchingItems(false)
+          return
+        } else if (matches.length > 1) {
+          // Multiple matches - open browse modal
+          setBrowseOpen(true)
+          return
+        } else {
+          // No matches in cache - clear input
+          setFindItemValue('')
           return
         }
+      } else {
+        // No cache - show loading and fetch data
+        setSearchingItems(true)
+      }
+      
+      try {
+        // Always refresh cache for Browse items
+        const data = await inventoryCache.getInventoryData(matchedWarehouseValue, true)
+        
+        // If we didn't have cache initially, now search in the fresh data
+        if (!hasCache) {
+          const matches = data.filter((item: any) => {
+            const itemNumber = item.item_number.toLowerCase()
+            const searchTerm = trimmed.toLowerCase()
+            return itemNumber === searchTerm || itemNumber.startsWith(searchTerm)
+          })
+          
+          if (matches.length === 1) {
+            const first = matches[0]
+            if (!first) {
+              setSearchingItems(false)
+              return
+            }
+            
+            // Check if item already exists in cart
+            const itemExists = orderDetail.some(item => item.item_number === first.item_number && !item.voided)
+            if (itemExists) {
+              setFindItemValue('')
+              setSearchingItems(false)
+              return
+            }
+            
+            const maxLine = orderDetail.filter(l => !l.is_kit_component).reduce((m,l) => Math.max(m, l.line_number||0), 0)
+            const newLine: OrderDetailDto = {
+              detail_id: 0,
+              line_number: maxLine + 1,
+              item_number: first.item_number,
+              description: first.description,
+              quantity: 1,
+              price: 0,
+              do_not_ship_before: new Date().toLocaleDateString(),
+              ship_by: new Date(Date.now() + 86400000).toLocaleDateString(),
+              voided: false,
+            }
+            setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
+            setFindItemValue('')
+            markAsChanged()
+            setSearchingItems(false)
+            return
+          } else if (matches.length > 1) {
+            // Multiple matches - open browse modal
+            setBrowseOpen(true)
+            setSearchingItems(false)
+            return
+          } else {
+            // No matches - clear input
+            setFindItemValue('')
+            setSearchingItems(false)
+            return
+          }
+        }
+        // If we had cache, the refresh happens in background and we already showed results
       } catch (error) {
         console.error('Error searching for items:', error)
       } finally {
@@ -1540,7 +1694,38 @@ export default function OrderPointsPage() {
     markAsChanged()
   }
 
-  async function reloadInventory(page = currentPage, showLoading = false) {
+  async function reloadInventory(page = currentPage, showLoading = false, useCache = true) {
+    // Get the warehouse value to use for cache (use warehouses state if available, otherwise calculate it)
+    const warehouseValue = warehouses || getMatchedWarehouseValue()
+    
+    // Check if we have valid cache and should use it
+    const hasCache = useCache && inventoryCache.hasValidCache(warehouseValue)
+    
+    if (hasCache && showLoading) {
+      // If we have cache, show cached data immediately
+      const cachedData = inventoryCache.searchInCache(warehouseValue, itemFilter)
+      
+      // Convert cached data to the format expected by the UI
+      const hash: any = {}
+      const existing = new Map(orderDetail.map(od => [od.item_number, od]))
+      cachedData.forEach((r: any) => {
+        const added = existing.get(r.item_number)
+        hash[r.item_number] = {
+          ...r,
+          quantity: added ? added.quantity : undefined,
+          price: added ? added.price : undefined,
+        }
+      })
+      
+      setInventory(hash)
+      setTotalItems(cachedData.length)
+      setCurrentPage(page)
+      
+      // Refresh cache in background without showing loading
+      refreshInventoryInBackground(page)
+      return
+    }
+    
     if (showLoading) {
       setRefreshingInventory(true)
     }
@@ -1587,6 +1772,9 @@ export default function OrderPointsPage() {
       }
     })
     setInventory(hash)
+    
+    // Update cache with fresh data
+    await inventoryCache.getInventoryData(warehouseValue, true)
     } catch (error) {
       console.error('Error reloading inventory:', error)
     } finally {
@@ -1596,12 +1784,28 @@ export default function OrderPointsPage() {
     }
   }
 
+  // Background refresh function for when we have cache
+  async function refreshInventoryInBackground(page = currentPage) {
+    try {
+      // Get the warehouse value to use for cache
+      const warehouseValue = warehouses || getMatchedWarehouseValue()
+      
+      // Always refresh cache for Browse items
+      await inventoryCache.getInventoryData(warehouseValue, true)
+      
+      // Optionally refresh the UI with the updated cache
+      // This could be called if you want to update the UI after background refresh
+    } catch (error) {
+      console.error('Error refreshing inventory in background:', error)
+    }
+  }
+
   // Pagination functions
   function goToPage(page: number) {
     const totalPages = Math.ceil(totalItems / pageSize)
     const targetPage = Math.max(1, Math.min(page, totalPages))
     if (targetPage !== currentPage) {
-      reloadInventory(targetPage, true)
+      reloadInventory(targetPage, true, true) // Use cache for pagination
     }
   }
 
@@ -1641,7 +1845,7 @@ export default function OrderPointsPage() {
       setCurrentPage(1);
       setItemFilter(''); // Clear any previous search
       setInventory({}); // Clear previous inventory data
-      reloadInventory(1, true);
+      reloadInventory(1, true, true); // Use cache if available
     }
   }, [browseOpen])
 
@@ -1653,7 +1857,7 @@ export default function OrderPointsPage() {
     if (itemFilter !== '') {
       const timeoutId = setTimeout(() => {
         setCurrentPage(1);
-        reloadInventory(1, true);
+        reloadInventory(1, true, true); // Use cache for search
       }, 350);
 
       return () => {
@@ -1666,7 +1870,7 @@ export default function OrderPointsPage() {
   useEffect(() => {
     if (browseOpen) {
       setCurrentPage(1)
-      reloadInventory(1, true)
+      reloadInventory(1, true, false) // Don't use cache for filter changes
     }
   }, [showZeroQty])
 
@@ -1674,7 +1878,7 @@ export default function OrderPointsPage() {
   useEffect(() => {
     if (browseOpen) {
       setCurrentPage(1)
-      reloadInventory(1, true)
+      reloadInventory(1, true, false) // Don't use cache for warehouse changes
     }
   }, [warehouses])
 
@@ -2175,7 +2379,7 @@ export default function OrderPointsPage() {
                         className="h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed w-full"
                         value={findItemValue}
                         onChange={e=>setFindItemValue(e.target.value)}
-                        onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
+                        onKeyDown={e=>{ if (e.key === 'Enter') onAddItem() }}
                         disabled={isPlacingOrder || isSavingDraft || !accountNumberLocation || searchingItems}
                       />
                       {searchingItems && (
@@ -2653,7 +2857,7 @@ export default function OrderPointsPage() {
             </Select>
             <Button 
                 className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
-              onClick={()=>reloadInventory(1, true)}
+              onClick={()=>reloadInventory(1, true, false)}
               disabled={refreshingInventory}
             >
               {refreshingInventory ? (
