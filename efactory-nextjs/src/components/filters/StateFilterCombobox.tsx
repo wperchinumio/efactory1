@@ -9,6 +9,7 @@ interface StateFilterComboboxProps {
 	className?: string;
 	disabled?: boolean;
 	countryValue?: string; // To determine visibility
+	boldWhenSelected?: boolean;
 }
 
 const StateFilterCombobox = ({ 
@@ -16,7 +17,8 @@ const StateFilterCombobox = ({
 	onValueChange, 
 	className = "",
 	disabled = false,
-	countryValue = '' // To determine visibility
+	countryValue = '', // To determine visibility
+	boldWhenSelected = false
 }: StateFilterComboboxProps) => {
 	const globalData = useGlobalFilterData();
 	
@@ -49,6 +51,7 @@ const StateFilterCombobox = ({
 					disabled={isDisabled}
 					emptyMessage="No states found."
 					showSearch={countryValue ? true : false}
+					boldWhenSelected={boldWhenSelected}
 				/>
 				{hasActiveSelection && (
 					<button

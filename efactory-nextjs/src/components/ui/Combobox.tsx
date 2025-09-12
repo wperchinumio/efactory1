@@ -18,6 +18,7 @@ interface ComboboxProps {
 	icon?: React.ComponentType<any>;
 	emptyMessage?: string;
 	showSearch?: boolean;
+	boldWhenSelected?: boolean;
 }
 
 const Combobox = ({ 
@@ -30,7 +31,8 @@ const Combobox = ({
 	disabled = false,
   icon: Icon = undefined,
 	emptyMessage = "No options found.",
-	showSearch = true
+	showSearch = true,
+	boldWhenSelected = false
 }: ComboboxProps) => {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [searchQuery, setSearchQuery] = useState<string>('');
@@ -102,7 +104,7 @@ const Combobox = ({
 			>
 				<div className="flex items-center gap-2 flex-1 min-w-0">
 					{Icon && <Icon className="w-4 h-4 text-font-color-100 flex-shrink-0" />}
-					<span className={`truncate ${selectedOption ? 'text-font-color' : 'text-font-color-100'}`}>
+					<span className={`truncate ${selectedOption ? `text-font-color ${boldWhenSelected ? 'font-medium' : ''}` : 'text-font-color-100'}`}>
 						{selectedOption ? selectedOption.label : placeholder}
 					</span>
 				</div>

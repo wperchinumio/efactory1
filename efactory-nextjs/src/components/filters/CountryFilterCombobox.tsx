@@ -8,13 +8,15 @@ interface CountryFilterComboboxProps {
 	onValueChange: (value: string) => void;
 	className?: string;
 	disabled?: boolean;
+	boldWhenSelected?: boolean;
 }
 
 const CountryFilterCombobox = ({ 
 	value, 
 	onValueChange, 
 	className = "",
-	disabled = false 
+	disabled = false,
+	boldWhenSelected = false
 }: CountryFilterComboboxProps) => {
 	const globalData = useGlobalFilterData();
 	
@@ -38,6 +40,7 @@ const CountryFilterCombobox = ({
 					icon={IconWorld}
 					disabled={disabled}
 					emptyMessage="No countries found."
+					boldWhenSelected={boldWhenSelected}
 				/>
 				{hasActiveSelection && (
 					<button

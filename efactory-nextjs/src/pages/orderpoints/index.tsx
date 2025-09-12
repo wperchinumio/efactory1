@@ -304,6 +304,7 @@ const EditableDatePicker = ({ value, onChange, placeholder = "Select date", clas
             transition-all duration-200 hover:shadow-md
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             ${isOpen ? 'border-primary ring-1 ring-primary ring-opacity-20' : ''}
+            ${inputValue ? 'font-medium' : ''}
           `}
           style={{ textIndent: '1.75rem' }}
         />
@@ -1705,7 +1706,7 @@ export default function OrderPointsPage() {
                         </Label>
                         <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
                         <SelectTrigger className={`h-9 text-sm mt-1 ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                            <span className="truncate">
+                            <span className={`truncate ${accountDisplayLabel ? 'font-medium' : ''}`}>
                               {accountDisplayLabel || "Select Account - Warehouse"}
                             </span>
                         </SelectTrigger>
@@ -1739,7 +1740,7 @@ export default function OrderPointsPage() {
                           <RequiredDot show={isRequiredFieldEmpty(orderHeader.customer_number)} />
                         </Label>
                         <Input 
-                          className="h-8 text-sm mt-1" 
+                          className={`h-8 text-sm mt-1 ${orderHeader.customer_number ? 'font-medium' : ''}`} 
                           value={orderHeader.customer_number || ''} 
                           onChange={e=>{setOrderHeader(p=>({ ...p, customer_number: e.target.value })); markAsChanged()}} 
                         />
@@ -1750,7 +1751,7 @@ export default function OrderPointsPage() {
                     <RequiredDot show={isRequiredFieldEmpty(orderHeader.po_number)} />
                   </Label>
                   <Input 
-                    className="h-8 text-sm mt-1" 
+                    className={`h-8 text-sm mt-1 ${orderHeader.po_number ? 'font-medium' : ''}`} 
                     value={orderHeader.po_number || ''} 
                     onChange={e=>{setOrderHeader(p=>({ ...p, po_number: e.target.value })); markAsChanged()}} 
                   />
@@ -1766,7 +1767,7 @@ export default function OrderPointsPage() {
                         </Label>
                         <Select value={String(orderHeader.order_status ?? 1)} onValueChange={handleOrderStatusChange}>
                           <SelectTrigger className="h-8 text-sm mt-1">
-                            <span className="truncate">
+                            <span className={`truncate ${orderStatusDisplayLabel ? 'font-medium' : ''}`}>
                               {orderStatusDisplayLabel || "Select Order Status"}
                             </span>
                           </SelectTrigger>
@@ -1959,9 +1960,10 @@ export default function OrderPointsPage() {
                         <CountryFilterCombobox
                           value={shippingAddress.country || ''}
                           onValueChange={(v: string) => {
-                            setShippingAddress({...shippingAddress, country: v, state_province: ''}); 
+                            setShippingAddress({...shippingAddress, country: v, state_province: ''});
                             markAsChanged();
                           }}
+                          boldWhenSelected={true}
                         />
                         <style jsx>{`
                           .relative :global(label) {
@@ -1985,6 +1987,7 @@ export default function OrderPointsPage() {
                             markAsChanged();
                           }}
                           countryValue={shippingAddress.country || ''}
+                          boldWhenSelected={true}
                         />
                         <style jsx>{`
                           .relative :global(label) {
@@ -2483,7 +2486,7 @@ export default function OrderPointsPage() {
               Show 0 QTY
             </label>
             <Select value={warehouses} onValueChange={setWarehouses}>
-                <SelectTrigger className="h-8 text-sm mt-1" style={{ width: '200px' }}>
+                <SelectTrigger className={`h-8 text-sm mt-1 ${warehouses ? 'font-medium' : ''}`} style={{ width: '200px' }}>
                 <SelectValue placeholder="Warehouse: All" />
               </SelectTrigger>
                 <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
