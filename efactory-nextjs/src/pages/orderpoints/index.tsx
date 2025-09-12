@@ -479,6 +479,75 @@ export default function OrderPointsPage() {
   const [editAmountsOpen, setEditAmountsOpen] = useState(false)
   const [editExtraFieldsOpen, setEditExtraFieldsOpen] = useState(false)
   
+  // Loading states for better UX
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  
+  // Track if form has unsaved changes - simpler approach
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Mark form as having changes
+  const markAsChanged = () => {
+    if (isInitialized) {
+      setHasUnsavedChanges(true)
+    }
+  }
+  
+  // Mark form as clean (no changes)
+  const markAsClean = () => {
+    setHasUnsavedChanges(false)
+  }
+  
+  // Initialize the form as clean after a short delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialized(true)
+      console.log('Form initialized, ready to track changes')
+    }, 500)
+    
+    return () => clearTimeout(timer)
+  }, [])
+  
+  // Handle browser beforeunload event to warn about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      console.log('Beforeunload triggered, hasUnsavedChanges:', hasUnsavedChanges)
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = 'You have made some changes, are you sure to leave?'
+        return 'You have made some changes, are you sure to leave?'
+      }
+    }
+    
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [hasUnsavedChanges])
+  
+  // Handle Next.js router navigation to warn about unsaved changes
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      console.log('Router navigation attempted to:', url, 'hasUnsavedChanges:', hasUnsavedChanges)
+      if (hasUnsavedChanges) {
+        const confirmed = window.confirm('You have made some changes, are you sure to leave?')
+        if (!confirmed) {
+          // Prevent navigation by throwing an error
+          throw 'Route change aborted by user'
+        }
+      }
+    }
+    
+    // Listen to router events
+    router.events.on('routeChangeStart', handleRouteChange)
+    
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange)
+    }
+  }, [hasUnsavedChanges, router])
+  
   // Temporary state for editing (only updated on save)
   const [tempBillingAddress, setTempBillingAddress] = useState<AddressDto>({})
   const [tempShippingDetails, setTempShippingDetails] = useState({
@@ -675,33 +744,73 @@ export default function OrderPointsPage() {
     })
   }
 
-  async function onNewOrderNumber() {
-    try {
-    const number = await generateOrderNumber()
-    const safeNumber: string = typeof number === 'string' ? number : String(number ?? '')
-    setOrderHeader({ ...orderHeader, order_number: safeNumber })
-      
-      // Show success toaster for new order number
-      toast({
-        title: "New Order Created",
-        description: `Order #${safeNumber} has been generated.`,
-        variant: "default",
-      })
-    } catch (error: any) {
-      // Show error toaster with error message
-      const errorMessage = error?.error_message || error?.message || "An error occurred while generating order number."
-      toast({
-        title: "Order Generation Failed",
-        description: errorMessage,
-        variant: "destructive",
-      })
-    }
+  function onNewOrder() {
+    // Reset form to initial state (like legacy createNewOrder)
+    setOrderHeader({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
+    setOrderDetail([])
+    setShippingAddress({ country: 'US' })
+    setBillingAddress({})
+    setAmounts({
+      shipping_handling: 0,
+      sales_tax: 0,
+      discounts: 0,
+      amount_paid: 0,
+      insurance: 0,
+      international_handling: 0,
+      international_declared_value: 0,
+      balance_due_us: 0
+    })
+    setAccountNumberLocation('')
+    setAccountDisplayLabel('')
+    setOrderStatusDisplayLabel('')
+    setFindItemValue('')
+    setSelectedRows([])
+    setSelectedRowsCount(0)
+    
+    // Reset unsaved changes state
+    markAsClean()
+    
+    // Show success toaster
+    toast({
+      title: "New Order Started",
+      description: "Form has been reset for a new order.",
+      variant: "default",
+    })
   }
 
   async function onSaveDraft() {
+    if (isSavingDraft) return // Prevent multiple calls
+    
+    setIsSavingDraft(true)
     try {
     const header = buildOrderHeaderForSubmit(true)
-    const res = await saveDraft(header, orderDetail)
+    
+    // Convert dates in order detail items from native format to ISO format
+    const convertDateToISO = (dateStr: string): string => {
+      if (!dateStr) return ''
+      try {
+        // If it's already in ISO format, return as is
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return dateStr
+        }
+        // If it's in native format, convert to ISO
+        const date = new Date(dateStr)
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0] || dateStr
+        }
+        return dateStr
+      } catch {
+        return dateStr
+      }
+    }
+    
+    const convertedOrderDetail = orderDetail.map(item => ({
+      ...item,
+      do_not_ship_before: convertDateToISO(item.do_not_ship_before ?? ''),
+      ship_by: convertDateToISO(item.ship_by ?? '')
+    }))
+    
+    const res = await saveDraft(header, convertedOrderDetail)
       
       if (res?.order_number) {
         // Show success toaster for draft save
@@ -713,6 +822,9 @@ export default function OrderPointsPage() {
         
         // Update order header with new order number
         setOrderHeader({ ...orderHeader, order_number: res.order_number })
+        
+        // Reset unsaved changes state
+        markAsClean()
       } else {
         // Show error toaster if no order number returned
         toast({
@@ -729,13 +841,44 @@ export default function OrderPointsPage() {
         description: errorMessage,
         variant: "destructive",
       })
+    } finally {
+      setIsSavingDraft(false)
     }
   }
 
   async function onPlaceOrder() {
+    if (isPlacingOrder) return // Prevent multiple calls
+    
+    setIsPlacingOrder(true)
     try {
     const header = buildOrderHeaderForSubmit(false)
-    const res = await saveEntry(header, orderDetail)
+    
+    // Convert dates in order detail items from native format to ISO format
+    const convertDateToISO = (dateStr: string): string => {
+      if (!dateStr) return ''
+      try {
+        // If it's already in ISO format, return as is
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return dateStr
+        }
+        // If it's in native format, convert to ISO
+        const date = new Date(dateStr)
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0] || dateStr
+        }
+        return dateStr
+      } catch {
+        return dateStr
+      }
+    }
+    
+    const convertedOrderDetail = orderDetail.map(item => ({
+      ...item,
+      do_not_ship_before: convertDateToISO(item.do_not_ship_before ?? ''),
+      ship_by: convertDateToISO(item.ship_by ?? '')
+    }))
+    
+    const res = await saveEntry(header, convertedOrderDetail)
       
       if (res?.order_number) {
         // Show success toaster with order number
@@ -744,6 +887,9 @@ export default function OrderPointsPage() {
           description: `Order #${res.order_number} has been placed successfully.`,
           variant: "default",
         })
+        
+        // Reset unsaved changes state
+        markAsClean()
         
         // Navigate to order details
         router.push(`/orders/${res.order_number}`)
@@ -763,6 +909,8 @@ export default function OrderPointsPage() {
         description: errorMessage,
         variant: "destructive",
       })
+    } finally {
+      setIsPlacingOrder(false)
     }
   }
 
@@ -778,8 +926,29 @@ export default function OrderPointsPage() {
     const subtotal = totals
     const total_due = subtotal + (amounts.shipping_handling||0) + (amounts.sales_tax||0) + (amounts.international_handling||0)
     const net_due_currency = total_due - (amounts.amount_paid||0)
+    
+    // Convert dates from native format to ISO format for API
+    const convertDateToISO = (dateStr: string): string => {
+      if (!dateStr) return ''
+      try {
+        // If it's already in ISO format, return as is
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return dateStr
+        }
+        // If it's in native format, convert to ISO
+        const date = new Date(dateStr)
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0] || dateStr
+        }
+        return dateStr
+      } catch {
+        return dateStr
+      }
+    }
+    
     return {
       ...orderHeader,
+      ordered_date: convertDateToISO(orderHeader.ordered_date ?? ''),
       order_subtotal: subtotal,
       shipping_handling: amounts.shipping_handling,
       balance_due_us: 0,
@@ -887,6 +1056,7 @@ export default function OrderPointsPage() {
         }
         setOrderDetail(prev => renumberDraftLines([ ...prev, newLine ]))
         setFindItemValue('')
+        markAsChanged()
         return
       }
     }
@@ -921,6 +1091,7 @@ export default function OrderPointsPage() {
     setOrderDetail(renumberDraftLines(remaining))
     setSelectedRows([])
     setSelectedRowsCount(0)
+    markAsChanged()
   }
 
   // Helper function to safely get warehouse options
@@ -1022,12 +1193,14 @@ export default function OrderPointsPage() {
         account_number: accountNumber,
         location: location
       }));
+      markAsChanged();
     } else {
       setOrderHeader(prev => ({
         ...prev,
         account_number: '',
         location: ''
       }));
+      markAsChanged();
     }
   }
 
@@ -1041,6 +1214,7 @@ export default function OrderPointsPage() {
     const orderStatusOptions = getOrderStatusOptions();
     const selectedOption = orderStatusOptions.find(opt => opt.value === value);
     setOrderStatusDisplayLabel(selectedOption ? selectedOption.label : '');
+    markAsChanged()
   }
 
   async function reloadInventory(page = currentPage) {
@@ -1224,6 +1398,7 @@ export default function OrderPointsPage() {
     })
     setOrderDetail(renumberDraftLines(next))
     setBrowseOpen(false)
+    markAsChanged()
   }
 
   return (
@@ -1232,18 +1407,47 @@ export default function OrderPointsPage() {
       <div className="bg-card-color border-b border-border-color px-6 py-2">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-semibold text-font-color mb-0.5">OrderPoints - Order Entry</h1>
-            <p className="text-sm text-font-color-100">Create and manage purchase orders</p>
+            <h1 className="text-xl font-semibold text-font-color mb-0.5 flex items-center gap-2">
+              OrderPoints - Order Entry
+              {hasUnsavedChanges && (
+                <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded">
+                  Unsaved Changes
+                </span>
+              )}
+            </h1>
+            <p className="text-sm text-font-color-100">
+              Create and manage purchase orders
+              {hasUnsavedChanges && <span className="text-orange-500 ml-2">• Unsaved changes detected</span>}
+              <button 
+                onClick={() => console.log('Current state:', { hasUnsavedChanges, isInitialized })}
+                className="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded"
+              >
+                Debug
+              </button>
+            </p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={onNewOrderNumber} className="bg-primary text-white hover:bg-primary/90 px-4 py-2">
+            <Button 
+              onClick={onNewOrder} 
+              disabled={isPlacingOrder || isSavingDraft}
+              className="bg-primary text-white hover:bg-primary/90 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               New Order
             </Button>
-            <Button onClick={onSaveDraft} variant="outline" className="border-border-color px-4 py-2">
-              Save Draft
+            <Button 
+              onClick={onSaveDraft} 
+              disabled={isSavingDraft || isPlacingOrder}
+              variant="outline" 
+              className="border-border-color px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSavingDraft ? "Saving..." : "Save Draft"}
             </Button>
-            <Button onClick={onPlaceOrder} className="bg-success text-white hover:bg-success/90 px-4 py-2">
-              Place Order
+            <Button 
+              onClick={onPlaceOrder} 
+              disabled={isPlacingOrder || isSavingDraft}
+              className="bg-success text-white hover:bg-success/90 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isPlacingOrder ? "Placing Order..." : "Place Order"}
             </Button>
           </div>
         </div>
@@ -1271,7 +1475,7 @@ export default function OrderPointsPage() {
                     <div>
                         <Label className="text-font-color-100 text-sm">Account # - Warehouse</Label>
                         <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
-                        <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
+                        <SelectTrigger className={`bg-card-color border-border-color text-font-color h-8 text-sm ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <span className="truncate">
                               {accountDisplayLabel || "Select Account - Warehouse"}
                             </span>
@@ -1303,7 +1507,7 @@ export default function OrderPointsPage() {
                   <Input 
                     className="bg-card-color border-border-color text-font-color h-8 text-sm" 
                           value={orderHeader.customer_number || ''} 
-                          onChange={e=>setOrderHeader(p=>({ ...p, customer_number: e.target.value }))} 
+                          onChange={e=>{setOrderHeader(p=>({ ...p, customer_number: e.target.value })); markAsChanged()}} 
                   />
                 </div>
                 <div>
@@ -1311,7 +1515,7 @@ export default function OrderPointsPage() {
                   <Input 
                     className="bg-card-color border-border-color text-font-color h-8 text-sm" 
                     value={orderHeader.po_number || ''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, po_number: e.target.value }))} 
+                    onChange={e=>{setOrderHeader(p=>({ ...p, po_number: e.target.value })); markAsChanged()}} 
                   />
                 </div>
                     </div>
@@ -1339,7 +1543,7 @@ export default function OrderPointsPage() {
                         <Label className="text-font-color-100 text-sm">PO Date</Label>
                   <EditableDatePicker 
                           value={orderHeader.ordered_date || ''} 
-                          onChange={value=>setOrderHeader(p=>({ ...p, ordered_date: value }))} 
+                          onChange={value=>{setOrderHeader(p=>({ ...p, ordered_date: value })); markAsChanged()}} 
                           placeholder="Select PO date"
                           className="h-8"
                   />
@@ -1354,7 +1558,7 @@ export default function OrderPointsPage() {
                     className="bg-card-color border-border-color text-font-color text-sm" 
                           rows={3} 
                     value={orderHeader.shipping_instructions || ''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value }))} 
+                    onChange={e=>{setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value })); markAsChanged()}} 
                   />
                 </div>
                       <div>
@@ -1363,7 +1567,7 @@ export default function OrderPointsPage() {
                     className="bg-card-color border-border-color text-font-color text-sm" 
                           rows={3} 
                     value={orderHeader.packing_list_comments || ''} 
-                    onChange={e=>setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value }))} 
+                    onChange={e=>{setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value })); markAsChanged()}} 
                   />
                       </div>
                 </div>
@@ -1406,7 +1610,7 @@ export default function OrderPointsPage() {
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-8 text-sm" 
                       value={shippingAddress.company||''} 
-                      onChange={e=>setShippingAddress({...shippingAddress,company:e.target.value})} 
+                      onChange={e=>{setShippingAddress({...shippingAddress,company:e.target.value}); markAsChanged()}} 
                     />
                   </div>
                   <div>
@@ -1414,7 +1618,7 @@ export default function OrderPointsPage() {
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-8 text-sm" 
                       value={shippingAddress.attention||''} 
-                      onChange={e=>setShippingAddress({...shippingAddress,attention:e.target.value})} 
+                      onChange={e=>{setShippingAddress({...shippingAddress,attention:e.target.value}); markAsChanged()}} 
                     />
                   </div>
                 </div>
@@ -1425,7 +1629,7 @@ export default function OrderPointsPage() {
                       className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
                       placeholder="Street address" 
                       value={shippingAddress.address1||''} 
-                      onChange={e=>setShippingAddress({...shippingAddress,address1:e.target.value})} 
+                      onChange={e=>{setShippingAddress({...shippingAddress,address1:e.target.value}); markAsChanged()}} 
                     />
                   </div>
                   <div>
@@ -1470,7 +1674,7 @@ export default function OrderPointsPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-font-color-100 text-sm font-medium">Country</Label>
-                    <Select value={shippingAddress.country||'US'} onValueChange={(v: string)=>setShippingAddress({...shippingAddress,country:v})}>
+                    <Select value={shippingAddress.country||'US'} onValueChange={(v: string)=>{setShippingAddress({...shippingAddress,country:v}); markAsChanged()}}>
                       <SelectTrigger className="bg-card-color border-border-color text-font-color h-9 text-sm">
                         <SelectValue />
                       </SelectTrigger>
@@ -1517,15 +1721,17 @@ export default function OrderPointsPage() {
                   <div className="flex items-center gap-2">
                     <Input
                       placeholder="Add item…"
-                      className="bg-card-color border-border-color text-font-color w-48 h-8 text-sm"
+                      className="bg-card-color border-border-color text-font-color w-48 h-8 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       value={findItemValue}
                       onChange={e=>setFindItemValue(e.target.value)}
                       onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
+                      disabled={isPlacingOrder || isSavingDraft}
                     />
                     <Button 
                       size="small" 
-                      className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap text-xs"
+                      className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={onBrowseItems}
+                      disabled={isPlacingOrder || isSavingDraft}
                     >
                       Browse Items…
                     </Button>
@@ -1535,9 +1741,9 @@ export default function OrderPointsPage() {
                         selectedRowsCount > 0 
                           ? 'bg-red-600 text-white hover:bg-red-700' 
                           : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                      }`}
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                       onClick={onRemoveSelected}
-                      disabled={selectedRowsCount === 0}
+                      disabled={selectedRowsCount === 0 || isPlacingOrder || isSavingDraft}
                     >
                       Remove selected {selectedRowsCount > 0 && `(${selectedRowsCount})`}
                     </Button>
@@ -1624,9 +1830,9 @@ export default function OrderPointsPage() {
                             </td>
                             <td className="p-2 text-font-color">
                               {isBundleComponent && <span className="text-gray-400 mr-2">└─</span>}
-                              {item.item_number}
+                              <span className="font-medium">{item.item_number}</span>
                             </td>
-                            <td className="p-2 text-font-color">
+                            <td className="p-2 text-primary">
                               {isBundleComponent && <span className="text-gray-400 mr-2">└─</span>}
                               {item.description}
                             </td>
@@ -1936,8 +2142,8 @@ export default function OrderPointsPage() {
                         <td className="py-1 px-3 text-font-color w-12">{(currentPage - 1) * pageSize + idx + 1}</td>
                         <td className="py-1 px-3 w-64">
                           <div className="font-medium text-font-color truncate" title={it.item_number}>{it.item_number}</div>
-                          <div className="text-font-color-100 text-sm truncate" title={it.description}>{it.description}</div>
-                      </td>
+                          <div className="text-primary text-sm truncate" title={it.description}>{it.description}</div>
+                        </td>
                         <td className="py-1 px-3 text-right w-20">
                         <Input
                           value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
@@ -2219,7 +2425,7 @@ export default function OrderPointsPage() {
             </Button>
             <Button 
               className="bg-primary text-white hover:bg-primary/90"
-              onClick={()=>{ if (editLineIndex==null) return; setOrderDetail(prev => prev.map((r,i)=> i===editLineIndex? { ...r, ...editLineData }: r)); setEditLineOpen(false) }}
+              onClick={()=>{ if (editLineIndex==null) return; setOrderDetail(prev => prev.map((r,i)=> i===editLineIndex? { ...r, ...editLineData }: r)); setEditLineOpen(false); markAsChanged() }}
             >
               Save
             </Button>
