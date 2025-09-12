@@ -45,12 +45,12 @@ export default function NotesPage() {
     }
   }, [selectedNoteId, notes]);
 
-  // Check if browser height is <= 400px and disable height calculations
-  // Also check if height is in middle range (400px-612px) and adjust accordingly
+  // Check if browser height is <= 250px and disable height calculations
+  // Also check if height is in middle range (250px-612px) and adjust accordingly
   useEffect(() => {
     const checkHeight = () => {
       const height = window.innerHeight;
-      if (height <= 400) {
+      if (height <= 250) {
         setUseFullHeight(true); // Use full height for small screens
       } else if (height <= 612) {
         setUseFullHeight(true); // Use full height for middle range too
@@ -550,7 +550,8 @@ export default function NotesPage() {
                   flexDirection: 'row',
                   overflow: useFullHeight ? 'visible' : 'hidden',
                   height: useFullHeight ? 'auto' : 'auto',
-                  maxHeight: useFullHeight ? 'none' : 'auto'
+                  maxHeight: useFullHeight ? 'none' : 'auto',
+                  minHeight: '350px'
                 }}>
                   {/* Line Numbers */}
                   <div 
@@ -614,7 +615,7 @@ export default function NotesPage() {
                       flex: useFullHeight ? 1 : 1,
                       width: '100%',
                       height: useFullHeight ? 'auto' : '100%',
-                      minHeight: useFullHeight ? 'auto' : 'auto',
+                      minHeight: '300px',
                       maxHeight: useFullHeight ? 'none' : 'auto',
                       padding: '12px',
                       border: 'none',

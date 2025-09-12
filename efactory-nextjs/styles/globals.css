@@ -1657,6 +1657,11 @@ html:has(body[data-luno-theme="dynamic"]) {
   /* No transitions - instant updates */
 }
 
+/* Notes page - ensure content area has proper min-height */
+.notes-content-area {
+  min-height: 400px;
+}
+
 /* Mobile-responsive Notes layout */
 @media (max-width: 768px) {
   .notes-container {
