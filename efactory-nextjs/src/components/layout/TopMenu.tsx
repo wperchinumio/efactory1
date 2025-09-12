@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { topMenuConfig, sidebarConfigs } from '../../config/navigation';
 import { TopMenuConfig } from '../../types/api/auth';
+import { isPublicCustomerRoute } from '@/utils/navigation';
 import {
   IconDots,
   IconChevronDown,
@@ -309,8 +310,13 @@ const TopMenu: React.FC = () => {
             onClick={() => handleMenuClick(menu.keyword)}
             className={`
               flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
-              ${(activeTopMenu === menu.keyword ||
-                (menu.keyword === 'services' && (router.asPath.startsWith('/documents') || router.asPath.startsWith('/services/administration-tasks')))) || activeDropdown === menu.keyword
+              ${(
+                // No active highlight for public routes (e.g., team-members)
+                isPublicCustomerRoute(router.asPath)
+                  ? false
+                  : (activeTopMenu === menu.keyword ||
+                    (menu.keyword === 'services' && (router.asPath.startsWith('/documents') || router.asPath.startsWith('/services/administration-tasks')))) || activeDropdown === menu.keyword
+              )
                 ? 'text-secondary bg-secondary-10 rounded-md'
                 : 'text-font-color'
               }

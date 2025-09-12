@@ -151,3 +151,51 @@ export function postJsonRaw<TResponse = unknown, TBody = unknown>(
 export function getJsonRaw<TResponse = unknown>(path: string, headers?: Record<string, string>) {
 	return httpRequestRaw<TResponse>({ method: 'get', path, headers: headers || {} });
 }
+
+// Multipart/form-data upload helper that follows our centralized token/error handling
+export async function postFormData<TResponse = unknown>(
+	path: string,
+	formData: FormData,
+	headers?: Record<string, string>,
+): Promise<TResponse> {
+	const base = getBaseUrl();
+	const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+	const url = `${base}/${cleanPath}`;
+
+	const requestHeaders: Record<string, string> = {
+		Accept: 'application/json',
+		...(headers ?? {}),
+	};
+
+	const token = getAccessToken();
+	if (token) requestHeaders['X-Access-Token'] = token;
+
+	const res = await fetch(url, {
+		method: 'POST',
+		headers: requestHeaders, // do not set Content-Type for multipart; browser sets boundary
+		body: formData,
+		credentials: 'include',
+	});
+
+	const isJson = res.headers.get('content-type')?.includes('application/json');
+	const payload = isJson ? await res.json() : undefined;
+
+	if (!res.ok) {
+		const error = payload ?? {
+			error_message: `Request failed with status ${res.status}`,
+			status: res.status,
+		};
+
+		if (res.status === 401 && typeof window !== 'undefined') {
+			import('../auth/storage').then(({ clearAuthToken }) => clearAuthToken());
+			if (!window.location.pathname.includes('/auth')) {
+				window.location.href = '/auth/sign-in';
+			}
+		}
+
+		(error as any).status = res.status;
+		throw error as any;
+	}
+
+	return (payload as TResponse) ?? ({} as TResponse);
+}

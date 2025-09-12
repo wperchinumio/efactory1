@@ -1,4 +1,4 @@
-import { postJson, getJson, httpRequest, postJsonRaw } from '@/lib/api/http';
+import { postJson, getJson, httpRequest, postJsonRaw, postFormData } from '@/lib/api/http';
 import type {
   ActivityPointDto,
   FulfillmentRowDto,
@@ -68,6 +68,7 @@ import type {
   FeedbackSubmissionRequest,
   FeedbackSubmissionResponse,
 } from '@/types/api';
+import type { ListTeamMembersRequest, ListTeamMembersResponse } from '@/types/api/team';
 
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
@@ -279,43 +280,27 @@ export async function readOrderPointsSettings(): Promise<OrderPointsSettingsDto>
 // Feedback API
 export async function submitFeedback(feedback: FeedbackSubmissionRequest): Promise<FeedbackSubmissionResponse> {
   const formData = new FormData();
-  if (feedback.file) {
-    formData.append('file', feedback.file);
-  }
+  if (feedback.file) formData.append('file', feedback.file);
 
-  // Get authentication token
-  let token = '';
-  if (typeof window !== 'undefined') {
-    try {
-      const raw = window.localStorage.getItem('authToken');
-      if (raw) {
-        const authData = JSON.parse(raw);
-        token = authData?.api_token || '';
-      }
-    } catch {
-      // Ignore parsing errors
-    }
-  }
-
-  const response = await fetch('/api/proxy/api/upload', {
-    method: 'POST',
-    headers: {
-      'X-Access-Token': token,
-      'X-Upload-Params': JSON.stringify({
-        func: 'feedback_upload',
-        type: feedback.type,
-        message: feedback.message
-      })
-    },
-    body: formData,
+  // Send via our centralized multipart helper; params in header mimic legacy handler
+  await postFormData('/api/upload', formData, {
+    'X-Upload-Params': JSON.stringify({
+      func: 'feedback_upload',
+      type: feedback.type,
+      message: feedback.message,
+    }),
   });
 
-  if (!response.ok) {
-    throw new Error(`Failed to submit feedback: ${response.status} ${response.statusText}`);
-  }
-
-  // Parse JSON response
-  await response.json();
   return { success: true, message: 'Feedback sent successfully' };
+}
+
+
+// ==========================
+// Team Members API
+// ==========================
+export async function fetchTeamMembers(): Promise<ListTeamMembersResponse> {
+  const body: ListTeamMembersRequest = { action: 'list' };
+  const res = await postJson<ListTeamMembersResponse>('/api/member', body as any);
+  return res.data as unknown as ListTeamMembersResponse;
 }
 

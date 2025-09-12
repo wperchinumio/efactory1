@@ -6,6 +6,9 @@ const routeAppIdsTable = {
   '/announcements': 2,
   '/overview/notes': 3,
 
+  // Shared pages
+  '/team-members': 1,
+
   '/orders/open': 5,
   '/orders/onhold': 6,
   '/orders/backorders': 7,
@@ -184,6 +187,22 @@ const routeAppIdsTable = {
   '/services/administration-tasks/invoices/rate-cards': 214,
 };
 
+// Public customer routes (no app permission required)
+// Add exact paths here; can also support prefixes via publicCustomerRoutePrefixes
+const publicCustomerRoutesExact = new Set<string>([
+  '/team-members',
+]);
+
+const publicCustomerRoutePrefixes: string[] = [
+  // e.g. '/profile', '/help'
+];
+
+export function isPublicCustomerRoute(pathname: string): boolean {
+  const clean = pathname.replace(/\?.+/, '');
+  if (publicCustomerRoutesExact.has(clean)) return true;
+  return publicCustomerRoutePrefixes.some(prefix => clean === prefix || clean.startsWith(`${prefix}/`));
+}
+
 /**
  * Get the app ID for a given pathname
  * @param pathname - The current pathname
@@ -224,6 +243,8 @@ export const getAppIdForPathname = (pathname: string): number | null => {
  * @returns True if user has access, false otherwise
  */
 export const hasAccessToPathname = (pathname: string, userApps: number[]): boolean => {
+  // Public customer pages are always accessible to authenticated customer contexts
+  if (isPublicCustomerRoute(pathname)) return true;
   const appId = getAppIdForPathname(pathname);
   if (!appId) return false;
   
@@ -270,7 +291,11 @@ export const getDefaultRoute = (userApps: number[]): string => {
  * @returns Array of route paths the user can access
  */
 export const getAccessibleRoutes = (userApps: number[]): string[] => {
-  return Object.keys(routeAppIdsTable).filter(route => 
+  const publicRoutes = Array.from(publicCustomerRoutesExact);
+  const appRoutes = Object.keys(routeAppIdsTable).filter(route => 
     hasAccessToPathname(route, userApps)
   );
+  return Array.from(new Set([...publicRoutes, ...appRoutes]));
 };
+// Export helper for guard/tests
+export const _debug_isPublicCustomerRoute = isPublicCustomerRoute;

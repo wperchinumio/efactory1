@@ -558,7 +558,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                                 <IconUser className='w-[16px] h-[16px]' />
                                                 My Profile
                                             </Link>
-                                            <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                            <Link href="/team-members" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
                                                 <IconUsersGroup className='w-[16px] h-[16px]' />
                                                 Team Members
                                             </Link>
