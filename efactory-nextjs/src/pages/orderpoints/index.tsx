@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label, DatePicker } from '@/components/ui'
 import { toast } from '@/components/ui/use-toast'
-import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconFileText, IconShoppingCart, IconMessageCircle, IconCalendar } from '@tabler/icons-react'
+import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconChevronDown, IconFileText, IconShoppingCart, IconMessageCircle, IconCalendar } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
 import {
   generateOrderNumber,
@@ -416,6 +416,7 @@ export default function OrderPointsPage() {
   }
   const router = useRouter()
 
+
   const [orderHeader, setOrderHeader] = useState<OrderHeaderDto>({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
   const [orderDetail, setOrderDetail] = useState<OrderDetailDto[]>([])
   const [accountNumberLocation, setAccountNumberLocation] = useState('')
@@ -486,6 +487,59 @@ export default function OrderPointsPage() {
   // Track if form has unsaved changes - simpler approach
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Panel expand/collapse states
+  const [billingExpanded, setBillingExpanded] = useState(false)
+  const [amountsExpanded, setAmountsExpanded] = useState(false)
+  const [extraFieldsExpanded, setExtraFieldsExpanded] = useState(false)
+  
+  // Helper functions to determine which fields have values
+  const getBillingFieldsWithValues = () => {
+    const fields = [
+      { key: 'company', label: 'Company', value: billingAddress.company },
+      { key: 'attention', label: 'Attention', value: billingAddress.attention },
+      { key: 'address1', label: 'Address 1', value: billingAddress.address1 },
+      { key: 'address2', label: 'Address 2', value: billingAddress.address2 },
+      { key: 'city', label: 'City', value: billingAddress.city },
+      { key: 'state_province', label: 'State/Province', value: billingAddress.state_province },
+      { key: 'postal_code', label: 'Postal Code', value: billingAddress.postal_code },
+      { key: 'country', label: 'Country', value: billingAddress.country },
+      { key: 'phone', label: 'Phone', value: billingAddress.phone },
+      { key: 'email', label: 'Email', value: billingAddress.email }
+    ]
+    return fields.filter(field => field.value && field.value.trim() !== '')
+  }
+  
+  const getAmountsFieldsWithValues = () => {
+    const orderAmount = orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0)
+    const totalAmount = orderAmount + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling
+    const netDue = totalAmount - amounts.amount_paid
+    
+    const fields = [
+      { key: 'order_amount', label: 'Order Amount', value: orderAmount, alwaysShow: true },
+      { key: 'shipping_handling', label: 'S & H', value: amounts.shipping_handling },
+      { key: 'sales_tax', label: 'Sales Taxes', value: amounts.sales_tax },
+      { key: 'international_handling', label: 'Discount/Add. Chgs.', value: amounts.international_handling },
+      { key: 'total_amount', label: 'Total Amount', value: totalAmount, alwaysShow: true, isBold: true },
+      { key: 'amount_paid', label: 'Amount Paid', value: amounts.amount_paid },
+      { key: 'net_due', label: 'Net Due', value: netDue, alwaysShow: true, isBold: true },
+      { key: 'balance_due_us', label: 'Balance Due (US)', value: amounts.balance_due_us },
+      { key: 'international_declared_value', label: 'Int. Decl. Value', value: amounts.international_declared_value },
+      { key: 'insurance', label: 'Insurance', value: amounts.insurance }
+    ]
+    return fields.filter(field => field.alwaysShow || field.value !== 0)
+  }
+  
+  const getExtraFieldsWithValues = () => {
+    const fields = [
+      { key: 'custom_field1', label: extraLabels.header_cf_1, value: orderHeader.custom_field1 },
+      { key: 'custom_field2', label: extraLabels.header_cf_2, value: orderHeader.custom_field2 },
+      { key: 'custom_field3', label: extraLabels.header_cf_3, value: orderHeader.custom_field3 },
+      { key: 'custom_field4', label: extraLabels.header_cf_4, value: orderHeader.custom_field4 },
+      { key: 'custom_field5', label: extraLabels.header_cf_5, value: orderHeader.custom_field5 }
+    ]
+    return fields.filter(field => field.value && field.value.trim() !== '')
+  }
   
   // Mark form as having changes
   const markAsChanged = () => {
@@ -1949,29 +2003,57 @@ export default function OrderPointsPage() {
                   <IconBuilding className="w-3.5 h-3.5" />
                   BILLING ADDRESS
                 </CardTitle>
-                <Button
-                  size="small"
-                  variant="outline"
-                  className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
-                  onClick={openBillingAddressModal}
-                >
-                  <IconEdit className="h-3 w-3 mr-1" />
-                  Edit...
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    onClick={() => setBillingExpanded(!billingExpanded)}
+                  >
+                    <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${billingExpanded ? 'rotate-180' : ''}`} />
+                    {billingExpanded ? 'Collapse' : 'Expand'}
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    onClick={openBillingAddressModal}
+                  >
+                    <IconEdit className="h-3 w-3 mr-1" />
+                    Edit...
+                  </Button>
+                </div>
               </div>
               </CardHeader>
               <CardContent className="p-3">
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Company:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.company ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.company || '-'}>{billingAddress.company || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Attention:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.attention ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.attention || '-'}>{billingAddress.attention || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 1:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.address1 ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.address1 || '-'}>{billingAddress.address1 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 2:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.address2 ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.address2 || '-'}>{billingAddress.address2 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">City:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.city ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.city || '-'}>{billingAddress.city || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">State/Province:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.state_province ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.state_province || '-'}>{billingAddress.state_province || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Postal Code:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.postal_code ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.postal_code || '-'}>{billingAddress.postal_code || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Country:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.country ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.country || '-'}>{billingAddress.country || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Phone:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.phone ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.phone || '-'}>{billingAddress.phone || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Email:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.email ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.email || '-'}>{billingAddress.email || '-'}</span></div>
+                {billingExpanded ? (
+                  // Show all fields when expanded
+                  <>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Company:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.company ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.company || '-'}>{billingAddress.company || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Attention:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.attention ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.attention || '-'}>{billingAddress.attention || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 1:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.address1 ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.address1 || '-'}>{billingAddress.address1 || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Address 2:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.address2 ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.address2 || '-'}>{billingAddress.address2 || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">City:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.city ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.city || '-'}>{billingAddress.city || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">State/Province:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.state_province ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.state_province || '-'}>{billingAddress.state_province || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Postal Code:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.postal_code ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.postal_code || '-'}>{billingAddress.postal_code || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Country:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.country ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.country || '-'}>{billingAddress.country || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Phone:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.phone ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.phone || '-'}>{billingAddress.phone || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Email:</span> <span className={`text-right truncate max-w-[120px] ${billingAddress.email ? 'text-font-color' : 'text-font-color-100'}`} title={billingAddress.email || '-'}>{billingAddress.email || '-'}</span></div>
+                  </>
+                ) : (
+                  // Show only fields with values when collapsed
+                  getBillingFieldsWithValues().length > 0 ? (
+                    getBillingFieldsWithValues().map(field => (
+                      <div key={field.key} className="flex justify-between items-center py-0.5">
+                        <span className="font-medium text-font-color-100 whitespace-nowrap">{field.label}:</span>
+                        <span className="text-right truncate max-w-[120px] text-font-color" title={field.value}>{field.value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-font-color-100 py-2">No billing address information</div>
+                  )
+                )}
                 </div>
               </CardContent>
             </Card>
@@ -1983,59 +2065,83 @@ export default function OrderPointsPage() {
                   <IconCurrency className="w-3.5 h-3.5" />
                   AMOUNTS
                 </CardTitle>
-                <Button
-                  size="small"
-                  variant="outline"
-                  className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
-                  onClick={openAmountsModal}
-                >
-                  <IconEdit className="h-3 w-3 mr-1" />
-                  Edit...
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    onClick={() => setAmountsExpanded(!amountsExpanded)}
+                  >
+                    <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${amountsExpanded ? 'rotate-180' : ''}`} />
+                    {amountsExpanded ? 'Collapse' : 'Expand'}
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    onClick={openAmountsModal}
+                  >
+                    <IconEdit className="h-3 w-3 mr-1" />
+                    Edit...
+                  </Button>
+                </div>
               </div>
               </CardHeader>
               <CardContent className="p-3">
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">Order Amount:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}`}>{orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
+                {amountsExpanded ? (
+                  // Show all fields when expanded
+                  <>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">Order Amount:</span>
+                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}`}>{orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
                     </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.shipping_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.shipping_handling.toFixed(2)}`}>{amounts.shipping_handling.toFixed(2)}</span>
-                  </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">Sales Taxes:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.sales_tax > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.sales_tax.toFixed(2)}`}>{amounts.sales_tax.toFixed(2)}</span>
-                  </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">Discount/Add. Chgs.:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.international_handling.toFixed(2)}`}>{amounts.international_handling.toFixed(2)}</span>
-                  </div>
-                <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
-                  <span className="text-font-color whitespace-nowrap">Total Amount:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
-                  </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.amount_paid > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.amount_paid.toFixed(2)}`}>{amounts.amount_paid.toFixed(2)}</span>
-                  </div>
-                <div className="flex justify-between items-center py-0.5 border-t-2 border-border-color pt-1 font-bold">
-                  <span className="text-font-color whitespace-nowrap">Net Due:</span>
-                  <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
-                  </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.balance_due_us > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.balance_due_us.toFixed(2)}`}>{amounts.balance_due_us.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">Int. Decl. Value:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_declared_value > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.international_declared_value.toFixed(2)}`}>{amounts.international_declared_value.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between items-center py-0.5">
-                  <span className="font-medium text-font-color-100 whitespace-nowrap">Insurance:</span>
-                  <span className={`font-mono text-right truncate max-w-[120px] ${amounts.insurance > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.insurance.toFixed(2)}`}>{amounts.insurance.toFixed(2)}</span>
-                  </div>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${amounts.shipping_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.shipping_handling.toFixed(2)}`}>{amounts.shipping_handling.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">Sales Taxes:</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${amounts.sales_tax > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.sales_tax.toFixed(2)}`}>{amounts.sales_tax.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">Discount/Add. Chgs.:</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.international_handling.toFixed(2)}`}>{amounts.international_handling.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
+                      <span className="text-font-color whitespace-nowrap">Total Amount:</span>
+                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${amounts.amount_paid > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.amount_paid.toFixed(2)}`}>{amounts.amount_paid.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5 border-t-2 border-border-color pt-1 font-bold">
+                      <span className="text-font-color whitespace-nowrap">Net Due:</span>
+                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${amounts.balance_due_us > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.balance_due_us.toFixed(2)}`}>{amounts.balance_due_us.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">Int. Decl. Value:</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_declared_value > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.international_declared_value.toFixed(2)}`}>{amounts.international_declared_value.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-0.5">
+                      <span className="font-medium text-font-color-100 whitespace-nowrap">Insurance:</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${amounts.insurance > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={`${amounts.insurance.toFixed(2)}`}>{amounts.insurance.toFixed(2)}</span>
+                    </div>
+                  </>
+                ) : (
+                  // Show only fields with non-zero values when collapsed
+                  getAmountsFieldsWithValues().map(field => (
+                    <div key={field.key} className={`flex justify-between items-center py-0.5 ${field.isBold ? 'border-t border-border-color pt-1 font-bold' : ''}`}>
+                      <span className={`whitespace-nowrap ${field.isBold ? 'text-font-color' : 'font-medium text-font-color-100'}`}>{field.label}:</span>
+                      <span className={`font-mono text-right truncate max-w-[120px] ${field.isBold ? 'text-font-color' : 'text-font-color'}`} title={field.value.toFixed(2)}>{field.value.toFixed(2)}</span>
+                    </div>
+                  ))
+                )}
                 </div>
               </CardContent>
             </Card>
@@ -2047,24 +2153,52 @@ export default function OrderPointsPage() {
                   <IconEdit className="w-3.5 h-3.5" />
                   EXTRA FIELDS
                 </CardTitle>
-                <Button
-                  size="small"
-                  variant="outline"
-                  className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
-                  onClick={openExtraFieldsModal}
-                >
-                  <IconEdit className="h-3 w-3 mr-1" />
-                  Edit...
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    onClick={() => setExtraFieldsExpanded(!extraFieldsExpanded)}
+                  >
+                    <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${extraFieldsExpanded ? 'rotate-180' : ''}`} />
+                    {extraFieldsExpanded ? 'Collapse' : 'Expand'}
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    onClick={openExtraFieldsModal}
+                  >
+                    <IconEdit className="h-3 w-3 mr-1" />
+                    Edit...
+                  </Button>
+                </div>
               </div>
               </CardHeader>
               <CardContent className="p-3">
               <div className="space-y-1 text-xs">
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_1}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field1 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field1 || '-'}>{orderHeader.custom_field1 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_2}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field2 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field2 || '-'}>{orderHeader.custom_field2 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_3}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field3 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field3 || '-'}>{orderHeader.custom_field3 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_4}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field4 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field4 || '-'}>{orderHeader.custom_field4 || '-'}</span></div>
-                <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_5}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field5 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field5 || '-'}>{orderHeader.custom_field5 || '-'}</span></div>
+                {extraFieldsExpanded ? (
+                  // Show all fields when expanded
+                  <>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_1}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field1 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field1 || '-'}>{orderHeader.custom_field1 || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_2}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field2 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field2 || '-'}>{orderHeader.custom_field2 || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_3}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field3 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field3 || '-'}>{orderHeader.custom_field3 || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_4}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field4 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field4 || '-'}>{orderHeader.custom_field4 || '-'}</span></div>
+                    <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">{extraLabels.header_cf_5}:</span> <span className={`text-right truncate max-w-[120px] ${orderHeader.custom_field5 ? 'text-font-color' : 'text-font-color-100'}`} title={orderHeader.custom_field5 || '-'}>{orderHeader.custom_field5 || '-'}</span></div>
+                  </>
+                ) : (
+                  // Show only fields with values when collapsed
+                  getExtraFieldsWithValues().length > 0 ? (
+                    getExtraFieldsWithValues().map(field => (
+                      <div key={field.key} className="flex justify-between items-center py-0.5">
+                        <span className="font-medium text-font-color-100 whitespace-nowrap">{field.label}:</span>
+                        <span className="text-right truncate max-w-[120px] text-font-color" title={field.value}>{field.value}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-font-color-100 py-2">No extra fields information</div>
+                  )
+                )}
                 </div>
               </CardContent>
             </Card>
