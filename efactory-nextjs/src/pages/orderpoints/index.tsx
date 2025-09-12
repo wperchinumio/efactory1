@@ -3,6 +3,8 @@ import { useRouter } from 'next/router'
 import dynamic from 'next/dynamic'
 // Styles are imported globally in _app.tsx for reliability
 import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription, ScrollArea, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea, Label, DatePicker } from '@/components/ui'
+import CountryFilterCombobox from '@/components/filters/CountryFilterCombobox'
+import StateFilterCombobox from '@/components/filters/StateFilterCombobox'
 import { toast } from '@/components/ui/use-toast'
 import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconChevronDown, IconFileText, IconShoppingCart, IconMessageCircle, IconCalendar } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
@@ -294,8 +296,8 @@ const EditableDatePicker = ({ value, onChange, placeholder = "Select date", clas
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           className={`
-            w-full pl-2.5 pr-3 py-2 bg-card-color border border-border-color rounded-lg 
-            text-font-color placeholder:text-font-color-100 cursor-text
+            w-full pl-2.5 pr-3 h-8 bg-card-color border border-border-color rounded-lg 
+            text-font-color placeholder:text-font-color-100 cursor-text text-sm
             focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20
             transition-all duration-200 hover:shadow-md
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -321,7 +323,7 @@ const EditableDatePicker = ({ value, onChange, placeholder = "Select date", clas
               <button
                 type="button"
                 onClick={() => navigateMonth(-1)}
-                className="w-8 h-8 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
+                className="w-8 h-9 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
               >
                 <IconChevronLeft className="w-4 h-4 text-font-color" />
               </button>
@@ -335,7 +337,7 @@ const EditableDatePicker = ({ value, onChange, placeholder = "Select date", clas
               <button
                 type="button"
                 onClick={() => navigateMonth(1)}
-                className="w-8 h-8 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
+                className="w-8 h-9 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
               >
                 <IconChevronRight className="w-4 h-4 text-font-color" />
               </button>
@@ -362,7 +364,7 @@ const EditableDatePicker = ({ value, onChange, placeholder = "Select date", clas
                   disabled={!date}
                   onClick={() => date && handleDateSelect(date)}
                   className={`
-                    w-8 h-8 rounded-lg text-[13px] font-medium transition-all duration-200
+                    w-8 h-9 rounded-lg text-[13px] font-medium transition-all duration-200
                     flex items-center justify-center
                     ${!date ? 'invisible' : ''}
                     ${date && isSelected(date)
@@ -415,6 +417,45 @@ export default function OrderPointsPage() {
     if (typeof window !== 'undefined') window.location.href = '/auth/sign-in'
   }
   const router = useRouter()
+
+  // Helper function to check if a required field is empty
+  const isRequiredFieldEmpty = (value: any) => {
+    if (value === null || value === undefined || value === '') return true;
+    if (typeof value === 'string' && value.trim() === '') return true;
+    return false;
+  };
+
+  // Helper function to check if at least one of two fields has a value
+  const hasAtLeastOne = (value1: any, value2: any) => {
+    return !isRequiredFieldEmpty(value1) || !isRequiredFieldEmpty(value2);
+  };
+
+  // Legacy-compliant required field checks
+  const isOrderNumberRequired = () => {
+    // Only required when manual order number generation is enabled
+    // For now, assume it's always required (can be made dynamic later)
+    return true;
+  };
+
+  const isPostalCodeRequired = () => {
+    // Only required for US/CA countries
+    return shippingAddress.country === 'US' || shippingAddress.country === 'CA';
+  };
+
+  const isStateRequired = () => {
+    // Only required for US/CA/AU countries
+    return ['US', 'CA', 'AU'].includes(shippingAddress.country || '');
+  };
+
+  // Clean small red dot component
+  const RequiredDot = ({ show }: { show: boolean }) => (
+    show ? <div className="w-1.5 h-1.5 bg-red-500 rounded-full ml-1"></div> : null
+  );
+
+  // Half dot for "at least one" scenarios
+  const HalfRequiredDot = ({ show }: { show: boolean }) => (
+    show ? <div className="w-1.5 h-1.5 bg-red-500 rounded-full ml-1 opacity-50"></div> : null
+  );
 
 
   const [orderHeader, setOrderHeader] = useState<OrderHeaderDto>({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
@@ -1464,7 +1505,7 @@ export default function OrderPointsPage() {
             <h1 className="text-xl font-semibold text-font-color mb-0.5 flex items-center gap-2">
               OrderPoints - Order Entry
               {hasUnsavedChanges && (
-                <span className="text-xs bg-orange-500 text-white px-2 py-1 rounded">
+                <span className="text-sm bg-orange-500 text-white px-2 py-1 rounded">
                   Unsaved Changes
                 </span>
               )}
@@ -1474,7 +1515,7 @@ export default function OrderPointsPage() {
               {hasUnsavedChanges && <span className="text-orange-500 ml-2">• Unsaved changes detected</span>}
               <button 
                 onClick={() => console.log('Current state:', { hasUnsavedChanges, isInitialized })}
-                className="ml-2 text-xs bg-blue-500 text-white px-2 py-1 rounded"
+                className="ml-2 text-sm bg-blue-500 text-white px-2 py-1 rounded"
               >
                 Debug
               </button>
@@ -1484,7 +1525,8 @@ export default function OrderPointsPage() {
             <Button 
               onClick={onNewOrder} 
               disabled={isPlacingOrder || isSavingDraft}
-              className="bg-primary text-white hover:bg-primary/90 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               New Order
             </Button>
@@ -1492,14 +1534,14 @@ export default function OrderPointsPage() {
               onClick={onSaveDraft} 
               disabled={isSavingDraft || isPlacingOrder}
               variant="outline" 
-              className="border-border-color px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-blue-500 text-blue-600 hover:bg-blue-50 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSavingDraft ? "Saving..." : "Save Draft"}
             </Button>
             <Button 
               onClick={onPlaceOrder} 
               disabled={isPlacingOrder || isSavingDraft}
-              className="bg-success text-white hover:bg-success/90 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPlacingOrder ? "Placing Order..." : "Place Order"}
             </Button>
@@ -1513,10 +1555,10 @@ export default function OrderPointsPage() {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
           <div className="xl:col-span-9 space-y-4">
             {/* Order Header and Shipping Address on same row */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            {/* Order Header */}
-              <Card className="shadow-sm border-border-color">
-                <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+            <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+            {/* Order Header - 40% width (5 columns) */}
+              <Card className="shadow-sm border-border-color xl:col-span-5">
+                <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                 <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                   <IconFileText className="w-3.5 h-3.5" />
                   ORDER HEADER
@@ -1527,9 +1569,12 @@ export default function OrderPointsPage() {
                     {/* Row 1: Account # - Warehouse | Order # */}
                 <div className="grid grid-cols-2 gap-2">
                     <div>
-                        <Label className="text-font-color-100 text-sm">Account # - Warehouse</Label>
+                        <Label className="text-font-color-100 text-sm flex items-center">
+                          Account # - Warehouse
+                          <RequiredDot show={isRequiredFieldEmpty(accountNumberLocation)} />
+                        </Label>
                         <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
-                        <SelectTrigger className={`bg-card-color border-border-color text-font-color h-8 text-sm ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <SelectTrigger className={`bg-card-color border-border-color text-font-color h-9 text-sm mt-1 ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <span className="truncate">
                               {accountDisplayLabel || "Select Account - Warehouse"}
                             </span>
@@ -1547,8 +1592,10 @@ export default function OrderPointsPage() {
                       </Select>
                     </div>
                       <div>
-                        <Label className="text-font-color-100 text-sm">Order #</Label>
-                        <div className="font-mono text-font-color bg-body-color p-1 rounded border border-border-color h-8 text-sm flex items-center">
+                        <Label className="text-font-color-100 text-sm flex items-center">
+                          Order #
+                        </Label>
+                        <div className="font-mono text-font-color bg-body-color p-1 rounded border border-border-color h-9 text-sm flex items-center mt-1">
                           {orderHeader.order_number || '-'}
                   </div>
                       </div>
@@ -1556,18 +1603,24 @@ export default function OrderPointsPage() {
                     
                     {/* Row 2: Customer # | PO # */}
                     <div className="grid grid-cols-2 gap-2">
-                <div>
-                        <Label className="text-font-color-100 text-sm">Customer #</Label>
-                  <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                    <div>
+                        <Label className="text-font-color-100 text-sm flex items-center">
+                          Customer #
+                          <RequiredDot show={isRequiredFieldEmpty(orderHeader.customer_number)} />
+                        </Label>
+                        <Input 
+                          className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
                           value={orderHeader.customer_number || ''} 
                           onChange={e=>{setOrderHeader(p=>({ ...p, customer_number: e.target.value })); markAsChanged()}} 
-                  />
-                </div>
+                        />
+                  </div>
                 <div>
-                  <Label className="text-font-color-100 text-sm">PO #</Label>
+                  <Label className="text-font-color-100 text-sm flex items-center">
+                    PO #
+                    <RequiredDot show={isRequiredFieldEmpty(orderHeader.po_number)} />
+                  </Label>
                   <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                    className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
                     value={orderHeader.po_number || ''} 
                     onChange={e=>{setOrderHeader(p=>({ ...p, po_number: e.target.value })); markAsChanged()}} 
                   />
@@ -1577,9 +1630,12 @@ export default function OrderPointsPage() {
                     {/* Row 3: Order Status | PO Date */}
                     <div className="grid grid-cols-2 gap-2">
                 <div>
-                        <Label className="text-font-color-100 text-sm">Order Status</Label>
+                        <Label className="text-font-color-100 text-sm flex items-center">
+                          Order Status
+                          <RequiredDot show={isRequiredFieldEmpty(orderHeader.order_status)} />
+                        </Label>
                         <Select value={String(orderHeader.order_status ?? 1)} onValueChange={handleOrderStatusChange}>
-                          <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm">
+                          <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1">
                             <span className="truncate">
                               {orderStatusDisplayLabel || "Select Order Status"}
                             </span>
@@ -1594,31 +1650,38 @@ export default function OrderPointsPage() {
                         </Select>
                 </div>
                 <div>
-                        <Label className="text-font-color-100 text-sm">PO Date</Label>
-                  <EditableDatePicker 
+                        <Label className="text-font-color-100 text-sm flex items-center">
+                          PO Date
+                          <RequiredDot show={isRequiredFieldEmpty(orderHeader.ordered_date)} />
+                        </Label>
+                        <EditableDatePicker 
                           value={orderHeader.ordered_date || ''} 
                           onChange={value=>{setOrderHeader(p=>({ ...p, ordered_date: value })); markAsChanged()}} 
                           placeholder="Select PO date"
-                          className="h-8"
-                  />
+                          className="h-8 mt-1"
+                        />
                 </div>
                     </div>
                     
                     {/* Row 4: Shipping Instructions | Comments */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                  <Label className="text-font-color-100 text-sm">Shipping Instructions</Label>
+                  <Label className="text-font-color-100 text-sm flex items-center">
+                    Shipping Instructions
+                  </Label>
                   <Textarea 
-                    className="bg-card-color border-border-color text-font-color text-sm" 
+                    className="bg-card-color border-border-color text-font-color text-sm mt-1" 
                           rows={3} 
                     value={orderHeader.shipping_instructions || ''} 
                     onChange={e=>{setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value })); markAsChanged()}} 
                   />
                 </div>
                       <div>
-                  <Label className="text-font-color-100 text-sm">Comments</Label>
+                  <Label className="text-font-color-100 text-sm flex items-center">
+                    Comments
+                  </Label>
                   <Textarea 
-                    className="bg-card-color border-border-color text-font-color text-sm" 
+                    className="bg-card-color border-border-color text-font-color text-sm mt-1" 
                           rows={3} 
                     value={orderHeader.packing_list_comments || ''} 
                     onChange={e=>{setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value })); markAsChanged()}} 
@@ -1629,26 +1692,27 @@ export default function OrderPointsPage() {
             </CardContent>
           </Card>
 
-              {/* Shipping Address - SAME ROW as Order Header */}
-            <Card className="shadow-sm border-border-color">
-              <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+              {/* Shipping Address - 60% width (7 columns) */}
+            <Card className="shadow-sm border-border-color xl:col-span-7">
+              <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                     <IconTruck className="w-3.5 h-3.5" />
                     SHIPPING ADDRESS
                   </CardTitle>
                 <div className="flex gap-2">
-                    <Button 
+                    <Button
                       size="small" 
-                      variant="outline" 
-                      className="border-border-color text-font-color hover:bg-body-color text-xs px-3 py-1"
+                      variant="outline"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50 text-sm px-3 py-1"
                       onClick={()=>router.push('/orderpoints/addressbook')}
                     >
                       Address Book…
                     </Button>
-                    <Button 
+                    <Button
                       size="small" 
-                      className="bg-primary text-white hover:bg-primary/90 text-xs px-3 py-1"
+                      variant="outline"
+                      className="border-green-500 text-green-600 hover:bg-green-50 text-sm px-3 py-1"
                       onClick={onValidateAddress}
                     >
                       Validate
@@ -1660,17 +1724,23 @@ export default function OrderPointsPage() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-font-color-100 text-sm">Company</Label>
+                    <Label className="text-font-color-100 text-sm flex items-center">
+                      Company
+                      <HalfRequiredDot show={!hasAtLeastOne(shippingAddress.company, shippingAddress.attention)} />
+                    </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                      className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
                       value={shippingAddress.company||''} 
                       onChange={e=>{setShippingAddress({...shippingAddress,company:e.target.value}); markAsChanged()}} 
                     />
                   </div>
                   <div>
-                    <Label className="text-font-color-100 text-sm">Attention</Label>
+                    <Label className="text-font-color-100 text-sm flex items-center">
+                      Attention
+                      <HalfRequiredDot show={!hasAtLeastOne(shippingAddress.company, shippingAddress.attention)} />
+                    </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                      className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
                       value={shippingAddress.attention||''} 
                       onChange={e=>{setShippingAddress({...shippingAddress,attention:e.target.value}); markAsChanged()}} 
                     />
@@ -1678,81 +1748,115 @@ export default function OrderPointsPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-font-color-100 text-sm font-medium">Address 1</Label>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      Address 1
+                      <RequiredDot show={isRequiredFieldEmpty(shippingAddress.address1)} />
+                    </Label>
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                      placeholder="Street address" 
                       value={shippingAddress.address1||''} 
                       onChange={e=>{setShippingAddress({...shippingAddress,address1:e.target.value}); markAsChanged()}} 
                     />
                   </div>
                   <div>
-                    <Label className="text-font-color-100 text-sm font-medium">Address 2</Label>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      Address 2
+                    </Label>
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                      placeholder="Apt, suite, etc." 
                       value={shippingAddress.address2||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-font-color-100 text-sm font-medium">City</Label>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      City
+                      <RequiredDot show={isRequiredFieldEmpty(shippingAddress.city)} />
+                    </Label>
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                      placeholder="City" 
                       value={shippingAddress.city||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
                     />
                   </div>
                   <div>
-                    <Label className="text-font-color-100 text-sm font-medium">State</Label>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      Postal Code
+                      <RequiredDot show={isPostalCodeRequired() && isRequiredFieldEmpty(shippingAddress.postal_code)} />
+                    </Label>
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                      placeholder="State" 
-                      value={shippingAddress.state_province||''} 
-                      onChange={e=>setShippingAddress({...shippingAddress,state_province:e.target.value})} 
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-font-color-100 text-sm font-medium">Postal Code</Label>
-                    <Input 
-                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                      placeholder="ZIP/Postal" 
                       value={shippingAddress.postal_code||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-font-color-100 text-sm font-medium">Country</Label>
-                    <Select value={shippingAddress.country||'US'} onValueChange={(v: string)=>{setShippingAddress({...shippingAddress,country:v}); markAsChanged()}}>
-                      <SelectTrigger className="bg-card-color border-border-color text-font-color h-9 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card-color border-border-color">
-                        <SelectItem value="US" className="text-font-color hover:bg-body-color">United States - US</SelectItem>
-                        <SelectItem value="CA" className="text-font-color hover:bg-body-color">Canada - CA</SelectItem>
-                        <SelectItem value="MX" className="text-font-color hover:bg-body-color">Mexico - MX</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      Country
+                      <RequiredDot show={isRequiredFieldEmpty(shippingAddress.country)} />
+                    </Label>
+                    <div className="mt-1">
+                      <div className="relative">
+                        <CountryFilterCombobox
+                          value={shippingAddress.country || ''}
+                          onValueChange={(v: string) => {
+                            setShippingAddress({...shippingAddress, country: v, state_province: ''}); 
+                            markAsChanged();
+                          }}
+                        />
+                        <style jsx>{`
+                          .relative :global(label) {
+                            display: none !important;
+                          }
+                        `}</style>
+                      </div>
+                    </div>
                   </div>
                   <div>
-                    <Label className="text-font-color-100 text-sm font-medium">Phone</Label>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      State
+                      <RequiredDot show={isStateRequired() && isRequiredFieldEmpty(shippingAddress.state_province)} />
+                    </Label>
+                    <div className="mt-1">
+                      <div className="relative">
+                        <StateFilterCombobox
+                          value={shippingAddress.state_province||''}
+                          onValueChange={(v: string) => {
+                            setShippingAddress({...shippingAddress, state_province: v}); 
+                            markAsChanged();
+                          }}
+                          countryValue={shippingAddress.country || ''}
+                        />
+                        <style jsx>{`
+                          .relative :global(label) {
+                            display: none !important;
+                          }
+                        `}</style>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      Phone
+                    </Label>
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                      placeholder="Phone number" 
                       value={shippingAddress.phone||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,phone:e.target.value})} 
                     />
                   </div>
                   <div>
-                    <Label className="text-font-color-100 text-sm font-medium">Email</Label>
+                    <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                      Email
+                    </Label>
                     <Input 
                       className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
-                      placeholder="Email address" 
                       type="email"
                       value={shippingAddress.email||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,email:e.target.value})} 
@@ -1766,7 +1870,7 @@ export default function OrderPointsPage() {
 
             {/* Items */}
             <Card className="shadow-sm border-border-color">
-              <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+              <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                     <IconShoppingCart className="w-3.5 h-3.5" />
@@ -1775,7 +1879,7 @@ export default function OrderPointsPage() {
                   <div className="flex items-center gap-2">
                     <Input
                       placeholder="Add item…"
-                      className="bg-card-color border-border-color text-font-color w-48 h-8 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="bg-card-color border-border-color text-font-color w-48 h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                       value={findItemValue}
                       onChange={e=>setFindItemValue(e.target.value)}
                       onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
@@ -1783,19 +1887,17 @@ export default function OrderPointsPage() {
                     />
                     <Button 
                       size="small" 
-                      className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      variant="outline"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={onBrowseItems}
                       disabled={isPlacingOrder || isSavingDraft}
                     >
                       Browse Items…
                     </Button>
-                    <Button 
+                    <Button
                       size="small" 
-                      className={`whitespace-nowrap ${
-                        selectedRowsCount > 0 
-                          ? 'bg-red-600 text-white hover:bg-red-700' 
-                          : 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      variant="outline"
+                      className={`whitespace-nowrap border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed`}
                       onClick={onRemoveSelected}
                       disabled={selectedRowsCount === 0 || isPlacingOrder || isSavingDraft}
                     >
@@ -1906,7 +2008,7 @@ export default function OrderPointsPage() {
                                 <Button 
                                   size="small" 
                                   variant="outline" 
-                                  className="text-xs px-2 py-1" 
+                                  className="text-sm px-2 py-1" 
                                   onClick={() => { 
                                     setEditLineIndex(index); 
                                     setEditLineData({ 
@@ -1927,10 +2029,10 @@ export default function OrderPointsPage() {
                                 </Button>
                               )}
                               {isBundleComponent && (
-                                <span className="text-xs text-gray-400">Component</span>
+                                <span className="text-sm text-gray-400">Component</span>
                               )}
                               {isVoided && (
-                                <span className="text-xs text-gray-400">Voided</span>
+                                <span className="text-sm text-gray-400">Voided</span>
                               )}
                             </td>
                           </tr>
@@ -1964,7 +2066,7 @@ export default function OrderPointsPage() {
           {/* Right Sidebar - All 4 panels stacked vertically */}
            <div className="xl:col-span-3 space-y-3">
           <Card className="shadow-sm border-border-color">
-             <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+             <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
               <div className="flex justify-between items-center">
                  <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                    <IconTruck className="w-3.5 h-3.5" />
@@ -1973,7 +2075,7 @@ export default function OrderPointsPage() {
                 <Button
                   size="small"
                   variant="outline"
-                   className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                    onClick={openShippingDetailsModal}
                 >
                   <IconEdit className="h-3 w-3 mr-1" />
@@ -1997,7 +2099,7 @@ export default function OrderPointsPage() {
             </Card>
 
           <Card className="shadow-sm border-border-color">
-            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                   <IconBuilding className="w-3.5 h-3.5" />
@@ -2007,7 +2109,7 @@ export default function OrderPointsPage() {
                   <Button
                     size="small"
                     variant="outline"
-                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                     onClick={() => setBillingExpanded(!billingExpanded)}
                   >
                     <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${billingExpanded ? 'rotate-180' : ''}`} />
@@ -2016,7 +2118,7 @@ export default function OrderPointsPage() {
                   <Button
                     size="small"
                     variant="outline"
-                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                     onClick={openBillingAddressModal}
                   >
                     <IconEdit className="h-3 w-3 mr-1" />
@@ -2059,7 +2161,7 @@ export default function OrderPointsPage() {
             </Card>
 
           <Card className="shadow-sm border-border-color">
-            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                   <IconCurrency className="w-3.5 h-3.5" />
@@ -2069,7 +2171,7 @@ export default function OrderPointsPage() {
                   <Button
                     size="small"
                     variant="outline"
-                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                     onClick={() => setAmountsExpanded(!amountsExpanded)}
                   >
                     <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${amountsExpanded ? 'rotate-180' : ''}`} />
@@ -2078,7 +2180,7 @@ export default function OrderPointsPage() {
                   <Button
                     size="small"
                     variant="outline"
-                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                     onClick={openAmountsModal}
                   >
                     <IconEdit className="h-3 w-3 mr-1" />
@@ -2147,7 +2249,7 @@ export default function OrderPointsPage() {
             </Card>
 
           <Card className="shadow-sm border-border-color">
-            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3">
+            <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                   <IconEdit className="w-3.5 h-3.5" />
@@ -2157,7 +2259,7 @@ export default function OrderPointsPage() {
                   <Button
                     size="small"
                     variant="outline"
-                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                     onClick={() => setExtraFieldsExpanded(!extraFieldsExpanded)}
                   >
                     <IconChevronDown className={`h-3 w-3 mr-1 transition-transform ${extraFieldsExpanded ? 'rotate-180' : ''}`} />
@@ -2166,7 +2268,7 @@ export default function OrderPointsPage() {
                   <Button
                     size="small"
                     variant="outline"
-                    className="text-xs px-2 py-1 h-6 text-gray-600 border-gray-300"
+                    className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                     onClick={openExtraFieldsModal}
                   >
                     <IconEdit className="h-3 w-3 mr-1" />
@@ -2218,7 +2320,7 @@ export default function OrderPointsPage() {
               placeholder="Search by item # or description"
               value={itemFilter}
               onChange={e=>setItemFilter(e.target.value)}
-              className="w-48 h-8 text-sm"
+              className="w-48 h-9 text-sm"
             />
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 text-sm text-font-color whitespace-nowrap">
@@ -2226,7 +2328,7 @@ export default function OrderPointsPage() {
               Show 0 QTY
             </label>
             <Select value={warehouses} onValueChange={setWarehouses}>
-                <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm" style={{ width: '200px' }}>
+                <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" style={{ width: '200px' }}>
                 <SelectValue placeholder="Warehouse: All" />
               </SelectTrigger>
                 <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
@@ -2282,7 +2384,7 @@ export default function OrderPointsPage() {
                         <Input
                           value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
                           onChange={e=>updateInventoryField(it.item_number, 'quantity', e.target.value)}
-                            className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-sm"
+                            className="text-right bg-card-color border-border-color text-font-color w-full h-9 text-sm"
                           type="number"
                           min="0"
                           disabled={formFieldsDisabled}
@@ -2292,7 +2394,7 @@ export default function OrderPointsPage() {
                         <Input
                           value={typeof it.price === 'number' ? String(it.price) : ''}
                           onChange={e=>updateInventoryField(it.item_number, 'price', e.target.value)}
-                            className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-sm"
+                            className="text-right bg-card-color border-border-color text-font-color w-full h-9 text-sm"
                           type="number"
                           step="0.01"
                           min="0"
@@ -2393,31 +2495,26 @@ export default function OrderPointsPage() {
             <div className="grid grid-cols-2 gap-3">
               <Input 
                 className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                placeholder="Address 1" 
                 value={validateResult?.correct_address?.address1||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address1: e.target.value } }))} 
               />
               <Input 
                 className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                placeholder="Address 2" 
                 value={validateResult?.correct_address?.address2||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address2: e.target.value } }))} 
               />
               <Input 
                 className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                placeholder="City" 
                 value={validateResult?.correct_address?.city||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), city: e.target.value } }))} 
               />
               <Input 
                 className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                placeholder="State" 
                 value={validateResult?.correct_address?.state_province||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), state_province: e.target.value } }))} 
               />
               <Input 
                 className="bg-card-color border-border-color text-font-color h-8 text-sm" 
-                placeholder="Postal Code" 
                 value={validateResult?.correct_address?.postal_code||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), postal_code: e.target.value } }))} 
               />
@@ -2578,7 +2675,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Company</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.company || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, company: e.target.value }))}
                 />
@@ -2586,7 +2683,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Attention</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.attention || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, attention: e.target.value }))}
                 />
@@ -2594,7 +2691,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Address 1</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.address1 || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, address1: e.target.value }))}
                 />
@@ -2602,7 +2699,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Address 2</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.address2 || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, address2: e.target.value }))}
                 />
@@ -2610,7 +2707,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">City</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.city || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, city: e.target.value }))}
                 />
@@ -2618,7 +2715,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">State/Province</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.state_province || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, state_province: e.target.value }))}
                 />
@@ -2626,7 +2723,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Postal Code</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.postal_code || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, postal_code: e.target.value }))}
                 />
@@ -2634,7 +2731,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Country</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.country || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, country: e.target.value }))}
                 />
@@ -2642,7 +2739,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Phone</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.phone || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, phone: e.target.value }))}
                 />
@@ -2650,7 +2747,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Email</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
                   value={tempBillingAddress.email || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, email: e.target.value }))}
                 />
