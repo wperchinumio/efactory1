@@ -480,6 +480,7 @@ export default function OrderPointsPage() {
   const [matchedWarehouse, setMatchedWarehouse] = useState('')
   const [searchingItems, setSearchingItems] = useState(false)
   const [browseItemsLoading, setBrowseItemsLoading] = useState(false)
+  const [refreshingInventory, setRefreshingInventory] = useState(false)
   
   // Determine if form fields should be disabled based on warehouse matching
   const formFieldsDisabled = warehouses === '' || 
@@ -1321,17 +1322,38 @@ export default function OrderPointsPage() {
       // Show loading state for search
       setSearchingItems(true)
       
-      // Call API to search for items (no cache)
       try {
+        // Call API to search for items (no cache) - use "starts with" logic
+        const and: any[] = []
+        
+        // Add warehouse filter if available
+        if (warehouses && typeof warehouses === 'string') {
+          const parts = warehouses.split('-')
+          if (parts.length >= 2) {
+            const [inv_region, inv_type] = parts
+            and.push({ field: 'inv_type', oper: '=', value: inv_type })
+            and.push({ field: 'inv_region', oper: '=', value: inv_region })
+          }
+        }
+        
+        and.push({ field: 'omit_zero_qty', oper: '=', value: true })
+        
         const response = await fetchInventoryForCart({
           page_num: 1,
-          page_size: 5,
-          filter: { and: [ { field: 'omit_zero_qty', oper: '=', value: true }, { field: 'name', oper: '=', value: trimmed } ] }
+          page_size: 100, // Get more results to search through
+          filter: { and }
         } as any)
         const rows = response.rows || []
         
-        if (rows.length === 1) {
-          const first = rows[0] as NonNullable<typeof rows[number]>
+        // Filter results to find items that match exactly OR start with the typed text
+        const matches = rows.filter((item: any) => {
+          const itemNumber = item.item_number.toLowerCase()
+          const searchTerm = trimmed.toLowerCase()
+          return itemNumber === searchTerm || itemNumber.startsWith(searchTerm)
+        })
+        
+        if (matches.length === 1) {
+          const first = matches[0]
           
           // Check if item already exists in cart
           const itemExists = orderDetail.some(item => item.item_number === first.item_number && !item.voided)
@@ -1366,24 +1388,10 @@ export default function OrderPointsPage() {
       }
     }
     
-    // Open dialog immediately and load fresh inventory data inside
+    // Open dialog only if no single match found
     setBrowseOpen(true)
-    setBrowseItemsLoading(true)
-    
-    // Add timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      setBrowseItemsLoading(false)
-    }, 10000) // 10 second timeout
-    
-    try {
-      await reloadInventory(1)
-    } catch (error) {
-      console.error('Error loading inventory:', error)
-    } finally {
-      clearTimeout(timeoutId)
-      setBrowseItemsLoading(false)
-    }
   }
+
 
 
   function onRemoveSelected() {
@@ -1532,9 +1540,13 @@ export default function OrderPointsPage() {
     markAsChanged()
   }
 
-  async function reloadInventory(page = currentPage) {
+  async function reloadInventory(page = currentPage, showLoading = false) {
+    if (showLoading) {
+      setRefreshingInventory(true)
+    }
     
-    const and: any[] = []
+    try {
+      const and: any[] = []
     // Warehouse filter
     if (warehouses && typeof warehouses === 'string') {
       const parts = warehouses.split('-')
@@ -1575,6 +1587,13 @@ export default function OrderPointsPage() {
       }
     })
     setInventory(hash)
+    } catch (error) {
+      console.error('Error reloading inventory:', error)
+    } finally {
+      if (showLoading) {
+        setRefreshingInventory(false)
+      }
+    }
   }
 
   // Pagination functions
@@ -1582,7 +1601,7 @@ export default function OrderPointsPage() {
     const totalPages = Math.ceil(totalItems / pageSize)
     const targetPage = Math.max(1, Math.min(page, totalPages))
     if (targetPage !== currentPage) {
-      reloadInventory(targetPage)
+      reloadInventory(targetPage, true)
     }
   }
 
@@ -1591,12 +1610,6 @@ export default function OrderPointsPage() {
   function goToNextPage() { goToPage(currentPage + 1) }
   function goToLastPage() { goToPage(Math.ceil(totalItems / pageSize)) }
 
-  useEffect(()=>{ 
-    if (browseOpen) {
-      setCurrentPage(1)
-      reloadInventory(1) 
-    }
-  }, [browseOpen])
 
   // Debug pagination state
   useEffect(() => {
@@ -1622,44 +1635,48 @@ export default function OrderPointsPage() {
     setOrderStatusDisplayLabel(selectedOption ? selectedOption.label : '');
   }, [orderHeader.order_status]);
 
+  // Load fresh data when dialog opens
+  useEffect(() => {
+    if (browseOpen) {
+      setCurrentPage(1);
+      setItemFilter(''); // Clear any previous search
+      setInventory({}); // Clear previous inventory data
+      reloadInventory(1, true);
+    }
+  }, [browseOpen])
+
   // Handle search input changes with debouncing
   useEffect(() => {
     if (!browseOpen) return;
 
-
-    // If search is empty, reload immediately to show all items
-    if (itemFilter === '') {
-      setCurrentPage(1);
-      reloadInventory(1);
-      return;
-    }
-
     // If search has content, use debounced search
-    const timeoutId = setTimeout(() => {
-      setCurrentPage(1);
-      reloadInventory(1);
-    }, 350);
+    if (itemFilter !== '') {
+      const timeoutId = setTimeout(() => {
+        setCurrentPage(1);
+        reloadInventory(1, true);
+      }, 350);
 
-    return () => {
-      clearTimeout(timeoutId);
-    };
+      return () => {
+        clearTimeout(timeoutId);
+      };
+    }
   }, [itemFilter, browseOpen])
 
   // Handle showZeroQty changes (immediate reload)
   useEffect(() => {
     if (browseOpen) {
       setCurrentPage(1)
-      reloadInventory(1)
+      reloadInventory(1, true)
     }
-  }, [showZeroQty, browseOpen])
+  }, [showZeroQty])
 
   // Handle warehouse changes (immediate reload)
   useEffect(() => {
     if (browseOpen) {
       setCurrentPage(1)
-      reloadInventory(1)
+      reloadInventory(1, true)
     }
-  }, [warehouses, browseOpen])
+  }, [warehouses])
 
   // Load address book when dialog opens
   useEffect(() => {
@@ -2636,9 +2653,17 @@ export default function OrderPointsPage() {
             </Select>
             <Button 
                 className="bg-primary text-white hover:bg-primary/90 whitespace-nowrap"
-              onClick={()=>reloadInventory()}
+              onClick={()=>reloadInventory(1, true)}
+              disabled={refreshingInventory}
             >
-              Refresh
+              {refreshingInventory ? (
+                <div className="flex items-center gap-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent"></div>
+                  <span>Refreshing...</span>
+                </div>
+              ) : (
+                'Refresh'
+              )}
             </Button>
           </div>
           </div>
