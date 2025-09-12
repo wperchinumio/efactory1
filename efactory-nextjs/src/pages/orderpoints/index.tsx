@@ -614,7 +614,6 @@ export default function OrderPointsPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsInitialized(true)
-      console.log('Form initialized, ready to track changes')
     }, 500)
     
     return () => clearTimeout(timer)
@@ -623,7 +622,6 @@ export default function OrderPointsPage() {
   // Handle browser beforeunload event to warn about unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      console.log('Beforeunload triggered, hasUnsavedChanges:', hasUnsavedChanges)
       if (hasUnsavedChanges) {
         e.preventDefault()
         e.returnValue = 'You have made some changes, are you sure to leave?'
@@ -641,7 +639,6 @@ export default function OrderPointsPage() {
   // Handle Next.js router navigation to warn about unsaved changes
   useEffect(() => {
     const handleRouteChange = (url: string) => {
-      console.log('Router navigation attempted to:', url, 'hasUnsavedChanges:', hasUnsavedChanges)
       if (hasUnsavedChanges) {
         const confirmed = window.confirm('You have made some changes, are you sure to leave?')
         if (!confirmed) {
@@ -1349,12 +1346,6 @@ export default function OrderPointsPage() {
       const authToken = JSON.parse(authTokenStr);
       const warehousesData = authToken?.user_data?.warehouses;
       
-      console.log('Warehouse Debug:', { 
-        authToken: !!authToken, 
-        userData: !!authToken?.user_data, 
-        warehouses: warehousesData,
-        warehousesType: typeof warehousesData 
-      });
       
       if (!warehousesData || typeof warehousesData !== 'object') return [];
       
@@ -1376,7 +1367,6 @@ export default function OrderPointsPage() {
         }
       });
       
-      console.log('Warehouse Options Generated:', options);
       return options;
     } catch (error) {
       console.error('Error loading warehouse options:', error);
@@ -1460,7 +1450,6 @@ export default function OrderPointsPage() {
   }
 
   async function reloadInventory(page = currentPage) {
-    console.log('reloadInventory called with:', { page, itemFilter, warehouses, showZeroQty });
     
     const and: any[] = []
     // Warehouse filter
@@ -1477,7 +1466,6 @@ export default function OrderPointsPage() {
       and.push({ field: 'name', oper: 'like', value: `%${itemFilter}%` })
     }
     
-    console.log('Search filters:', and);
 
     const payload: Omit<InventoryStatusForCartBody,'resource'|'action'> = {
       page_num: page,
@@ -1489,7 +1477,6 @@ export default function OrderPointsPage() {
     const rows = response.rows || []
     const total = response.total || 0
     
-    console.log('Inventory API Response:', { total, rowsCount: rows.length, page, pageSize })
     
     setTotalItems(total)
     setCurrentPage(page)
@@ -1530,7 +1517,6 @@ export default function OrderPointsPage() {
 
   // Debug pagination state
   useEffect(() => {
-    console.log('Pagination State:', { totalItems, pageSize, currentPage, showPagination: totalItems > pageSize })
   }, [totalItems, pageSize, currentPage])
 
   // Initialize accountNumberLocation from orderHeader
@@ -1557,26 +1543,21 @@ export default function OrderPointsPage() {
   useEffect(() => {
     if (!browseOpen) return;
 
-    console.log('Search Effect Triggered:', { itemFilter, browseOpen });
 
     // If search is empty, reload immediately to show all items
     if (itemFilter === '') {
-      console.log('Empty search - reloading immediately');
       setCurrentPage(1);
       reloadInventory(1);
       return;
     }
 
     // If search has content, use debounced search
-    console.log('Setting debounced search for:', itemFilter);
     const timeoutId = setTimeout(() => {
-      console.log('Debounced search executing for:', itemFilter);
       setCurrentPage(1);
       reloadInventory(1);
     }, 350);
 
     return () => {
-      console.log('Clearing timeout for:', itemFilter);
       clearTimeout(timeoutId);
     };
   }, [itemFilter, browseOpen])
@@ -1663,7 +1644,7 @@ export default function OrderPointsPage() {
               Create and manage purchase orders
               {hasUnsavedChanges && <span className="text-orange-500 ml-2">• Unsaved changes detected</span>}
               <button 
-                onClick={() => console.log('Current state:', { hasUnsavedChanges, isInitialized })}
+                onClick={() => {}}
                 className="ml-2 text-sm bg-blue-500 text-white px-2 py-1 rounded"
               >
                 Debug
