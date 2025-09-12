@@ -1202,8 +1202,18 @@ export default function OrderPointsPage() {
       state_province: shippingAddress.state_province || '',
       postal_code: shippingAddress.postal_code || ''
     }})
-    setValidateResult(res)
-    setValidateOpen(true)
+    
+    // Only show dialog if there are warnings or errors
+    if (res.warnings || res.errors) {
+      setValidateResult(res)
+      setValidateOpen(true)
+    } else if (res.correct_address) {
+      // Auto-update address on success (no warnings/errors)
+      const corrected = { ...res.correct_address, country: 'US' }
+      setShippingAddress(prev => ({ ...prev, ...corrected }))
+      // Show success toast
+      // Note: You may want to add a toast notification here
+    }
   }
 
   function onAcceptCorrectAddress() {
@@ -2644,40 +2654,128 @@ export default function OrderPointsPage() {
 
       {/* Validate Address Modal */}
       <Dialog open={validateOpen} onOpenChange={setValidateOpen}>
-        <DialogContent style={{ maxWidth: 700 }}>
+        <DialogContent style={{ maxWidth: 800 }}>
           <DialogHeader>
-            <DialogTitle>Validate Address</DialogTitle>
-            <DialogDescription>Review suggested corrections</DialogDescription>
+            <DialogTitle>Address validation</DialogTitle>
+            <DialogDescription>
+              The address verification program has suggested an update to the address you entered. Please{' '}
+              <strong>Accept</strong> the updated address, or <strong>Cancel</strong> to return to the previous page.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {validateResult?.warnings && <div className="text-warning text-sm">Warnings: {JSON.stringify(validateResult.warnings)}</div>}
-            {validateResult?.errors && <div className="text-danger text-sm">Errors: {JSON.stringify(validateResult.errors)}</div>}
-            <div className="grid grid-cols-2 gap-3">
-              <Input 
-                className="h-8 text-sm" 
-                value={validateResult?.correct_address?.address1||''} 
-                onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address1: e.target.value } }))} 
-              />
-              <Input 
-                className="h-8 text-sm" 
-                value={validateResult?.correct_address?.address2||''} 
-                onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address2: e.target.value } }))} 
-              />
-              <Input 
-                className="h-8 text-sm" 
-                value={validateResult?.correct_address?.city||''} 
-                onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), city: e.target.value } }))} 
-              />
-              <Input 
-                className="h-8 text-sm" 
-                value={validateResult?.correct_address?.state_province||''} 
-                onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), state_province: e.target.value } }))} 
-              />
-              <Input 
-                className="h-8 text-sm" 
-                value={validateResult?.correct_address?.postal_code||''} 
-                onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), postal_code: e.target.value } }))} 
-              />
+            <div className="grid grid-cols-2 gap-6">
+              {/* Address As-Entered Column */}
+              <div>
+                <h4 className="text-yellow-500 font-bold mb-4">Address As-Entered</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium">Address 1:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={shippingAddress.address1 || ''} 
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Address 2:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={shippingAddress.address2 || ''} 
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">City:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={shippingAddress.city || ''} 
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">State:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={shippingAddress.state_province || ''} 
+                      disabled
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Postal Code:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={shippingAddress.postal_code || ''} 
+                      disabled
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Updated Address Column */}
+              <div>
+                <h4 className="text-yellow-500 font-bold mb-4">Updated Address</h4>
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium">Address 1:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={validateResult?.correct_address?.address1 || ''} 
+                      onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address1: e.target.value } }))} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Address 2:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={validateResult?.correct_address?.address2 || ''} 
+                      onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address2: e.target.value } }))} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">City:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={validateResult?.correct_address?.city || ''} 
+                      onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), city: e.target.value } }))} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">State:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={validateResult?.correct_address?.state_province || ''} 
+                      onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), state_province: e.target.value } }))} 
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Postal Code:</Label>
+                    <Input 
+                      className="mt-1" 
+                      value={validateResult?.correct_address?.postal_code || ''} 
+                      onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), postal_code: e.target.value } }))} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Messages at Bottom */}
+            <div className="mt-4 space-y-2">
+              {validateResult?.errors && (
+                <div className="text-red-600 font-bold text-sm">
+                  Errors: {Array.isArray(validateResult.errors) ? validateResult.errors.join(', ') : validateResult.errors}
+                </div>
+              )}
+              {validateResult?.warnings && (
+                <div className="text-yellow-600 font-bold text-sm">
+                  Warnings: {Array.isArray(validateResult.warnings) ? validateResult.warnings.join(', ') : validateResult.warnings}
+                </div>
+              )}
+              {!validateResult?.errors && !validateResult?.warnings && (
+                <div className="text-green-600 font-bold text-sm">
+                  Status: VALIDATED_CHANGED
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
@@ -2690,6 +2788,7 @@ export default function OrderPointsPage() {
             </Button>
             <Button 
               className="bg-primary text-white hover:bg-primary/90"
+              disabled={!!validateResult?.errors}
               onClick={onAcceptCorrectAddress}
             >
               Accept
