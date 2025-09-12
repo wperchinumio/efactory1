@@ -452,14 +452,14 @@ export default function OrderPointsPage() {
     return ['US', 'CA', 'AU'].includes(shippingAddress.country || '');
   };
 
-  // Clean small red dot component
+  // Clean red asterisk component
   const RequiredDot = ({ show }: { show: boolean }) => (
-    show ? <div className="w-1.5 h-1.5 bg-red-500 rounded-full ml-1"></div> : null
+    show ? <span className="text-red-500 ml-1">*</span> : null
   );
 
-  // Half dot for "at least one" scenarios
+  // Half asterisk for "at least one" scenarios
   const HalfRequiredDot = ({ show }: { show: boolean }) => (
-    show ? <div className="w-1.5 h-1.5 bg-red-500 rounded-full ml-1 opacity-50"></div> : null
+    show ? <span className="text-red-500 ml-1 opacity-50">*</span> : null
   );
 
 

@@ -3,13 +3,20 @@ import { useRouter } from 'next/router';
 import { getAuthState } from '@/lib/auth/guards';
 import Button from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
-import { Input, Label, Tabs, TabsList, TabsTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, Textarea, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui';
+import { Input, Label, Tabs, TabsList, TabsTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Textarea, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui';
+import BrowseItemsDialog from '@/components/common/BrowseItemsDialog';
+import CountryFilterCombobox from '@/components/filters/CountryFilterCombobox';
+import StateFilterCombobox from '@/components/filters/StateFilterCombobox';
+import { toast } from '@/components/ui/use-toast';
 import { IconFileText, IconTruck, IconPackage, IconCurrency, IconSettings, IconEdit, IconChevronDown } from '@tabler/icons-react';
 import {
   readReturnTrakSettings,
   generateRmaNumber,
   saveRma,
+  fetchInventoryForCart,
+  validateAddress,
 } from '@/services/api';
+import { returntrakInventoryCache } from '@/services/returntrakInventoryCache';
 import type {
   AddressDto,
   RmaAuthItemDto,
@@ -24,6 +31,7 @@ export default function ReturnTrakEntryPage() {
   const auth = getAuthState();
   if (!auth.isAuthenticated) {
     if (typeof window !== 'undefined') window.location.href = '/auth/sign-in';
+    return null;
   }
   const router = useRouter();
 
@@ -70,7 +78,6 @@ export default function ReturnTrakEntryPage() {
   const [toReceive, setToReceive] = useState<RmaAuthItemDto[]>([]);
   const [toShip, setToShip] = useState<RmaShipItemDto[]>([]);
   const [findItemValue, setFindItemValue] = useState('');
-  const [browseOpen, setBrowseOpen] = useState(false);
   const [warehousesValue, setWarehousesValue] = useState('');
 
   // Panel states for expand/collapse functionality
@@ -81,6 +88,9 @@ export default function ReturnTrakEntryPage() {
   const [showShippingModal, setShowShippingModal] = useState(false);
   const [showAmountsModal, setShowAmountsModal] = useState(false);
   const [showOthersModal, setShowOthersModal] = useState(false);
+  const [showBrowseItemsModal, setShowBrowseItemsModal] = useState(false);
+  const [validateOpen, setValidateOpen] = useState(false);
+  const [validateResult, setValidateResult] = useState<any>(null);
 
   // Derived: accounts list from authToken (calc_account_regions)
   const accountsMap = useMemo(() => {
@@ -95,7 +105,17 @@ export default function ReturnTrakEntryPage() {
     }
   }, []);
 
-  const accountOptions = useMemo(() => Object.entries(accountsMap).map(([value, label]) => ({ value, label })), [accountsMap]);
+  const accountOptions = useMemo(() => Object.entries(accountsMap).map(([value, label]) => ({ value, label: String(label) })), [accountsMap]);
+
+  // Auto-select first account if only one option available (like legacy)
+  useEffect(() => {
+    if (accountOptions.length === 1 && !accountReceivingWarehouse) {
+      setAccountReceivingWarehouse(accountOptions[0]?.value || '');
+    }
+    if (accountOptions.length === 1 && !accountShippingWarehouse) {
+      setAccountShippingWarehouse(accountOptions[0]?.value || '');
+    }
+  }, [accountOptions, accountReceivingWarehouse, accountShippingWarehouse]);
 
   const isToShipEnabled = useMemo(() => {
     if (!rmaType || !rmaSettings) return false;
@@ -136,12 +156,17 @@ export default function ReturnTrakEntryPage() {
       detail_id: 0,
       line_number: newLine,
       item_number,
-      description,
-      quantity: 1,
+      description: description ?? '',
+      quantity: 0, // Start with 0 as per legacy
       serialnumber: '',
       voided: false,
     };
     setToReceive(prev => [...prev, item]);
+    
+    // If RMA type requires both receive and ship (like T1), also add to ship
+    if (isToShipEnabled) {
+      addShipItem(item_number, description);
+    }
   }
 
   function addShipItem(item_number: string, description?: string) {
@@ -151,8 +176,8 @@ export default function ReturnTrakEntryPage() {
       detail_id: 0,
       line_number: newLine,
       item_number,
-      description,
-      quantity: 1,
+      description: description ?? '',
+      quantity: 0, // Start with 0 as per legacy
       unit_price: '0.00',
       voided: false,
     };
@@ -190,7 +215,47 @@ export default function ReturnTrakEntryPage() {
       setFindItemValue('');
       return;
     }
-    setBrowseOpen(true);
+    openBrowseItemsModal();
+  }
+
+  // Address validation function (matching OrderPoints)
+  async function onValidateAddress() {
+    const res = await validateAddress({ action: 'validate_address', data: {
+      address1: shippingAddress.address1 || '',
+      address2: shippingAddress.address2 || '',
+      city: shippingAddress.city || '',
+      state_province: shippingAddress.state_province || '',
+      postal_code: shippingAddress.postal_code || ''
+    }})
+    
+    // Only show dialog if there are warnings or errors
+    if (res.warnings || res.errors) {
+      setValidateResult(res)
+      setValidateOpen(true)
+    } else if (res.correct_address) {
+      // Auto-update address on success (no warnings/errors)
+      const corrected = { ...res.correct_address, country: 'US' }
+      setShippingAddress(prev => ({ ...prev, ...corrected }))
+      // Show success toast (matching legacy behavior)
+      toast({
+        title: 'Address Validated Successfully!',
+        description: 'The address has been validated and updated automatically.',
+        variant: 'success'
+      })
+    }
+  }
+
+  function onAcceptCorrectAddress() {
+    if (validateResult?.correct_address) {
+      const corrected = { ...validateResult.correct_address, country: 'US' }
+      setShippingAddress(prev => ({ ...prev, ...corrected }))
+      setValidateOpen(false)
+      setValidateResult(null)
+    }
+  }
+
+  function canValidateAddress() {
+    return !!(shippingAddress.address1?.trim() && shippingAddress.city?.trim() && shippingAddress.state_province?.trim() && shippingAddress.postal_code?.trim())
   }
 
   async function onPlaceRma(to_draft: boolean) {
@@ -199,9 +264,9 @@ export default function ReturnTrakEntryPage() {
       to_draft ? setSavingDraft(true) : setPlacing(true);
       const header: RmaHeaderSaveDto = {
         is_draft: to_draft,
-        rma_number: rmaNumber || undefined,
-        rma_type_code: rmaType || undefined,
-        disposition_code: disposition || undefined,
+        rma_number: rmaNumber || '',
+        rma_type_code: rmaType || '',
+        disposition_code: disposition || '',
         // Map account selections like legacy: "12345.WH1" => parts
         ...(accountReceivingWarehouse
           ? {
@@ -305,6 +370,141 @@ export default function ReturnTrakEntryPage() {
   function openOthersModal() {
     setShowOthersModal(true);
   }
+  
+  // Browse Items handlers
+  function openBrowseItemsModal() {
+    setShowBrowseItemsModal(true);
+  }
+  
+  function handleAddItemsToCart(items: any[]) {
+    // Add items to the appropriate cart based on activeCartTab
+    if (activeCartTab === 'auth') {
+      setToReceive(prev => [...prev, ...items.map(item => ({
+        ...item,
+        line_number: prev.length + 1,
+        item_number: item.item_number,
+        description: item.description,
+        quantity: item.quantity || 1,
+        price: item.price || 0,
+        qty_net: item.qty_net || 0,
+        // Add other required fields for RmaAuthItemDto
+      }))]);
+    } else {
+      setToShip(prev => [...prev, ...items.map(item => ({
+        ...item,
+        line_number: prev.length + 1,
+        item_number: item.item_number,
+        description: item.description,
+        quantity: item.quantity || 1,
+        price: item.price || 0,
+        qty_net: item.qty_net || 0,
+        // Add other required fields for RmaShipItemDto
+      }))]);
+    }
+  }
+  
+  // Get the appropriate warehouse based on active tab
+  function getCurrentWarehouse() {
+    if (activeCartTab === 'auth') {
+      return accountReceivingWarehouse || '';
+    } else {
+      return accountShippingWarehouse || '';
+    }
+  }
+  
+  // Check if we have a valid warehouse for the current tab
+  function hasValidWarehouse() {
+    const warehouse = getCurrentWarehouse();
+    return warehouse && warehouse.trim() !== '';
+  }
+
+  // Always enable Browse Items (as requested by user)
+  function shouldEnableBrowseItems() {
+    return true; // Always enabled as per user request
+  }
+  
+  // Auto-add functionality for "Add item" input
+  async function handleAddItemAuto() {
+    if (!findItemValue.trim() || !getCurrentWarehouse()) return;
+    
+    const trimmed = findItemValue.trim();
+    const matchedWarehouse = getCurrentWarehouse();
+    const cacheType = activeCartTab as 'auth' | 'ship';
+    
+    try {
+      // Check if we have valid cache first
+      if (returntrakInventoryCache.hasValidCache(matchedWarehouse, cacheType)) {
+        const matches = returntrakInventoryCache.searchInCache(matchedWarehouse, trimmed, cacheType);
+        
+        if (matches.length === 1) {
+          const item = matches[0];
+          if (!item) return;
+          
+          // Check if item already exists in current cart
+          const existingItems = activeCartTab === 'auth' ? toReceive : toShip;
+          const alreadyExists = existingItems.some(existing => 
+            existing.item_number === item.item_number && !existing.voided
+          );
+          
+          if (!alreadyExists) {
+            if (activeCartTab === 'auth') {
+              addAuthItem(item.item_number, item.description);
+            } else {
+              addShipItem(item.item_number, item.description);
+            }
+            
+            setFindItemValue('');
+          }
+        } else if (matches.length > 1) {
+          // Multiple matches, open browse dialog
+          openBrowseItemsModal();
+        } else {
+          // No matches, open browse dialog
+          openBrowseItemsModal();
+        }
+        return;
+      }
+      
+      // No valid cache, fetch fresh data
+      const data = await returntrakInventoryCache.getInventoryData(matchedWarehouse, cacheType, false);
+      
+      // Filter items that start with the search term (SKU only)
+      const matchingItems = data.filter((item: any) => 
+        item.item_number.toLowerCase().startsWith(trimmed.toLowerCase())
+      );
+      
+      if (matchingItems.length === 1) {
+        const item = matchingItems[0];
+        if (!item) return;
+        
+        // Check if item already exists in current cart
+        const existingItems = activeCartTab === 'auth' ? toReceive : toShip;
+        const alreadyExists = existingItems.some(existing => 
+          existing.item_number === item.item_number && !existing.voided
+        );
+        
+        if (!alreadyExists) {
+          if (activeCartTab === 'auth') {
+            addAuthItem(item.item_number, item.description);
+          } else {
+            addShipItem(item.item_number, item.description);
+          }
+          
+          setFindItemValue('');
+        }
+      } else if (matchingItems.length > 1) {
+        // Multiple matches, open browse dialog
+        openBrowseItemsModal();
+      } else {
+        // No matches, open browse dialog
+        openBrowseItemsModal();
+      }
+    } catch (error) {
+      console.error('Failed to search items:', error);
+      // On error, open browse dialog
+      openBrowseItemsModal();
+    }
+  }
 
   return (
     <div className="min-h-screen bg-body-color">
@@ -312,28 +512,28 @@ export default function ReturnTrakEntryPage() {
       <div className="bg-card-color border-b border-border-color">
         <div className="w-full max-w-7xl mx-auto px-6 py-4" style={{ maxWidth: '1600px' }}>
           <div className="flex items-center justify-between">
-            <div>
+        <div>
               <h1 className="text-xl font-semibold text-font-color">ReturnTrak - RMA Entry</h1>
               <p className="text-sm text-font-color-100 mt-1">Create and manage RMAs</p>
-            </div>
+        </div>
             <div className="flex items-center gap-3">
               <Button 
                 variant="outline" 
-                size="sm" 
+                size="small" 
                 onClick={() => onPlaceRma(true)} 
                 disabled={savingDraft || placing}
                 className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2"
               >
                 {savingDraft ? "Saving..." : "Save Draft"}
-              </Button>
+          </Button>
               <Button 
-                size="sm" 
+                size="small" 
                 onClick={() => onPlaceRma(false)} 
                 disabled={placing || !rmaType || !accountReceivingWarehouse}
                 className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {placing ? "Placing RMA..." : "Place RMA"}
-              </Button>
+          </Button>
             </div>
           </div>
         </div>
@@ -356,40 +556,41 @@ export default function ReturnTrakEntryPage() {
                       NEW RMA
                     </div>
                   </CardTitle>
-                </CardHeader>
+            </CardHeader>
                 <CardContent className="p-3">
                   <div className="space-y-3">
                     {/* Row 1: Account # - RMA WH | RMA Type */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Account # - RMA WH
                         </Label>
-                        <Select value={accountReceivingWarehouse} onValueChange={setAccountReceivingWarehouse}>
+                  <Select value={accountReceivingWarehouse} onValueChange={setAccountReceivingWarehouse}>
                           <SelectTrigger className="h-9 text-sm mt-1">
                             <span className={`truncate ${accountReceivingWarehouse ? 'font-medium' : ''}`}>
-                              {accountOptions.find(opt => opt.value === accountReceivingWarehouse)?.label || ""}
+                              {accountOptions.find(opt => opt.value === accountReceivingWarehouse)?.label ?? "Select..."}
                             </span>
                           </SelectTrigger>
                           <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
+                              <span className="text-gray-400">Select...</span>
                             </SelectItem>
-                            {accountOptions.map(opt => (
+                            {accountOptions.length > 0 ? accountOptions.map(opt => (
                               <SelectItem key={opt.value} value={opt.value} className="text-font-color hover:bg-body-color">
-                                <span className="whitespace-nowrap">{opt.label}</span>
+                                <span className="whitespace-nowrap">{String(opt.label)}</span>
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
+                            )) : null}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           RMA Type
                         </Label>
-                        <Select value={rmaType} onValueChange={(v) => {
-                          setRmaType(v);
-                          setDisposition('');
-                        }}>
+                  <Select value={rmaType} onValueChange={(v) => {
+                    setRmaType(v);
+                    setDisposition('');
+                  }}>
                           <SelectTrigger className="h-9 text-sm mt-1">
                             <span className={`truncate ${rmaType ? 'font-medium' : ''}`}>
                               {rmaSettings?.rma_types?.find(t => t.code === rmaType) ? 
@@ -400,45 +601,47 @@ export default function ReturnTrakEntryPage() {
                           </SelectTrigger>
                           <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
+                              <span className="text-gray-400">Select...</span>
                             </SelectItem>
-                            {(rmaSettings?.rma_types || []).map(t => (
+                      {(rmaSettings?.rma_types || []).map(t => (
                               <SelectItem key={t.code} value={t.code} className="text-font-color hover:bg-body-color">
                                 <span className="whitespace-nowrap">{`${t.code} - ${t.title}`}</span>
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
                     {/* Row 2: Account # - Ship WH | Disposition */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Account # - Ship WH
                         </Label>
-                        <Select value={accountShippingWarehouse} onValueChange={setAccountShippingWarehouse}>
+                  <Select value={accountShippingWarehouse} onValueChange={setAccountShippingWarehouse}>
                           <SelectTrigger className="h-9 text-sm mt-1" disabled={!isToShipEnabled}>
                             <span className={`truncate ${accountShippingWarehouse ? 'font-medium' : ''}`}>
-                              {accountOptions.find(opt => opt.value === accountShippingWarehouse)?.label || ""}
+                              {accountOptions.find(opt => opt.value === accountShippingWarehouse)?.label ?? "Select..."}
                             </span>
                           </SelectTrigger>
                           <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
+                              <span className="text-gray-400">Select...</span>
                             </SelectItem>
-                            {accountOptions.map(opt => (
+                            {accountOptions.length > 0 ? accountOptions.map(opt => (
                               <SelectItem key={opt.value} value={opt.value} className="text-font-color hover:bg-body-color">
-                                <span className="whitespace-nowrap">{opt.label}</span>
+                                <span className="whitespace-nowrap">{String(opt.label)}</span>
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
+                            )) : null}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Disposition
                         </Label>
-                        <Select value={disposition} onValueChange={setDisposition}>
+                  <Select value={disposition} onValueChange={setDisposition}>
                           <SelectTrigger className="h-9 text-sm mt-1" disabled={!rmaType}>
                             <span className={`truncate ${disposition ? 'font-medium' : ''}`}>
                               {rmaSettings?.dispositions?.find(d => d.code === disposition) ? 
@@ -449,20 +652,21 @@ export default function ReturnTrakEntryPage() {
                           </SelectTrigger>
                           <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
+                              <span className="text-gray-400">Select...</span>
                             </SelectItem>
-                            {(rmaSettings?.dispositions || []).map(d => (
+                      {(rmaSettings?.dispositions || []).map(d => (
                               <SelectItem key={d.code} value={d.code} className="text-font-color hover:bg-body-color">
                                 <span className="whitespace-nowrap">{`${d.code} - ${d.title}`}</span>
                               </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
                     {/* Row 3: RMA # | Place of Purchase */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div>
+                <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           RMA #
                         </Label>
@@ -502,8 +706,8 @@ export default function ReturnTrakEntryPage() {
                             value={rmaNumber || ''} 
                             onChange={e => setRmaNumber(e.target.value)} 
                           />
-                        )}
-                      </div>
+                    )}
+                  </div>
                       <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Place of Purchase
@@ -511,11 +715,12 @@ export default function ReturnTrakEntryPage() {
                         <Select value={options.place_of_purchase || ''} onValueChange={v => setOptions(prev => ({ ...prev, place_of_purchase: v }))}>
                           <SelectTrigger className="h-9 text-sm mt-1">
                             <span className={`truncate ${options.place_of_purchase ? 'font-medium' : ''}`}>
-                              {options.place_of_purchase || ""}
+                              {options.place_of_purchase ?? "Select..."}
                             </span>
                           </SelectTrigger>
                           <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
+                              <span className="text-gray-400">Select...</span>
                             </SelectItem>
                             <SelectItem value="Online" className="text-font-color hover:bg-body-color">
                               <span className="whitespace-nowrap">Online</span>
@@ -528,52 +733,55 @@ export default function ReturnTrakEntryPage() {
                             </SelectItem>
                           </SelectContent>
                         </Select>
-                      </div>
+                </div>
                     </div>
 
                     {/* Custom fields (all) */}
                     {(rmaSettings?.custom_fields || []).length > 0 && (
                       <div className="space-y-2">
                         {(rmaSettings?.custom_fields || []).map(cf => (
-                          <div key={cf.index}>
+                    <div key={cf.index}>
                             <Label className="text-font-color-100 text-sm flex items-center">
                               {cf.title}:
                               {cf.required && <span className="text-red-500 ml-1">*</span>}
                             </Label>
-                            {cf.type === 'text' ? (
+                      {cf.type === 'text' ? (
                               <Input 
                                 className="h-8 text-sm mt-1" 
                                 value={options[`option${cf.index}`] || ''} 
                                 onChange={e=>setOptions(prev=>({ ...prev, [`option${cf.index}`]: e.target.value }))} 
                               />
-                            ) : (
-                              <Select value={options[`option${cf.index}`] || ''} onValueChange={v=>setOptions(prev=>({ ...prev, [`option${cf.index}`]: v }))}>
+                      ) : (
+                        <Select value={options[`option${cf.index}`] || ''} onValueChange={v=>setOptions(prev=>({ ...prev, [`option${cf.index}`]: v }))}>
                                 <SelectTrigger className="h-8 text-sm mt-1">
                                   <span className={`truncate ${options[`option${cf.index}`] ? 'font-medium' : ''}`}>
-                                    {options[`option${cf.index}`] || ""}
+                                    {options[`option${cf.index}`] ?? "Select..."}
                                   </span>
                                 </SelectTrigger>
                                 <SelectContent className="bg-card-color border-border-color">
                                   <SelectItem value="" className="text-font-color hover:bg-body-color">
+                                    <span className="text-gray-400">Select...</span>
                                   </SelectItem>
-                                  {(cf.list || []).map(item => {
-                                    const [val, label] = item.includes('||') ? item.split('||') : [item, item];
+                            {(cf.list || []).map(item => {
+                              const [val, label] = item.includes('||') ? item.split('||') : [item, item];
+                              const safeVal = val || '';
+                              const safeLabel = label || '';
                                     return (
-                                      <SelectItem key={val} value={val} className="text-font-color hover:bg-body-color">
-                                        <span className="whitespace-nowrap">{label}</span>
+                                      <SelectItem key={safeVal} value={safeVal} className="text-font-color hover:bg-body-color">
+                                        <span className="whitespace-nowrap">{safeLabel}</span>
                                       </SelectItem>
                                     )
-                                  })}
-                                </SelectContent>
-                              </Select>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                            })}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  ))}
+                </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
+              </div>
+            </CardContent>
+          </Card>
 
               {/* RMA Address - 60% width (7 columns) */}
               <Card className="shadow-sm border-border-color xl:col-span-7">
@@ -584,11 +792,11 @@ export default function ReturnTrakEntryPage() {
                       RMA ADDRESS
                     </CardTitle>
                   </div>
-                </CardHeader>
+            </CardHeader>
                 <CardContent className="p-3">
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Company
                         </Label>
@@ -597,8 +805,8 @@ export default function ReturnTrakEntryPage() {
                           value={shippingAddress.company||''} 
                           onChange={e=>setShippingAddress({...shippingAddress,company:e.target.value})} 
                         />
-                      </div>
-                      <div>
+                </div>
+                <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Attention
                         </Label>
@@ -607,10 +815,10 @@ export default function ReturnTrakEntryPage() {
                           value={shippingAddress.attention||''} 
                           onChange={e=>setShippingAddress({...shippingAddress,attention:e.target.value})} 
                         />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Address 1
                         </Label>
@@ -619,8 +827,8 @@ export default function ReturnTrakEntryPage() {
                           value={shippingAddress.address1||''} 
                           onChange={e=>setShippingAddress({...shippingAddress,address1:e.target.value})} 
                         />
-                      </div>
-                      <div>
+                </div>
+                <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Address 2
                         </Label>
@@ -629,10 +837,10 @@ export default function ReturnTrakEntryPage() {
                           value={shippingAddress.address2||''} 
                           onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
                         />
-                      </div>
-                    </div>
+                </div>
+              </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <div>
+                <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           City
                         </Label>
@@ -641,20 +849,8 @@ export default function ReturnTrakEntryPage() {
                           value={shippingAddress.city||''} 
                           onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
                         />
-                      </div>
-                      <div>
-                        <Label className="text-font-color-100 text-sm font-medium flex items-center">
-                          State
-                        </Label>
-                        <Input 
-                          className="h-8 text-sm mt-1" 
-                          value={shippingAddress.state_province||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,state_province:e.target.value})} 
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                </div>
+                <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Postal Code
                         </Label>
@@ -663,20 +859,55 @@ export default function ReturnTrakEntryPage() {
                           value={shippingAddress.postal_code||''} 
                           onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
                         />
-                      </div>
-                      <div>
+                </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Country
                         </Label>
-                        <Input 
-                          className="h-8 text-sm mt-1" 
-                          value={shippingAddress.country||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,country:e.target.value})} 
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
+                        <div className="mt-1">
+                          <div className="relative">
+                            <CountryFilterCombobox
+                              value={shippingAddress.country || ''}
+                              onValueChange={(v: string) => {
+                                setShippingAddress({...shippingAddress, country: v, state_province: ''});
+                              }}
+                              boldWhenSelected={true}
+                            />
+                            <style jsx>{`
+                              .relative :global(label) {
+                                display: none !important;
+                              }
+                            `}</style>
+                          </div>
+                        </div>
+                </div>
+                <div>
+                        <Label className="text-font-color-100 text-sm font-medium flex items-center">
+                          State
+                        </Label>
+                        <div className="mt-1">
+                          <div className="relative">
+                            <StateFilterCombobox
+                              value={shippingAddress.state_province||''}
+                              onValueChange={(v: string) => {
+                                setShippingAddress({...shippingAddress, state_province: v});
+                              }}
+                              countryValue={shippingAddress.country || ''}
+                              boldWhenSelected={true}
+                            />
+                            <style jsx>{`
+                              .relative :global(label) {
+                                display: none !important;
+                              }
+                            `}</style>
+                          </div>
+                        </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Phone
                         </Label>
@@ -685,8 +916,8 @@ export default function ReturnTrakEntryPage() {
                           value={shippingAddress.phone||''} 
                           onChange={e=>setShippingAddress({...shippingAddress,phone:e.target.value})} 
                         />
-                      </div>
-                      <div>
+                </div>
+                <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Email
                         </Label>
@@ -697,130 +928,184 @@ export default function ReturnTrakEntryPage() {
                         />
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="flex justify-end pt-2">
+                      <Button
+                        size="small" 
+                        variant="outline"
+                        className="border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-green-500 disabled:hover:text-green-600 text-sm px-3 py-1"
+                        onClick={onValidateAddress}
+                        disabled={!canValidateAddress()}
+                      >
+                        Validate Address
+                      </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
             </div>
 
-            {/* Items cart */}
+          {/* Items cart */}
             <Card className="shadow-sm border-border-color">
               <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
-                <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
-                  <IconPackage className="w-3.5 h-3.5" />
-                  ITEMS
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-3">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Add item…"
-                      value={findItemValue}
-                      onChange={e=>setFindItemValue(e.target.value)}
-                      onKeyDown={e=>{ if (e.key==='Enter') onAddItem() }}
-                      className="h-9 text-sm w-48 sm:w-64 md:w-72 lg:w-80 xl:w-96"
-                    />
-                    <div className="hidden sm:block" />
-                    <Tabs value={activeCartTab} onValueChange={v=>setActiveCartTab(v as any)}>
-                      <TabsList className="h-9">
-                        <TabsTrigger value="auth" className="text-sm px-3">Auth</TabsTrigger>
-                        <TabsTrigger value="ship" disabled={!isToShipEnabled} className="text-sm px-3">To Ship</TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                    <div className="flex-1" />
-                    <Button variant="outline" size="sm" onClick={()=>setBrowseOpen(true)} className="text-sm px-3 py-2">
-                      Browse Items…
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
+                    <IconPackage className="w-3.5 h-3.5" />
+                    ITEMS
+                  </CardTitle>
+              <div className="flex items-center gap-2">
+                    <div className="relative w-48 sm:w-64 md:w-72 lg:w-80 xl:w-96">
+                <Input
+                  placeholder="Add item…"
+                        className="h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed w-full"
+                  value={findItemValue}
+                  onChange={e=>setFindItemValue(e.target.value)}
+                        onKeyDown={e=>{ if (e.key==='Enter') handleAddItemAuto() }}
+                        disabled={!hasValidWarehouse()}
+                />
+                    </div>
+                <Tabs value={activeCartTab} onValueChange={v=>setActiveCartTab(v as any)}>
+                      <TabsList className="h-8">
+                        <TabsTrigger value="auth" className="text-xs px-3">Auth</TabsTrigger>
+                        <TabsTrigger value="ship" disabled={!isToShipEnabled} className="text-xs px-3">To Ship</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+           <Button
+             size="small"
+             variant="outline"
+             className="border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+             onClick={openBrowseItemsModal}
+             disabled={!shouldEnableBrowseItems()}
+           >
+             Browse Items…
+           </Button>
+                    <Button
+                      size="small"
+                      variant="outline"
+                      className="whitespace-nowrap border-red-500 text-red-600 hover:!bg-red-50 hover:!border-red-600 hover:!text-red-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!bg-transparent disabled:hover:!border-red-500 disabled:hover:!text-red-600 transition-colors duration-200"
+                      disabled={true}
+                    >
+                      Remove selected
                     </Button>
-                  </div>
-
-                  {/* Simple table like OrderPoints items */}
-                  <div className="border border-border-color rounded-md overflow-hidden">
-                    <table className="w-full text-xs">
-                      <thead className="bg-muted/50">
-                        <tr>
+              </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-4">
+                <div className="overflow-x-auto">
+                  {toReceive.length === 0 && toShip.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      No items in cart
+                    </div>
+                  ) : (
+                    <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
                           <th className="text-left p-2 font-medium text-font-color-100">#</th>
                           <th className="text-left p-2 font-medium text-font-color-100">Item # / Description</th>
-                          <th className="text-right p-2 font-medium text-font-color-100">Auth Qty</th>
+                          <th className="text-right p-2 font-medium text-font-color-100">Auth.<br/>Qty</th>
+                          <th className="text-center p-2 font-medium text-font-color-100">Auth.<br/>Serial #</th>
                           <th className="text-right p-2 font-medium text-font-color-100">Ship Qty</th>
                           <th className="text-right p-2 font-medium text-font-color-100">Unit Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {toReceive.map((row, idx) => (
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {toReceive.map((row, idx) => (
                           <tr key={`auth-${row.item_number}-${row.line_number}`} className="border-t border-border-color hover:bg-body-color/30">
-                            <td className="p-2 text-font-color-100">{idx+1}</td>
-                            <td className="p-2">
-                              <div className="font-medium text-font-color">{row.item_number}</div>
-                              <div className="text-[11px] text-font-color-100">{row.description}</div>
+                            <td className="p-2 text-font-color-100">
+                              <div className="flex items-center gap-2">
+                                <span>{idx+1}</span>
+                                <div className="text-red-500 text-lg">↓</div>
+                              </div>
                             </td>
-                            <td className="p-2 text-right">
-                              <Input
+                        <td className="p-2">
+                              <div className="font-medium text-font-color">{row.item_number}</div>
+                          <div className="text-[11px] text-font-color-100">{row.description}</div>
+                        </td>
+                        <td className="p-2 text-right">
+                          <Input
                                 className="w-20 text-right h-7 text-xs"
-                                value={String(row.quantity)}
-                                onChange={e=>{
-                                  const val = Math.max(0, parseInt(e.target.value || '0', 10));
-                                  setToReceive(prev => prev.map(r => r.line_number===row.line_number?{...r, quantity: val}:r));
-                                  // If To Ship enabled, sync total quantity per item
-                                  const totalForItem = val + prevSumForItem(row.item_number, row.line_number);
-                                  if (isToShipEnabled) {
-                                    setToShip(prev => {
-                                      const idxShip = prev.findIndex(s => s.item_number === row.item_number);
-                                      if (idxShip >= 0) {
-                                        const clone = [...prev];
-                                        clone[idxShip] = { ...clone[idxShip], quantity: totalForItem };
-                                        return clone;
-                                      }
-                                      return prev;
-                                    });
+                            value={String(row.quantity)}
+                            onChange={e=>{
+                              const val = Math.max(0, parseInt(e.target.value || '0', 10));
+                              setToReceive(prev => prev.map(r => r.line_number===row.line_number?{...r, quantity: val}:r));
+                              // If To Ship enabled, sync total quantity per item
+                              if (isToShipEnabled) {
+                                setToShip(prev => {
+                                  const idxShip = prev.findIndex(s => s.item_number === row.item_number);
+                                  if (idxShip >= 0) {
+                                    const clone = [...prev];
+                                    clone[idxShip] = { 
+                                      ...clone[idxShip], 
+                                      quantity: val
+                                    } as RmaShipItemDto;
+                                    return clone;
                                   }
-                                }}
-                              />
-                            </td>
+                                  return prev;
+                                });
+                              }
+                            }}
+                          />
+                        </td>
+                        <td className="p-2 text-center">
+                          <Input
+                                className="w-32 text-center h-7 text-xs"
+                            value={row.serialnumber || ''}
+                            onChange={e=>{
+                              setToReceive(prev => prev.map(r => r.line_number===row.line_number?{...r, serialnumber: e.target.value}:r));
+                            }}
+                            placeholder="Empty"
+                          />
+                        </td>
                             <td className="p-2 text-right text-font-color-100">—</td>
                             <td className="p-2 text-right text-font-color-100">—</td>
-                          </tr>
-                        ))}
-                        {isToShipEnabled && toShip.map((row, idx) => (
+                      </tr>
+                    ))}
+                    {isToShipEnabled && toShip.map((row, idx) => (
                           <tr key={`ship-${row.item_number}-${row.line_number}`} className="border-t border-border-color hover:bg-body-color/30">
-                            <td className="p-2 text-font-color-100">{idx+1}</td>
-                            <td className="p-2">
+                            <td className="p-2 text-font-color-100">
+                              <div className="flex items-center gap-2">
+                                <span>{toReceive.length + idx + 1}</span>
+                                <div className="text-blue-500 text-lg">↑</div>
+                              </div>
+                            </td>
+                        <td className="p-2">
                               <div className="font-medium text-font-color">{row.item_number}</div>
-                              <div className="text-[11px] text-font-color-100">{row.description}</div>
-                            </td>
+                          <div className="text-[11px] text-font-color-100">{row.description}</div>
+                        </td>
                             <td className="p-2 text-right text-font-color-100">—</td>
-                            <td className="p-2 text-right">
-                              <Input
+                            <td className="p-2 text-center text-font-color-100">—</td>
+                        <td className="p-2 text-right">
+                          <Input
                                 className="w-20 text-right h-7 text-xs"
-                                value={String(row.quantity)}
-                                onChange={e=>{
-                                  const val = Math.max(0, parseInt(e.target.value || '0', 10));
-                                  setToShip(prev => prev.map(r => r.line_number===row.line_number?{...r, quantity: val}:r));
-                                }}
-                              />
-                            </td>
-                            <td className="p-2 text-right">
-                              <Input
+                            value={String(row.quantity)}
+                            onChange={e=>{
+                              const val = Math.max(0, parseInt(e.target.value || '0', 10));
+                              setToShip(prev => prev.map(r => r.line_number===row.line_number?{...r, quantity: val}:r));
+                            }}
+                          />
+                        </td>
+                        <td className="p-2 text-right">
+                          <Input
                                 className="w-24 text-right h-7 text-xs"
-                                value={String(row.unit_price || '0.00')}
-                                onChange={e=>{
-                                  const v = e.target.value;
-                                  setToShip(prev => prev.map(r => r.line_number===row.line_number?{...r, unit_price: v}:r));
-                                }}
-                              />
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                            value={String(row.unit_price || '0.00')}
+                            onChange={e=>{
+                              const v = e.target.value;
+                              setToShip(prev => prev.map(r => r.line_number===row.line_number?{...r, unit_price: v}:r));
+                            }}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                  )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
           {/* Right Sidebar - 3 columns */}
           <div className="xl:col-span-3 space-y-4">
-            {/* Shipping */}
+          {/* Shipping */}
             <Card className="shadow-sm border-border-color">
               <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                 <div className="flex justify-between items-center">
@@ -833,12 +1118,11 @@ export default function ReturnTrakEntryPage() {
                     variant="outline"
                     className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                     onClick={openShippingModal}
-                    title="Edit"
                   >
                     <IconEdit className="h-3 w-3" />
                   </Button>
                 </div>
-              </CardHeader>
+            </CardHeader>
               <CardContent className="p-3">
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Int. Code:</span> <span className="text-font-color text-right truncate max-w-[120px]" title={String(shipping.int_code || '0')}>{shipping.int_code || '0'}</span></div>
@@ -868,7 +1152,6 @@ export default function ReturnTrakEntryPage() {
                       variant="outline"
                       className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                       onClick={() => setAmountsExpanded(!amountsExpanded)}
-                      title={amountsExpanded ? 'Collapse' : 'Expand'}
                     >
                       <IconChevronDown className={`h-3 w-3 transition-transform ${amountsExpanded ? 'rotate-180' : ''}`} />
                     </Button>
@@ -877,7 +1160,6 @@ export default function ReturnTrakEntryPage() {
                       variant="outline"
                       className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                       onClick={openAmountsModal}
-                      title="Edit"
                     >
                       <IconEdit className="h-3 w-3" />
                     </Button>
@@ -962,7 +1244,6 @@ export default function ReturnTrakEntryPage() {
                       variant="outline"
                       className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                       onClick={() => setOthersExpanded(!othersExpanded)}
-                      title={othersExpanded ? 'Collapse' : 'Expand'}
                     >
                       <IconChevronDown className={`h-3 w-3 transition-transform ${othersExpanded ? 'rotate-180' : ''}`} />
                     </Button>
@@ -971,7 +1252,6 @@ export default function ReturnTrakEntryPage() {
                       variant="outline"
                       className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                       onClick={openOthersModal}
-                      title="Edit"
                     >
                       <IconEdit className="h-3 w-3" />
                     </Button>
@@ -1008,15 +1288,6 @@ export default function ReturnTrakEntryPage() {
         </div>
       </div>
 
-      {/* Browse Items modal (shared behavior with OrderPoints simplified) */}
-      <Dialog open={browseOpen} onOpenChange={setBrowseOpen}>
-        <DialogContent className="flex flex-col overflow-hidden" style={{ width: '900px', height: '720px', maxWidth: '90vw', maxHeight: '90vh', minWidth: '900px', minHeight: '720px' }}>
-          <DialogHeader className="flex-shrink-0">
-            <DialogTitle>Browse Items</DialogTitle>
-          </DialogHeader>
-          <div className="p-2 text-sm">Use OrderPoints browse dialog patterns here; coming soon.</div>
-        </DialogContent>
-      </Dialog>
 
       {/* Shipping Modal */}
       <Dialog open={showShippingModal} onOpenChange={setShowShippingModal}>
@@ -1026,61 +1297,61 @@ export default function ReturnTrakEntryPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div>
+                <div>
                 <Label className="text-font-color-100 text-sm">Int. Code</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={String(shipping.int_code || '')} 
                   onChange={e=>setShipping({...shipping, int_code: e.target.value})} 
                 />
-              </div>
-              <div>
+                </div>
+                <div>
                 <Label className="text-font-color-100 text-sm">Carrier</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.shipping_carrier} 
                   onChange={e=>setShipping({...shipping, shipping_carrier: e.target.value})} 
                 />
-              </div>
+                </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
+                <div>
                 <Label className="text-font-color-100 text-sm">Service</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.shipping_service} 
                   onChange={e=>setShipping({...shipping, shipping_service: e.target.value})} 
                 />
-              </div>
-              <div>
+                </div>
+                <div>
                 <Label className="text-font-color-100 text-sm">Packing List Type</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={String(shipping.packing_list_type || '')} 
                   onChange={e=>setShipping({...shipping, packing_list_type: e.target.value})} 
                 />
-              </div>
+                </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
+                <div>
                 <Label className="text-font-color-100 text-sm">Freight Account</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.freight_account} 
                   onChange={e=>setShipping({...shipping, freight_account: e.target.value})} 
                 />
-              </div>
-              <div>
+                </div>
+                  <div>
                 <Label className="text-font-color-100 text-sm">Consignee #</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.consignee_number} 
                   onChange={e=>setShipping({...shipping, consignee_number: e.target.value})} 
                 />
-              </div>
+                  </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div>
+                  <div>
                 <Label className="text-font-color-100 text-sm">Terms</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
@@ -1095,16 +1366,16 @@ export default function ReturnTrakEntryPage() {
                   value={shipping.fob} 
                   onChange={e=>setShipping({...shipping, fob: e.target.value})} 
                 />
-              </div>
-            </div>
-            <div>
+                  </div>
+                </div>
+                <div>
               <Label className="text-font-color-100 text-sm">Payment Type</Label>
               <Input 
                 className="h-8 text-sm mt-1" 
                 value={shipping.payment_type} 
                 onChange={e=>setShipping({...shipping, payment_type: e.target.value})} 
               />
-            </div>
+                </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 variant="outline"
@@ -1117,7 +1388,7 @@ export default function ReturnTrakEntryPage() {
               >
                 Save
               </Button>
-            </div>
+              </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -1267,8 +1538,8 @@ export default function ReturnTrakEntryPage() {
                   onChange={e=>setOthers({...others, customer_number: e.target.value})} 
                 />
               </div>
-            </div>
-            <div>
+              </div>
+              <div>
               <Label className="text-font-color-100 text-sm">Est. Weight for RS Label (lb)</Label>
               <Input 
                 className="h-8 text-sm mt-1" 
@@ -1277,8 +1548,8 @@ export default function ReturnTrakEntryPage() {
                 value={others.return_weight_lb} 
                 onChange={e=>setOthers({...others, return_weight_lb: e.target.value})} 
               />
-            </div>
-            <div>
+              </div>
+              <div>
               <Label className="text-font-color-100 text-sm">Shipping Instructions</Label>
               <Textarea 
                 className="text-sm mt-1 min-h-[80px]" 
@@ -1286,7 +1557,7 @@ export default function ReturnTrakEntryPage() {
                 onChange={e=>setOthers({...others, shipping_instructions: e.target.value})} 
                 placeholder="Enter shipping instructions..."
               />
-            </div>
+              </div>
             <div>
               <Label className="text-font-color-100 text-sm">Comments</Label>
               <Textarea 
@@ -1295,7 +1566,7 @@ export default function ReturnTrakEntryPage() {
                 onChange={e=>setOthers({...others, comments: e.target.value})} 
                 placeholder="Enter additional comments..."
               />
-            </div>
+        </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 variant="outline"
@@ -1308,16 +1579,79 @@ export default function ReturnTrakEntryPage() {
               >
                 Save
               </Button>
-            </div>
+      </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Browse Items Dialog */}
+        <BrowseItemsDialog
+          open={showBrowseItemsModal}
+          onOpenChange={setShowBrowseItemsModal}
+          onAddItems={handleAddItemsToCart}
+          warehouse={getCurrentWarehouse()}
+          title="Browse Items"
+          warningMessage={!hasValidWarehouse() ? "Please select a warehouse to browse items" : ""}
+          cacheType={activeCartTab as 'auth' | 'ship'}
+          existingCartItems={activeCartTab === 'auth' ? toReceive : toShip}
+        />
+
+      {/* Validate Address Modal */}
+      <Dialog open={validateOpen} onOpenChange={setValidateOpen}>
+        <DialogContent style={{ maxWidth: 800 }}>
+          <DialogHeader>
+            <DialogTitle>Address Validation Results</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {validateResult?.warnings && validateResult.warnings.length > 0 && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-medium text-yellow-800 mb-2">Warnings:</h4>
+                <ul className="list-disc list-inside text-yellow-700 space-y-1">
+                  {validateResult.warnings.map((warning: string, index: number) => (
+                    <li key={index}>{warning}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {validateResult?.errors && validateResult.errors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="font-medium text-red-800 mb-2">Errors:</h4>
+                <ul className="list-disc list-inside text-red-700 space-y-1">
+                  {validateResult.errors.map((error: string, index: number) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {validateResult?.correct_address && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h4 className="font-medium text-green-800 mb-2">Suggested Correction:</h4>
+                <div className="text-green-700 space-y-1">
+                  <div><strong>Address 1:</strong> {validateResult.correct_address.address1}</div>
+                  {validateResult.correct_address.address2 && (
+                    <div><strong>Address 2:</strong> {validateResult.correct_address.address2}</div>
+                  )}
+                  <div><strong>City:</strong> {validateResult.correct_address.city}</div>
+                  <div><strong>State:</strong> {validateResult.correct_address.state_province}</div>
+                  <div><strong>Postal Code:</strong> {validateResult.correct_address.postal_code}</div>
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setValidateOpen(false)}>
+              Cancel
+            </Button>
+            {validateResult?.correct_address && (
+              <Button onClick={onAcceptCorrectAddress}>
+                Accept Correction
+              </Button>
+            )}
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-
-  function prevSumForItem(item_number: string, excludeLine: number) {
-    return toReceive.filter(i => i.item_number === item_number && i.line_number !== excludeLine).reduce((s, i) => s + (i.quantity || 0), 0);
-  }
 }
 
 
