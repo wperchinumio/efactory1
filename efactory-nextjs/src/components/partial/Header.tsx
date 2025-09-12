@@ -23,6 +23,7 @@ import {
     IconTag,
     IconArrowBigLeftFilled,
 } from '@tabler/icons-react';
+import ContactForm from '../common/ContactForm';
 import {
     dark_version,
     light_version,
@@ -121,6 +122,13 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
     const toggleThemeSetting = () => {
         setThemeSetting(!themeSetting)
         document.body.classList.toggle("overflow-hidden", !themeSetting)
+    }
+
+    // feedback modal
+    const [feedbackOpen, setFeedbackOpen] = useState(false)
+    const toggleFeedback = () => {
+        setFeedbackOpen(!feedbackOpen)
+        document.body.classList.toggle("overflow-hidden", !feedbackOpen)
     }
 
     // user profile dropdown
@@ -554,10 +562,10 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                                 <IconUsersGroup className='w-[16px] h-[16px]' />
                                                 Team Members
                                             </Link>
-                                            <Link href="#" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
+                                            <button onClick={() => { closeUserProfile(); toggleFeedback(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
                                                 <IconThumbUpFilled className='w-[16px] h-[16px]' />
                                                 Leave a feedback
-                                            </Link>
+                                            </button>
                                         </>
                                     ) : null}
                                     
@@ -727,6 +735,15 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                 </div>
             </div>
             <div onClick={toggleThemeSetting} className={`fixed z-[4] w-full h-full left-0 top-0 bg-black-50 backdrop-blur-[2px] transition-all duration-500 ease-in-out ${themeSetting ? 'opacity-1 visible overflow-auto' : 'opacity-0 invisible overflow-hidden'}`}></div>
+            
+            {/* Feedback Modal */}
+            <ContactForm 
+                isOpen={feedbackOpen} 
+                onClose={() => {
+                    setFeedbackOpen(false);
+                    document.body.classList.remove("overflow-hidden");
+                }} 
+            />
         </>
     )
 }

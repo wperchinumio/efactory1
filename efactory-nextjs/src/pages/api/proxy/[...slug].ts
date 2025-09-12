@@ -1,8 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import formidable from 'formidable';
 
 export const config = {
 	api: {
-		bodyParser: true,
+		bodyParser: false, // Disable to handle FormData
 	},
 };
 
@@ -40,13 +41,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 		if (['host', 'connection', 'content-length'].includes(lower)) continue;
 		headers[lower] = Array.isArray(value) ? value.join(',') : String(value);
 	}
-	// Ensure JSON default
-	headers['accept'] = headers['accept'] || 'application/json';
-	if (!headers['content-type']) headers['content-type'] = 'application/json';
-
+	
+	// Handle different content types
+	const contentType = req.headers['content-type'] || '';
 	let body: BodyInit | undefined = undefined;
+	
 	if (method !== 'GET' && method !== 'HEAD') {
-		body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
+		if (contentType.includes('multipart/form-data')) {
+			// Handle FormData (file uploads)
+			const form = formidable({
+				maxFileSize: 5 * 1024 * 1024, // 5MB
+				keepExtensions: true,
+			});
+			
+			const [fields, files] = await form.parse(req);
+			
+			// Create new FormData for upstream request
+			const formData = new FormData();
+			
+			// Add fields
+			for (const [key, value] of Object.entries(fields)) {
+				const fieldValue = Array.isArray(value) ? value[0] : value;
+				if (fieldValue) {
+					formData.append(key, fieldValue);
+				}
+			}
+			
+			// Add files
+			for (const [key, file] of Object.entries(files)) {
+				const fileObj = Array.isArray(file) ? file[0] : file;
+				if (fileObj && fileObj.filepath) {
+					formData.append(key, fileObj as any);
+				}
+			}
+			
+			body = formData;
+			// Don't set content-type header for FormData, let fetch handle it
+		} else {
+			// Handle JSON data
+			headers['accept'] = headers['accept'] || 'application/json';
+			if (!headers['content-type']) headers['content-type'] = 'application/json';
+			body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body ?? {});
+		}
 	}
 
 	try {

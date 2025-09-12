@@ -64,6 +64,10 @@ import type {
   UpdateOrderPointsBody,
   ValidateAddressBody,
 } from '@/types/api/orderpoints';
+import type {
+  FeedbackSubmissionRequest,
+  FeedbackSubmissionResponse,
+} from '@/types/api';
 
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
@@ -270,5 +274,48 @@ export async function readOrderPointsSettings(): Promise<OrderPointsSettingsDto>
   
   const response = await postJson<ReadOrderPointsSettingsResponse>('/api/orderpoints', request);
   return (response.data as unknown) as OrderPointsSettingsDto;
+}
+
+// Feedback API
+export async function submitFeedback(feedback: FeedbackSubmissionRequest): Promise<FeedbackSubmissionResponse> {
+  const formData = new FormData();
+  if (feedback.file) {
+    formData.append('file', feedback.file);
+  }
+
+  // Get authentication token
+  let token = '';
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem('authToken');
+      if (raw) {
+        const authData = JSON.parse(raw);
+        token = authData?.api_token || '';
+      }
+    } catch {
+      // Ignore parsing errors
+    }
+  }
+
+  const response = await fetch('/api/proxy/api/upload', {
+    method: 'POST',
+    headers: {
+      'X-Access-Token': token,
+      'X-Upload-Params': JSON.stringify({
+        func: 'feedback_upload',
+        type: feedback.type,
+        message: feedback.message
+      })
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to submit feedback: ${response.status} ${response.statusText}`);
+  }
+
+  // Parse JSON response
+  await response.json();
+  return { success: true, message: 'Feedback sent successfully' };
 }
 

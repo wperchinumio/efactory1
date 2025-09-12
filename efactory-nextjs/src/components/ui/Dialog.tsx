@@ -67,7 +67,7 @@ const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
   ({ className = '', children, style, ...props }, ref) => (
     <div
       ref={ref}
-      className={`rounded-lg shadow-lg max-w-md w-full mx-4 p-6 ${className}`}
+      className={`rounded-lg shadow-lg w-full mx-4 p-6 ${className}`}
       style={{
         backgroundColor: 'var(--card-color)',
         border: '1px solid var(--border-color)',

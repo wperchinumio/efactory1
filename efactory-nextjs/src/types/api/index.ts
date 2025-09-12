@@ -290,6 +290,27 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================================================
+// FEEDBACK TYPES
+// ============================================================================
+
+export interface FeedbackSubmissionRequest {
+  type: 'idea' | 'question' | 'problem';
+  message: string;
+  file?: File;
+}
+
+export interface FeedbackSubmissionResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface FeedbackApiError {
+  success: false;
+  message: string;
+  error?: string;
+}
+
+// ============================================================================
 // EXPORT ALL TYPES
 // ============================================================================
 
