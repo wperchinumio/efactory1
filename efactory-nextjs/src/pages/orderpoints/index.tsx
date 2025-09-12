@@ -18,6 +18,7 @@ import {
   createAddress,
 } from '@/services/api'
 import { inventoryCache } from '@/services/inventoryCache'
+import { addressBookCache } from '@/services/addressBookCache'
 import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto, ReadAddressesResponse } from '@/types/api/orderpoints'
 
 
@@ -926,22 +927,47 @@ export default function OrderPointsPage() {
   }
 
   // Address Book functions
-  async function loadAddressBook() {
+  async function loadAddressBook(useCache = true, forceRefresh = false) {
+    // Check if we have valid cache and should use it
+    const hasCache = useCache && addressBookCache.hasValidCache(addressBookPage, 100, addressBookFilter)
+    
+    if (hasCache && !forceRefresh) {
+      // If we have cache, show cached data immediately
+      const cachedData = addressBookCache.searchInCache(addressBookPage, 100, addressBookFilter)
+      
+      setAddressBookData(cachedData)
+      setAddressBookTotal(cachedData.length)
+      
+      // Refresh cache in background without showing loading
+      refreshAddressBookInBackground()
+      return
+    }
+    
     setAddressBookLoading(true)
     try {
-      const res = await readAddresses({ 
-        action: 'read_addresses', 
-        page_num: addressBookPage, 
-        page_size: 100, 
-        filter: addressBookFilter ? { and: [{ field: 'name', oper: '=', value: addressBookFilter }] } as any : undefined 
-      })
-      setAddressBookData(res.rows || [])
-      setAddressBookTotal(res.total || 0)
+      const { rows, total } = await addressBookCache.getAddressBookData(
+        addressBookPage, 
+        100, 
+        addressBookFilter, 
+        forceRefresh
+      )
+      setAddressBookData(rows)
+      setAddressBookTotal(total)
     } catch (error) {
       console.error('Error loading address book:', error)
       toast({ title: 'Error', description: 'Failed to load address book', variant: 'destructive' })
     } finally {
       setAddressBookLoading(false)
+    }
+  }
+
+  // Background refresh function for when we have cache
+  async function refreshAddressBookInBackground() {
+    try {
+      // Always refresh cache for Address Book
+      await addressBookCache.getAddressBookData(addressBookPage, 100, addressBookFilter, true)
+    } catch (error) {
+      console.error('Error refreshing address book in background:', error)
     }
   }
 
@@ -973,8 +999,12 @@ export default function OrderPointsPage() {
       toast({ title: 'Success', description: 'Address added to address book' })
       setShowAddToAddressBook(false)
       setAddressBookTitle('')
-      // Reload address book
-      loadAddressBook()
+      
+      // Clear all address book caches since we added a new address
+      addressBookCache.clearAllCaches()
+      
+      // Reload address book with fresh data
+      loadAddressBook(false, true)
     } catch (error) {
       console.error('Error adding to address book:', error)
       toast({ title: 'Error', description: 'Failed to add address to address book', variant: 'destructive' })
@@ -1885,7 +1915,7 @@ export default function OrderPointsPage() {
   // Load address book when dialog opens
   useEffect(() => {
     if (showAddressBook) {
-      loadAddressBook()
+      loadAddressBook(true, false) // Use cache when opening modal
     }
   }, [showAddressBook, addressBookPage, addressBookFilter])
 
@@ -3678,17 +3708,35 @@ export default function OrderPointsPage() {
             <DialogHeader className="flex-shrink-0">
               <div className="flex items-center justify-between">
                 <DialogTitle>Select from address book</DialogTitle>
-                <Button
-                  size="small"
-                  className="bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={() => {
-                    setShowAddressBook(false)
-                    setShowAddToAddressBook(true)
-                  }}
-                >
-                  <IconPlus className="w-3 h-3 mr-1" />
-                  Add to Address Book
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="small"
+                    variant="outline"
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    onClick={() => loadAddressBook(false, true)}
+                    disabled={addressBookLoading}
+                  >
+                    {addressBookLoading ? (
+                      <div className="flex items-center gap-1">
+                        <div className="animate-spin rounded-full h-3 w-3 border-2 border-gray-300 border-t-blue-600"></div>
+                        <span>Refreshing...</span>
+                      </div>
+                    ) : (
+                      'Refresh'
+                    )}
+                  </Button>
+                  <Button
+                    size="small"
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => {
+                      setShowAddressBook(false)
+                      setShowAddToAddressBook(true)
+                    }}
+                  >
+                    <IconPlus className="w-3 h-3 mr-1" />
+                    Add to Address Book
+                  </Button>
+                </div>
               </div>
             </DialogHeader>
             
