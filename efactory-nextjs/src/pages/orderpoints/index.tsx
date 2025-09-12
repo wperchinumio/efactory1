@@ -1789,12 +1789,12 @@ export default function OrderPointsPage() {
                         <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
                         <SelectTrigger className={`h-9 text-sm mt-1 ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <span className={`truncate ${accountDisplayLabel ? 'font-medium' : ''}`}>
-                              {accountDisplayLabel || "Select Account - Warehouse"}
+                              {accountDisplayLabel || ""}
                             </span>
                         </SelectTrigger>
                         <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
-                              Select Account - Warehouse
+                              
                             </SelectItem>
                             {getAccountOptions().map(option => (
                               <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
@@ -1856,7 +1856,6 @@ export default function OrderPointsPage() {
                     <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Customer #
-                          <RequiredDot show={isRequiredFieldEmpty(orderHeader.customer_number)} />
                         </Label>
                         <Input 
                           className={`h-8 text-sm mt-1 ${orderHeader.customer_number ? 'font-medium' : ''}`} 
@@ -1867,7 +1866,6 @@ export default function OrderPointsPage() {
                 <div>
                   <Label className="text-font-color-100 text-sm flex items-center">
                     PO #
-                    <RequiredDot show={isRequiredFieldEmpty(orderHeader.po_number)} />
                   </Label>
                   <Input 
                     className={`h-8 text-sm mt-1 ${orderHeader.po_number ? 'font-medium' : ''}`} 
