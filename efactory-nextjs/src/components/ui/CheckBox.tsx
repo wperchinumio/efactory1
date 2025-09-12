@@ -104,11 +104,12 @@ const CheckBox = ({
           }}
           className={`
             ${boxSize} rounded border border-border-color flex items-center justify-center
-            focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-20
+            focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-primary'}
             ${(checked || indeterminate) ? 'bg-primary border-primary' : 'bg-card-color'}
             ${inputClassName}
           `}
+          style={{ verticalAlign: 'middle' }}
         >
           {checked && !indeterminate && (
             <svg className={`${iconSize} text-white`} viewBox="0 0 20 20" fill="currentColor">

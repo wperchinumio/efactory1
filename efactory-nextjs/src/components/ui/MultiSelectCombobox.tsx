@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { IconChevronDown, IconCheck, IconSearch } from '@tabler/icons-react';
+import CheckBox from './CheckBox';
 
 interface MultiSelectOption {
 	value: string;
@@ -117,11 +118,11 @@ const MultiSelectCombobox = ({
 				className={`
 					cursor-pointer rounded-lg bg-card-color border border-border-color 
 					px-3 py-2 text-[14px]/[20px] w-full
-					focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-20 focus:border-primary 
+					focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary 
 					shadow-sm hover:shadow-md transition-all duration-200 text-font-color
 					flex items-center justify-between gap-2
 					${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-					${isOpen ? 'ring-2 ring-primary ring-opacity-20 border-primary' : ''}
+					${isOpen ? 'ring-1 ring-primary ring-opacity-20 border-primary' : ''}
 				`}
 				onClick={handleToggle}
 				disabled={disabled}
@@ -192,11 +193,10 @@ const MultiSelectCombobox = ({
 									key={option.value}
 									className="flex items-center gap-3 px-3 py-2 hover:bg-primary-10 cursor-pointer transition-colors"
 								>
-									<input
-										type="checkbox"
+									<CheckBox
 										checked={selectedValues.includes(option.value)}
 										onChange={() => handleToggleOption(option.value)}
-										className="w-4 h-4 text-primary bg-card-color border-border-color rounded focus:ring-primary focus:ring-2"
+										className="w-4 h-4 flex-shrink-0 mb-2"
 									/>
 									<span className="text-[14px] text-font-color flex-1 truncate">
 										{option.label}

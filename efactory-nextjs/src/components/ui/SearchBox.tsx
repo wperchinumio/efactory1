@@ -137,7 +137,7 @@ const SearchBox = ({
           text-font-color
           placeholder:text-font-color-100
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-20 focus:border-primary
+          focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary
           hover:border-primary/50
           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border-color
         `}

@@ -34,7 +34,7 @@ const Button = ({
 }: ButtonProps) => {
   const [isPressed, setIsPressed] = useState(false);
   // Base classes
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md leading-none box-border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md leading-none box-border transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
   // Size classes (explicit heights to avoid external CSS affecting size)
   const sizeClasses = {

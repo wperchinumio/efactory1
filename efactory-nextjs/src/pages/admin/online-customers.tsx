@@ -436,7 +436,7 @@ function OnlineCustomersPageInner() {
 									<IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
 									<input 
 										ref={searchInputRef}
-										className='form-control pl-9 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary transition-colors' 
+										className='form-control pl-9 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary transition-colors' 
 										placeholder='Search customers, companies, browsers...' 
 										value={filter} 
 										onChange={(e) => setFilter(e.target.value)} 

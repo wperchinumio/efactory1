@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 
 interface SelectContextType {
   value: string;
@@ -35,10 +35,25 @@ export interface SelectValueProps {
 const Select = React.forwardRef<HTMLDivElement, SelectProps>(
   ({ value = '', onValueChange, children, ...props }, ref) => {
     const [open, setOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+          setOpen(false);
+        }
+      };
+
+      if (open) {
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+      }
+    }, [open]);
 
     return (
       <SelectContext.Provider value={{ value, onValueChange: onValueChange || (() => {}), open, setOpen }}>
-        <div ref={ref} className="relative" {...props}>
+        <div ref={containerRef} className="relative" {...props}>
           {children}
         </div>
       </SelectContext.Provider>
@@ -56,7 +71,7 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
       <button
         ref={ref}
         type="button"
-        className={`flex h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+        className={`flex h-10 w-full items-center justify-between rounded-lg border px-3 py-2 text-sm bg-card-color border-border-color text-font-color placeholder:text-font-color-100 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
         onClick={() => context.setOpen(!context.open)}
         {...props}
       >
@@ -99,7 +114,7 @@ const SelectContent = React.forwardRef<HTMLDivElement, SelectContentProps>(
     return (
       <div
         ref={ref}
-        className={`absolute top-full z-50 w-full rounded-md border mt-1 shadow-md ${className}`}
+        className={`absolute top-full z-50 w-full rounded-lg border border-border-color bg-card-color mt-1 shadow-md ${className}`}
         {...props}
       >
         <div className="max-h-60 overflow-auto p-1">
@@ -119,7 +134,7 @@ const SelectItem = React.forwardRef<HTMLDivElement, SelectItemProps>(
     return (
       <div
         ref={ref}
-        className={`relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className}`}
+        className={`relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 px-2 text-sm text-font-color outline-none hover:bg-primary-10 focus:bg-primary-10 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 ${className}`}
         onClick={() => {
           context.onValueChange(value);
           context.setOpen(false);

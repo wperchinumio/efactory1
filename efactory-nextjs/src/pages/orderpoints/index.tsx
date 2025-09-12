@@ -298,10 +298,10 @@ const EditableDatePicker = ({ value, onChange, placeholder = "Select date", clas
           className={`
             w-full pl-2.5 pr-3 h-8 bg-card-color border border-border-color rounded-lg 
             text-font-color placeholder:text-font-color-100 cursor-text text-sm
-            focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20
+            focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary focus:ring-opacity-20
             transition-all duration-200 hover:shadow-md
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-            ${isOpen ? 'border-primary ring-2 ring-primary ring-opacity-20' : ''}
+            ${isOpen ? 'border-primary ring-1 ring-primary ring-opacity-20' : ''}
           `}
           style={{ textIndent: '1.75rem' }}
         />
@@ -733,7 +733,7 @@ export default function OrderPointsPage() {
         consignee_number,
         terms,
         international_code,
-        packing_list_comments: comments.trim().length > 0 ? comments : (prev.packing_list_comments || '')
+        packing_list_comments: comments && comments.trim().length > 0 ? comments : (prev.packing_list_comments || '')
       }))
     }
   }, [shippingAddress.country, shippingSettings])
@@ -1574,7 +1574,7 @@ export default function OrderPointsPage() {
                           <RequiredDot show={isRequiredFieldEmpty(accountNumberLocation)} />
                         </Label>
                         <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
-                        <SelectTrigger className={`bg-card-color border-border-color text-font-color h-9 text-sm mt-1 ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <SelectTrigger className={`h-9 text-sm mt-1 ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <span className="truncate">
                               {accountDisplayLabel || "Select Account - Warehouse"}
                             </span>
@@ -1609,7 +1609,7 @@ export default function OrderPointsPage() {
                           <RequiredDot show={isRequiredFieldEmpty(orderHeader.customer_number)} />
                         </Label>
                         <Input 
-                          className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
+                          className="h-8 text-sm mt-1" 
                           value={orderHeader.customer_number || ''} 
                           onChange={e=>{setOrderHeader(p=>({ ...p, customer_number: e.target.value })); markAsChanged()}} 
                         />
@@ -1620,7 +1620,7 @@ export default function OrderPointsPage() {
                     <RequiredDot show={isRequiredFieldEmpty(orderHeader.po_number)} />
                   </Label>
                   <Input 
-                    className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
+                    className="h-8 text-sm mt-1" 
                     value={orderHeader.po_number || ''} 
                     onChange={e=>{setOrderHeader(p=>({ ...p, po_number: e.target.value })); markAsChanged()}} 
                   />
@@ -1635,7 +1635,7 @@ export default function OrderPointsPage() {
                           <RequiredDot show={isRequiredFieldEmpty(orderHeader.order_status)} />
                         </Label>
                         <Select value={String(orderHeader.order_status ?? 1)} onValueChange={handleOrderStatusChange}>
-                          <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1">
+                          <SelectTrigger className="h-8 text-sm mt-1">
                             <span className="truncate">
                               {orderStatusDisplayLabel || "Select Order Status"}
                             </span>
@@ -1729,7 +1729,7 @@ export default function OrderPointsPage() {
                       <HalfRequiredDot show={!hasAtLeastOne(shippingAddress.company, shippingAddress.attention)} />
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
+                      className="h-8 text-sm mt-1" 
                       value={shippingAddress.company||''} 
                       onChange={e=>{setShippingAddress({...shippingAddress,company:e.target.value}); markAsChanged()}} 
                     />
@@ -1740,7 +1740,7 @@ export default function OrderPointsPage() {
                       <HalfRequiredDot show={!hasAtLeastOne(shippingAddress.company, shippingAddress.attention)} />
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" 
+                      className="h-8 text-sm mt-1" 
                       value={shippingAddress.attention||''} 
                       onChange={e=>{setShippingAddress({...shippingAddress,attention:e.target.value}); markAsChanged()}} 
                     />
@@ -1753,7 +1753,7 @@ export default function OrderPointsPage() {
                       <RequiredDot show={isRequiredFieldEmpty(shippingAddress.address1)} />
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      className="h-9 text-sm mt-1" 
                       value={shippingAddress.address1||''} 
                       onChange={e=>{setShippingAddress({...shippingAddress,address1:e.target.value}); markAsChanged()}} 
                     />
@@ -1763,7 +1763,7 @@ export default function OrderPointsPage() {
                       Address 2
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      className="h-9 text-sm mt-1" 
                       value={shippingAddress.address2||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
                     />
@@ -1776,7 +1776,7 @@ export default function OrderPointsPage() {
                       <RequiredDot show={isRequiredFieldEmpty(shippingAddress.city)} />
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      className="h-9 text-sm mt-1" 
                       value={shippingAddress.city||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
                     />
@@ -1787,7 +1787,7 @@ export default function OrderPointsPage() {
                       <RequiredDot show={isPostalCodeRequired() && isRequiredFieldEmpty(shippingAddress.postal_code)} />
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      className="h-9 text-sm mt-1" 
                       value={shippingAddress.postal_code||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
                     />
@@ -1846,7 +1846,7 @@ export default function OrderPointsPage() {
                       Phone
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      className="h-9 text-sm mt-1" 
                       value={shippingAddress.phone||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,phone:e.target.value})} 
                     />
@@ -1856,7 +1856,7 @@ export default function OrderPointsPage() {
                       Email
                     </Label>
                     <Input 
-                      className="bg-card-color border-border-color text-font-color h-9 text-sm mt-1" 
+                      className="h-9 text-sm mt-1" 
                       type="email"
                       value={shippingAddress.email||''} 
                       onChange={e=>setShippingAddress({...shippingAddress,email:e.target.value})} 
@@ -1879,7 +1879,7 @@ export default function OrderPointsPage() {
                   <div className="flex items-center gap-2">
                     <Input
                       placeholder="Add item…"
-                      className="bg-card-color border-border-color text-font-color w-48 h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-48 h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                       value={findItemValue}
                       onChange={e=>setFindItemValue(e.target.value)}
                       onKeyDown={e=>{ if (e.key === 'Enter') onBrowseItems() }}
@@ -2328,7 +2328,7 @@ export default function OrderPointsPage() {
               Show 0 QTY
             </label>
             <Select value={warehouses} onValueChange={setWarehouses}>
-                <SelectTrigger className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1" style={{ width: '200px' }}>
+                <SelectTrigger className="h-8 text-sm mt-1" style={{ width: '200px' }}>
                 <SelectValue placeholder="Warehouse: All" />
               </SelectTrigger>
                 <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
@@ -2494,27 +2494,27 @@ export default function OrderPointsPage() {
             {validateResult?.errors && <div className="text-danger text-sm">Errors: {JSON.stringify(validateResult.errors)}</div>}
             <div className="grid grid-cols-2 gap-3">
               <Input 
-                className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                className="h-8 text-sm" 
                 value={validateResult?.correct_address?.address1||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address1: e.target.value } }))} 
               />
               <Input 
-                className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                className="h-8 text-sm" 
                 value={validateResult?.correct_address?.address2||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address2: e.target.value } }))} 
               />
               <Input 
-                className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                className="h-8 text-sm" 
                 value={validateResult?.correct_address?.city||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), city: e.target.value } }))} 
               />
               <Input 
-                className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                className="h-8 text-sm" 
                 value={validateResult?.correct_address?.state_province||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), state_province: e.target.value } }))} 
               />
               <Input 
-                className="bg-card-color border-border-color text-font-color h-8 text-sm" 
+                className="h-8 text-sm" 
                 value={validateResult?.correct_address?.postal_code||''} 
                 onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), postal_code: e.target.value } }))} 
               />
@@ -2550,7 +2550,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Description</Label>
                 <Input 
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  className="mt-1" 
                   value={editLineData.description || ''} 
                   onChange={e=>setEditLineData(d=>({ ...d, description: e.target.value }))} 
                 />
@@ -2559,7 +2559,7 @@ export default function OrderPointsPage() {
                 <Label className="text-font-color-100 text-sm">Quantity</Label>
                 <Input 
                   type="number"
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  className="mt-1" 
                   value={editLineData.quantity || 0} 
                   onChange={e=>setEditLineData(d=>({ ...d, quantity: Number(e.target.value) }))} 
                 />
@@ -2572,7 +2572,7 @@ export default function OrderPointsPage() {
                 <Input 
                   type="number"
                   step="0.01"
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  className="mt-1" 
                   value={editLineData.price || 0} 
                   onChange={e=>setEditLineData(d=>({ ...d, price: Number(e.target.value) }))} 
                 />
@@ -2580,7 +2580,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Extended Price</Label>
                 <Input 
-                  className="bg-card-color border-border-color text-font-color mt-1" 
+                  className="mt-1" 
                   value={((editLineData.quantity || 0) * (editLineData.price || 0)).toFixed(2)}
                   disabled
                 />
@@ -2613,7 +2613,7 @@ export default function OrderPointsPage() {
             <div>
               <Label className="text-font-color-100 text-sm">Custom Field 1</Label>
               <Input 
-                className="bg-card-color border-border-color text-font-color mt-1" 
+                className="mt-1" 
                   value={editLineData.custom_field1 || ''} 
                 onChange={e=>setEditLineData(d=>({ ...d, custom_field1: e.target.value }))} 
               />
@@ -2621,7 +2621,7 @@ export default function OrderPointsPage() {
             <div>
               <Label className="text-font-color-100 text-sm">Custom Field 2</Label>
               <Input 
-                className="bg-card-color border-border-color text-font-color mt-1" 
+                className="mt-1" 
                   value={editLineData.custom_field2 || ''} 
                 onChange={e=>setEditLineData(d=>({ ...d, custom_field2: e.target.value }))} 
               />
@@ -2629,7 +2629,7 @@ export default function OrderPointsPage() {
             <div>
               <Label className="text-font-color-100 text-sm">Custom Field 5</Label>
               <Input 
-                className="bg-card-color border-border-color text-font-color mt-1" 
+                className="mt-1" 
                   value={editLineData.custom_field5 || ''} 
                 onChange={e=>setEditLineData(d=>({ ...d, custom_field5: e.target.value }))} 
               />
@@ -2639,7 +2639,7 @@ export default function OrderPointsPage() {
             <div>
               <Label className="text-font-color-100 text-sm">Comments</Label>
               <Textarea 
-                className="bg-card-color border-border-color text-font-color mt-1" 
+                className="mt-1" 
                 rows={4} 
                 value={editLineData.comments || ''} 
                 onChange={e=>setEditLineData(d=>({ ...d, comments: e.target.value }))} 
@@ -2675,7 +2675,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Company</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.company || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, company: e.target.value }))}
                 />
@@ -2683,7 +2683,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Attention</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.attention || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, attention: e.target.value }))}
                 />
@@ -2691,7 +2691,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Address 1</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.address1 || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, address1: e.target.value }))}
                 />
@@ -2699,7 +2699,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Address 2</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.address2 || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, address2: e.target.value }))}
                 />
@@ -2707,7 +2707,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">City</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.city || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, city: e.target.value }))}
                 />
@@ -2715,7 +2715,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">State/Province</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.state_province || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, state_province: e.target.value }))}
                 />
@@ -2723,7 +2723,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Postal Code</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.postal_code || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, postal_code: e.target.value }))}
                 />
@@ -2731,7 +2731,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Country</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.country || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, country: e.target.value }))}
                 />
@@ -2739,7 +2739,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Phone</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.phone || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, phone: e.target.value }))}
                 />
@@ -2747,7 +2747,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Email</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm mt-1"
+                  className="h-8 text-sm mt-1"
                   value={tempBillingAddress.email || ''}
                   onChange={e => setTempBillingAddress(p => ({ ...p, email: e.target.value }))}
                 />
@@ -2779,7 +2779,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">International Code</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.international_code || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, international_code: e.target.value }))}
                 />
@@ -2787,7 +2787,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Shipping Carrier</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.shipping_carrier || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, shipping_carrier: e.target.value }))}
                 />
@@ -2795,7 +2795,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Shipping Service</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.shipping_service || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, shipping_service: e.target.value }))}
                 />
@@ -2803,7 +2803,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Freight Account</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.freight_account || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, freight_account: e.target.value }))}
                 />
@@ -2811,7 +2811,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Consignee #</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.consignee_number || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, consignee_number: e.target.value }))}
                 />
@@ -2819,7 +2819,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Incoterms</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.terms || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, terms: e.target.value }))}
                 />
@@ -2827,7 +2827,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">FOB Location</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.fob || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, fob: e.target.value }))}
                 />
@@ -2835,7 +2835,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Payment Type</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.payment_type || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, payment_type: e.target.value }))}
                 />
@@ -2843,7 +2843,7 @@ export default function OrderPointsPage() {
               <div className="col-span-2">
                 <Label className="text-font-color-100 text-sm">Packing List Type</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempShippingDetails.packing_list_type || ''}
                   onChange={e => setTempShippingDetails(p => ({ ...p, packing_list_type: e.target.value }))}
                 />
@@ -2875,7 +2875,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">S & H</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   type="number"
                   step="0.01"
                   value={tempAmounts.shipping_handling}
@@ -2885,7 +2885,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Sales Taxes</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   type="number"
                   step="0.01"
                   value={tempAmounts.sales_tax}
@@ -2895,7 +2895,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Amount Paid</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   type="number"
                   step="0.01"
                   value={tempAmounts.amount_paid}
@@ -2905,7 +2905,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Discount/Add. Chgs.</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   type="number"
                   step="0.01"
                   value={tempAmounts.international_handling}
@@ -2915,7 +2915,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Balance Due (US)</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   type="number"
                   step="0.01"
                   value={tempAmounts.balance_due_us}
@@ -2925,7 +2925,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Int. Decl. Value</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   type="number"
                   step="0.01"
                   value={tempAmounts.international_declared_value}
@@ -2935,7 +2935,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">Insurance</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   type="number"
                   step="0.01"
                   value={tempAmounts.insurance}
@@ -2969,7 +2969,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_1}</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempExtraFields.custom_field1 || ''}
                   onChange={e => setTempExtraFields(p => ({ ...p, custom_field1: e.target.value }))}
                 />
@@ -2977,7 +2977,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_2}</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempExtraFields.custom_field2 || ''}
                   onChange={e => setTempExtraFields(p => ({ ...p, custom_field2: e.target.value }))}
                 />
@@ -2985,7 +2985,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_3}</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempExtraFields.custom_field3 || ''}
                   onChange={e => setTempExtraFields(p => ({ ...p, custom_field3: e.target.value }))}
                 />
@@ -2993,7 +2993,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_4}</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempExtraFields.custom_field4 || ''}
                   onChange={e => setTempExtraFields(p => ({ ...p, custom_field4: e.target.value }))}
                 />
@@ -3001,7 +3001,7 @@ export default function OrderPointsPage() {
               <div>
                 <Label className="text-font-color-100 text-sm">{extraLabels.header_cf_5}</Label>
                 <Input
-                  className="bg-card-color border-border-color text-font-color h-8 text-sm"
+                  className="h-8 text-sm"
                   value={tempExtraFields.custom_field5 || ''}
                   onChange={e => setTempExtraFields(p => ({ ...p, custom_field5: e.target.value }))}
                 />

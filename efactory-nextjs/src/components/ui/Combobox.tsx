@@ -89,11 +89,11 @@ const Combobox = ({
 				className={`
 					cursor-pointer rounded-lg bg-card-color border border-border-color 
 					px-3 py-2 text-[14px]/[20px] w-full
-					focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-20 focus:border-primary 
+					focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary 
 					shadow-sm hover:shadow-md transition-all duration-200 text-font-color
 					flex items-center justify-between gap-2
 					${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-					${isOpen ? 'ring-2 ring-primary ring-opacity-20 border-primary' : ''}
+					${isOpen ? 'ring-1 ring-primary ring-opacity-20 border-primary' : ''}
 				`}
 				onClick={handleToggle}
 				disabled={disabled}

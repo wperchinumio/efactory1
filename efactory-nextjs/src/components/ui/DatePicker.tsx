@@ -124,10 +124,10 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", className = 
 					className={`
 						w-full pl-2.5 pr-3 py-2 bg-card-color border border-border-color rounded-lg 
 						text-font-color placeholder:text-font-color-100 cursor-pointer
-						focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-20
+						focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary focus:ring-opacity-20
 						transition-all duration-200 hover:shadow-md
 						${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-						${isOpen ? 'border-primary ring-2 ring-primary ring-opacity-20' : ''}
+						${isOpen ? 'border-primary ring-1 ring-primary ring-opacity-20' : ''}
 					`}
 					style={{ textIndent: '1.75rem' }}
 					onClick={() => !disabled && setIsOpen(!isOpen)}
