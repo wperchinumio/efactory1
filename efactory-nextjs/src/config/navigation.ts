@@ -98,6 +98,13 @@ export const topMenuConfig: TopMenuConfig[] = [
     sidebarConfig: 'items'
   },
   {
+    keyword: 'returntrak',
+    title: 'ReturnTrak',
+    iconComponent: IconArrowsExchange,
+    appIds: [55, 56, 54, 57, 58, 59, 75],
+    sidebarConfig: 'returntrak'
+  },
+  {
     keyword: 'orderpoints',
     title: 'OrderPoints',
     iconComponent: IconShoppingCart,
@@ -105,18 +112,11 @@ export const topMenuConfig: TopMenuConfig[] = [
     sidebarConfig: 'orderpoints'
   },
   {
-    keyword: 'transportation',
-    title: 'Transportation',
-    iconComponent: IconTruck,
-    appIds: [209, 210, 207, 212, 213],
-    sidebarConfig: 'transportation'
-  },
-  {
-    keyword: 'returntrak',
-    title: 'ReturnTrak',
-    iconComponent: IconArrowsExchange,
-    appIds: [55, 56, 54, 57, 58, 59, 75],
-    sidebarConfig: 'returntrak'
+    keyword: 'edi',
+    title: 'EDI Central',
+    iconComponent: IconCloud,
+    appIds: [52, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
+    sidebarConfig: 'edi'
   },
   {
     keyword: 'analytics',
@@ -126,11 +126,11 @@ export const topMenuConfig: TopMenuConfig[] = [
     sidebarConfig: 'analytics'
   },
   {
-    keyword: 'edi',
-    title: 'EDI Central',
-    iconComponent: IconCloud,
-    appIds: [52, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
-    sidebarConfig: 'edi'
+    keyword: 'transportation',
+    title: 'Transportation',
+    iconComponent: IconTruck,
+    appIds: [209, 210, 207, 212, 213],
+    sidebarConfig: 'transportation'
   },
   {
     keyword: 'services',
