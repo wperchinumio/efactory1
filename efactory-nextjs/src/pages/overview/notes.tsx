@@ -263,7 +263,7 @@ export default function NotesPage() {
 
   return (
     <div 
-      className="notes-container"
+      className="notes-container notes-page-specific"
       style={{ 
         display: 'flex', 
         height: useFullHeight ? 'auto' : 'calc(100vh - 80px)', 

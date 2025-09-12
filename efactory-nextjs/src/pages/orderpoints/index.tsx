@@ -1637,7 +1637,7 @@ export default function OrderPointsPage() {
   }
 
   return (
-    <div className="bg-body-color min-h-screen">
+    <div className="bg-body-color">
       {/* Header with Title and Actions */}
       <div className="bg-card-color border-b border-border-color px-6 py-2">
         <div className="flex items-center justify-between">

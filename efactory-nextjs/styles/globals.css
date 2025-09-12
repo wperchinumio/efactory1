@@ -1657,88 +1657,88 @@ html:has(body[data-luno-theme="dynamic"]) {
   /* No transitions - instant updates */
 }
 
-/* Notes page - ensure content area has proper min-height */
-.notes-content-area {
+/* Notes page - ensure content area has proper min-height - SCOPED TO NOTES PAGE ONLY */
+.notes-page-specific.notes-container .notes-content-area {
   min-height: 400px;
 }
 
-/* Mobile-responsive Notes layout */
+/* Mobile-responsive Notes layout - SCOPED TO NOTES PAGE ONLY */
 @media (max-width: 768px) {
-  .notes-container {
+  .notes-page-specific.notes-container {
     flex-direction: column !important;
     height: auto !important;
     min-height: calc(100vh - 120px) !important;
     overflow: visible !important;
   }
   
-  .notes-sidebar {
+  .notes-page-specific .notes-sidebar {
     width: 100% !important;
     border-right: none !important;
     border-bottom: 1px solid var(--border-color) !important;
     max-height: 40vh !important;
   }
   
-  .notes-main-content {
+  .notes-page-specific .notes-main-content {
     flex: 1 !important;
     min-height: 60vh !important;
   }
   
   /* Mobile: Remove fixed heights and use natural scrolling */
-  .notes-sidebar .scroll-area {
+  .notes-page-specific .notes-sidebar .scroll-area {
     max-height: 30vh !important;
   }
   
   /* Mobile: Adjust editor layout */
-  .notes-content-area {
+  .notes-page-specific .notes-content-area {
     min-height: 400px !important;
     max-height: none !important;
     overflow: visible !important;
   }
   
   /* Mobile: Allow natural scrolling for editor */
-  .notes-content-area > div {
+  .notes-page-specific .notes-content-area > div {
     max-height: none !important;
     overflow: visible !important;
   }
 }
 
 @media (max-width: 480px) {
-  .notes-container {
+  .notes-page-specific.notes-container {
     padding: 0 !important;
   }
   
-  .notes-sidebar {
+  .notes-page-specific .notes-sidebar {
     max-height: 35vh !important;
   }
   
-  .notes-sidebar .scroll-area {
+  .notes-page-specific .notes-sidebar .scroll-area {
     max-height: 25vh !important;
   }
   
   /* Mobile: Stack edit/preview buttons vertically on very small screens */
-  .notes-main-content .edit-preview-toggle {
+  .notes-page-specific .notes-main-content .edit-preview-toggle {
     flex-direction: column !important;
     gap: 4px !important;
   }
   
-  .notes-main-content .edit-preview-toggle > div {
+  .notes-page-specific .notes-main-content .edit-preview-toggle > div {
     width: 100% !important;
   }
   
-  .notes-main-content .edit-preview-toggle button {
+  .notes-page-specific .notes-main-content .edit-preview-toggle button {
     width: 100% !important;
     justify-content: center !important;
   }
   
   /* Mobile: Touch-friendly button sizes */
-  .notes-sidebar button,
-  .notes-main-content button {
+  .notes-page-specific .notes-sidebar button,
+  .notes-page-specific .notes-main-content button {
     min-height: 44px !important;
     min-width: 44px !important;
   }
   
   /* Mobile: Larger touch targets for note items */
-  .notes-sidebar .scroll-area > div > div {
+  .notes-page-specific .notes-sidebar .scroll-area > div > div {
     padding: 16px 12px !important;
     margin-bottom: 12px !important;
   }
@@ -1746,17 +1746,17 @@ html:has(body[data-luno-theme="dynamic"]) {
 
 /* Mobile: Disable line numbers on very small screens */
 @media (max-width: 480px) {
-  .line-numbers {
+  .notes-page-specific .line-numbers {
     display: none !important;
   }
   
-  .notes-content-area textarea {
+  .notes-page-specific .notes-content-area textarea {
     padding-left: 12px !important;
   }
 }
 
 /* Override scroll-area when using full height - NUCLEAR OPTION */
-.notes-container.force-no-scrollbars .scroll-area {
+.notes-page-specific.notes-container.force-no-scrollbars .scroll-area {
   overflow: visible !important;
   max-height: none !important;
   height: auto !important;
@@ -1764,14 +1764,14 @@ html:has(body[data-luno-theme="dynamic"]) {
   -ms-overflow-style: none !important;
 }
 
-.notes-container.force-no-scrollbars .scroll-area::-webkit-scrollbar {
+.notes-page-specific.notes-container.force-no-scrollbars .scroll-area::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
 }
 
 /* NUCLEAR: Force textarea to never have scrollbars when in full height mode */
-.notes-container.force-no-scrollbars textarea {
+.notes-page-specific.notes-container.force-no-scrollbars textarea {
   overflow: visible !important;
   max-height: none !important;
   height: auto !important;
@@ -1786,14 +1786,14 @@ html:has(body[data-luno-theme="dynamic"]) {
   overscroll-behavior: none !important;
 }
 
-.notes-container.force-no-scrollbars textarea::-webkit-scrollbar {
+.notes-page-specific.notes-container.force-no-scrollbars textarea::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
 }
 
 /* NUCLEAR: Force line numbers to extend fully when in full height mode */
-.notes-container.force-no-scrollbars .line-numbers {
+.notes-page-specific.notes-container.force-no-scrollbars .line-numbers {
   height: auto !important;
   max-height: none !important;
   min-height: auto !important;
@@ -1802,7 +1802,7 @@ html:has(body[data-luno-theme="dynamic"]) {
   -ms-overflow-style: none !important;
 }
 
-.notes-container.force-no-scrollbars .line-numbers::-webkit-scrollbar {
+.notes-page-specific.notes-container.force-no-scrollbars .line-numbers::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
