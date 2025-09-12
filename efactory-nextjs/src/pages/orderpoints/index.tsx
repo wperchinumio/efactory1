@@ -1780,7 +1780,11 @@ export default function OrderPointsPage() {
                             <div className="flex-1 relative">
                               <Input
                                 value={orderHeader.order_number || ''}
-                                readOnly
+                                onChange={e => {
+                                  setOrderHeader(prev => ({ ...prev, order_number: e.target.value }))
+                                  markAsChanged()
+                                }}
+                                readOnly={!orderHeader.order_number}
                                 className={`font-mono h-9 text-sm rounded-r-none border-r-0 ${
                                   !orderHeader.order_number 
                                     ? 'bg-primary-10' 
