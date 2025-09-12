@@ -63,12 +63,10 @@ interface HeaderProps {
 	mobileNav: boolean;
 	toggleNote: () => void;
 	toggleChat: () => void;
-	containerToggle: () => void;
-	container: boolean;
 	userApps?: number[];
 }
 
-export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleChat, containerToggle, container, userApps = [] }: HeaderProps) {
+export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleChat, userApps = [] }: HeaderProps) {
     const { loadingStates, setChangingUser } = useLoading();
     const { isChangingUser } = loadingStates;
     
@@ -231,41 +229,9 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         saveThemePreferences({ fontFamily });
     };
 
-    // dynamic font setting
-    const [fontLink, setFontLink] = useState('');
-    const [fontUrl, setFontUrl] = useState('');
-    const handleApply = () => {
-        const link = document.createElement('link');
-        link.href = fontUrl;
-        link.rel = 'stylesheet';
-        document.head.appendChild(link);
-        document.body.style.fontFamily = fontLink;
-    };
-    const handleClear = () => {
-        const link = document.querySelector(`link[href="${fontUrl}"]`);
-        if (link) {
-            link.remove();
-        }
-        document.body.style.fontFamily = '';
-        setFontLink('');
-        setFontUrl('');
-    };
 
 
 
-    // box shadow setting
-    const [showShadow, setShowShadow] = useState(false);
-    const [cardShadow, setCardShadow] = useState<Element[]>([]);
-    useEffect(() => {
-        const card = document.querySelectorAll(".card");
-        setCardShadow(Array.from(card));
-    }, [])
-    const shadowToggle = () => {
-        setShowShadow(!showShadow);
-        cardShadow.forEach(card => {
-            card.classList.toggle("shadow-shadow-sm");
-        });
-    }
 
     // search bar open
     const [searchBar, setSearchBar] = useState(false);
@@ -597,8 +563,8 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                     
                                     {/* Settings is always available */}
                                     <button onClick={() => { closeUserProfile(); toggleThemeSetting(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
-                                        <IconSettings className='w-[16px] h-[16px]' />
-                                        Settings
+                                        <IconBrush className='w-[16px] h-[16px]' />
+                                        Theme Settings
                                     </button>
                                     
                                     {/* Back to DCL Menu only shows when admin is impersonating */}
@@ -644,7 +610,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
             <div className={`fixed top-0 bg-card-color z-[5] h-svh w-full max-w-[500px] transition-all duration-200 ${themeSetting ? 'ltr:right-0 rtl:left-0' : 'ltr:-right-full rtl:-left-full'}`}>
                 <div className='md:px-6 px-4 md:py-4 py-3 flex items-center justify-between gap-4 border-b border-border-color'>
                     <div className='text-[20px]/[30px] font-medium'>
-                        Theme Setting
+                        Theme Settings
                     </div>
                     <button onClick={toggleThemeSetting}>
                         <IconX />
@@ -734,76 +700,11 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                             ))}
                         </div>
                     </div>
-                    <div className='relative mb-6 md:p-4 py-4 px-3 bg-body-color rounded-xl'>
-                        <span className='inline-block font-semibold mb-4'>
-                            Dynamic Font Setting
-                        </span>
-                        <div className='mb-2 form-control'>
-                            <label className="form-label">Enter font URL</label>
-                            <input
-                                type="text"
-                                id="font_url"
-                                value={fontUrl}
-                                className="form-input"
-                                onChange={(e) => setFontUrl(e.target.value)}
-                                placeholder="http://fonts.cdnfonts.com/css/vonfont"
-                            />
-                        </div>
-                        <div className='mb-4 form-control'>
-                            <label className="form-label">Enter font family name</label>
-                            <input
-                                type="text"
-                                id="font_family"
-                                value={fontLink}
-                                onChange={(e) => setFontLink(e.target.value)}
-                                placeholder="vonfont"
-                                className="form-input"
-                            />
-                        </div>
-                        <div className='flex items-start gap-1.5'>
-                            <button
-                                onClick={handleApply}
-                                className='btn btn-primary'
-                            >
-                                Apply Font
-                            </button>
-                            <button
-                                onClick={handleClear}
-                                className='btn btn-secondary'
-                            >
-                                Reset
-                            </button>
-                        </div>
-                    </div>
                     <div>
                         <div className='mb-1.5'>
                             More Setting
                         </div>
                         <ul>
-                            <li className='py-3 px-4 border-b border-dashed border-border-color hover:bg-primary-10'>
-                                <div className="form-check form-switch">
-                                    <input
-                                        type="checkbox"
-                                        id="container_checkbox"
-                                        onChange={containerToggle}
-                                        checked={container}
-                                        className="form-check-input"
-                                    />
-                                    <label className="form-check-label" htmlFor="container_checkbox">Container</label>
-                                </div>
-                            </li>
-                            <li className='py-3 px-4 hover:bg-primary-10'>
-                                <div className="form-check form-switch">
-                                    <input
-                                        type="checkbox"
-                                        id="shadow_checkbox"
-                                        onChange={shadowToggle}
-                                        checked={showShadow}
-                                        className="form-check-input"
-                                    />
-                                    <label className="form-check-label" htmlFor="shadow_checkbox">Card Box-Shadow</label>
-                                </div>
-                            </li>
                             <li className='py-3 px-4 hover:bg-primary-10'>
                                 <div className="form-check form-switch">
                                     <input

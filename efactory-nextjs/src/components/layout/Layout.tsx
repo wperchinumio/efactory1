@@ -21,36 +21,6 @@ function LayoutContent({ children, userApps = [] }: LayoutProps) {
   
   // Hide footer on login-user, online-customer, users, analytics, and license-summary pages
   const hideFooter = router.pathname.includes('/login-user') || router.pathname.includes('/online-customer') || router.pathname.includes('/admin/users') || router.pathname.includes('/admin/analytics') || router.pathname.includes('/admin/license-summary');
-  const [container, setContainer] = useState<boolean>(false);
-
-  // Initialize container state from localStorage after hydration
-  useEffect(() => {
-    if (typeof localStorage !== "undefined") {
-      const savedContainer = localStorage.getItem('container') === 'true';
-      setContainer(savedContainer);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Update the container class based on state
-    const containerElements = document.querySelectorAll('.container, .container-fluid');
-    containerElements.forEach(el => {
-      if (container) {
-        el.classList.add('container');
-        el.classList.remove('container-fluid');
-      } else {
-        el.classList.add('container-fluid');
-        el.classList.remove('container');
-      }
-    });
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem('container', container.toString());
-    }
-  }, [container, router.pathname]); // Update on container state or pageUrl change
-
-  const containerToggle = (): void => {
-    setContainer(prev => !prev);
-  };
 
   const [mobileNav, setMobileNav] = useState<boolean>(false);
   const toggleMobileNav = (): void => setMobileNav(prev => !prev);
@@ -127,7 +97,7 @@ function LayoutContent({ children, userApps = [] }: LayoutProps) {
             )}
           </div>
           <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
-            <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} containerToggle={containerToggle} container={container} userApps={userAppIds} />
+            <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} userApps={userAppIds} />
             {children}
             {!hideFooter && <Footer />}
           </div>
