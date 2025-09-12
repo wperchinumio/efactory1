@@ -6,7 +6,7 @@ import { Button, Card, CardContent, CardHeader, CardTitle, Input, CheckBox, Dial
 import CountryFilterCombobox from '@/components/filters/CountryFilterCombobox'
 import StateFilterCombobox from '@/components/filters/StateFilterCombobox'
 import { toast } from '@/components/ui/use-toast'
-import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconChevronDown, IconFileText, IconShoppingCart, IconMessageCircle, IconCalendar } from '@tabler/icons-react'
+import { IconTruck, IconCurrency, IconEdit, IconMapPin, IconBuilding, IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight, IconChevronDown, IconFileText, IconShoppingCart, IconMessageCircle, IconCalendar, IconPlus } from '@tabler/icons-react'
 import { getAuthState } from '@/lib/auth/guards'
 import {
   generateOrderNumber,
@@ -14,8 +14,10 @@ import {
   saveEntry,
   fetchInventoryForCart,
   readOrderPointsSettings,
+  readAddresses,
+  createAddress,
 } from '@/services/api'
-import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto } from '@/types/api/orderpoints'
+import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto, ReadAddressesResponse } from '@/types/api/orderpoints'
 
 
 function isFiniteNumber(v: any): v is number {
@@ -528,6 +530,20 @@ export default function OrderPointsPage() {
   // Track if form has unsaved changes - simpler approach
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [showNewOrderConfirm, setShowNewOrderConfirm] = useState(false)
+  const [showAddressBook, setShowAddressBook] = useState(false)
+  const [showAddToAddressBook, setShowAddToAddressBook] = useState(false)
+  const [addressBookTitle, setAddressBookTitle] = useState('')
+  const [addressBookData, setAddressBookData] = useState<ReadAddressesResponse['rows']>([])
+  const [addressBookFilter, setAddressBookFilter] = useState('')
+  const [selectedAddress, setSelectedAddress] = useState<ReadAddressesResponse['rows'][0] | null>(null)
+  const [addressBookPage, setAddressBookPage] = useState(1)
+  const [addressBookTotal, setAddressBookTotal] = useState(0)
+  const [addressBookLoading, setAddressBookLoading] = useState(false)
+  
+  // Text area dialog states
+  const [shippingInstructionsDialog, setShippingInstructionsDialog] = useState(false)
+  const [commentsDialog, setCommentsDialog] = useState(false)
   
   // Panel expand/collapse states
   const [billingExpanded, setBillingExpanded] = useState(false)
@@ -840,7 +856,17 @@ export default function OrderPointsPage() {
   }
 
   function onNewOrder() {
+    // Check if there are unsaved changes
+    if (hasUnsavedChanges) {
+      setShowNewOrderConfirm(true)
+      return
+    }
+    
     // Reset form to initial state (like legacy createNewOrder)
+    resetForm()
+  }
+
+  function resetForm() {
     setOrderHeader({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
     setOrderDetail([])
     setShippingAddress({ country: 'US' })
@@ -871,6 +897,113 @@ export default function OrderPointsPage() {
       description: "Form has been reset for a new order.",
       variant: "default",
     })
+  }
+
+  function handleNewOrderConfirm() {
+    setShowNewOrderConfirm(false)
+    resetForm()
+  }
+
+  function handleNewOrderCancel() {
+    setShowNewOrderConfirm(false)
+  }
+
+  // Address Book functions
+  async function loadAddressBook() {
+    setAddressBookLoading(true)
+    try {
+      const res = await readAddresses({ 
+        action: 'read_addresses', 
+        page_num: addressBookPage, 
+        page_size: 100, 
+        filter: addressBookFilter ? { and: [{ field: 'name', oper: '=', value: addressBookFilter }] } as any : undefined 
+      })
+      setAddressBookData(res.rows || [])
+      setAddressBookTotal(res.total || 0)
+    } catch (error) {
+      console.error('Error loading address book:', error)
+      toast({ title: 'Error', description: 'Failed to load address book', variant: 'destructive' })
+    } finally {
+      setAddressBookLoading(false)
+    }
+  }
+
+  function handleAddressSelect(address: ReadAddressesResponse['rows'][0]) {
+    setSelectedAddress(address)
+    // Update shipping address
+    setShippingAddress(address.ship_to || {})
+    // Update billing address if available
+    if (address.bill_to) {
+      setBillingAddress(address.bill_to)
+    }
+    setShowAddressBook(false)
+    setHasUnsavedChanges(true)
+  }
+
+  async function handleAddToAddressBook() {
+    if (!addressBookTitle.trim()) return
+    
+    try {
+      await createAddress({
+        action: 'create_address',
+        data: {
+          title: addressBookTitle,
+          ship_to: shippingAddress,
+          bill_to: billingAddress,
+          is_validate: false
+        }
+      })
+      toast({ title: 'Success', description: 'Address added to address book' })
+      setShowAddToAddressBook(false)
+      setAddressBookTitle('')
+      // Reload address book
+      loadAddressBook()
+    } catch (error) {
+      console.error('Error adding to address book:', error)
+      toast({ title: 'Error', description: 'Failed to add address to address book', variant: 'destructive' })
+    }
+  }
+
+  // Helper function to format address for display
+  function formatAddress(address: any): string {
+    if (!address) return ''
+    
+    const parts = []
+    if (address.company) parts.push(address.company)
+    if (address.attention) parts.push(address.attention)
+    if (address.address1) parts.push(address.address1)
+    if (address.address2) parts.push(address.address2)
+    if (address.city) parts.push(address.city)
+    if (address.state) parts.push(address.state)
+    if (address.postal_code) parts.push(address.postal_code)
+    if (address.country) parts.push(address.country)
+    
+    return parts.join(', ')
+  }
+
+  // Check if validate address button should be enabled
+  function canValidateAddress(): boolean {
+    const { address1, country, international_code } = shippingAddress
+    const hasAddress1 = address1 && String(address1).trim().length > 0
+    const isUSCountry = country === 'US' || international_code === 0 || international_code === '0'
+    return Boolean(hasAddress1 && isUSCountry)
+  }
+
+  // Text area dialog handlers
+  function openShippingInstructionsDialog() {
+    setShippingInstructionsDialog(true)
+  }
+
+  function closeShippingInstructionsDialog() {
+    setShippingInstructionsDialog(false)
+  }
+
+  function openCommentsDialog() {
+    setCommentsDialog(true)
+  }
+
+  function closeCommentsDialog() {
+    setCommentsDialog(false)
   }
 
   async function onSaveDraft() {
@@ -1450,6 +1583,13 @@ export default function OrderPointsPage() {
     }
   }, [warehouses, browseOpen])
 
+  // Load address book when dialog opens
+  useEffect(() => {
+    if (showAddressBook) {
+      loadAddressBook()
+    }
+  }, [showAddressBook, addressBookPage, addressBookFilter])
+
   function updateInventoryField(item_number: string, field: 'quantity' | 'price', value: string) {
     const v = value.trim()
     if (v !== '' && !isFiniteNumber(v)) return
@@ -1504,11 +1644,6 @@ export default function OrderPointsPage() {
           <div>
             <h1 className="text-xl font-semibold text-font-color mb-0.5 flex items-center gap-2">
               OrderPoints - Order Entry
-              {hasUnsavedChanges && (
-                <span className="text-sm bg-orange-500 text-white px-2 py-1 rounded">
-                  Unsaved Changes
-                </span>
-              )}
             </h1>
             <p className="text-sm text-font-color-100">
               Create and manage purchase orders
@@ -1534,7 +1669,7 @@ export default function OrderPointsPage() {
               onClick={onSaveDraft} 
               disabled={isSavingDraft || isPlacingOrder}
               variant="outline" 
-              className="border-blue-500 text-blue-600 hover:bg-blue-50 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2"
             >
               {isSavingDraft ? "Saving..." : "Save Draft"}
             </Button>
@@ -1669,23 +1804,47 @@ export default function OrderPointsPage() {
                   <Label className="text-font-color-100 text-sm flex items-center">
                     Shipping Instructions
                   </Label>
-                  <Textarea 
-                    className="bg-card-color border-border-color text-font-color text-sm mt-1" 
-                          rows={3} 
-                    value={orderHeader.shipping_instructions || ''} 
-                    onChange={e=>{setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value })); markAsChanged()}} 
-                  />
+                  <div className="relative">
+                    <Textarea 
+                      className="bg-card-color border-border-color text-font-color text-sm mt-1 pr-8 cursor-pointer" 
+                      rows={4} 
+                      value={orderHeader.shipping_instructions || ''} 
+                      onChange={e=>{setOrderHeader(p=>({ ...p, shipping_instructions: e.target.value })); markAsChanged()}} 
+                      onClick={openShippingInstructionsDialog}
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      onClick={openShippingInstructionsDialog}
+                      className="absolute top-2 right-2 p-1 text-font-color-100 hover:text-font-color transition-colors"
+                      title="Expand to edit"
+                    >
+                      <IconEdit className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                       <div>
                   <Label className="text-font-color-100 text-sm flex items-center">
                     Comments
                   </Label>
-                  <Textarea 
-                    className="bg-card-color border-border-color text-font-color text-sm mt-1" 
-                          rows={3} 
-                    value={orderHeader.packing_list_comments || ''} 
-                    onChange={e=>{setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value })); markAsChanged()}} 
-                  />
+                  <div className="relative">
+                    <Textarea 
+                      className="bg-card-color border-border-color text-font-color text-sm mt-1 pr-8 cursor-pointer" 
+                      rows={4} 
+                      value={orderHeader.packing_list_comments || ''} 
+                      onChange={e=>{setOrderHeader(p=>({ ...p, packing_list_comments: e.target.value })); markAsChanged()}} 
+                      onClick={openCommentsDialog}
+                      readOnly
+                    />
+                    <button
+                      type="button"
+                      onClick={openCommentsDialog}
+                      className="absolute top-2 right-2 p-1 text-font-color-100 hover:text-font-color transition-colors"
+                      title="Expand to edit"
+                    >
+                      <IconEdit className="w-4 h-4" />
+                    </button>
+                  </div>
                       </div>
                 </div>
               </div>
@@ -1702,18 +1861,19 @@ export default function OrderPointsPage() {
                   </CardTitle>
                 <div className="flex gap-2">
                     <Button
-                      size="small" 
+                      size="small"
                       variant="outline"
                       className="border-gray-300 text-gray-700 hover:bg-gray-50 text-sm px-3 py-1"
-                      onClick={()=>router.push('/orderpoints/addressbook')}
+                      onClick={() => setShowAddressBook(true)}
                     >
                       Address Book…
                     </Button>
                     <Button
                       size="small" 
                       variant="outline"
-                      className="border-green-500 text-green-600 hover:bg-green-50 text-sm px-3 py-1"
+                      className="border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-green-500 disabled:hover:text-green-600 text-sm px-3 py-1"
                       onClick={onValidateAddress}
+                      disabled={!canValidateAddress()}
                     >
                       Validate
                     </Button>
@@ -1895,9 +2055,9 @@ export default function OrderPointsPage() {
                       Browse Items…
                     </Button>
                     <Button
-                      size="small" 
+                      size="small"
                       variant="outline"
-                      className={`whitespace-nowrap border-red-500 text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className="whitespace-nowrap border-red-500 text-red-600 hover:!bg-red-50 hover:!border-red-600 hover:!text-red-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!bg-transparent disabled:hover:!border-red-500 disabled:hover:!text-red-600 transition-colors duration-200"
                       onClick={onRemoveSelected}
                       disabled={selectedRowsCount === 0 || isPlacingOrder || isSavingDraft}
                     >
@@ -3021,6 +3181,289 @@ export default function OrderPointsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* New Order Confirmation Dialog */}
+      <Dialog open={showNewOrderConfirm} onOpenChange={setShowNewOrderConfirm}>
+        <DialogContent style={{ maxWidth: 400 }}>
+          <DialogHeader>
+            <DialogTitle>Confirmation</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-font-color">
+              You have made some changes, are you sure to start a new order?
+            </p>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={handleNewOrderCancel}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              NO
+            </Button>
+            <Button 
+              onClick={handleNewOrderConfirm}
+              className="bg-red-600 text-white hover:bg-red-700 hover:!bg-red-700 transition-colors duration-200"
+            >
+              YES
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+        </Dialog>
+
+        {/* Address Book Dialog */}
+        <Dialog open={showAddressBook} onOpenChange={setShowAddressBook}>
+          <DialogContent className="flex flex-col overflow-hidden" style={{ width: '1000px', height: '720px', maxWidth: '90vw', maxHeight: '90vh', minWidth: '1000px', minHeight: '720px' }}>
+            <DialogHeader className="flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <DialogTitle>Select from address book</DialogTitle>
+                <Button
+                  size="small"
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={() => {
+                    setShowAddressBook(false)
+                    setShowAddToAddressBook(true)
+                  }}
+                >
+                  <IconPlus className="w-3 h-3 mr-1" />
+                  Add to Address Book
+                </Button>
+              </div>
+            </DialogHeader>
+            
+            {/* Filters */}
+            <div className="flex items-center justify-between gap-3 mb-3 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-font-color font-medium">
+                  TOTAL CONTACTS: {addressBookTotal}
+                </span>
+              </div>
+              <Input
+                placeholder="Filter by title..."
+                value={addressBookFilter}
+                onChange={e => setAddressBookFilter(e.target.value)}
+                className="w-48 h-9 text-sm"
+              />
+            </div>
+
+            {/* Address Table */}
+            <div className="flex-1 overflow-hidden border border-border-color rounded-lg">
+              <div className="h-full flex flex-col">
+                {/* Table Header */}
+                <div className="flex-shrink-0 bg-gray-50 border-b border-border-color">
+                  <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-font-color-100 uppercase">
+                    <div className="col-span-1">#</div>
+                    <div className="col-span-3">TITLE</div>
+                    <div className="col-span-4">SHIPPING ADDRESS</div>
+                    <div className="col-span-4">BILLING ADDRESS</div>
+                  </div>
+                </div>
+
+                {/* Table Body */}
+                <ScrollArea className="flex-1">
+                  <div className="divide-y divide-border-color">
+                    {addressBookLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="text-font-color-100">Loading addresses...</div>
+                      </div>
+                    ) : addressBookData.length === 0 ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="text-font-color-100">No addresses found</div>
+                      </div>
+                    ) : (
+                      addressBookData.map((address, index) => (
+                        <div
+                          key={address.id || index}
+                          className={`grid grid-cols-12 gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${
+                            selectedAddress?.id === address.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                          }`}
+                          onClick={() => setSelectedAddress(address)}
+                          onDoubleClick={() => handleAddressSelect(address)}
+                        >
+                          <div className="col-span-1 text-font-color-100">
+                            {((addressBookPage - 1) * 100) + index + 1}
+                          </div>
+                          <div className="col-span-3 text-blue-600 hover:underline">
+                            {address.title || ''}
+                          </div>
+                          <div className="col-span-4 text-font-color">
+                            {address.ship_to ? formatAddress(address.ship_to) : ''}
+                          </div>
+                          <div className="col-span-4 text-font-color">
+                            {address.bill_to ? formatAddress(address.bill_to) : ''}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex-shrink-0 flex items-center justify-between mt-3">
+              <div className="text-sm text-font-color-100">
+                {addressBookTotal} contacts on {Math.ceil(addressBookTotal / 100)} page{Math.ceil(addressBookTotal / 100) !== 1 ? 's' : ''}
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setAddressBookPage(1)}
+                  disabled={addressBookPage === 1}
+                >
+                  <IconChevronsLeft className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setAddressBookPage(Math.max(1, addressBookPage - 1))}
+                  disabled={addressBookPage === 1}
+                >
+                  <IconChevronLeft className="w-4 h-4" />
+                </Button>
+                <Input
+                  value={addressBookPage}
+                  onChange={e => {
+                    const page = parseInt(e.target.value) || 1
+                    setAddressBookPage(Math.max(1, Math.min(page, Math.ceil(addressBookTotal / 100))))
+                  }}
+                  className="w-12 h-8 text-center text-sm mx-1"
+                />
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setAddressBookPage(Math.min(Math.ceil(addressBookTotal / 100), addressBookPage + 1))}
+                  disabled={addressBookPage >= Math.ceil(addressBookTotal / 100)}
+                >
+                  <IconChevronRight className="w-4 h-4" />
+                </Button>
+                <Button
+                  size="small"
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => setAddressBookPage(Math.ceil(addressBookTotal / 100))}
+                  disabled={addressBookPage >= Math.ceil(addressBookTotal / 100)}
+                >
+                  <IconChevronsRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter className="flex-shrink-0">
+              <Button variant="outline" onClick={() => setShowAddressBook(false)}>
+                Cancel
+              </Button>
+              <Button 
+                className="bg-red-600 text-white hover:bg-red-700 hover:!bg-red-700 transition-colors duration-200"
+                onClick={() => selectedAddress && handleAddressSelect(selectedAddress)}
+                disabled={!selectedAddress}
+              >
+                Select
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add to Address Book Dialog */}
+        <Dialog open={showAddToAddressBook} onOpenChange={setShowAddToAddressBook}>
+          <DialogContent style={{ maxWidth: 400 }}>
+            <DialogHeader>
+              <DialogTitle>Add to Address Book</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-font-color mb-1">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    value={addressBookTitle}
+                    onChange={(e) => setAddressBookTitle(e.target.value)}
+                    placeholder="Type the address title"
+                    required
+                  />
+                </div>
+                <div className="text-sm text-font-color-100">
+                  This will save the current shipping and billing addresses to your address book.
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddToAddressBook(false)}>
+                Cancel
+              </Button>
+              <Button 
+                className="bg-red-600 text-white hover:bg-red-700 hover:!bg-red-700 transition-colors duration-200"
+                onClick={handleAddToAddressBook}
+                disabled={!addressBookTitle.trim()}
+              >
+                Add
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Shipping Instructions Dialog */}
+        <Dialog open={shippingInstructionsDialog} onOpenChange={setShippingInstructionsDialog}>
+          <DialogContent style={{ width: '800px', height: '500px', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <DialogHeader>
+              <DialogTitle>Shipping Instructions</DialogTitle>
+              <DialogDescription>Edit shipping instructions for this order</DialogDescription>
+            </DialogHeader>
+            <div className="py-4 flex-1">
+              <Textarea
+                className="w-full h-full min-h-[300px] text-sm resize-none"
+                value={orderHeader.shipping_instructions || ''}
+                onChange={e => {
+                  setOrderHeader(p => ({ ...p, shipping_instructions: e.target.value }))
+                  markAsChanged()
+                }}
+                placeholder="Enter shipping instructions..."
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={closeShippingInstructionsDialog}>
+                Cancel
+              </Button>
+              <Button onClick={closeShippingInstructionsDialog}>
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Comments Dialog */}
+        <Dialog open={commentsDialog} onOpenChange={setCommentsDialog}>
+          <DialogContent style={{ width: '800px', height: '500px', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <DialogHeader>
+              <DialogTitle>Comments</DialogTitle>
+              <DialogDescription>Edit comments for this order</DialogDescription>
+            </DialogHeader>
+            <div className="py-4 flex-1">
+              <Textarea
+                className="w-full h-full min-h-[300px] text-sm resize-none"
+                value={orderHeader.packing_list_comments || ''}
+                onChange={e => {
+                  setOrderHeader(p => ({ ...p, packing_list_comments: e.target.value }))
+                  markAsChanged()
+                }}
+                placeholder="Enter comments..."
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={closeCommentsDialog}>
+                Cancel
+              </Button>
+              <Button onClick={closeCommentsDialog}>
+                Save
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

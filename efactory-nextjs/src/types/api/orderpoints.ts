@@ -137,9 +137,10 @@ export interface CreateAddressBody {
   action: 'create_address';
   data: {
     title?: string;
-    billingAddress?: AddressDto;
-    shippingAddress?: AddressDto;
-  } | AddressDto;
+    ship_to?: AddressDto;
+    bill_to?: AddressDto;
+    is_validate?: boolean;
+  };
 }
 
 export interface UpdateAddressBody {
