@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Label, Separator } from '@/components/ui'
 import RadioButton from '@/components/ui/RadioButton'
-import { IconFileSpreadsheet, IconUpload, IconInfoCircle, IconTrash, IconCheck, IconX } from '@tabler/icons-react'
+import { IconFileSpreadsheet, IconUpload, IconInfoCircle, IconTrash, IconCheck, IconX, IconDownload } from '@tabler/icons-react'
 import { uploadMassOrders } from '@/services/api'
 
 type Environment = 'verify' | 'sandbox' | 'production'
@@ -156,9 +156,23 @@ export default function MassUploadPage(){
                       <strong> Template 1</strong> requires the full order info in one single excel row. 
                       <strong> Template 2</strong> requires the full line info in one single row.
                     </p>
-                    <div className="flex items-center gap-4">
-                      <a className="text-primary underline font-medium hover:text-primary-600 text-sm" href={template1Url} onClick={e=>{ e.preventDefault(); downloadTemplate(template1Url, 'Template_1.xlsx') }}>Template 1 (one order per row)</a>
-                      <a className="text-primary underline font-medium hover:text-primary-600 text-sm" href={template2Url} onClick={e=>{ e.preventDefault(); downloadTemplate(template2Url, 'Template_2.xlsx') }}>Template 2 (one line per row)</a>
+                    <div className="flex items-center gap-6">
+                      <a
+                        className="text-primary underline font-medium hover:text-primary-600 text-sm inline-flex items-center gap-1.5"
+                        href={template1Url}
+                        onClick={e=>{ e.preventDefault(); downloadTemplate(template1Url, 'Template_1.xlsx') }}
+                      >
+                        <IconDownload className="w-4 h-4" />
+                        <span>Template 1 (one order per row)</span>
+                      </a>
+                      <a
+                        className="text-primary underline font-medium hover:text-primary-600 text-sm inline-flex items-center gap-1.5"
+                        href={template2Url}
+                        onClick={e=>{ e.preventDefault(); downloadTemplate(template2Url, 'Template_2.xlsx') }}
+                      >
+                        <IconDownload className="w-4 h-4" />
+                        <span>Template 2 (one line per row)</span>
+                      </a>
                     </div>
                   </div>
                 </div>
