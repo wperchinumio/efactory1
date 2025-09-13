@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:no-depr": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "dev:no-hmr": "cross-env FAST_REFRESH=false next dev",
     "dev:trace-depr": "cross-env NODE_OPTIONS=--trace-deprecation next dev",
     "dev:throw-depr": "cross-env NODE_OPTIONS=\"--trace-deprecation --throw-deprecation\" next dev",
