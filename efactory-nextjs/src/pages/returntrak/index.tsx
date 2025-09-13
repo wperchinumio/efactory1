@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { getAuthState } from '@/lib/auth/guards';
 import Button from '@/components/ui/Button';
@@ -36,6 +36,9 @@ export default function ReturnTrakEntryPage() {
     return null;
   }
   const router = useRouter();
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const pendingRouteRef = useRef<string | null>(null);
   // Prefill from ReturnTrak Drafts if present
   useEffect(() => {
     const draft = consumeRmaDraft();
@@ -84,7 +87,6 @@ export default function ReturnTrakEntryPage() {
           option6: String(header.cf6 || ''),
           option7: String(header.cf7 || ''),
         }));
-
         setAmounts(prev => ({
           ...prev,
           order_subtotal: Number(header.order_subtotal || 0),
@@ -100,6 +102,7 @@ export default function ReturnTrakEntryPage() {
         }));
         setToReceive(Array.isArray(draft.to_receive) ? draft.to_receive : []);
         setToShip(Array.isArray(draft.to_ship) ? draft.to_ship : []);
+        setHasUnsavedChanges(false);
       } catch {
         // ignore
       }
@@ -476,6 +479,7 @@ export default function ReturnTrakEntryPage() {
     if (manual === false) {
       const num = await generateRmaNumber();
       setRmaNumber(num || '');
+      setHasUnsavedChanges(true);
     }
   }
 
@@ -773,6 +777,7 @@ export default function ReturnTrakEntryPage() {
         setToShip([]);
         setRmaNumber('');
       }
+      markAsClean();
     } finally {
       to_draft ? setSavingDraft(false) : setPlacing(false);
     }
@@ -822,14 +827,17 @@ export default function ReturnTrakEntryPage() {
   // Modal handlers
   function openShippingModal() {
     setShowShippingModal(true);
+    setHasUnsavedChanges(true);
   }
 
   function openAmountsModal() {
     handleAmountsModalOpen();
+    setHasUnsavedChanges(true);
   }
 
   function openOthersModal() {
     handleOthersModalOpen();
+    setHasUnsavedChanges(true);
   }
   
   // Browse Items handlers
@@ -932,6 +940,7 @@ export default function ReturnTrakEntryPage() {
         }
       }
     });
+    setHasUnsavedChanges(true);
   }
   
   // Get the appropriate warehouse based on active tab
@@ -1052,6 +1061,36 @@ export default function ReturnTrakEntryPage() {
     }
   }
 
+  // Warn on browser refresh/close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Leave this page?';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Intercept Next.js route changes
+  useEffect(() => {
+    const handler = (url: string) => {
+      if (hasUnsavedChanges) {
+        pendingRouteRef.current = url;
+        setShowLeaveConfirm(true);
+        // cancel navigation
+        throw 'Route change aborted due to unsaved changes';
+      }
+    };
+    router.events.on('routeChangeStart', handler as any);
+    return () => router.events.off('routeChangeStart', handler as any);
+  }, [hasUnsavedChanges, router]);
+
+  function markAsClean() {
+    setHasUnsavedChanges(false);
+  }
+
   return (
     <div className="bg-body-color">
       {/* Header */}
@@ -1060,7 +1099,10 @@ export default function ReturnTrakEntryPage() {
           <div className="flex items-center justify-between">
         <div>
               <h1 className="text-xl font-semibold text-font-color">ReturnTrak - RMA Entry</h1>
-              <p className="text-sm text-font-color-100 mt-1">Create and manage RMAs</p>
+              <p className="text-sm text-font-color-100 mt-1">
+                Create and manage RMAs
+                {hasUnsavedChanges && <span className="text-orange-500 ml-2">• Unsaved changes detected</span>}
+              </p>
         </div>
             <div className="flex items-center gap-3">
               <Button 
@@ -1234,7 +1276,7 @@ export default function ReturnTrakEntryPage() {
                             <div className="flex-1 relative">
                               <Input
                                 value={rmaNumber || ''}
-                                onChange={e => setRmaNumber(e.target.value)}
+                                onChange={e => { setRmaNumber(e.target.value); setHasUnsavedChanges(true); }}
                                 readOnly={!rmaNumber}
                                 className={`font-mono h-9 text-sm rounded-r-none border-r-0 ${
                                   !rmaNumber 
@@ -1262,7 +1304,7 @@ export default function ReturnTrakEntryPage() {
                           <Input 
                             className={`h-9 text-sm mt-1 ${rmaNumber ? 'font-medium' : ''}`} 
                             value={rmaNumber || ''} 
-                            onChange={e => setRmaNumber(e.target.value)} 
+                            onChange={e => { setRmaNumber(e.target.value); setHasUnsavedChanges(true); }} 
                           />
                     )}
                   </div>
@@ -1281,10 +1323,10 @@ export default function ReturnTrakEntryPage() {
                               <Input 
                                 className="h-8 text-sm mt-1" 
                                 value={options[`option${cf.index}`] || ''} 
-                                onChange={e=>setOptions(prev=>({ ...prev, [`option${cf.index}`]: e.target.value }))} 
+                                onChange={e=>{ setOptions(prev=>({ ...prev, [`option${cf.index}`]: e.target.value })); setHasUnsavedChanges(true); }} 
                               />
                       ) : (
-                        <Select value={options[`option${cf.index}`] || ''} onValueChange={v=>setOptions(prev=>({ ...prev, [`option${cf.index}`]: v }))}>
+                        <Select value={options[`option${cf.index}`] || ''} onValueChange={v=>{ setOptions(prev=>({ ...prev, [`option${cf.index}`]: v })); setHasUnsavedChanges(true); }}>
                                 <SelectTrigger className="h-8 text-sm mt-1">
                                   <span className={`truncate ${options[`option${cf.index}`] ? 'font-medium' : ''}`}>
                                     {options[`option${cf.index}`] ?? "Select..."}
@@ -1349,7 +1391,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-8 text-sm mt-1" 
                           value={shippingAddress.company||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,company:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,company:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                 </div>
                 <div>
@@ -1362,7 +1404,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-8 text-sm mt-1" 
                           value={shippingAddress.attention||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,attention:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,attention:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                 </div>
               </div>
@@ -1377,7 +1419,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-9 text-sm mt-1" 
                           value={shippingAddress.address1||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,address1:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,address1:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                 </div>
                 <div>
@@ -1387,7 +1429,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-9 text-sm mt-1" 
                           value={shippingAddress.address2||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,address2:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,address2:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                 </div>
               </div>
@@ -1402,7 +1444,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-8 text-sm mt-1" 
                           value={shippingAddress.city||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,city:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,city:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                 </div>
                 <div>
@@ -1415,7 +1457,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-8 text-sm mt-1" 
                           value={shippingAddress.postal_code||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,postal_code:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,postal_code:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                 </div>
                     </div>
@@ -1433,6 +1475,7 @@ export default function ReturnTrakEntryPage() {
                               value={shippingAddress.country || ''}
                               onValueChange={(v: string) => {
                                 setShippingAddress({...shippingAddress, country: v, state_province: ''});
+                                setHasUnsavedChanges(true);
                               }}
                               boldWhenSelected={true}
                             />
@@ -1457,6 +1500,7 @@ export default function ReturnTrakEntryPage() {
                               value={shippingAddress.state_province||''}
                               onValueChange={(v: string) => {
                                 setShippingAddress({...shippingAddress, state_province: v});
+                                setHasUnsavedChanges(true);
                               }}
                               countryValue={shippingAddress.country || ''}
                               boldWhenSelected={true}
@@ -1478,7 +1522,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-8 text-sm mt-1" 
                           value={shippingAddress.phone||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,phone:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,phone:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                 </div>
                 <div>
@@ -1491,7 +1535,7 @@ export default function ReturnTrakEntryPage() {
                         <Input 
                           className="h-8 text-sm mt-1" 
                           value={shippingAddress.email||''} 
-                          onChange={e=>setShippingAddress({...shippingAddress,email:e.target.value})} 
+                          onChange={e=>{setShippingAddress({...shippingAddress,email:e.target.value}); setHasUnsavedChanges(true);}} 
                         />
                       </div>
                 </div>
@@ -1899,7 +1943,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={String(shipping.int_code || '')} 
-                  onChange={e=>setShipping({...shipping, int_code: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, int_code: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
                 </div>
                 <div>
@@ -1907,7 +1951,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.shipping_carrier} 
-                  onChange={e=>setShipping({...shipping, shipping_carrier: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, shipping_carrier: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
                 </div>
             </div>
@@ -1917,7 +1961,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.shipping_service} 
-                  onChange={e=>setShipping({...shipping, shipping_service: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, shipping_service: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
                 </div>
                 <div>
@@ -1925,7 +1969,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={String(shipping.packing_list_type || '')} 
-                  onChange={e=>setShipping({...shipping, packing_list_type: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, packing_list_type: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
                 </div>
             </div>
@@ -1935,7 +1979,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.freight_account} 
-                  onChange={e=>setShipping({...shipping, freight_account: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, freight_account: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
                 </div>
                   <div>
@@ -1943,7 +1987,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.consignee_number} 
-                  onChange={e=>setShipping({...shipping, consignee_number: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, consignee_number: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
                   </div>
             </div>
@@ -1953,7 +1997,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.terms} 
-                  onChange={e=>setShipping({...shipping, terms: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, terms: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
               </div>
               <div>
@@ -1961,7 +2005,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={shipping.fob} 
-                  onChange={e=>setShipping({...shipping, fob: e.target.value})} 
+                  onChange={e=>{setShipping({...shipping, fob: e.target.value}); setHasUnsavedChanges(true);}} 
                 />
                   </div>
                 </div>
@@ -1970,7 +2014,7 @@ export default function ReturnTrakEntryPage() {
               <Input 
                 className="h-8 text-sm mt-1" 
                 value={shipping.payment_type} 
-                onChange={e=>setShipping({...shipping, payment_type: e.target.value})} 
+                onChange={e=>{setShipping({...shipping, payment_type: e.target.value}); setHasUnsavedChanges(true);}} 
               />
                 </div>
             <div className="flex justify-end gap-2 pt-4">
@@ -2016,7 +2060,7 @@ export default function ReturnTrakEntryPage() {
                     type="number"
                     step="0.01"
                     value={modalAmounts.shipping_handling}
-                    onChange={e => handleAmountsModalChange('shipping_handling', e.target.value)}
+                    onChange={e => { handleAmountsModalChange('shipping_handling', e.target.value); setHasUnsavedChanges(true); }}
                   />
                 </div>
                 <div>
@@ -2026,7 +2070,7 @@ export default function ReturnTrakEntryPage() {
                     type="number"
                     step="0.01"
                     value={modalAmounts.sales_tax}
-                    onChange={e => handleAmountsModalChange('sales_tax', e.target.value)}
+                    onChange={e => { handleAmountsModalChange('sales_tax', e.target.value); setHasUnsavedChanges(true); }}
                   />
                 </div>
                 <div>
@@ -2036,7 +2080,7 @@ export default function ReturnTrakEntryPage() {
                     type="number"
                     step="0.01"
                     value={modalAmounts.international_handling}
-                    onChange={e => handleAmountsModalChange('international_handling', e.target.value)}
+                    onChange={e => { handleAmountsModalChange('international_handling', e.target.value); setHasUnsavedChanges(true); }}
                   />
                 </div>
                 <div>
@@ -2055,7 +2099,7 @@ export default function ReturnTrakEntryPage() {
                     type="number"
                     step="0.01"
                     value={modalAmounts.amount_paid}
-                    onChange={e => handleAmountsModalChange('amount_paid', e.target.value)}
+                    onChange={e => { handleAmountsModalChange('amount_paid', e.target.value); setHasUnsavedChanges(true); }}
                   />
                 </div>
                 <div>
@@ -2074,7 +2118,7 @@ export default function ReturnTrakEntryPage() {
                     type="number"
                     step="0.01"
                     value={modalAmounts.balance_due_us}
-                    onChange={e => handleAmountsModalChange('balance_due_us', e.target.value)}
+                    onChange={e => { handleAmountsModalChange('balance_due_us', e.target.value); setHasUnsavedChanges(true); }}
                   />
                 </div>
                 <div>
@@ -2084,7 +2128,7 @@ export default function ReturnTrakEntryPage() {
                     type="number"
                     step="0.01"
                     value={modalAmounts.international_declared_value}
-                    onChange={e => handleAmountsModalChange('international_declared_value', e.target.value)}
+                    onChange={e => { handleAmountsModalChange('international_declared_value', e.target.value); setHasUnsavedChanges(true); }}
                   />
                 </div>
                 <div>
@@ -2094,7 +2138,7 @@ export default function ReturnTrakEntryPage() {
                     type="number"
                     step="0.01"
                     value={modalAmounts.insurance}
-                    onChange={e => handleAmountsModalChange('insurance', e.target.value)}
+                    onChange={e => { handleAmountsModalChange('insurance', e.target.value); setHasUnsavedChanges(true); }}
                   />
                 </div>
               </div>
@@ -2127,7 +2171,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={modalOthers.original_order_number} 
-                  onChange={e=>handleOthersModalChange('original_order_number', e.target.value)} 
+                  onChange={e=>{handleOthersModalChange('original_order_number', e.target.value); setHasUnsavedChanges(true);}} 
                 />
               </div>
               <div>
@@ -2135,7 +2179,7 @@ export default function ReturnTrakEntryPage() {
                 <Input 
                   className="h-8 text-sm mt-1" 
                   value={modalOthers.customer_number} 
-                  onChange={e=>handleOthersModalChange('customer_number', e.target.value)} 
+                  onChange={e=>{handleOthersModalChange('customer_number', e.target.value); setHasUnsavedChanges(true);}} 
                 />
               </div>
               </div>
@@ -2146,7 +2190,7 @@ export default function ReturnTrakEntryPage() {
                 type="number"
                 step="0.01"
                 value={modalOthers.return_weight_lb} 
-                onChange={e=>handleOthersModalChange('return_weight_lb', e.target.value)} 
+                onChange={e=>{handleOthersModalChange('return_weight_lb', e.target.value); setHasUnsavedChanges(true);}} 
               />
               </div>
               <div>
@@ -2154,7 +2198,7 @@ export default function ReturnTrakEntryPage() {
               <Textarea 
                 className="text-sm mt-1 min-h-[80px]" 
                 value={modalOthers.shipping_instructions} 
-                onChange={e=>handleOthersModalChange('shipping_instructions', e.target.value)} 
+                onChange={e=>{handleOthersModalChange('shipping_instructions', e.target.value); setHasUnsavedChanges(true);}} 
                 placeholder="Enter shipping instructions..."
               />
               </div>
@@ -2163,7 +2207,7 @@ export default function ReturnTrakEntryPage() {
               <Textarea 
                 className="text-sm mt-1 min-h-[80px]" 
                 value={modalOthers.comments} 
-                onChange={e=>handleOthersModalChange('comments', e.target.value)} 
+                onChange={e=>{handleOthersModalChange('comments', e.target.value); setHasUnsavedChanges(true);}} 
                 placeholder="Enter additional comments..."
               />
         </div>
@@ -2212,7 +2256,7 @@ export default function ReturnTrakEntryPage() {
               <Label className="text-font-color-100 text-sm">Quantity</Label>
               <Input
                 value={editLineData.quantity}
-                onChange={e => setEditLineData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))}
+                onChange={e => { setEditLineData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 })); setHasUnsavedChanges(true); }}
                 className="h-9 text-sm mt-1"
                 type="number"
                 min="0"
@@ -2224,7 +2268,7 @@ export default function ReturnTrakEntryPage() {
                 <Label className="text-font-color-100 text-sm">Serial Number</Label>
                 <Input
                   value={editLineData.serialnumber}
-                  onChange={e => setEditLineData(prev => ({ ...prev, serialnumber: e.target.value }))}
+                  onChange={e => { setEditLineData(prev => ({ ...prev, serialnumber: e.target.value })); setHasUnsavedChanges(true); }}
                   className="h-9 text-sm mt-1"
                   placeholder="Enter serial number"
                 />
@@ -2236,7 +2280,7 @@ export default function ReturnTrakEntryPage() {
                 <Label className="text-font-color-100 text-sm">Unit Price</Label>
                 <Input
                   value={editLineData.unit_price}
-                  onChange={e => setEditLineData(prev => ({ ...prev, unit_price: e.target.value }))}
+                  onChange={e => { setEditLineData(prev => ({ ...prev, unit_price: e.target.value })); setHasUnsavedChanges(true); }}
                   className="h-9 text-sm mt-1"
                   type="number"
                   step="0.01"
@@ -2307,6 +2351,22 @@ export default function ReturnTrakEntryPage() {
                 Accept Correction
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Leave page confirmation */}
+      <Dialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <DialogContent style={{ maxWidth: 520 }}>
+          <DialogHeader>
+            <DialogTitle>Unsaved changes</DialogTitle>
+            <p className="text-sm mt-2 text-font-color-100">
+              You have unsaved changes. Are you sure you want to leave this page?
+            </p>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowLeaveConfirm(false); pendingRouteRef.current = null; }}>Stay</Button>
+            <Button onClick={() => { const next = pendingRouteRef.current; setShowLeaveConfirm(false); setHasUnsavedChanges(false); if (next) router.push(next); }}>Leave</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

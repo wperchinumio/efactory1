@@ -708,15 +708,9 @@ export default function OrderPointsPage() {
   useEffect(() => {
     const handleRouteChange = (url: string) => {
       if (hasUnsavedChanges) {
-        const confirmed = window.confirm('You have made some changes, are you sure to leave?')
-        if (!confirmed) {
-          // Prevent navigation by throwing an error
-          throw 'Route change aborted by user'
-        } else {
-          // User confirmed, reset the form and clear unsaved changes
-          resetForm()
-          setHasUnsavedChanges(false)
-        }
+        pendingRouteRef.current = url
+        setShowLeaveConfirm(true)
+        throw 'Route change aborted by user'
       }
     }
     
@@ -2010,6 +2004,9 @@ export default function OrderPointsPage() {
     setBrowseOpen(false)
     markAsChanged()
   }
+
+  const pendingRouteRef = useRef<string | null>(null)
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false)
 
   return (
     <div className="bg-body-color">
@@ -4053,6 +4050,22 @@ export default function OrderPointsPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Leave page confirmation */}
+      <Dialog open={showLeaveConfirm} onOpenChange={setShowLeaveConfirm}>
+        <DialogContent style={{ maxWidth: 520 }}>
+          <DialogHeader>
+            <DialogTitle>Unsaved changes</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes. Are you sure you want to leave this page?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setShowLeaveConfirm(false); pendingRouteRef.current = null }}>Stay</Button>
+            <Button onClick={() => { const next = pendingRouteRef.current; setShowLeaveConfirm(false); setHasUnsavedChanges(false); if (next) router.push(next) }}>Leave</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
