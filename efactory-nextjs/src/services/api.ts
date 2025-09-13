@@ -246,8 +246,9 @@ export async function cloneTemplate(body: CloneTemplateBody): Promise<void> {
   await postJson<Record<string, never>>('/api/orderpoints', body as any);
 }
 
-export async function cloneOrder(body: CloneOrderBody): Promise<void> {
-  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+export async function cloneOrder(body: CloneOrderBody): Promise<CreateOrderPointsResponse> {
+  const res = await postJson<CreateOrderPointsResponse>('/api/orderpoints', body as any);
+  return res.data as any;
 }
 
 // Address Book
@@ -283,6 +284,11 @@ export async function listDrafts(): Promise<ListDraftsResponse> {
 export async function deleteDrafts(order_ids: number[]): Promise<void> {
   const body: DeleteDraftsBody = { action: 'delete_draft', order_ids };
   await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function toggleDraftTemplate(order_id: number, is_template: boolean): Promise<void> {
+  const body: ToggleTemplateBody = { action: 'toggle_template', order_id, is_template } as any;
+  await postJson<Record<string, never>>('/api/orderpoints', body);
 }
 
 // Inventory modal

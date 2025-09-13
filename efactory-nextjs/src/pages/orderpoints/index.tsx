@@ -17,6 +17,7 @@ import {
   readAddresses,
   createAddress,
 } from '@/services/api'
+import { consumeOrderDraft } from '@/services/orderEntryCache'
 import { inventoryCache } from '@/services/inventoryCache'
 import { addressBookCache } from '@/services/addressBookCache'
 import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto, ReadAddressesResponse } from '@/types/api/orderpoints'
@@ -422,6 +423,31 @@ export default function OrderPointsPage() {
     if (typeof window !== 'undefined') window.location.href = '/auth/sign-in'
   }
   const router = useRouter()
+  // Consume draft payload from Drafts page if available
+  useEffect(() => {
+    const draft = consumeOrderDraft()
+    if (draft) {
+      try {
+        const header = draft.order_header || {}
+        const detail = Array.isArray(draft.order_detail) ? draft.order_detail : []
+        // Split flattened legacy header into our local states
+        const {
+          shipping_address: draftShip = {},
+          billing_address: draftBill = {},
+          ...restHeader
+        } = header as any
+
+        setOrderHeader(prev => ({ ...prev, ...restHeader }))
+        setShippingAddress({ ...(draftShip as any) })
+        setBillingAddress({ ...(draftBill as any) })
+        setOrderDetail(detail as any)
+        setHasUnsavedChanges(false)
+        setIsInitialized(true)
+      } catch {
+        // ignore
+      }
+    }
+  }, [])
 
   // Helper function to check if a required field is empty
   const isRequiredFieldEmpty = (value: any) => {

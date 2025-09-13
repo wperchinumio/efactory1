@@ -27,6 +27,7 @@ import type {
 } from '@/types/api/returntrak';
 import { addressBookCache } from '@/services/addressBookCache';
 import { inventoryCache } from '@/services/inventoryCache';
+import { consumeRmaDraft } from '@/services/returnTrakEntryCache';
 
 export default function ReturnTrakEntryPage() {
   const auth = getAuthState();
@@ -35,6 +36,75 @@ export default function ReturnTrakEntryPage() {
     return null;
   }
   const router = useRouter();
+  // Prefill from ReturnTrak Drafts if present
+  useEffect(() => {
+    const draft = consumeRmaDraft();
+    if (draft) {
+      try {
+        const header = draft.rma_header || {} as any;
+        setRmaNumber(String(header.rma_number || ''));
+        setRmaType(String(header.rma_type_code || ''));
+        setDisposition(String(header.disposition_code || ''));
+        if (header.account_number || header.location) {
+          setAccountReceivingWarehouse(`${header.account_number || ''}.${header.location || ''}`.replace(/^\./,'').replace(/\.$/,''));
+        }
+        if (header.shipping_account_number || header.shipping_warehouse) {
+          setAccountShippingWarehouse(`${header.shipping_account_number || ''}.${header.shipping_warehouse || ''}`.replace(/^\./,'').replace(/\.$/,''));
+        }
+        setShippingAddress({ ...(header.shipping_address || {}) });
+        setShipping(prev => ({
+          ...prev,
+          shipping_carrier: String(header.shipping_carrier || ''),
+          shipping_service: String(header.shipping_service || ''),
+          packing_list_type: String(header.packing_list_type || ''),
+          freight_account: String(header.freight_account || ''),
+          consignee_number: String(header.consignee_number || ''),
+          int_code: String(header.international_code || ''),
+          terms: String(header.terms || ''),
+          fob: String(header.fob || ''),
+          payment_type: String(header.payment_type || ''),
+        }));
+        setOthers(prev => ({
+          ...prev,
+          customer_number: String(header.customer_number || ''),
+          shipping_instructions: String(header.shipping_instructions || ''),
+          comments: String(header.comments || ''),
+          original_order_number: String(header.original_order_number || ''),
+          original_account_number: String(header.original_account_number || ''),
+          return_weight_lb: (header.return_weight_lb as any) || ''
+        }));
+        // Map cf1..cf7 to dynamic options (e.g., Place of Purchase, Reason for Return)
+        setOptions(prev => ({
+          ...prev,
+          option1: String(header.cf1 || ''),
+          option2: String(header.cf2 || ''),
+          option3: String(header.cf3 || ''),
+          option4: String(header.cf4 || ''),
+          option5: String(header.cf5 || ''),
+          option6: String(header.cf6 || ''),
+          option7: String(header.cf7 || ''),
+        }));
+
+        setAmounts(prev => ({
+          ...prev,
+          order_subtotal: Number(header.order_subtotal || 0),
+          shipping_handling: Number(header.shipping_handling || 0),
+          sales_tax: Number(header.sales_tax || 0),
+          international_handling: Number(header.international_handling || 0),
+          total_due: Number(header.total_due || 0),
+          amount_paid: Number(header.amount_paid || 0),
+          net_due_currency: Number(header.net_due_currency || 0),
+          balance_due_us: Number(header.balance_due_us || 0),
+          international_declared_value: Number(header.international_declared_value || 0),
+          insurance: Number(header.insurance || 0)
+        }));
+        setToReceive(Array.isArray(draft.to_receive) ? draft.to_receive : []);
+        setToShip(Array.isArray(draft.to_ship) ? draft.to_ship : []);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
 
   const [rmaSettings, setRmaSettings] = useState<RmaSettingsDto | null>(null);
   const [loadingSettings, setLoadingSettings] = useState(true);
@@ -367,13 +437,25 @@ export default function ReturnTrakEntryPage() {
     return () => { mounted = false };
   }, []);
 
-  // Prepopulate shipping fields when RMA settings are loaded
+  // Prepopulate shipping fields when RMA settings are loaded (only if not coming from draft)
+  const [didApplyDefaultShipping, setDidApplyDefaultShipping] = useState(false);
   useEffect(() => {
     if (!rmaSettings?.general?.shipping) return;
-    
-    const { domestic, international } = rmaSettings.general.shipping;
-    
-    // Use domestic settings as defaults (you could add logic to choose domestic vs international)
+    if (didApplyDefaultShipping) return;
+    // If draft already set shipping values, skip applying defaults
+    const hasDraftShipping = [
+      shipping.shipping_carrier,
+      shipping.shipping_service,
+      shipping.packing_list_type,
+      shipping.freight_account,
+      shipping.consignee_number,
+      shipping.terms,
+      shipping.fob,
+      shipping.int_code,
+    ].some(v => (v ?? '') !== '');
+    if (hasDraftShipping) return;
+
+    const { domestic } = rmaSettings.general.shipping;
     setShipping(prev => ({
       ...prev,
       shipping_carrier: domestic.carrier || prev.shipping_carrier,
@@ -385,7 +467,8 @@ export default function ReturnTrakEntryPage() {
       fob: domestic.fob || prev.fob,
       int_code: domestic.int_code?.toString() || prev.int_code,
     }));
-  }, [rmaSettings]);
+    setDidApplyDefaultShipping(true);
+  }, [rmaSettings, didApplyDefaultShipping, shipping]);
 
   async function onGenerateRmaNumber() {
     if (!rmaSettings) return;
@@ -727,7 +810,13 @@ export default function ReturnTrakEntryPage() {
       { key: 'shipping_instructions', label: 'Shipping Instructions', value: others.shipping_instructions },
       { key: 'comments', label: 'Comments', value: others.comments }
     ];
-    return fields.filter(field => field.value && field.value.trim() !== '');
+    return fields.filter(field => {
+      const v: any = field.value;
+      if (v === undefined || v === null) return false;
+      if (typeof v === 'string') return v.trim() !== '';
+      if (typeof v === 'number') return v !== 0;
+      return Boolean(v);
+    });
   }
 
   // Modal handlers
@@ -1130,7 +1219,7 @@ export default function ReturnTrakEntryPage() {
                 </div>
               </div>
 
-                    {/* Row 3: RMA # | Place of Purchase */}
+                    {/* Row 3: RMA # */}
                     <div className="grid grid-cols-2 gap-2">
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
@@ -1177,32 +1266,6 @@ export default function ReturnTrakEntryPage() {
                           />
                     )}
                   </div>
-                      <div>
-                        <Label className="text-font-color-100 text-sm flex items-center">
-                          Place of Purchase
-                        </Label>
-                        <Select value={options.place_of_purchase || ''} onValueChange={v => setOptions(prev => ({ ...prev, place_of_purchase: v }))}>
-                          <SelectTrigger className="h-9 text-sm mt-1">
-                            <span className={`truncate ${options.place_of_purchase ? 'font-medium' : ''}`}>
-                              {options.place_of_purchase ?? "Select..."}
-                            </span>
-                          </SelectTrigger>
-                          <SelectContent className="bg-card-color border-border-color">
-                            <SelectItem value="" className="text-font-color hover:bg-body-color">
-                              <span className="text-gray-400">Select...</span>
-                            </SelectItem>
-                            <SelectItem value="Online" className="text-font-color hover:bg-body-color">
-                              <span className="whitespace-nowrap">Online</span>
-                            </SelectItem>
-                            <SelectItem value="Store" className="text-font-color hover:bg-body-color">
-                              <span className="whitespace-nowrap">Store</span>
-                            </SelectItem>
-                            <SelectItem value="Phone" className="text-font-color hover:bg-body-color">
-                              <span className="whitespace-nowrap">Phone</span>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                </div>
                     </div>
 
                     {/* Custom fields (all) */}

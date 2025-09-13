@@ -242,7 +242,18 @@ export interface SaveRmaEntryResponse {
 }
 
 export interface ListRmaDraftsRequest { action: 'list_drafts' }
-export type ListRmaDraftsResponse = ApiResponse<Array<{ rma_id: number; rma_header: RmaHeaderDto }>>;
+// Legacy drafts list returns a flat draft row (not nested under rma_header)
+export interface RmaDraftRow {
+  rma_id: number;
+  rma_number?: string;
+  rma_type?: string;
+  rma_type_code?: string;
+  receiving_account_number?: string;
+  receiving_warehouse?: string;
+  original_order_number?: string;
+  shipping_address?: AddressDto;
+}
+export type ListRmaDraftsResponse = ApiResponse<RmaDraftRow[]>;
 
 export interface DeleteRmaDraftsRequest { action: 'delete_draft'; rma_ids: number[] }
 

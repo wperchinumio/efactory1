@@ -2,15 +2,34 @@ import React from 'react';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   children: React.ReactNode;
-  variant?: 'default' | 'secondary' | 'success' | 'warning' | 'danger';
+  variant?: 'default' | 'secondary' | 'success' | 'warning' | 'danger' | 'info';
+  outline?: boolean;
 }
 
 const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ className = '', children, variant = 'default', ...props }, ref) => {
+  ({ className = '', children, variant = 'default', outline = false, ...props }, ref) => {
     const getVariantClasses = () => {
+      if (outline) {
+        switch (variant) {
+          case 'secondary':
+            return 'bg-transparent text-font-color border-font-color-200';
+          case 'info':
+            return 'bg-transparent text-info border-info';
+          case 'success':
+            return 'bg-transparent text-success border-success';
+          case 'warning':
+            return 'bg-transparent text-warning border-warning';
+          case 'danger':
+            return 'bg-transparent text-danger border-danger';
+          default:
+            return 'bg-transparent text-primary border-primary';
+        }
+      }
       switch (variant) {
         case 'secondary':
           return 'bg-font-color-200 text-font-color border-font-color-200';
+        case 'info':
+          return 'bg-info text-white border-info';
         case 'success':
           return 'bg-success text-white border-success';
         case 'warning':
