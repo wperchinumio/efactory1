@@ -146,7 +146,7 @@ export default function ReturnTrakEntryPage() {
   // RMA Type Configuration (matching legacy)
   const rmaTypeConfig: Record<string, [[number, number, number, number], [number, number]]> = {
     'T01': [[1,1,1,1], [1,1]],
-    'T02': [[1,0,1,1], [0,1]],
+    'T02': [[1,0,1,1], [0,0]],
     'T03': [[1,1,1,1], [1,1]],
     'T11': [[1,1,0,1], [1,0]],
     'T12': [[1,0,0,1], [0,0]],
@@ -314,6 +314,14 @@ export default function ReturnTrakEntryPage() {
     }
   }, [isToShipEnabled]);
 
+  // Rules a) & b) Auto-select Ship WH when RMA Type requires shipment and Ship WH is empty
+  // This handles both cases: RMA Type selected first, or RMA WH selected first
+  useEffect(() => {
+    if (isToShipEnabled && accountReceivingWarehouse && !accountShippingWarehouse) {
+      setAccountShippingWarehouse(accountReceivingWarehouse);
+    }
+  }, [isToShipEnabled, accountReceivingWarehouse, accountShippingWarehouse]);
+
 
   useEffect(() => {
     let mounted = true;
@@ -458,6 +466,24 @@ export default function ReturnTrakEntryPage() {
     if (editLineType === 'auth') {
       const updatedItem = toReceive[editLineIndex];
       if (updatedItem) {
+        // Check for duplicate SKU + Serial Number combination (excluding current line)
+        const duplicateExists = toReceive.some((item, index) => 
+          index !== editLineIndex &&
+          !item.voided &&
+          item.item_number === updatedItem.item_number &&
+          item.serialnumber === editLineData.serialnumber &&
+          editLineData.serialnumber.trim() !== ''
+        );
+        
+        if (duplicateExists) {
+          toast({
+            title: "Duplicate Serial Number",
+            description: "A line for this SKU already exists with this Serial Number. Please use a different serial number.",
+            variant: "destructive",
+          });
+          return; // Don't save if duplicate exists
+        }
+        
         setToReceive(prev => prev.map((item, index) => 
           index === editLineIndex 
             ? { ...item, quantity: editLineData.quantity, serialnumber: editLineData.serialnumber }
@@ -694,52 +720,98 @@ export default function ReturnTrakEntryPage() {
   }
   
   function handleAddItemsToCart(items: any[]) {
-    // Add items using the proper functions that handle dual-line logic
+    // Add items using smart logic: SKU + Serial Number is unique key
     items.forEach(item => {
       if (activeCartTab === 'auth') {
-        // Create auth item with quantity and price from Browse Items
-        const maxLine = toReceive.reduce((m, i) => Math.max(m, i.line_number), 0);
-        const newLine = maxLine + 1;
-        const newItem: RmaAuthItemDto = {
-          detail_id: 0, // 0 for new line
-          line_number: newLine,
-          item_number: item.item_number,
-          description: item.description || '',
-          quantity: item.quantity || 0,
-          serialnumber: '',
-          voided: false,
-        };
-        setToReceive(prev => [...prev, newItem]);
+        // Smart quantity addition logic for Auth items
+        const existingItemIndex = toReceive.findIndex(existing => 
+          existing.item_number === item.item_number && 
+          existing.serialnumber === '' && 
+          !existing.voided
+        );
+        
+        if (existingItemIndex !== -1) {
+          // Update existing line (no serial number) - add quantities
+          setToReceive(prev => prev.map((existing, index) => 
+            index === existingItemIndex 
+              ? { ...existing, quantity: existing.quantity + (item.quantity || 0) }
+              : existing
+          ));
+        } else {
+          // Add new line
+          const maxLine = toReceive.reduce((m, i) => Math.max(m, i.line_number), 0);
+          const newLine = maxLine + 1;
+          const newItem: RmaAuthItemDto = {
+            detail_id: 0, // 0 for new line
+            line_number: newLine,
+            item_number: item.item_number,
+            description: item.description || '',
+            quantity: item.quantity || 0,
+            serialnumber: '',
+            voided: false,
+          };
+          setToReceive(prev => [...prev, newItem]);
+        }
         
         // If RMA type requires both receive and ship, also add to ship
         if (isToShipEnabled) {
-          const maxShipLine = toShip.reduce((m, i) => Math.max(m, i.line_number), 0);
-          const newShipLine = maxShipLine + 1;
-          const newShipItem: RmaShipItemDto = {
+          const existingShipItemIndex = toShip.findIndex(existing => 
+            existing.item_number === item.item_number && 
+            !existing.voided
+          );
+          
+          if (existingShipItemIndex !== -1) {
+            // Update existing ship line - add quantities
+            setToShip(prev => prev.map((existing, index) => 
+              index === existingShipItemIndex 
+                ? { ...existing, quantity: existing.quantity + (item.quantity || 0) }
+                : existing
+            ));
+          } else {
+            // Add new ship line
+            const maxShipLine = toShip.reduce((m, i) => Math.max(m, i.line_number), 0);
+            const newShipLine = maxShipLine + 1;
+            const newShipItem: RmaShipItemDto = {
+              detail_id: 0, // 0 for new line
+              line_number: newShipLine,
+              item_number: item.item_number,
+              description: item.description || '',
+              quantity: item.quantity || 0,
+              unit_price: String(item.price || 0),
+              voided: false,
+            };
+            setToShip(prev => [...prev, newShipItem]);
+          }
+        }
+      } else {
+        // Smart quantity addition logic for Ship items
+        const existingItemIndex = toShip.findIndex(existing => 
+          existing.item_number === item.item_number && 
+          !existing.voided
+        );
+        
+        if (existingItemIndex !== -1) {
+          // Update existing line - add quantities
+          setToShip(prev => prev.map((existing, index) => 
+            index === existingItemIndex 
+              ? { ...existing, quantity: existing.quantity + (item.quantity || 0) }
+              : existing
+          ));
+        } else {
+          // Add new line
+          const maxLine = toShip.reduce((m, i) => Math.max(m, i.line_number), 0);
+          const newLine = maxLine + 1;
+          const newItem: RmaShipItemDto = {
             detail_id: 0, // 0 for new line
-            line_number: newShipLine,
+            line_number: newLine,
             item_number: item.item_number,
             description: item.description || '',
             quantity: item.quantity || 0,
             unit_price: String(item.price || 0),
             voided: false,
           };
-          setToShip(prev => [...prev, newShipItem]);
+          setToShip(prev => [...prev, newItem]);
         }
-      } else {
-        // Create ship item with quantity and price from Browse Items
-        const maxLine = toShip.reduce((m, i) => Math.max(m, i.line_number), 0);
-        const newLine = maxLine + 1;
-        const newItem: RmaShipItemDto = {
-          detail_id: 0, // 0 for new line
-          line_number: newLine,
-          item_number: item.item_number,
-          description: item.description || '',
-          quantity: item.quantity || 0,
-          unit_price: String(item.price || 0),
-          voided: false,
-        };
-        setToShip(prev => [...prev, newItem]);
       }
     });
   }
@@ -759,6 +831,21 @@ export default function ReturnTrakEntryPage() {
     return warehouse && warehouse.trim() !== '';
   }
 
+  // Check if we have both warehouse and RMA type selected
+  function hasValidWarehouseAndRmaType() {
+    const warehouse = getCurrentWarehouse();
+    const hasWarehouse = warehouse && warehouse.trim() !== '';
+    const hasRmaType = rmaType && rmaType.trim() !== '';
+    
+    // Rule c) If shipment is required, Ship WH must also be selected
+    if (isToShipEnabled && hasRmaType) {
+      const hasShipWarehouse = accountShippingWarehouse && accountShippingWarehouse.trim() !== '';
+      return hasWarehouse && hasRmaType && hasShipWarehouse;
+    }
+    
+    return hasWarehouse && hasRmaType;
+  }
+
   // Always enable Browse Items button (as requested by user)
   function shouldEnableBrowseItems() {
     return true; // Always enabled as per user request
@@ -766,7 +853,7 @@ export default function ReturnTrakEntryPage() {
   
   // Auto-add functionality for "Add item" input
   async function handleAddItemAuto() {
-    if (!findItemValue.trim() || !getCurrentWarehouse()) return;
+    if (!findItemValue.trim() || !hasValidWarehouseAndRmaType()) return;
     
     const trimmed = findItemValue.trim();
     const matchedWarehouse = getCurrentWarehouse();
@@ -1096,7 +1183,7 @@ export default function ReturnTrakEntryPage() {
                     <div key={cf.index}>
                             <Label className="text-font-color-100 text-sm flex items-center">
                               {cf.title}:
-                              {cf.required && <span className="text-red-500 ml-1">*</span>}
+                              {cf.required && !options[`option${cf.index}`] && <span className="text-red-500 ml-1">*</span>}
                             </Label>
                       {cf.type === 'text' ? (
                               <Input 
@@ -1337,9 +1424,9 @@ export default function ReturnTrakEntryPage() {
                   value={findItemValue}
                   onChange={e=>setFindItemValue(e.target.value)}
                         onKeyDown={e=>{ if (e.key==='Enter') handleAddItemAuto() }}
-                        disabled={!hasValidWarehouse()}
+                        disabled={!hasValidWarehouseAndRmaType()}
                 />
-                    </div>
+              </div>
                 {/* Custom Toggle Switch for Auth/To Ship */}
                 <div className="flex items-center bg-gray-100 rounded-lg p-1 h-8">
                   <button
@@ -1448,7 +1535,7 @@ export default function ReturnTrakEntryPage() {
                           {row.quantity}
                         </td>
                         <td className="p-2 text-center text-font-color">
-                          {row.serialnumber || 'Empty'}
+                          {row.serialnumber || ''}
                         </td>
                             <td className="p-2 text-right text-font-color-100">—</td>
                             <td className="p-2 text-right text-font-color-100">—</td>
@@ -2012,10 +2099,13 @@ export default function ReturnTrakEntryPage() {
           onAddItems={handleAddItemsToCart}
           warehouse={getCurrentWarehouse()}
           title="Browse Items"
-          warningMessage={!hasValidWarehouse() ? "Please select a warehouse to browse items" : ""}
+          warningMessage={!hasValidWarehouseAndRmaType() ? 
+            (isToShipEnabled && (!accountShippingWarehouse || accountShippingWarehouse.trim() === '') ? 
+              "Please select a warehouse, RMA type, and Ship WH to browse items" : 
+              "Please select a warehouse and RMA type to browse items") : ""}
           cacheType={activeCartTab as 'auth' | 'ship'}
           existingCartItems={activeCartTab === 'auth' ? toReceive : toShip}
-          disabled={!hasValidWarehouse()}
+          disabled={!hasValidWarehouseAndRmaType()}
         />
 
       {/* Edit Line Modal */}
