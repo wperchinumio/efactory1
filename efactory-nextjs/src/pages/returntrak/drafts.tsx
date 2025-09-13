@@ -129,32 +129,28 @@ export default function ReturnTrakDraftsPage() {
 
   return (
     <div className="min-h-screen bg-body-color">
-      {/* Header Section */}
-      <div className="bg-card-color border-b border-border-color">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-font-color mb-2">ReturnTrak Drafts</h1>
-              <p className="text-font-color-100 text-sm">Manage your saved RMA drafts and templates</p>
-              
-              {/* Status Cards */}
-              <div className="flex flex-wrap gap-4 mt-4">
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <IconFileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                    {draftCount} Drafts
-                  </span>
-                </div>
-                {selectedCount > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                    <IconShoppingCart className="w-4 h-4 text-orange-600 dark:text-orange-400" />
-                    <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                      {selectedCount} Selected
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+      {/* Header with Title and Actions */}
+      <div className="bg-card-color border-b border-border-color px-6 py-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-font-color mb-0.5 flex items-center gap-2">
+              ReturnTrak Drafts
+            </h1>
+            <p className="text-sm text-font-color-100">
+              Manage your saved RMA drafts and templates
+              <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-xs">
+                <IconFileText className="w-3 h-3" />
+                {draftCount} Drafts
+              </span>
+              {selectedCount > 0 && (
+                <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded text-xs">
+                  <IconShoppingCart className="w-3 h-3" />
+                  {selectedCount} Selected
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
