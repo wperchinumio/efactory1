@@ -52,7 +52,7 @@ export default function FilterDateRange({
 
   const displayValue = value 
     ? `${formatDate(value.start)} - ${formatDate(value.end)}`
-    : config.title;
+    : 'Any';
 
   return (
     <div className={`relative ${className}`}>

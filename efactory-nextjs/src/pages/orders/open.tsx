@@ -68,7 +68,7 @@ export default function OrdersOpenPage() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div>
         <PageHeader iconClassName={header.pageIcon} title={`${header.pageTitle} · ${header.pageSubtitle}`} />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -82,7 +82,7 @@ export default function OrdersOpenPage() {
 
   if (error) {
     return (
-      <div className="space-y-4">
+      <div>
         <PageHeader iconClassName={header.pageIcon} title={`${header.pageTitle} · ${header.pageSubtitle}`} />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -102,7 +102,7 @@ export default function OrdersOpenPage() {
 
   if (!selectedView) {
     return (
-      <div className="space-y-4">
+      <div>
         <PageHeader iconClassName={header.pageIcon} title={`${header.pageTitle} · ${header.pageSubtitle}`} />
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -115,7 +115,7 @@ export default function OrdersOpenPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-1">
       <PageHeader iconClassName={header.pageIcon} title={`${header.pageTitle} · ${header.pageSubtitle}`} />
       <LunoAgGrid
         resource={resource}

@@ -2,6 +2,8 @@
 
 export type FilterType = 
   | 'DATE_RANGE_QF'
+  | 'DATE_RANGE_ADVANCED_QF'
+  | 'DATE_RANGE_CUSTOM_QF'
   | 'DROPDOWN_QF' 
   | 'BOOLEAN_QF'
   | 'DATE_QF'
@@ -33,6 +35,14 @@ export interface DateRangeFilterConfig extends BaseFilterConfig {
   type: 'DATE_RANGE_QF';
 }
 
+export interface DateRangeAdvancedFilterConfig extends BaseFilterConfig {
+  type: 'DATE_RANGE_ADVANCED_QF';
+}
+
+export interface DateRangeCustomFilterConfig extends BaseFilterConfig {
+  type: 'DATE_RANGE_CUSTOM_QF';
+}
+
 export interface DateFilterConfig extends BaseFilterConfig {
   type: 'DATE_QF';
 }
@@ -48,6 +58,8 @@ export interface TextInputFilterConfig extends BaseFilterConfig {
 export type FilterConfig = 
   | DropdownFilterConfig 
   | DateRangeFilterConfig 
+  | DateRangeAdvancedFilterConfig
+  | DateRangeCustomFilterConfig
   | DateFilterConfig 
   | BooleanFilterConfig 
   | TextInputFilterConfig;
@@ -64,7 +76,7 @@ export interface DateRangeValue {
 }
 
 export interface FilterState {
-  [field: string]: FilterValue;
+  [field: string]: FilterValue | FilterValue[];
 }
 
 export interface GridFilterConfig {

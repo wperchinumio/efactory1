@@ -62,7 +62,7 @@ export default function FilterTextInput({
           onChange={handleInputChange}
           onKeyPress={handleKeyPress}
           onBlur={handleBlur}
-          placeholder={config.title}
+          placeholder="Search..."
           className={`
             w-full pl-10 pr-10 py-2 text-sm border rounded-md shadow-sm
             bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600

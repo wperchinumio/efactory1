@@ -48,7 +48,7 @@ export default function FilterBoolean({
           {config.iconClassName && (
             <i className={`${config.iconClassName} text-gray-400 dark:text-gray-500`} />
           )}
-          <span className="truncate">{config.title}</span>
+          <span className="truncate">Filter</span>
         </div>
         <div className="flex items-center space-x-1">
           {value === true && (

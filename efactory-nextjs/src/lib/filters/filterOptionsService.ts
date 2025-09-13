@@ -19,11 +19,8 @@ export async function getWarehouseOptions(): Promise<FilterOption[]> {
   }
 
   try {
-    // Get warehouses from user data or API
-    const response = await postJson('/api/account', {
-      resource: 'user_data',
-      action: 'read'
-    });
+    // Get warehouses from global API
+    const response = await postJson('/api/global', {});
 
     const warehouses = (response.data as any)?.warehouses || {};
     const options: FilterOption[] = [];
@@ -54,11 +51,8 @@ export async function getLocationOptions(): Promise<FilterOption[]> {
   }
 
   try {
-    // Get locations from user data or API
-    const response = await postJson('/api/account', {
-      resource: 'user_data',
-      action: 'read'
-    });
+    // Get locations from global API
+    const response = await postJson('/api/global', {});
 
     const warehouses = (response.data as any)?.warehouses || {};
     const options: FilterOption[] = [];
@@ -89,11 +83,8 @@ export async function getAccountOptions(): Promise<FilterOption[]> {
   }
 
   try {
-    // Get accounts from user data or API
-    const response = await postJson('/api/account', {
-      resource: 'user_data',
-      action: 'read'
-    });
+    // Get accounts from global API
+    const response = await postJson('/api/global', {});
 
     const accounts = (response.data as any)?.calc_accounts || [];
     const options: FilterOption[] = accounts.map((account: string) => ({
@@ -118,11 +109,8 @@ export async function getOrderTypeOptions(): Promise<FilterOption[]> {
   }
 
   try {
-    // Get order types from global API data
-    const response = await postJson('/api/account', {
-      resource: 'global_api_data',
-      action: 'read'
-    });
+    // Get order types from global API
+    const response = await postJson('/api/global', {});
 
     const orderTypes = (response.data as any)?.order_types || {};
     const options: FilterOption[] = Object.keys(orderTypes).map((orderTypeKey) => ({
@@ -147,11 +135,8 @@ export async function getAccountRegionOptions(): Promise<FilterOption[]> {
   }
 
   try {
-    // Get account regions from user data
-    const response = await postJson('/api/account', {
-      resource: 'user_data',
-      action: 'read'
-    });
+    // Get account regions from global API
+    const response = await postJson('/api/global', {});
 
     const calcAccountRegions = (response.data as any)?.calc_account_regions || {};
     const options: FilterOption[] = Object.keys(calcAccountRegions)

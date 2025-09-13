@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getJson } from '@/lib/api/http';
 import { getAuthToken } from '@/lib/auth/storage';
 
@@ -256,7 +256,7 @@ export function useGlobalFilterData(): GlobalFilterData & { getFilterOptions: ()
 	}, [refreshTrigger]);
 
 	// Function to get filter options from the loaded data
-	const getFilterOptions = (): FilterOptions => {
+	const getFilterOptions = useMemo((): FilterOptions => {
 		const { sub_warehouses, loading } = data;
 
 		if (loading) {
@@ -584,10 +584,10 @@ export function useGlobalFilterData(): GlobalFilterData & { getFilterOptions: ()
 			getDestinationOptions,
 			getOrderTypeOptions
 		};
-	};
+	}, [data.warehouses, data.sub_warehouses, data.countries, data.states, data.carriers, data.order_types, data.accounts, data.loading]);
 
 	return {
 		...data,
-		getFilterOptions
+		getFilterOptions: () => getFilterOptions
 	};
 }

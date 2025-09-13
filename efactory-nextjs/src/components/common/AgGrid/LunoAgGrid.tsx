@@ -40,7 +40,7 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
   const colDef: ColDef = {
     field: field.field,
     headerName: field.alias,
-    sortable: !!field.sortable,
+    sortable: field.sortable !== false, // Enable sorting by default unless explicitly disabled
     minWidth: field.min_width ?? 50,
     cellClass: (params) => {
       const align = field.align || 'left';
@@ -203,21 +203,61 @@ export function LunoAgGrid<T = any>({
   const [filterState, setFilterState] = useState<FilterState>({});
   const pageSize = selectedView.rows_per_page || 100;
 
-  // Debug: Log when rows change
-  useEffect(() => {
-    console.log('LunoAgGrid: Rows updated', { 
-      rowsCount: rows.length, 
-      total, 
-      page,
-      isMobile: typeof window !== 'undefined' && window.innerWidth < 768
-    });
-  }, [rows, total, page]);
 
   // Handle filter changes
   const handleFiltersChange = (newFilterState: FilterState) => {
     setFilterState(newFilterState);
     setPage(1); // Reset to first page when filters change
     fetchPage(1, newFilterState);
+  };
+
+  // Handle sort changes - trigger remote sorting
+  const handleSortChanged = (event: any) => {
+    // Get the sort model from the grid API
+    const api = gridApiRef.current || event.api;
+    if (!api) return;
+    
+    // Use the correct method to get sort model
+    let sortModel: any[] = [];
+    try {
+      // Try the modern approach first
+      if (api.getColumnState) {
+        const columnState = api.getColumnState();
+        sortModel = columnState
+          .filter((col: any) => col.sort)
+          .map((col: any) => ({ colId: col.colId, sort: col.sort }));
+      } else if (api.getSortModel) {
+        // Fallback to legacy method
+        sortModel = api.getSortModel();
+      }
+    } catch (error) {
+      console.error('Error getting sort model:', error);
+      sortModel = [];
+    }
+    
+    
+    if (sortModel && sortModel.length > 0) {
+      // Update the selectedView sort with the new sort
+      // Legacy API expects format: [{ "field_name": "direction" }]
+      const updatedView = {
+        ...selectedView,
+        sort: [{
+          field: sortModel[0].colId,
+          dir: sortModel[0].sort
+        }]
+      };
+      // Debug: console.log('Updated view sort:', updatedView.sort);
+      // Fetch page 1 with new sort
+      fetchPage(1, undefined, updatedView);
+    } else {
+      // No sorting - clear sort and fetch page 1
+      const updatedView = {
+        ...selectedView,
+        sort: []
+      };
+      // Debug: console.log('Cleared sort');
+      fetchPage(1, undefined, updatedView);
+    }
   };
 
   // Theme change listener
@@ -328,10 +368,9 @@ export function LunoAgGrid<T = any>({
     return [...preCols, ...defs];
   }, [selectedView.fields, showIndexColumn, showOrderTypeColumn]);
 
-  async function fetchPage(nextPage: number, customFilterState?: FilterState) {
-    console.log('LunoAgGrid: fetchPage called', { nextPage, pageSize, rowsUrl });
-    
-    const baseFilter: GridFilter = initialFilters || selectedView.filter;
+  async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView) {
+    const viewToUse = customView || selectedView;
+    const baseFilter: GridFilter = initialFilters || viewToUse.filter;
     const currentFilterState = customFilterState || filterState;
     
     // Convert filter state to GridFilter format
@@ -382,15 +421,14 @@ export function LunoAgGrid<T = any>({
       currentFilter = { and: filterConditions };
     }
     
-    const sort = applyServerSort && selectedView.sort?.length
-      ? [{ [selectedView.sort[0]?.field || '']: selectedView.sort[0]?.dir || 'asc' }]    
-      : [{} as any];
+    const sort = applyServerSort && viewToUse.sort?.length
+      ? [{ [viewToUse.sort[0]?.field || '']: viewToUse.sort[0]?.dir || 'asc' }]    
+      : [];
     
-    console.log('LunoAgGrid: Making API call', { nextPage, pageSize, currentFilter, sort });
+    // Debug: console.log('Fetching page with sort:', sort);
     
     try {
       const response = await onFetchRows(nextPage, pageSize, currentFilter, sort, undefined);
-      console.log('LunoAgGrid: API response', { rows: response.rows?.length, total: response.total });
       setRows(response.rows || []);
       setTotal(response.total || 0);
       setPage(nextPage); // Update page state after successful API call
@@ -400,19 +438,12 @@ export function LunoAgGrid<T = any>({
   }
 
   useEffect(() => {
-    console.log('LunoAgGrid: Fetching page 1', { rowsUrl, selectedView, initialFilters });
     fetchPage(1);
   }, [rowsUrl, selectedView, initialFilters]);
 
   // Handle window resize to refresh grid on mobile/desktop transitions
   useEffect(() => {
     const handleResize = () => {
-      console.log('LunoAgGrid: Window resized', { 
-        width: window.innerWidth, 
-        height: window.innerHeight,
-        rowsCount: rows.length,
-        isMobile: window.innerWidth < 768
-      });
       
       if (gridApiRef.current) {
         // Refresh grid completely on resize to ensure data stays visible
@@ -632,20 +663,28 @@ export function LunoAgGrid<T = any>({
             columnDefs={colDefs}
             onGridReady={onGridReady}
             onRowClicked={(ev) => onRowClicked?.(ev.data)}
-            defaultColDef={{ resizable: true }}
-          onColumnResized={handleColumnResized}
-          onColumnMoved={handleColumnMoved}
-          onFilterChanged={onFilterChanged}
-          pagination={false}
+            defaultColDef={{ 
+              resizable: true, 
+              sortable: true,
+              unSortIcon: false // Hide unsort icon since we only have asc/desc
+            }}
+            onColumnResized={handleColumnResized}
+            onColumnMoved={handleColumnMoved}
+            onFilterChanged={onFilterChanged}
+            onSortChanged={handleSortChanged}
+            pagination={false}
             suppressCellFocus
             animateRows
             domLayout="normal"
             suppressPaginationPanel
-          rowSelection={{
-            mode: 'singleRow',
-            checkboxes: false,
-            enableClickSelection: true
-          }}
+            rowSelection={{
+              mode: 'singleRow',
+              checkboxes: false,
+              enableClickSelection: true
+            }}
+            // Server-side sorting configuration - only ASC/DESC, no unsorted state
+            sortingOrder={['asc', 'desc']}
+            multiSortKey="ctrl"
             getRowStyle={(params) => ({
               backgroundColor: (params.node?.rowIndex ?? 0) % 2 === 0 ? 'var(--ag-even-row-background-color)' : 'var(--ag-odd-row-background-color)',
               color: 'var(--ag-foreground-color)',

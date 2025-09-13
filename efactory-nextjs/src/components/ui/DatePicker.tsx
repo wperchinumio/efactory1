@@ -138,22 +138,22 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", className = 
 			{/* Calendar Dropdown */}
 			{isOpen && (
 				<div 
-					className="absolute top-full left-0 mt-2 z-[99999] bg-card-color border border-border-color rounded-xl shadow-2xl overflow-hidden min-w-[320px]"
+					className="absolute top-full left-0 mt-2 z-[99999] bg-card-color border border-border-color rounded-xl shadow-2xl overflow-hidden min-w-[280px]"
 					style={{ zIndex: 99999 }}
 				>
 					{/* Calendar Header */}
-					<div className="bg-primary-10 px-4 py-3 border-b border-border-color">
+					<div className="bg-primary-10 px-3 py-2 border-b border-border-color">
 						<div className="flex items-center justify-between">
 							<button
 								type="button"
 								onClick={() => navigateMonth(-1)}
-								className="w-8 h-8 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
+								className="w-6 h-6 rounded hover:bg-primary-20 flex items-center justify-center transition-colors"
 							>
-								<IconChevronLeft className="w-4 h-4 text-font-color" />
+								<IconChevronLeft className="w-3 h-3 text-font-color" />
 							</button>
 							
 							<div className="flex items-center gap-2">
-								<h3 className="text-[15px] font-bold text-font-color">
+								<h3 className="text-[13px] font-bold text-font-color">
 									{monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
 								</h3>
 							</div>
@@ -161,26 +161,26 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", className = 
 							<button
 								type="button"
 								onClick={() => navigateMonth(1)}
-								className="w-8 h-8 rounded-lg hover:bg-primary-20 flex items-center justify-center transition-colors"
+								className="w-6 h-6 rounded hover:bg-primary-20 flex items-center justify-center transition-colors"
 							>
-								<IconChevronRight className="w-4 h-4 text-font-color" />
+								<IconChevronRight className="w-3 h-3 text-font-color" />
 							</button>
 						</div>
 					</div>
 
 					{/* Calendar Body */}
-					<div className="p-4">
+					<div className="p-1">
 						{/* Day Headers */}
-						<div className="grid grid-cols-7 gap-1 mb-2">
+						<div className="grid grid-cols-7 gap-0.5 mb-1">
 							{dayNames.map(day => (
-								<div key={day} className="text-center text-[11px] font-semibold text-font-color-100 py-2">
+								<div key={day} className="text-center text-[11px] font-semibold text-font-color-100 py-1">
 									{day}
 								</div>
 							))}
 						</div>
 
 						{/* Calendar Days */}
-						<div className="grid grid-cols-7 gap-1">
+						<div className="grid grid-cols-7 gap-0.5">
 							{getDaysInMonth(currentMonth).map((date, index) => (
 								<button
 									key={index}
@@ -188,7 +188,7 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", className = 
 									disabled={!date}
 									onClick={() => date && handleDateSelect(date)}
 									className={`
-										w-8 h-8 rounded-lg text-[13px] font-medium transition-all duration-200
+										w-6 h-6 rounded text-[11px] font-medium transition-all duration-200
 										flex items-center justify-center
 										${!date ? 'invisible' : ''}
                                                                                 ${date && isSelected(date)
@@ -205,7 +205,7 @@ const DatePicker = ({ value, onChange, placeholder = "Select date", className = 
 						</div>
 
 						{/* Quick Actions */}
-						<div className="mt-4 pt-3 border-t border-border-color">
+						<div className="mt-2 pt-2 border-t border-border-color">
 							<div className="flex items-center justify-between gap-2">
 								<button
 									type="button"

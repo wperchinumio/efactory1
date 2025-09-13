@@ -23,22 +23,28 @@ export const accountNumberQF: FilterConfig = {
 export const receivedDateQF: FilterConfig = {
   field: 'received_date',
   title: 'RECEIVED DATE',
-  type: 'DATE_RANGE_QF',
-  width: '140px'
+  type: 'DATE_RANGE_CUSTOM_QF',
+  iconClassName: 'fa fa-calendar',
+  width: '140px',
+  allowClear: true
 };
 
 export const shippedDateQF: FilterConfig = {
   field: 'shipped_date',
   title: 'SHIPPED DATE',
-  type: 'DATE_RANGE_QF',
-  width: '140px'
+  type: 'DATE_RANGE_CUSTOM_QF',
+  iconClassName: 'fa fa-calendar',
+  width: '140px',
+  allowClear: true
 };
 
 export const orderedDateQF: FilterConfig = {
   field: 'ordered_date',
   title: 'ORDER DATE',
-  type: 'DATE_RANGE_QF',
-  width: '120px'
+  type: 'DATE_RANGE_CUSTOM_QF',
+  iconClassName: 'fa fa-calendar',
+  width: '140px',
+  allowClear: true
 };
 
 export const orderTypeQF: FilterConfig = {
@@ -55,8 +61,9 @@ export const intCodeQF: FilterConfig = {
   title: 'DESTINATION',
   type: 'DROPDOWN_QF',
   options: [
-    { key: 'Domestic', value: 0, oper: '=' },
-    { key: 'International', value: 0, oper: '<>' }
+    { key: 'All', value: '', oper: '=' },
+    { key: 'Domestic', value: '0', oper: '=' },
+    { key: 'International', value: '1', oper: '<>' }
   ],
   iconClassName: 'fa fa-location-arrow',
   width: '120px'
