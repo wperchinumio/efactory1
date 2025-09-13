@@ -172,17 +172,17 @@ export default function GridMultiSelectFilter({
         onClick={handleToggle}
         className={`
           w-full px-3 py-2 text-left text-xs font-medium
-          bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-          rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700
+          bg-card-color border border-border-color
+          rounded-lg shadow-sm hover:bg-primary-10
           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
           transition-all duration-200 flex items-center justify-between
-          ${hasActiveSelection ? 'text-primary border-primary bg-primary/5' : 'text-gray-700 dark:text-gray-300'}
+          ${hasActiveSelection ? 'text-primary border-primary bg-primary-10' : 'text-font-color'}
         `}
         style={{ width: config.width || 'auto', minWidth: '120px', maxWidth: '180px' }}
       >
         <div className="flex items-center space-x-2">
           {config.iconClassName && (
-            <i className={`${config.iconClassName} text-gray-500 dark:text-gray-400`} />
+            <i className={`${config.iconClassName} text-font-color-100`} />
           )}
           <span className="truncate text-xs">{getDisplayText()}</span>
           {loading && (
@@ -190,7 +190,7 @@ export default function GridMultiSelectFilter({
           )}
         </div>
         <ChevronDownIcon 
-          className={`h-3 w-3 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+          className={`h-3 w-3 text-font-color-100 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`} 
         />
@@ -207,7 +207,7 @@ export default function GridMultiSelectFilter({
           
           {/* Dropdown Content */}
           <div 
-            className="absolute z-20 mt-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden min-w-[200px]"
+            className="absolute z-20 mt-2 w-full bg-card-color border border-border-color rounded-xl shadow-xl overflow-hidden min-w-[200px]"
             style={{ 
               width: Math.max(
                 containerRef.current?.getBoundingClientRect().width || 0, 
@@ -218,13 +218,13 @@ export default function GridMultiSelectFilter({
 
 
             {/* Options List */}
-            <div className="max-h-[400px] overflow-y-auto px-2 pb-2">
+            <div className="max-h-[400px] overflow-y-auto px-2 pt-2 pb-2">
               {loading ? (
-                <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+                <div className="px-3 py-3 text-sm text-font-color-100 text-center">
                   Loading options...
                 </div>
               ) : filteredOptions.length === 0 ? (
-                <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+                <div className="px-3 py-3 text-sm text-font-color-100 text-center">
                   No {config.title.toLowerCase()} found.
                 </div>
               ) : (
@@ -235,20 +235,30 @@ export default function GridMultiSelectFilter({
                   return (
                     <label
                       key={index}
-                      className="flex items-center gap-2 px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors rounded-lg group"
+                      className="flex items-center gap-2 px-2 py-1 hover:bg-primary-10 cursor-pointer transition-colors rounded-lg group"
+                      onClick={(e) => {
+                        // Only handle click if it's not on the button itself
+                        if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'SPAN') {
+                          handleToggleOption(optionValue);
+                        }
+                      }}
                     >
                       <button
                         type="button"
                         role="checkbox"
                         aria-checked={isSelected}
-                        onClick={() => handleToggleOption(optionValue)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleToggleOption(optionValue);
+                        }}
                         className={`
                           w-3.5 h-3.5 rounded border flex items-center justify-center
                           focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20
                           cursor-pointer hover:border-primary transition-colors
                           ${isSelected 
                             ? 'bg-primary border-primary' 
-                            : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600'
+                            : 'bg-card-color border-border-color'
                           }
                         `}
                       >
@@ -258,7 +268,7 @@ export default function GridMultiSelectFilter({
                           </svg>
                         )}
                       </button>
-                      <span className="text-xs text-gray-900 dark:text-gray-100 flex-1 truncate group-hover:text-primary transition-colors">
+                      <span className="text-sm text-font-color flex-1 truncate group-hover:text-primary transition-colors">
                         {option.key}
                       </span>
                     </label>
@@ -268,10 +278,10 @@ export default function GridMultiSelectFilter({
             </div>
 
             {/* Clear All and Apply Buttons */}
-            <div className="p-2 bg-gray-50 dark:bg-gray-800/50 space-y-1.5">
+            <div className="p-2 bg-primary-5 space-y-1.5">
               <button
                 type="button"
-                className="w-full px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium transition-colors"
+                className="w-full px-3 py-1.5 text-xs text-font-color hover:text-primary font-medium transition-colors"
                 onClick={handleClearAll}
               >
                 Clear All

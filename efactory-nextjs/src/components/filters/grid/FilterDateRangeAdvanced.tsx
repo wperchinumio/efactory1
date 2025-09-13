@@ -206,8 +206,8 @@ export default function FilterDateRangeAdvanced({
         onClick={() => setIsOpen(!isOpen)}
         className={`
           w-full flex items-center justify-between px-3 py-2 text-sm font-normal
-          bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600
-          rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600
+          bg-card-color border border-border-color
+          rounded-md shadow-sm hover:bg-primary-10
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
           transition-colors duration-200
           ${selectedRange ? 'text-red-600 dark:text-red-400 border-red-500' : 'text-gray-500 dark:text-gray-400'}
@@ -229,7 +229,7 @@ export default function FilterDateRangeAdvanced({
                 e.stopPropagation();
                 handleClear();
               }}
-              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-full transition-colors"
+              className="p-1 hover:bg-primary-10 rounded-full transition-colors"
             >
               <XMarkIcon className="h-3 w-3 text-gray-400" />
             </button>
@@ -239,7 +239,7 @@ export default function FilterDateRangeAdvanced({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-96 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
+        <div className="absolute z-50 mt-1 w-96 bg-card-color border border-border-color rounded-md shadow-lg">
           <div className="flex">
             {/* Left Panel - Predefined Ranges */}
             <div className="w-1/2 p-4 border-r border-gray-200 dark:border-gray-600">
@@ -249,7 +249,7 @@ export default function FilterDateRangeAdvanced({
                     type="button"
                     onClick={handleClear}
                     className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                      !selectedRange ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                      !selectedRange ? 'bg-primary-10 text-primary' : 'hover:bg-primary-10'
                     }`}
                   >
                     Clear
@@ -262,7 +262,7 @@ export default function FilterDateRangeAdvanced({
                     type="button"
                     onClick={() => handleRangeSelect(range)}
                     className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                      selectedRange?.label === range.label ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                      selectedRange?.label === range.label ? 'bg-primary-10 text-primary' : 'hover:bg-primary-10'
                     }`}
                   >
                     {range.label}
@@ -273,7 +273,7 @@ export default function FilterDateRangeAdvanced({
                   type="button"
                   onClick={handleCustomRangeToggle}
                   className={`w-full text-left px-3 py-2 text-sm rounded-md transition-colors ${
-                    showCustomRange ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'hover:bg-gray-100 dark:hover:bg-gray-600'
+                    showCustomRange ? 'bg-primary-10 text-primary' : 'hover:bg-primary-10'
                   }`}
                 >
                   Custom Range
@@ -286,26 +286,26 @@ export default function FilterDateRangeAdvanced({
               {showCustomRange ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs font-medium text-font-color mb-2">
                       From:
                     </label>
                     <input
                       type="date"
                       value={customStart}
                       onChange={(e) => setCustomStart(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="w-full px-3 py-2 border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-card-color text-font-color"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-xs font-medium text-font-color mb-2">
                       To:
                     </label>
                     <input
                       type="date"
                       value={customEnd}
                       onChange={(e) => setCustomEnd(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      className="w-full px-3 py-2 border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-card-color text-font-color"
                     />
                   </div>
                 </div>
@@ -325,7 +325,7 @@ export default function FilterDateRangeAdvanced({
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors"
+              className="px-4 py-2 text-sm font-medium text-font-color bg-primary-10 hover:bg-primary-20 rounded-md transition-colors"
             >
               Cancel
             </button>

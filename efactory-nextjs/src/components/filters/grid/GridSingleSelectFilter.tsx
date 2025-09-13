@@ -101,17 +101,17 @@ export default function GridSingleSelectFilter({
         onClick={handleToggle}
         className={`
           w-full px-3 py-2 text-left text-xs font-medium
-          bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-          rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700
+          bg-card-color border border-border-color
+          rounded-lg shadow-sm hover:bg-primary-10
           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
           transition-all duration-200 flex items-center justify-between
-          ${hasActiveSelection ? 'text-primary border-primary bg-primary/5' : 'text-gray-700 dark:text-gray-300'}
+          ${hasActiveSelection ? 'text-primary border-primary bg-primary-10' : 'text-font-color'}
         `}
         style={{ width: config.width || 'auto', minWidth: '120px', maxWidth: '180px' }}
       >
         <div className="flex items-center space-x-2">
           {config.iconClassName && (
-            <i className={`${config.iconClassName} text-gray-500 dark:text-gray-400`} />
+            <i className={`${config.iconClassName} text-font-color-100`} />
           )}
           <span className="truncate text-xs">{getDisplayText()}</span>
           {loading && (
@@ -119,7 +119,7 @@ export default function GridSingleSelectFilter({
           )}
         </div>
         <ChevronDownIcon 
-          className={`h-3 w-3 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+          className={`h-3 w-3 text-font-color-100 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`} 
         />
@@ -136,7 +136,7 @@ export default function GridSingleSelectFilter({
           
           {/* Dropdown Content */}
           <div 
-            className="absolute z-20 mt-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden min-w-[200px]"
+            className="absolute z-20 mt-2 w-full bg-card-color border border-border-color rounded-xl shadow-xl overflow-hidden min-w-[200px]"
             style={{ 
               width: Math.max(
                 containerRef.current?.getBoundingClientRect().width || 0, 
@@ -146,16 +146,16 @@ export default function GridSingleSelectFilter({
           >
             {/* Clear Option for Total Filter */}
             {config.field === 'total' && hasActiveSelection && (
-              <div className="px-2 pt-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+              <div className="px-2 pt-2 pb-1 border-b border-border-color">
                 <button
                   type="button"
                   onClick={() => handleSelectOption('')}
-                  className="w-full flex items-center px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors rounded-lg group text-left text-gray-600 dark:text-gray-400"
+                  className="w-full flex items-center px-2 py-1 hover:bg-primary-10 cursor-pointer transition-colors rounded-lg group text-left text-font-color-100"
                 >
                   <div className="flex items-center justify-center w-3 h-3 mr-2">
                     <XMarkIcon className="w-3 h-3" />
                   </div>
-                  <span className="text-xs flex-1 truncate group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
+                  <span className="text-sm flex-1 truncate group-hover:text-font-color transition-colors">
                     No totals
                   </span>
                 </button>
@@ -163,13 +163,13 @@ export default function GridSingleSelectFilter({
             )}
 
             {/* Options List */}
-            <div className="max-h-[300px] overflow-y-auto px-2 pb-2">
+            <div className="max-h-[300px] overflow-y-auto px-2 pt-2 pb-2">
               {loading ? (
-                <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+                <div className="px-3 py-3 text-sm text-font-color-100 text-center">
                   Loading options...
                 </div>
               ) : filteredOptions.length === 0 ? (
-                <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+                <div className="px-3 py-3 text-sm text-font-color-100 text-center">
                   No {config.title.toLowerCase()} found.
                 </div>
               ) : (
@@ -183,8 +183,8 @@ export default function GridSingleSelectFilter({
                       type="button"
                       onClick={() => handleSelectOption(optionValue)}
                       className={`
-                        w-full flex items-center px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors rounded-lg group text-left
-                        ${isSelected ? 'bg-primary/10 text-primary' : 'text-gray-900 dark:text-gray-100'}
+                        w-full flex items-center px-2 py-1 hover:bg-primary-10 cursor-pointer transition-colors rounded-lg group text-left
+                        ${isSelected ? 'bg-primary-10 text-primary' : 'text-font-color'}
                       `}
                     >
                       <div className="flex items-center justify-center w-3 h-3 mr-2">
@@ -192,9 +192,9 @@ export default function GridSingleSelectFilter({
                           <CheckIcon className="w-3 h-3 text-primary" />
                         )}
                       </div>
-                      <span className="text-xs flex-1 truncate group-hover:text-primary transition-colors">
-                        {option.key}
-                      </span>
+                    <span className="text-sm flex-1 truncate group-hover:text-primary transition-colors">
+                      {option.key}
+                    </span>
                     </button>
                   );
                 })

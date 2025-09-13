@@ -231,11 +231,11 @@ const FilterDateRangeCustom = ({
           type="button"
           className={`
             w-full px-3 py-2 text-left text-xs font-medium
-            bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-            rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700
+            bg-card-color border border-border-color
+            rounded-lg shadow-sm hover:bg-primary-10
             focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
             transition-all duration-200 flex items-center justify-between
-            ${hasActiveSelection ? 'text-primary border-primary bg-primary/5' : 'text-gray-700 dark:text-gray-300'}
+            ${hasActiveSelection ? 'text-primary border-primary bg-primary-10' : 'text-font-color'}
           `}
           style={{ 
             width: value ? 'fit-content' : (config.width || 'auto'),
@@ -247,12 +247,12 @@ const FilterDateRangeCustom = ({
         >
           <div className="flex items-center space-x-2 flex-1">
             {config.iconClassName && (
-              <i className={`${config.iconClassName} text-gray-500 dark:text-gray-400`} />
+              <i className={`${config.iconClassName} text-font-color-100`} />
             )}
             <span className="text-xs whitespace-nowrap flex-1">{getDisplayText()}</span>
           </div>
           <IconChevronDown 
-            className={`h-3 w-3 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+            className={`h-3 w-3 text-font-color-100 transition-transform duration-200 ${
               isOpen ? 'rotate-180' : ''
             }`} 
           />
@@ -269,7 +269,7 @@ const FilterDateRangeCustom = ({
             
             {/* Dropdown Content */}
             <div 
-              className="absolute z-20 mt-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden min-w-[200px]"
+              className="absolute z-20 mt-2 w-full bg-card-color border border-border-color rounded-xl shadow-xl overflow-hidden min-w-[200px]"
               style={{ width: Math.max(containerRef.current?.getBoundingClientRect().width || 0, 200) }}
             >
             {/* Options List */}
@@ -279,12 +279,12 @@ const FilterDateRangeCustom = ({
                   key={option.value}
                   type="button"
                   className={`
-                    w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-600 
+                    w-full px-3 py-2 text-left text-sm hover:bg-primary-10 
                     transition-colors duration-150 flex items-center justify-between gap-2
                     ${value && option.value !== 'CUSTOM' && option.value !== '' && 
                       value.start === option.value && value.end === option.value
-                      ? 'bg-primary/10 text-primary' 
-                      : 'text-gray-700 dark:text-gray-300'
+                      ? 'bg-primary-10 text-primary' 
+                      : 'text-font-color'
                     }
                   `}
                   onClick={() => handleSelect(option.value)}
@@ -313,26 +313,26 @@ const FilterDateRangeCustom = ({
           }}
         >
           <div 
-            className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
+            className="bg-card-color border border-border-color rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Panel Header */}
-            <div className="bg-primary/5 dark:bg-primary/10 border-b border-gray-200 dark:border-gray-600 px-6 py-4">
+            <div className="bg-primary-5 border-b border-border-color px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-primary text-white rounded-lg flex items-center justify-center">
                     <IconCalendar className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Custom Date Range</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Select your custom date range</p>
+                    <h3 className="text-lg font-bold text-font-color">Custom Date Range</h3>
+                    <p className="text-sm text-font-color-100">Select your custom date range</p>
                   </div>
                 </div>
                 <button
                   onClick={handleCustomCancel}
-                  className="w-8 h-8 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-lg hover:bg-primary-10 flex items-center justify-center transition-colors"
                 >
-                  <IconX className="w-4 h-4 text-gray-500" />
+                  <IconX className="w-4 h-4 text-font-color-100" />
                 </button>
               </div>
             </div>
@@ -342,7 +342,7 @@ const FilterDateRangeCustom = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* From Date */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-semibold text-font-color mb-2">
                     From Date
                   </label>
                   <DatePicker
@@ -354,7 +354,7 @@ const FilterDateRangeCustom = ({
 
                 {/* To Date */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-sm font-semibold text-font-color mb-2">
                     To Date
                   </label>
                   <DatePicker
@@ -367,7 +367,7 @@ const FilterDateRangeCustom = ({
 
               {/* Quick Select Options */}
               <div className="mt-6">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Quick Select</h4>
+                <h4 className="text-sm font-semibold text-font-color mb-3">Quick Select</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {[
                     { label: 'Today', days: 0 },
@@ -398,9 +398,9 @@ const FilterDateRangeCustom = ({
 
               {/* Preview */}
               {customStartDate && customEndDate && (
-                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Preview</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="mt-6 p-4 bg-primary-5 border border-border-color rounded-lg">
+                  <h4 className="text-sm font-semibold text-font-color mb-2">Preview</h4>
+                  <p className="text-sm text-font-color-100">
                     <span className="font-medium">{customStartDate}</span>
                     {' '} to {' '}
                     <span className="font-medium">{customEndDate}</span>
@@ -410,11 +410,11 @@ const FilterDateRangeCustom = ({
             </div>
 
             {/* Panel Footer */}
-            <div className="bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600 px-6 py-4">
+            <div className="bg-primary-5 border-t border-border-color px-6 py-4">
               <div className="flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-font-color bg-primary-10 hover:bg-primary-20 rounded-md transition-colors"
                   onClick={handleCustomCancel}
                 >
                   Cancel

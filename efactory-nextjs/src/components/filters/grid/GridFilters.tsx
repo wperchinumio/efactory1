@@ -283,7 +283,7 @@ export default function GridFilters({
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-800 ${className}`}>
+    <div className={`bg-card-color border-b border-border-color ${className}`}>
       {/* Filter Panel - Always Visible */}
       <div className="px-6 py-1">
         <div className="flex items-center justify-between">
@@ -291,7 +291,7 @@ export default function GridFilters({
             {Object.entries(filters).map(([key, config]) => (
               <div key={key} className="flex-shrink-0">
                 {/* Filter Label */}
-                <div className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                <div className="text-[10px] font-medium text-font-color-100">
                   {config.title}
                 </div>
                 {renderFilter(key, config)}
@@ -304,7 +304,7 @@ export default function GridFilters({
             <button
               type="button"
               onClick={handleClearAllFilters}
-              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-font-color hover:text-primary transition-colors"
             >
               <ArrowPathIcon className="h-4 w-4" />
               <span>Clear All</span>

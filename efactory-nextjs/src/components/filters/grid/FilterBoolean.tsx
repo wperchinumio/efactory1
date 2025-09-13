@@ -1,5 +1,5 @@
 import React from 'react';
-import CheckBox from '@/components/ui/checkbox';
+import CheckBox from '@/components/ui/CheckBox';
 import type { BooleanFilterConfig } from '@/types/api/filters';
 
 interface FilterBooleanProps {
@@ -31,7 +31,7 @@ export default function FilterBoolean({
         size="small"
       />
       <span className={`text-xs font-medium select-none transition-colors ${
-        value ? 'text-primary' : 'text-gray-500 dark:text-gray-400'
+        value ? 'text-primary' : 'text-font-color-100'
       }`}>
         {value ? 'ON' : 'OFF'}
       </span>

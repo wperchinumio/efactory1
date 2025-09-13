@@ -38,6 +38,15 @@ export const shippedDateQF: FilterConfig = {
   allowClear: true
 };
 
+export const deliveryDateQF: FilterConfig = {
+  field: 'delivery_date',
+  title: 'DELIVERY DATE',
+  type: 'DATE_RANGE_CUSTOM_QF',
+  iconClassName: 'fa fa-calendar',
+  width: '140px',
+  allowClear: true
+};
+
 export const orderedDateQF: FilterConfig = {
   field: 'ordered_date',
   title: 'ORDER DATE',
@@ -248,6 +257,33 @@ export const gridFilterConfigs: GridFilterConfig = {
     inv_type_region: warehouseQF,
     account_number: accountNumberQF,
     received_date: { ...receivedDateQF, allowClear: false }
+  },
+  'detail-freight': {
+    location: locationQF,
+    account_number: accountNumberQF,
+    shipped_date: { ...shippedDateQF, allowClear: false },
+    delivery_date: { ...deliveryDateQF, allowClear: true },
+    order_type: orderTypeQF,
+    international_code: intCodeQF,
+    received_date: receivedDateQF
+  },
+  'detail-package': {
+    location: locationQF,
+    account_number: accountNumberQF,
+    shipped_date: { ...shippedDateQF, allowClear: false },
+    delivery_date: { ...deliveryDateQF, allowClear: true },
+    order_type: orderTypeQF,
+    international_code: intCodeQF,
+    received_date: receivedDateQF
+  },
+  'detail-serial': {
+    location: locationQF,
+    account_number: accountNumberQF,
+    shipped_date: { ...shippedDateQF, allowClear: false },
+    delivery_date: { ...deliveryDateQF, allowClear: true },
+    order_type: orderTypeQF,
+    international_code: intCodeQF,
+    received_date: receivedDateQF
   }
 };
 

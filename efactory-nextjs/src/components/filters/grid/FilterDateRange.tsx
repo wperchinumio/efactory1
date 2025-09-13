@@ -61,8 +61,8 @@ export default function FilterDateRange({
         onClick={() => setIsOpen(!isOpen)}
         className={`
           w-full flex items-center justify-between px-2 py-1.5 text-xs font-normal
-          bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600
-          rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600
+          bg-card-color border border-border-color
+          rounded-md shadow-sm hover:bg-primary-10
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
           transition-colors duration-200
           ${value ? 'text-red-600 dark:text-red-400 border-red-500' : 'text-gray-500 dark:text-gray-400'}
@@ -81,7 +81,7 @@ export default function FilterDateRange({
             <button
               type="button"
               onClick={handleClear}
-              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-full transition-colors"
+              className="p-1 hover:bg-primary-10 rounded-full transition-colors"
             >
               <XMarkIcon className="h-2.5 w-2.5 text-gray-400" />
             </button>
@@ -98,29 +98,29 @@ export default function FilterDateRange({
           />
           
           {/* Date Range Picker */}
-          <div className="absolute z-20 mt-1 w-80 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg p-4">
+          <div className="absolute z-20 mt-1 w-80 bg-card-color border border-border-color rounded-md shadow-lg p-4">
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-xs font-medium text-font-color mb-1">
                   Start Date
                 </label>
                 <input
                   type="date"
                   value={tempStart}
                   onChange={(e) => setTempStart(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-card-color text-font-color"
                 />
               </div>
               
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-xs font-medium text-font-color mb-1">
                   End Date
                 </label>
                 <input
                   type="date"
                   value={tempEnd}
                   onChange={(e) => setTempEnd(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  className="w-full px-3 py-2 border border-border-color rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-card-color text-font-color"
                 />
               </div>
               
@@ -128,7 +128,7 @@ export default function FilterDateRange({
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors"
+                  className="px-3 py-1.5 text-xs font-medium text-font-color bg-primary-10 hover:bg-primary-20 rounded-md transition-colors"
                 >
                   Cancel
                 </button>

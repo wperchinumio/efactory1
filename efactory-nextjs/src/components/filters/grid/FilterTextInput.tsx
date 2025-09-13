@@ -65,7 +65,7 @@ export default function FilterTextInput({
           placeholder="Search..."
           className={`
             w-full pl-10 pr-10 py-2 text-sm border rounded-md shadow-sm
-            bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600
+            bg-card-color border-border-color
             text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
             transition-colors duration-200
@@ -77,7 +77,7 @@ export default function FilterTextInput({
           <button
             type="button"
             onClick={handleClear}
-            className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-gray-100 dark:hover:bg-gray-600 rounded-r-md transition-colors"
+            className="absolute inset-y-0 right-0 pr-3 flex items-center hover:bg-primary-10 rounded-r-md transition-colors"
           >
             <XMarkIcon className="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" />
           </button>

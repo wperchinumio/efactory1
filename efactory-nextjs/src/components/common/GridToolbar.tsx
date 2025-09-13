@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from '@/components/ui/shadcn/dropdown-menu';
+import { Button } from '@/components/ui';
 import ScheduleReportModal from '@/components/common/ScheduleReportModal';
 import ManageFiltersModal from '@/components/common/ManageFiltersModal';
 import type { SchedulerTask } from '@/types/api/scheduler';
@@ -66,6 +65,8 @@ export default function GridToolbar({
   const [exporting, setExporting] = useState<'excel' | 'csv' | 'zip' | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [viewsOpen, setViewsOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const selectedView = useMemo(() => views.find((v) => v.selected) || views.find((v) => v.id === selectedViewId) || views[0], [views, selectedViewId]);
 
@@ -169,54 +170,130 @@ export default function GridToolbar({
               </button>
               
               {/* Right side - Dropdown trigger */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button 
-                    className="inline-flex items-center justify-center h-8 px-2 text-xs font-medium rounded-r-md bg-card-color text-font-color hover:bg-primary-10 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <IconChevronDown size={12} />
-                  </button>
-                </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="min-w-[200px] bg-card-color border-border-color text-font-color shadow-lg" 
-                align="end"
-                style={{ 
-                  backgroundColor: 'var(--card-color)', 
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--font-color)',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-                }}
-              >
-                <DropdownMenuLabel className="text-xs font-medium text-font-color px-2 py-1.5">Views</DropdownMenuLabel>
-                {views.map((v) => (
-                  <DropdownMenuItem 
-                    key={v.id} 
-                    onClick={() => handleSelectView(v.id)} 
-                    className={`text-xs px-2 py-1.5 hover:bg-primary-10 ${v.selected ? 'bg-primary-10' : ''}`}
-                    style={{ backgroundColor: v.selected ? 'var(--primary-10)' : 'transparent' }}
-                  >
-                    <div className="w-3 h-3 mr-2 flex items-center justify-center">
-                      {v.selected && <IconCheck size={12} className="text-primary" />}
-                    </div>
-                    <span className={v.selected ? 'font-semibold text-primary' : 'text-font-color'}>{v.name}</span>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator className="bg-border-color" />
-                <DropdownMenuItem 
-                  onClick={() => setManageOpen(true)} 
-                  className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
+              <div className="relative">
+                <button 
+                  className="inline-flex items-center justify-center h-8 px-2 text-xs font-medium rounded-r-md bg-card-color text-font-color hover:bg-primary-10 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => setViewsOpen(!viewsOpen)}
                 >
-                  <IconSettings size={12} className="mr-2" />
-                  Customize…
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border-color" />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color">
-                    <IconDownload size={12} className="mr-2" />
-                    Export To
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent 
-                    className="bg-card-color border-border-color text-font-color shadow-lg"
+                  <IconChevronDown size={12} />
+                </button>
+                
+                {viewsOpen && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-10" 
+                      onClick={() => setViewsOpen(false)}
+                    />
+                    <div 
+                      className="absolute right-0 top-full mt-1 min-w-[200px] bg-card-color border border-border-color text-font-color shadow-lg rounded-md z-20"
+                      style={{ 
+                        backgroundColor: 'var(--card-color)', 
+                        borderColor: 'var(--border-color)',
+                        color: 'var(--font-color)',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                      }}
+                    >
+                      <div className="text-sm font-medium text-font-color px-2 py-1.5 border-b border-border-color">Views</div>
+                      {views.map((v) => (
+                        <button
+                          key={v.id} 
+                          onClick={() => {
+                            handleSelectView(v.id);
+                            setViewsOpen(false);
+                          }} 
+                          className={`w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 flex items-center ${v.selected ? 'bg-primary-10' : ''}`}
+                          style={{ backgroundColor: v.selected ? 'var(--primary-10)' : 'transparent' }}
+                        >
+                          <div className="w-3 h-3 mr-2 flex items-center justify-center">
+                            {v.selected && <IconCheck size={12} className="text-primary" />}
+                          </div>
+                          <span className={v.selected ? 'font-semibold text-primary' : 'text-font-color'}>{v.name}</span>
+                        </button>
+                      ))}
+                      <div className="border-t border-border-color my-1"></div>
+                      <button 
+                        onClick={() => {
+                          setManageOpen(true);
+                          setViewsOpen(false);
+                        }} 
+                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center"
+                      >
+                        <IconSettings size={12} className="mr-2" />
+                        Customize…
+                      </button>
+                      <div className="border-t border-border-color my-1"></div>
+                      <button 
+                        onClick={() => {
+                          handleExport('excel');
+                          setViewsOpen(false);
+                        }} 
+                        disabled={!!exporting} 
+                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50"
+                      >
+                        {exporting === 'excel' ? 'Exporting…' : 'Export to Excel'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          handleExport('csv');
+                          setViewsOpen(false);
+                        }} 
+                        disabled={!!exporting} 
+                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50"
+                      >
+                        {exporting === 'csv' ? 'Exporting…' : 'Export to CSV'}
+                      </button>
+                      <button 
+                        onClick={() => {
+                          handleExport('zip');
+                          setViewsOpen(false);
+                        }} 
+                        disabled={!!exporting} 
+                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50"
+                      >
+                        {exporting === 'zip' ? 'Exporting…' : 'Export to Zip'}
+                      </button>
+                      <div className="border-t border-border-color my-1"></div>
+                      <button 
+                        onClick={() => {
+                          setScheduleOpen(true);
+                          setViewsOpen(false);
+                        }} 
+                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center"
+                      >
+                        <IconCalendar size={12} className="mr-2" />
+                        Schedule report…
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Filters Dropdown */}
+            <div className="relative">
+              <button 
+                className={`inline-flex items-center justify-between h-8 px-3 text-xs font-medium rounded-md border focus:outline-none focus:ring-1 focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 min-w-[100px] ${
+                  savedFilters.find((f) => f.selected) 
+                    ? 'border-red-500 bg-red-50 text-red-700 hover:bg-red-100 focus:ring-red-500' 
+                    : 'border-border-color bg-card-color text-font-color hover:bg-primary-10 focus:ring-primary'
+                }`}
+                onClick={() => setFiltersOpen(!filtersOpen)}
+              >
+                <div className="flex items-center">
+                  <IconFilter size={12} className="mr-2" />
+                  {savedFilters.find((f) => f.selected)?.name || 'Filters'}
+                </div>
+                <IconChevronDown size={12} />
+              </button>
+              
+              {filtersOpen && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10" 
+                    onClick={() => setFiltersOpen(false)}
+                  />
+                  <div 
+                    className="absolute right-0 top-full mt-1 min-w-[180px] bg-card-color border border-border-color text-font-color shadow-lg rounded-md z-20"
                     style={{ 
                       backgroundColor: 'var(--card-color)', 
                       borderColor: 'var(--border-color)',
@@ -224,106 +301,62 @@ export default function GridToolbar({
                       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
                     }}
                   >
-                    <DropdownMenuItem 
-                      onClick={() => handleExport('excel')} 
-                      disabled={!!exporting} 
-                      className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
+                    <button 
+                      onClick={() => {
+                        setManageOpen(true);
+                        setFiltersOpen(false);
+                      }} 
+                      className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center"
                     >
-                      {exporting === 'excel' ? 'Exporting…' : 'Excel'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleExport('csv')} 
-                      disabled={!!exporting} 
-                      className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
+                      <IconSettings size={12} className="mr-2" />
+                      Save current filter…
+                    </button>
+                    <div className="border-t border-border-color my-1"></div>
+                    <button 
+                      onClick={() => {
+                        handleUnsetSavedFilter();
+                        setFiltersOpen(false);
+                      }} 
+                      className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center"
                     >
-                      {exporting === 'csv' ? 'Exporting…' : 'CSV'}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleExport('zip')} 
-                      disabled={!!exporting} 
-                      className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
+                      <IconX size={12} className="mr-2" />
+                      Reset
+                    </button>
+                    <div className="border-t border-border-color my-1"></div>
+                    <button 
+                      onClick={() => {
+                        setManageOpen(true);
+                        setFiltersOpen(false);
+                      }} 
+                      className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center"
                     >
-                      {exporting === 'zip' ? 'Exporting…' : 'Zip'}
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuSeparator className="bg-border-color" />
-                <DropdownMenuItem 
-                  onClick={() => setScheduleOpen(true)} 
-                  className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
-                >
-                  <IconCalendar size={12} className="mr-2" />
-                  Schedule report…
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            {/* Filters Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button 
-                  className={`inline-flex items-center justify-between h-8 px-3 text-xs font-medium rounded-md border focus:outline-none focus:ring-1 focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 min-w-[100px] ${
-                    savedFilters.find((f) => f.selected) 
-                      ? 'border-red-500 bg-red-50 text-red-700 hover:bg-red-100 focus:ring-red-500' 
-                      : 'border-border-color bg-card-color text-font-color hover:bg-primary-10 focus:ring-primary'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <IconFilter size={12} className="mr-2" />
-                    {savedFilters.find((f) => f.selected)?.name || 'Filters'}
+                      <IconSettings size={12} className="mr-2" />
+                      Manage filters…
+                    </button>
+                    {savedFilters.length > 0 && (
+                      <>
+                        <div className="border-t border-border-color my-1"></div>
+                        {savedFilters.map((f) => (
+                          <button
+                            key={f.id} 
+                            onClick={() => {
+                              handleSelectSavedFilter(f.id);
+                              setFiltersOpen(false);
+                            }} 
+                            className={`w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 flex items-center ${f.selected ? 'bg-primary-10' : ''} text-font-color`}
+                            style={{ backgroundColor: f.selected ? 'var(--primary-10)' : 'transparent' }}
+                          >
+                            {f.selected && <IconCheck size={12} className="mr-2 text-primary" />}
+                            {!f.selected && <div className="w-3 mr-2" />}
+                            <span className={f.selected ? 'font-semibold text-primary' : 'text-font-color'}>{f.name}</span>
+                          </button>
+                        ))}
+                      </>
+                    )}
                   </div>
-                  <IconChevronDown size={12} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                className="min-w-[180px] bg-card-color border-border-color text-font-color shadow-lg" 
-                align="end"
-                style={{ 
-                  backgroundColor: 'var(--card-color)', 
-                  borderColor: 'var(--border-color)',
-                  color: 'var(--font-color)',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
-                }}
-              >
-                <DropdownMenuItem 
-                  onClick={() => setManageOpen(true)} 
-                  className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
-                >
-                  <IconSettings size={12} className="mr-2" />
-                  Save current filter…
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border-color" />
-                <DropdownMenuItem 
-                  onClick={handleUnsetSavedFilter} 
-                  className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
-                >
-                  <IconX size={12} className="mr-2" />
-                  Reset
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-border-color" />
-                <DropdownMenuItem 
-                  onClick={() => setManageOpen(true)} 
-                  className="text-xs px-2 py-1.5 hover:bg-primary-10 text-font-color"
-                >
-                  <IconSettings size={12} className="mr-2" />
-                  Manage filters…
-                </DropdownMenuItem>
-                {savedFilters.length > 0 && <DropdownMenuSeparator className="bg-border-color" />}
-                {savedFilters.map((f) => (
-                  <DropdownMenuItem 
-                    key={f.id} 
-                    onClick={() => handleSelectSavedFilter(f.id)} 
-                    className={`text-xs px-2 py-1.5 hover:bg-primary-10 ${f.selected ? 'bg-primary-10' : ''} text-font-color`}
-                    style={{ backgroundColor: f.selected ? 'var(--primary-10)' : 'transparent' }}
-                  >
-                    {f.selected && <IconCheck size={12} className="mr-2 text-primary" />}
-                    {!f.selected && <div className="w-3 mr-2" />}
-                    <span className={f.selected ? 'font-semibold text-primary' : 'text-font-color'}>{f.name}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

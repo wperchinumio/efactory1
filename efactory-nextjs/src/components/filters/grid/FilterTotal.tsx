@@ -54,17 +54,17 @@ export default function FilterTotal({
         onClick={() => setIsOpen(!isOpen)}
         className={`
           w-full px-3 py-2 text-left text-xs font-medium
-          bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700
-          rounded-lg shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700
+          bg-card-color border border-border-color
+          rounded-lg shadow-sm hover:bg-primary-10
           focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary
           transition-all duration-200 flex items-center justify-between
-          ${hasActiveSelection ? 'text-primary border-primary bg-primary/5' : 'text-gray-700 dark:text-gray-300'}
+          ${hasActiveSelection ? 'text-primary border-primary bg-primary-10' : 'text-font-color'}
         `}
         style={{ minWidth: '140px', maxWidth: '180px' }}
       >
         <span className="truncate text-xs">{getDisplayText()}</span>
         <ChevronDownIcon 
-          className={`h-3 w-3 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${
+          className={`h-3 w-3 text-font-color-100 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`} 
         />
@@ -81,7 +81,7 @@ export default function FilterTotal({
           
           {/* Dropdown Content */}
           <div 
-            className="absolute z-20 mt-2 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden"
+            className="absolute z-20 mt-2 w-full bg-card-color border border-border-color rounded-xl shadow-xl overflow-hidden"
             style={{ 
               width: Math.max(containerRef.current?.getBoundingClientRect().width || 0, 180)
             }}
@@ -97,8 +97,8 @@ export default function FilterTotal({
                     type="button"
                     onClick={() => handleSelectOption(option.value)}
                     className={`
-                      w-full flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors text-left
-                      ${isSelected ? 'bg-primary/10 text-primary' : 'text-gray-900 dark:text-gray-100'}
+                      w-full flex items-center px-3 py-2 hover:bg-primary-10 cursor-pointer transition-colors text-left
+                      ${isSelected ? 'bg-primary-10 text-primary' : 'text-font-color'}
                     `}
                   >
                     <div className="flex items-center justify-center w-3 h-3 mr-2">
