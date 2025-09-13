@@ -22,6 +22,8 @@ import {
     IconCalendarFilled,
     IconTag,
     IconArrowBigLeftFilled,
+    IconMenu2,
+    IconChevronLeft,
 } from '@tabler/icons-react';
 import ContactForm from '../common/ContactForm';
 import UserProfileModal from '../common/UserProfileModal';
@@ -545,11 +547,15 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
 
     return (
         <>
-            <div className="md:py-4 md:px-6 sm:p-3 py-3 border-b-4 border-card-color bg-body-color sticky top-0 z-[2] xl:shadow-none shadow-lg">
+            <div className="md:py-4 md:px-4 sm:p-3 py-3 border-b-4 border-card-color bg-body-color sticky top-0 z-[2] xl:shadow-none shadow-lg">
                 <div className='container-fluid flex items-center'>
-                <div className='flex items-center gap-3 sm:pe-4 pe-2 flex-1 min-w-0'>
-                        <button onClick={toggleMiniSidebar} className='xl:flex hidden items-center justify-center w-[36px] h-[36px] min-w-[36px] text-primary bg-primary-10 rounded-full'>
-                            <IconArrowBigLeftFilled className={`transition-all ${miniSidebar ? 'rotate-180 rtl:rotate-0' : 'rotate-0 rtl:rotate-180'}`} />
+                <div className='flex items-center gap-1 sm:pe-4 pe-2 flex-1 min-w-0'>
+                        <button onClick={toggleMiniSidebar} className='xl:flex hidden items-center justify-center w-[36px] h-[36px] min-w-[36px] text-primary bg-primary-10 rounded-full' aria-label={miniSidebar ? 'Expand sidebar' : 'Collapse sidebar'}>
+                            {miniSidebar ? (
+                                <IconMenu2 className="w-5 h-5" />
+                            ) : (
+                                <IconChevronLeft className="w-5 h-5" />
+                            )}
                         </button>
                         <Link href="/">
                             <CompanyLogo />

@@ -78,12 +78,12 @@ const TopMenu: React.FC = () => {
     measureDiv.style.top = '-9999px';
     measureDiv.style.left = '-9999px';
     measureDiv.style.whiteSpace = 'nowrap';
-    measureDiv.className = 'flex items-center space-x-1';
+    measureDiv.className = 'flex items-center space-x-0.5';
 
     // Add one button per menu to measure
     allMenus.forEach(menu => {
       const button = document.createElement('button');
-      button.className = `flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-0'} px-4 py-2 text-sm font-medium`;
+      button.className = `flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-1'} px-4 py-2 text-sm font-medium`;
       button.innerHTML = `
         ${showTopMenuIcons ? '<div class="w-[18px] h-[18px]"></div>' : ''}
         <span class="whitespace-nowrap">${menu.title}</span>
@@ -100,7 +100,7 @@ const TopMenu: React.FC = () => {
 
     document.body.appendChild(measureDiv);
 
-    // Determine inter-item gap from Tailwind space-x-1 (read from second child)
+    // Determine inter-item gap from Tailwind space-x-0.5 (read from second child)
     const second = measureDiv.children.item(1) as HTMLElement | null;
     gapWidthRef.current = second ? parseFloat(getComputedStyle(second).marginLeft || '0') : 0;
 
@@ -329,7 +329,7 @@ const TopMenu: React.FC = () => {
   }
 
   return (
-    <div ref={menuRef} className="flex items-center space-x-1 w-full">
+    <div ref={menuRef} className="flex items-center space-x-0.5 w-full">
       {/* Visible menu items - using exact Luno theme pattern */}
       {visibleMenus.map((menu) => {
         const firstRoute = getFirstRoute(menu.keyword);
@@ -350,7 +350,7 @@ const TopMenu: React.FC = () => {
                   setActiveDropdown(null);
                 }}
                 className={`
-                  flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-0'} px-4 py-2 text-sm font-medium transition-all hover:text-secondary
+                  flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-1'} px-4 py-2 text-sm font-medium transition-all hover:text-secondary
                   ${isActive
                     ? 'text-secondary bg-secondary-10 rounded-md'
                     : 'text-font-color'
@@ -367,7 +367,7 @@ const TopMenu: React.FC = () => {
               <button
                 onClick={() => handleMenuClick(menu.keyword)}
                 className={`
-                  flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-0'} px-4 py-2 text-sm font-medium transition-all hover:text-secondary
+                  flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-1'} px-4 py-2 text-sm font-medium transition-all hover:text-secondary
                   ${isActive
                     ? 'text-secondary bg-secondary-10 rounded-md'
                     : 'text-font-color'

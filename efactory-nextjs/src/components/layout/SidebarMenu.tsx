@@ -606,7 +606,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                 className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview' || calculatedActiveSidebarMenu === 'overview') ? 'text-secondary' : ''}`}
               >
                 <IconHome className="stroke-[1.5] w-[22px] h-[22px]" />
-                <span className='link'>Overview</span>
+                <span className='link text-[15px]/[21px]'>Overview</span>
               </Link>
             </li>
             <li className='sidebar-listitem'>
@@ -616,7 +616,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                 className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${(pageUrl === '/overview/notes' || calculatedActiveSidebarMenu === 'notes') ? 'text-secondary' : ''}`}
               >
                 <IconPencil className="stroke-[1.5] w-[22px] h-[22px]" />
-                <span className='link'>Personal notes</span>
+                <span className='link text-[15px]/[21px]'>Personal notes</span>
               </Link>
             </li>
           </>
@@ -643,7 +643,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                       className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
-                      <span className='link'>{item.title}</span>
+                      <span className='link text-[15px]/[21px]'>{item.title}</span>
                       {(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 
                         <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : 
                         <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />
@@ -672,7 +672,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                       className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${pageUrl === item.route ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
-                      <span className='link'>{item.title}</span>
+                      <span className='link text-[15px]/[21px]'>{item.title}</span>
                     </Link>
                   </li>
                 );
@@ -689,7 +689,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
-                  <span className='link'>{item.title}</span>
+                  <span className='link text-[15px]/[21px]'>{item.title}</span>
                   {(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) ? 
                     <IconChevronsDown className="arrow-icon stroke-[1.5] w-[20px] h-[20px] ms-auto" /> : 
                     <IconChevronRight className="arrow-icon stroke-[1.5] w-[18px] h-[18px] ms-auto rtl:rotate-180" />
@@ -716,7 +716,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   className={`sidebar-list-link flex items-center gap-2.5 w-full py-2 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
-                  <span className='link'>{item.title}</span>
+                  <span className='link text-[15px]/[21px]'>{item.title}</span>
                 </Link>
               </li>
             );
