@@ -135,6 +135,69 @@ export default function ReturnTrakEntryPage() {
     return config ? config[1][1] === 1 : false;
   }, [rmaType]);
 
+  // Check if Auth (Receive) should be enabled based on RMA type
+  const isToReceiveEnabled = useMemo(() => {
+    if (!rmaType) return false;
+    const config = rmaTypeConfig[rmaType];
+    return config ? config[1][0] === 1 : false;
+  }, [rmaType]);
+
+  // Helper function to determine if a field is required
+  const isFieldRequired = (fieldName: string) => {
+    switch (fieldName) {
+      case 'accountReceivingWarehouse':
+        return !accountReceivingWarehouse;
+      case 'rmaType':
+        return !rmaType;
+      case 'accountShippingWarehouse':
+        return !accountShippingWarehouse && isToShipEnabled;
+      case 'disposition':
+        return !disposition && isToReceiveEnabled;
+      case 'rmaNumber':
+        return !rmaNumber && isManualNumbering;
+      case 'company':
+        // Company is required when BOTH company AND attention are empty (like OrderPoints)
+        return (!shippingAddress.company || shippingAddress.company.trim() === '') && 
+               (!shippingAddress.attention || shippingAddress.attention.trim() === '');
+      case 'attention':
+        // Attention is required when BOTH company AND attention are empty (like OrderPoints)
+        return (!shippingAddress.company || shippingAddress.company.trim() === '') && 
+               (!shippingAddress.attention || shippingAddress.attention.trim() === '');
+      case 'address1':
+        // Address 1 is required when empty AND RMA type supports shipping
+        return (!shippingAddress.address1 || shippingAddress.address1.trim() === '') && isToShipEnabled;
+      case 'city':
+        // City is required when empty AND RMA type supports shipping
+        return (!shippingAddress.city || shippingAddress.city.trim() === '') && isToShipEnabled;
+      case 'postal_code':
+        // Postal Code is required when empty AND country is US/CA AND RMA type supports shipping
+        return (!shippingAddress.postal_code || shippingAddress.postal_code.trim() === '') && 
+               (shippingAddress.country === 'US' || shippingAddress.country === 'CA') && 
+               isToShipEnabled;
+      case 'state_province':
+        // State is required when empty AND country is US/CA/AU AND RMA type supports shipping
+        return (!shippingAddress.state_province || shippingAddress.state_province.trim() === '') && 
+               (shippingAddress.country === 'US' || shippingAddress.country === 'CA' || shippingAddress.country === 'AU') && 
+               isToShipEnabled;
+      case 'country':
+        // Country is required when empty AND RMA type supports shipping
+        return (!shippingAddress.country || shippingAddress.country.trim() === '') && isToShipEnabled;
+      case 'email':
+        // Email is required when empty AND email is required for any RMA type
+        return (!shippingAddress.email || shippingAddress.email.trim() === '') && isEmailRequired;
+      // Address 2 and Phone are NOT required in legacy code
+      default:
+        return false;
+    }
+  };
+
+  // Check if email is required based on RMA settings
+  const isEmailRequired = useMemo(() => {
+    if (!rmaSettings?.email_settings_rt) return false;
+    const emailSettings = rmaSettings.email_settings_rt;
+    return emailSettings.issue || emailSettings.receive || emailSettings.ship || emailSettings.cancel;
+  }, [rmaSettings]);
+
   // Derived: accounts list from authToken (calc_account_regions)
   const accountsMap = useMemo(() => {
     try {
@@ -730,6 +793,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Account # - RMA WH
+                          {isFieldRequired('accountReceivingWarehouse') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                   <Select value={accountReceivingWarehouse} onValueChange={setAccountReceivingWarehouse}>
                           <SelectTrigger className="h-9 text-sm mt-1">
@@ -752,6 +818,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           RMA Type
+                          {isFieldRequired('rmaType') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                   <Select value={rmaType} onValueChange={(v) => {
                     setRmaType(v);
@@ -784,6 +853,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Account # - Ship WH
+                          {isFieldRequired('accountShippingWarehouse') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                   <Select value={accountShippingWarehouse} onValueChange={setAccountShippingWarehouse}>
                           <SelectTrigger className="h-9 text-sm mt-1" disabled={!isToShipEnabled}>
@@ -806,6 +878,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Disposition
+                          {isFieldRequired('disposition') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                   <Select value={disposition} onValueChange={setDisposition}>
                           <SelectTrigger className="h-9 text-sm mt-1" disabled={!rmaType}>
@@ -835,6 +910,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           RMA #
+                          {isFieldRequired('rmaNumber') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                         {!isManualNumbering ? (
                           // Auto-generation mode: special styling with generate button
@@ -850,7 +928,7 @@ export default function ReturnTrakEntryPage() {
                                     : 'bg-card-color'
                                 } ${rmaNumber ? 'font-medium' : ''}`}
                               />
-                            </div>
+                  </div>
                             <button
                               type="button"
                               onClick={onGenerateRmaNumber}
@@ -864,7 +942,7 @@ export default function ReturnTrakEntryPage() {
                             >
                               &gt;&gt;
                             </button>
-                          </div>
+                </div>
                         ) : (
                           // Manual mode: standard input field
                           <Input 
@@ -976,6 +1054,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Company
+                          {isFieldRequired('company') && (
+                            <span className="text-orange-500 ml-1">*</span>
+                          )}
                         </Label>
                         <Input 
                           className="h-8 text-sm mt-1" 
@@ -986,6 +1067,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm flex items-center">
                           Attention
+                          {isFieldRequired('attention') && (
+                            <span className="text-orange-500 ml-1">*</span>
+                          )}
                         </Label>
                         <Input 
                           className="h-8 text-sm mt-1" 
@@ -998,6 +1082,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Address 1
+                          {isFieldRequired('address1') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                         <Input 
                           className="h-9 text-sm mt-1" 
@@ -1020,6 +1107,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           City
+                          {isFieldRequired('city') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                         <Input 
                           className="h-8 text-sm mt-1" 
@@ -1030,6 +1120,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Postal Code
+                          {isFieldRequired('postal_code') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                         <Input 
                           className="h-8 text-sm mt-1" 
@@ -1042,6 +1135,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Country
+                          {isFieldRequired('country') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                         <div className="mt-1">
                           <div className="relative">
@@ -1063,6 +1159,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           State
+                          {isFieldRequired('state_province') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                         <div className="mt-1">
                           <div className="relative">
@@ -1097,6 +1196,9 @@ export default function ReturnTrakEntryPage() {
                 <div>
                         <Label className="text-font-color-100 text-sm font-medium flex items-center">
                           Email
+                          {isFieldRequired('email') && (
+                            <span className="text-red-500 ml-1">*</span>
+                          )}
                         </Label>
                         <Input 
                           className="h-8 text-sm mt-1" 
