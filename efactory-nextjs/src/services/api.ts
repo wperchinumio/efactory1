@@ -174,20 +174,20 @@ export async function saveOverviewLayout(layout: OverviewLayout): Promise<Overvi
 export async function listGridViews(resource: string): Promise<GridViewListData> {
   const body: ListGridViewsRequest = { action: 'list', views: [resource] };
   const res = await postJson<ListGridViewsResponse>('/api/views', body);
-  return res.data[0];
+  return (res.data as any)[0];
 }
 
 // Select a saved view by id for a resource (server returns updated structure)
 export async function selectGridView(resource: string, id: number): Promise<GridViewListData> {
   const body: SelectGridViewRequest = { action: 'select', view: resource, id } as any;
   const res = await postJson<ListGridViewsResponse>('/api/views', body as any);
-  return res.data[0];
+  return (res.data as any)[0];
 }
 
 // Read rows from the rows endpoint provided by the view response
 export async function readGridRows<T = any>(rowsUrl: string, payload: ReadGridRowsRequest): Promise<GridRowResponse<T>> {
   const res = await postJson<{ data: GridRowResponse<T> }>(rowsUrl, payload as any);
-  return res.data;
+  return res.data as unknown as GridRowResponse<T>;
 }
 
 // Notes API

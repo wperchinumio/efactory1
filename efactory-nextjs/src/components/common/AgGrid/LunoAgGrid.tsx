@@ -6,8 +6,10 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import { getAuthToken } from '@/lib/auth/storage';
 import { getCachedView, setCachedView } from '@/lib/grid/viewCache';
-import type { GridFieldDef, GridFilter, GridRowResponse, GridSelectedView } from '@/types/api/grid';
+import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView } from '@/types/api/grid';
+import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer } from './renderers';
+import GridFilters from '@/components/filters/GridFilters';
 
 export interface LunoAgGridProps<T = any> {
   resource: string; // e.g., 'fulfillment-open'
@@ -23,6 +25,10 @@ export interface LunoAgGridProps<T = any> {
   showOrderTypeColumn?: boolean;
   showFlagsColumn?: boolean;
   showInvoiceAllColumn?: boolean;
+  containerSize?: 'default' | 'compact' | 'large'; // Grid container size variant
+  // Filter system
+  filters?: Record<string, FilterConfig>; // Filter configurations for this grid
+  showFilters?: boolean; // Whether to show the filter panel
 }
 
 // Ensure community modules are registered once
@@ -35,13 +41,27 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
     field: field.field,
     headerName: field.alias,
     sortable: !!field.sortable,
-    width: field.width,
     minWidth: field.min_width ?? 50,
     cellClass: (params) => {
       const align = field.align || 'left';
       return align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
     },
   };
+
+  // Only add width if it's defined
+  if (field.width) {
+    colDef.width = field.width;
+  }
+
+  // Add header filter if field is filterable
+  if (field.filterable) {
+    colDef.filter = true;
+    colDef.floatingFilter = true;
+    colDef.filterParams = {
+      buttons: ['reset', 'apply'],
+      closeOnApply: true,
+    };
+  }
 
   // Special renderers mapping placeholder (extend later):
   // Examples: fmtorderlink, fmtdate, fmtnumber
@@ -92,6 +112,65 @@ function getThemeClass(): string {
   return mode === 'dark' ? 'ag-theme-quartz-dark' : 'ag-theme-quartz';
 }
 
+function getThemeAwareStyles(): React.CSSProperties {
+  if (typeof window === 'undefined') return {};
+  
+  const mode = document.documentElement.getAttribute('data-theme');
+  const isDark = mode === 'dark';
+  
+  return {
+    '--ag-background-color': isDark ? '#24282e' : '#ffffff',
+    '--ag-foreground-color': isDark ? '#E0E0E0' : '#363535',
+    '--ag-header-background-color': isDark ? '#2d3238' : '#f8f9fa',
+    '--ag-header-foreground-color': isDark ? '#E0E0E0' : '#363535',
+    '--ag-border-color': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-row-hover-color': isDark ? '#2d3238' : '#f8f9fa',
+    '--ag-selected-row-background-color': isDark ? '#1a1d23' : '#e3f2fd',
+    '--ag-odd-row-background-color': isDark ? '#1e2127' : '#ffffff',
+    '--ag-even-row-background-color': isDark ? '#24282e' : '#ffffff',
+    '--ag-cell-horizontal-border': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-header-cell-hover-background-color': isDark ? '#3a3f45' : '#e9ecef',
+    '--ag-header-cell-moving-background-color': isDark ? '#3a3f45' : '#e9ecef',
+    '--ag-range-selection-background-color': isDark ? 'rgba(0, 123, 255, 0.2)' : 'rgba(0, 123, 255, 0.1)',
+    '--ag-range-selection-border-color': isDark ? '#007bff' : '#007bff',
+    '--ag-input-border-color': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-input-background-color': isDark ? '#24282e' : '#ffffff',
+    '--ag-input-foreground-color': isDark ? '#E0E0E0' : '#363535',
+    '--ag-disabled-foreground-color': isDark ? '#9399a1' : '#6c757d',
+    '--ag-chip-background-color': isDark ? '#2d3238' : '#f8f9fa',
+    '--ag-chip-foreground-color': isDark ? '#E0E0E0' : '#363535',
+    '--ag-popup-background-color': isDark ? '#24282e' : '#ffffff',
+    '--ag-popup-border-color': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-tooltip-background-color': isDark ? '#24282e' : '#ffffff',
+    '--ag-tooltip-foreground-color': isDark ? '#E0E0E0' : '#363535',
+    '--ag-tooltip-border-color': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-checkbox-background-color': isDark ? '#24282e' : '#ffffff',
+    '--ag-checkbox-border-color': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-checkbox-checked-color': isDark ? '#007bff' : '#007bff',
+    '--ag-font-family': 'Mulish, sans-serif',
+    '--ag-font-size': '14px',
+    '--ag-font-weight': '400',
+    '--ag-header-font-weight': '600',
+    '--ag-header-font-size': '14px',
+    '--ag-cell-horizontal-padding': '12px',
+    '--ag-cell-vertical-padding': '8px',
+    '--ag-header-height': '40px',
+    '--ag-row-height': '40px',
+    '--ag-border-radius': '6px',
+    '--ag-header-column-separator-display': 'block',
+    '--ag-header-column-separator-color': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-header-column-separator-height': '60%',
+    '--ag-header-column-resize-handle-color': isDark ? '#4c4c4c' : '#e7e7e7',
+    '--ag-header-column-resize-handle-width': '2px',
+    '--ag-header-column-resize-handle-height': '60%',
+    '--ag-header-column-resize-handle-display': 'block',
+    '--ag-scrollbar-thumb-color': isDark ? '#696969' : '#b9b9b9',
+    '--ag-scrollbar-track-color': isDark ? '#2d3238' : '#f8f9fa',
+    '--ag-scrollbar-width': '8px',
+    '--ag-scrollbar-height': '8px',
+  } as React.CSSProperties;
+}
+
 function makeViewStorageKey(resource: string): string | null {
   const token = getAuthToken();
   const userId = token?.user_data?.user_id;
@@ -112,12 +191,62 @@ export function LunoAgGrid<T = any>({
   showOrderTypeColumn = true,
   showFlagsColumn = false,
   showInvoiceAllColumn = false,
+  containerSize = 'default',
+  filters = {},
+  showFilters = true,
 }: LunoAgGridProps<T>) {
   const gridApiRef = useRef<GridApi | null>(null);
   const [rows, setRows] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [themeClass, setThemeClass] = useState(() => getThemeClass());
+  const [filterState, setFilterState] = useState<FilterState>({});
   const pageSize = selectedView.rows_per_page || 100;
+
+  // Debug: Log when rows change
+  useEffect(() => {
+    console.log('LunoAgGrid: Rows updated', { 
+      rowsCount: rows.length, 
+      total, 
+      page,
+      isMobile: typeof window !== 'undefined' && window.innerWidth < 768
+    });
+  }, [rows, total, page]);
+
+  // Handle filter changes
+  const handleFiltersChange = (newFilterState: FilterState) => {
+    setFilterState(newFilterState);
+    setPage(1); // Reset to first page when filters change
+    fetchPage(1, newFilterState);
+  };
+
+  // Theme change listener
+  useEffect(() => {
+    const handleThemeChange = () => {
+      const newThemeClass = getThemeClass();
+      setThemeClass(prev => prev !== newThemeClass ? newThemeClass : prev);
+    };
+
+    // Listen for theme changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+          handleThemeChange();
+        }
+      });
+    });
+
+    if (typeof window !== 'undefined') {
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+      });
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   // Persist view fields (width/order) per user+resource
   useEffect(() => {
@@ -157,10 +286,11 @@ export function LunoAgGrid<T = any>({
         minWidth: 50,
         maxWidth: 90,
         pinned: 'left',
-        suppressMenu: true,
+        suppressHeaderMenuButton: true,
         sortable: false,
         valueGetter: (p) => (p.data?.row_id ? p.data.row_id : (p.node?.rowIndex ?? 0) + 1),
-        cellClass: 'text-right font-medium text-[var(--font-color-100)]',
+        cellClass: 'text-right font-medium',
+        cellStyle: { color: 'var(--ag-foreground-color)' },
       });
     }
     if (showOrderTypeColumn) {
@@ -198,21 +328,105 @@ export function LunoAgGrid<T = any>({
     return [...preCols, ...defs];
   }, [selectedView.fields, showIndexColumn, showOrderTypeColumn]);
 
-  const themeClass = useMemo(() => getThemeClass(), []);
-
-  async function fetchPage(nextPage: number) {
+  async function fetchPage(nextPage: number, customFilterState?: FilterState) {
+    console.log('LunoAgGrid: fetchPage called', { nextPage, pageSize, rowsUrl });
+    
     const baseFilter: GridFilter = initialFilters || selectedView.filter;
+    const currentFilterState = customFilterState || filterState;
+    
+    // Convert filter state to GridFilter format
+    const filterConditions: GridFilterCondition[] = [];
+    
+    // Add filter state conditions
+    Object.values(currentFilterState).forEach(filterValue => {
+      if (filterValue && filterValue.value !== null && filterValue.value !== '') {
+        // Handle multi-select values (comma-separated)
+        if (filterValue.value.includes(',')) {
+          // Multi-select: use 'in' operator
+          filterConditions.push({
+            field: filterValue.field,
+            oper: 'in',
+            value: filterValue.value,
+          });
+        } else {
+          // Single value: use original operator
+          filterConditions.push({
+            field: filterValue.field,
+            oper: filterValue.oper,
+            value: filterValue.value,
+          });
+        }
+      }
+    });
+    
+    // Get current filter state from AG Grid (for column-specific filters)
+    let currentFilter = baseFilter;
+    if (gridApiRef.current) {
+      const filterModel = gridApiRef.current.getFilterModel();
+      if (Object.keys(filterModel).length > 0) {
+        // Convert AG Grid filter model to our GridFilter format
+        Object.entries(filterModel).forEach(([field, filterState]: [string, any]) => {
+          if (filterState.filter) {
+            filterConditions.push({
+              field,
+              oper: filterState.type === 'contains' ? 'like' : '=',
+              value: filterState.filter,
+            });
+          }
+        });
+      }
+    }
+    
+    // Combine all filter conditions
+    if (filterConditions.length > 0) {
+      currentFilter = { and: filterConditions };
+    }
+    
     const sort = applyServerSort && selectedView.sort?.length
-      ? [{ [selectedView.sort[0].field]: selectedView.sort[0].dir }]
+      ? [{ [selectedView.sort[0]?.field || '']: selectedView.sort[0]?.dir || 'asc' }]    
       : [{} as any];
-    const response = await onFetchRows(nextPage, pageSize, baseFilter, sort, undefined);
-    setRows(response.rows || []);
-    setTotal(response.total || 0);
+    
+    console.log('LunoAgGrid: Making API call', { nextPage, pageSize, currentFilter, sort });
+    
+    try {
+      const response = await onFetchRows(nextPage, pageSize, currentFilter, sort, undefined);
+      console.log('LunoAgGrid: API response', { rows: response.rows?.length, total: response.total });
+      setRows(response.rows || []);
+      setTotal(response.total || 0);
+      setPage(nextPage); // Update page state after successful API call
+    } catch (error) {
+      console.error('LunoAgGrid: API error', error);
+    }
   }
 
   useEffect(() => {
+    console.log('LunoAgGrid: Fetching page 1', { rowsUrl, selectedView, initialFilters });
     fetchPage(1);
   }, [rowsUrl, selectedView, initialFilters]);
+
+  // Handle window resize to refresh grid on mobile/desktop transitions
+  useEffect(() => {
+    const handleResize = () => {
+      console.log('LunoAgGrid: Window resized', { 
+        width: window.innerWidth, 
+        height: window.innerHeight,
+        rowsCount: rows.length,
+        isMobile: window.innerWidth < 768
+      });
+      
+      if (gridApiRef.current) {
+        // Refresh grid completely on resize to ensure data stays visible
+        setTimeout(() => {
+          gridApiRef.current?.redrawRows();
+          // Force refresh of the entire grid
+          gridApiRef.current?.refreshCells({ force: true });
+        }, 100);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [rows.length]);
 
   function onGridReady(e: GridReadyEvent) {
     gridApiRef.current = e.api;
@@ -229,6 +443,12 @@ export function LunoAgGrid<T = any>({
     }
   }
 
+  function onFilterChanged() {
+    // Reset to page 1 when filters change
+    setPage(1);
+    fetchPage(1);
+  }
+
   function persistColumnState() {
     try {
       const api = gridApiRef.current;
@@ -236,7 +456,7 @@ export function LunoAgGrid<T = any>({
       const allCols = api.getColumnDefs() || [];
       const currentState = api.getColumnDefs()?.map((c: any) => c.field) || [];
       // Derive order and widths from grid columns API
-      const gridColumns = api.getColumnApi().getAllGridColumns();
+      const gridColumns = api.getColumns() || [];
       const order = gridColumns.map((gc) => gc.getColDef().field as string);
       const widthByField: Record<string, number> = {};
       gridColumns.forEach((gc) => {
@@ -281,26 +501,160 @@ export function LunoAgGrid<T = any>({
     persistColumnState();
   }
 
+  const themeAwareStyles = useMemo(() => getThemeAwareStyles(), [themeClass]);
+
+  // Custom pagination panel component (without page size selector)
+  const CustomPaginationPanel = () => {
+    // Always show pagination panel, even if grid is not ready
+    const startRow = (page - 1) * pageSize + 1;
+    const endRow = Math.min(page * pageSize, total);
+    const totalPages = Math.ceil(total / pageSize);
+    const [pageInput, setPageInput] = useState(page.toString());
+    
+    // Update input when page changes
+    useEffect(() => {
+      setPageInput(page.toString());
+    }, [page]);
+    
+    const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setPageInput(e.target.value);
+    };
+    
+    const handlePageInputKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        const newPage = parseInt(pageInput);
+        if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
+          // Use fetchPage for remote pagination instead of AG Grid's built-in pagination
+          fetchPage(newPage);
+        } else {
+          // Reset to current page if invalid
+          setPageInput(page.toString());
+        }
+      }
+    };
+    
+    const handlePageInputBlur = () => {
+      // Reset to current page if user clicks away without pressing Enter
+      setPageInput(page.toString());
+    };
+    
+    return (
+      <div 
+        className="flex items-center justify-between px-4 py-3 text-sm border-t min-h-[48px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+        style={{
+          color: 'var(--ag-foreground-color)',
+          backgroundColor: 'var(--ag-header-background-color)',
+          borderColor: 'var(--ag-border-color)'
+        }}
+      >
+        <div className="font-medium">
+          {total > 0 ? `${startRow} to ${endRow} of ${total.toLocaleString()} ${paginationWord}` : `0 ${paginationWord}`}
+        </div>
+        {total > 0 && (
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => fetchPage(1)}
+              disabled={page === 1}
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+            >
+              First
+            </button>
+            <button
+              onClick={() => fetchPage(page - 1)}
+              disabled={page === 1}
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+            >
+              Previous
+            </button>
+            <div className="flex items-center space-x-1 px-2">
+              <span className="text-xs text-gray-600 dark:text-gray-400">Page</span>
+              <input
+                type="number"
+                value={pageInput}
+                onChange={handlePageInputChange}
+                onKeyPress={handlePageInputKeyPress}
+                onBlur={handlePageInputBlur}
+                min="1"
+                max={totalPages}
+                className="w-12 px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <span className="text-xs text-gray-600 dark:text-gray-400">of {totalPages}</span>
+            </div>
+            <button
+              onClick={() => fetchPage(page + 1)}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+            >
+              Next
+            </button>
+            <button
+              onClick={() => fetchPage(totalPages)}
+              disabled={page >= totalPages}
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+            >
+              Last
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const containerClass = containerSize === 'compact' 
+    ? 'grid-container-compact' 
+    : containerSize === 'large' 
+    ? 'grid-container-large' 
+    : 'grid-container';
+
   return (
-    <div className={`w-full h-full ${themeClass} rounded-md border border-[var(--border-color)] bg-[var(--card-bg)]`} style={{ height: 'calc(100vh - 280px)', overflow: 'hidden' }}>
-      <AgGridReact
-        theme="legacy"
-        rowData={rows}
-        columnDefs={colDefs}
-        onGridReady={onGridReady}
-        onRowClicked={(ev) => onRowClicked?.(ev.data)}
-        defaultColDef={{ resizable: true }}
-        onColumnResized={handleColumnResized}
-        onColumnMoved={handleColumnMoved}
-        pagination
-        paginationPageSize={pageSize}
-        onPaginationChanged={onPaginationChanged}
-        suppressCellFocus
-        animateRows
-        domLayout="normal"
-      />
-      <div className="text-xs text-muted mt-2">
-        {total.toLocaleString()} {paginationWord}
+    <div className="w-full">
+      {/* Filter Panel */}
+      {showFilters && Object.keys(filters).length > 0 && (
+        <GridFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+        />
+      )}
+      
+      {/* Grid Container */}
+      <div 
+        className={`w-full ${themeClass} rounded-md border flex flex-col ${containerClass}`} 
+        style={{ 
+          borderColor: 'var(--ag-border-color)',
+          backgroundColor: 'var(--ag-background-color)',
+          ...themeAwareStyles
+        }}
+      >
+        <div className="flex-1 overflow-hidden">
+          <AgGridReact
+            theme="legacy"
+            rowData={rows}
+            columnDefs={colDefs}
+            onGridReady={onGridReady}
+            onRowClicked={(ev) => onRowClicked?.(ev.data)}
+            defaultColDef={{ resizable: true }}
+          onColumnResized={handleColumnResized}
+          onColumnMoved={handleColumnMoved}
+          onFilterChanged={onFilterChanged}
+          pagination={false}
+            suppressCellFocus
+            animateRows
+            domLayout="normal"
+            suppressPaginationPanel
+          rowSelection={{
+            mode: 'singleRow',
+            checkboxes: false,
+            enableClickSelection: true
+          }}
+            getRowStyle={(params) => ({
+              backgroundColor: (params.node?.rowIndex ?? 0) % 2 === 0 ? 'var(--ag-even-row-background-color)' : 'var(--ag-odd-row-background-color)',
+              color: 'var(--ag-foreground-color)',
+            })}
+            headerHeight={44}
+            rowHeight={48}
+          />
+        </div>
+        <CustomPaginationPanel />
       </div>
     </div>
   );

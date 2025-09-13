@@ -24,6 +24,7 @@ export interface GridFieldDef {
   field: string;
   alias: string;
   sortable?: boolean;
+  filterable?: boolean; // Whether this column should have a header filter
   align?: GridAlign;
   render?: string; // e.g. 'fmtorderlink', 'fmtdate', ... (legacy renderer id)
   min_width?: number;

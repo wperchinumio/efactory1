@@ -79,8 +79,8 @@ export function OrderStageRenderer({ value, data }: { value: number; data?: any 
     yellowHaze: '#c5bf66',      // yellow-haze
     yellowMint: '#c5b96b',      // yellow-mint
     greenSoft: '#3faba4',       // green-soft
-  } as const;
-  let barColor = colorMap.yellowGold;
+  };
+  let barColor: string = colorMap.yellowGold;
   if (stage === 2) barColor = colorMap.dark;
   else if (stage > 2 && stage < 10) barColor = colorMap.redThunderbird;
   else if (stage === 10) barColor = colorMap.red;

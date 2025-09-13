@@ -209,6 +209,321 @@ body[data-luno-theme="dynamic"] {
   scroll-behavior: auto !important;
 }
 
+/* 
+ * Responsive Grid Container - Reusable across all pages
+ * 
+ * Usage:
+ * - grid-container: Auto height mobile (min 300px), calc(100vh - 120px) desktop
+ * - grid-container-compact: Auto height mobile (min 250px), calc(100vh - 180px) desktop
+ * - grid-container-large: Auto height mobile (min 400px), calc(100vh - 120px) desktop
+ * 
+ * Features:
+ * - Automatically adjusts height based on viewport size
+ * - Mobile-friendly with auto height to show all rows
+ * - Desktop-optimized with viewport-based calculations
+ * - Includes space for pagination controls
+ * - Maximum height constraint on mobile (80vh) to prevent overflow
+ */
+.grid-container {
+  /* Default height for mobile and small screens */
+  height: auto;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* For desktop screens with height > 400px */
+@media (min-height: 401px) and (min-width: 768px) {
+  .grid-container {
+    /* Full viewport height minus header, padding, and pagination space */
+    height: calc(100vh - 120px);
+    min-height: 400px;
+  }
+}
+
+/* For very large screens, ensure minimum usable height */
+@media (min-height: 800px) and (min-width: 1024px) {
+  .grid-container {
+    height: calc(100vh - 120px);
+    min-height: 500px;
+  }
+}
+
+/* Utility classes for different page layouts */
+.grid-container-compact {
+  height: auto;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-height: 401px) and (min-width: 768px) {
+  .grid-container-compact {
+    height: calc(100vh - 180px);
+    min-height: 300px;
+  }
+}
+
+.grid-container-large {
+  height: auto;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-height: 401px) and (min-width: 768px) {
+  .grid-container-large {
+    height: calc(100vh - 120px);
+    min-height: 500px;
+  }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 767px) {
+  .grid-container,
+  .grid-container-compact,
+  .grid-container-large {
+    height: 100vh; /* Use full viewport height on mobile */
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* Ensure grid content takes available space */
+  .grid-container .flex-1,
+  .grid-container-compact .flex-1,
+  .grid-container-large .flex-1 {
+    flex: 1;
+    min-height: 200px;
+    height: calc(100vh - 120px); /* Full height minus pagination space */
+  }
+}
+
+/* AG Grid Theme-Aware Styling */
+.ag-theme-quartz {
+  --ag-font-family: 'Mulish', sans-serif;
+  --ag-font-size: 14px;
+  --ag-font-weight: 400;
+  --ag-header-font-weight: 600;
+  --ag-header-font-size: 14px;
+  --ag-cell-horizontal-padding: 12px;
+  --ag-cell-vertical-padding: 8px;
+  --ag-header-height: 44px;
+  --ag-row-height: 48px;
+  --ag-border-radius: 6px;
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-height: 60%;
+  --ag-header-column-resize-handle-width: 2px;
+  --ag-header-column-resize-handle-height: 60%;
+  --ag-header-column-resize-handle-display: block;
+  --ag-scrollbar-width: 8px;
+  --ag-scrollbar-height: 8px;
+}
+
+/* Dark theme variant - using same base class but with dark overrides */
+.ag-theme-quartz-dark {
+  --ag-font-family: 'Mulish', sans-serif;
+  --ag-font-size: 14px;
+  --ag-font-weight: 400;
+  --ag-header-font-weight: 600;
+  --ag-header-font-size: 14px;
+  --ag-cell-horizontal-padding: 12px;
+  --ag-cell-vertical-padding: 8px;
+  --ag-header-height: 44px;
+  --ag-row-height: 48px;
+  --ag-border-radius: 6px;
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-height: 60%;
+  --ag-header-column-resize-handle-width: 2px;
+  --ag-header-column-resize-handle-height: 60%;
+  --ag-header-column-resize-handle-display: block;
+  --ag-scrollbar-width: 8px;
+  --ag-scrollbar-height: 8px;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .ag-theme-quartz {
+  --ag-background-color: #ffffff;
+  --ag-foreground-color: #363535;
+  --ag-header-background-color: #f8f9fa;
+  --ag-header-foreground-color: #363535;
+  --ag-border-color: #e7e7e7;
+  --ag-row-hover-color: #f8f9fa;
+  --ag-selected-row-background-color: #e3f2fd;
+  --ag-odd-row-background-color: #ffffff;
+  --ag-even-row-background-color: #ffffff;
+  --ag-cell-horizontal-border: #e7e7e7;
+  --ag-header-cell-hover-background-color: #e9ecef;
+  --ag-header-cell-moving-background-color: #e9ecef;
+  --ag-range-selection-background-color: rgba(0, 123, 255, 0.1);
+  --ag-range-selection-border-color: #007bff;
+  --ag-input-border-color: #e7e7e7;
+  --ag-input-background-color: #ffffff;
+  --ag-input-foreground-color: #363535;
+  --ag-disabled-foreground-color: #6c757d;
+  --ag-chip-background-color: #f8f9fa;
+  --ag-chip-foreground-color: #363535;
+  --ag-popup-background-color: #ffffff;
+  --ag-popup-border-color: #e7e7e7;
+  --ag-tooltip-background-color: #ffffff;
+  --ag-tooltip-foreground-color: #363535;
+  --ag-tooltip-border-color: #e7e7e7;
+  --ag-checkbox-background-color: #ffffff;
+  --ag-checkbox-border-color: #e7e7e7;
+  --ag-checkbox-checked-color: #007bff;
+  --ag-header-column-separator-color: #e7e7e7;
+  --ag-header-column-resize-handle-color: #e7e7e7;
+  --ag-scrollbar-thumb-color: #b9b9b9;
+  --ag-scrollbar-track-color: #f8f9fa;
+}
+
+/* Dark theme overrides */
+[data-theme="dark"] .ag-theme-quartz-dark {
+  --ag-background-color: #24282e;
+  --ag-foreground-color: #E0E0E0;
+  --ag-header-background-color: #2d3238;
+  --ag-header-foreground-color: #E0E0E0;
+  --ag-border-color: #4c4c4c;
+  --ag-row-hover-color: #2d3238;
+  --ag-selected-row-background-color: #1a1d23;
+  --ag-odd-row-background-color: #1e2127;
+  --ag-even-row-background-color: #24282e;
+  --ag-cell-horizontal-border: #4c4c4c;
+  --ag-header-cell-hover-background-color: #3a3f45;
+  --ag-header-cell-moving-background-color: #3a3f45;
+  --ag-range-selection-background-color: rgba(0, 123, 255, 0.2);
+  --ag-range-selection-border-color: #007bff;
+  --ag-input-border-color: #4c4c4c;
+  --ag-input-background-color: #24282e;
+  --ag-input-foreground-color: #E0E0E0;
+  --ag-disabled-foreground-color: #9399a1;
+  --ag-chip-background-color: #2d3238;
+  --ag-chip-foreground-color: #E0E0E0;
+  --ag-popup-background-color: #24282e;
+  --ag-popup-border-color: #4c4c4c;
+  --ag-tooltip-background-color: #24282e;
+  --ag-tooltip-foreground-color: #E0E0E0;
+  --ag-tooltip-border-color: #4c4c4c;
+  --ag-checkbox-background-color: #24282e;
+  --ag-checkbox-border-color: #4c4c4c;
+  --ag-checkbox-checked-color: #007bff;
+  --ag-header-column-separator-color: #4c4c4c;
+  --ag-header-column-resize-handle-color: #4c4c4c;
+  --ag-scrollbar-thumb-color: #696969;
+  --ag-scrollbar-track-color: #2d3238;
+}
+
+/* Also apply dark theme to regular quartz theme when in dark mode */
+[data-theme="dark"] .ag-theme-quartz {
+  --ag-background-color: #24282e;
+  --ag-foreground-color: #E0E0E0;
+  --ag-header-background-color: #2d3238;
+  --ag-header-foreground-color: #E0E0E0;
+  --ag-border-color: #4c4c4c;
+  --ag-row-hover-color: #2d3238;
+  --ag-selected-row-background-color: #1a1d23;
+  --ag-odd-row-background-color: #1e2127;
+  --ag-even-row-background-color: #24282e;
+  --ag-cell-horizontal-border: #4c4c4c;
+  --ag-header-cell-hover-background-color: #3a3f45;
+  --ag-header-cell-moving-background-color: #3a3f45;
+  --ag-range-selection-background-color: rgba(0, 123, 255, 0.2);
+  --ag-range-selection-border-color: #007bff;
+  --ag-input-border-color: #4c4c4c;
+  --ag-input-background-color: #24282e;
+  --ag-input-foreground-color: #E0E0E0;
+  --ag-disabled-foreground-color: #9399a1;
+  --ag-chip-background-color: #2d3238;
+  --ag-chip-foreground-color: #E0E0E0;
+  --ag-popup-background-color: #24282e;
+  --ag-popup-border-color: #4c4c4c;
+  --ag-tooltip-background-color: #24282e;
+  --ag-tooltip-foreground-color: #E0E0E0;
+  --ag-tooltip-border-color: #4c4c4c;
+  --ag-checkbox-background-color: #24282e;
+  --ag-checkbox-border-color: #4c4c4c;
+  --ag-checkbox-checked-color: #007bff;
+  --ag-header-column-separator-color: #4c4c4c;
+  --ag-header-column-resize-handle-color: #4c4c4c;
+  --ag-scrollbar-thumb-color: #696969;
+  --ag-scrollbar-track-color: #2d3238;
+}
+
+/* Custom AG Grid cell styling */
+.ag-theme-quartz .ag-cell,
+.ag-theme-quartz-dark .ag-cell {
+  display: flex;
+  align-items: center;
+  line-height: 1.4;
+}
+
+.ag-theme-quartz .ag-header-cell,
+.ag-theme-quartz-dark .ag-header-cell {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+/* Custom scrollbar styling for AG Grid */
+.ag-theme-quartz .ag-body-viewport::-webkit-scrollbar,
+.ag-theme-quartz-dark .ag-body-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ag-theme-quartz .ag-body-viewport::-webkit-scrollbar-track,
+.ag-theme-quartz-dark .ag-body-viewport::-webkit-scrollbar-track {
+  background: var(--ag-scrollbar-track-color);
+}
+
+.ag-theme-quartz .ag-body-viewport::-webkit-scrollbar-thumb,
+.ag-theme-quartz-dark .ag-body-viewport::-webkit-scrollbar-thumb {
+  background: var(--ag-scrollbar-thumb-color);
+  border-radius: 4px;
+}
+
+.ag-theme-quartz .ag-body-viewport::-webkit-scrollbar-thumb:hover,
+.ag-theme-quartz-dark .ag-body-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--ag-foreground-color);
+}
+
+/* Pagination styling */
+.ag-theme-quartz .ag-paging-panel,
+.ag-theme-quartz-dark .ag-paging-panel {
+  background: var(--ag-header-background-color);
+  border-top: 1px solid var(--ag-border-color);
+  color: var(--ag-foreground-color);
+}
+
+.ag-theme-quartz .ag-paging-button,
+.ag-theme-quartz-dark .ag-paging-button {
+  color: var(--ag-foreground-color);
+  background: transparent;
+  border: 1px solid var(--ag-border-color);
+}
+
+.ag-theme-quartz .ag-paging-button:hover,
+.ag-theme-quartz-dark .ag-paging-button:hover {
+  background: var(--ag-row-hover-color);
+}
+
+.ag-theme-quartz .ag-paging-button[disabled],
+.ag-theme-quartz-dark .ag-paging-button[disabled] {
+  color: var(--ag-disabled-foreground-color);
+  background: transparent;
+}
+
+/* Row selection styling */
+.ag-theme-quartz .ag-row-selected,
+.ag-theme-quartz-dark .ag-row-selected {
+  background: var(--ag-selected-row-background-color) !important;
+}
+
+.ag-theme-quartz .ag-row:hover,
+.ag-theme-quartz-dark .ag-row:hover {
+  background: var(--ag-row-hover-color) !important;
+}
+
 .custom-scrollbar {
   scrollbar-color: var(--card-color) var(--card-color);
   scrollbar-width: thin;
