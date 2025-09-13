@@ -1270,7 +1270,7 @@ export default function ReturnTrakEntryPage() {
                           {row.quantity}
                         </td>
                         <td className="p-2 text-right text-font-color">
-                          {parseFloat(row.unit_price || '0').toFixed(2)}
+                          {parseFloat(String(row.unit_price || '0')).toFixed(2)}
                         </td>
                         <td className="p-2 text-center">
                               <Button
