@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useNavigation } from '../../contexts/NavigationContext';
 import { topMenuConfig, sidebarConfigs } from '../../config/navigation';
 import { TopMenuConfig } from '../../types/api/auth';
@@ -20,6 +21,28 @@ const TopMenu: React.FC = () => {
       return <IconComponent className="w-[18px] h-[18px]" />;
     } else if (menu.iconClassName) {
       return <i className={`${menu.iconClassName} w-[18px] h-[18px]`} />;
+    }
+    return null;
+  };
+
+  // Helper function to get the first available route for a top menu
+  const getFirstRoute = (menuKeyword: string): string | null => {
+    const sidebarConfig = sidebarConfigs[menuKeyword];
+    if (sidebarConfig && sidebarConfig.menus && sidebarConfig.menus.length > 0) {
+      const firstMenu = sidebarConfig.menus[0];
+      if (!firstMenu) return null;
+      
+      // Check if first menu has a direct route
+      if (firstMenu.route) {
+        return firstMenu.route;
+      } 
+      // Check if first menu has dropdown menus
+      else if (firstMenu.dropdownMenus && firstMenu.dropdownMenus.length > 0) {
+        const firstDropdown = firstMenu.dropdownMenus[0];
+        if (firstDropdown) {
+          return firstDropdown.route;
+        }
+      }
     }
     return null;
   };
@@ -304,33 +327,59 @@ const TopMenu: React.FC = () => {
   return (
     <div ref={menuRef} className="flex items-center space-x-1 w-full">
       {/* Visible menu items - using exact Luno theme pattern */}
-      {visibleMenus.map((menu) => (
-        <div key={menu.keyword} className="relative">
-          <button
-            onClick={() => handleMenuClick(menu.keyword)}
-            className={`
-              flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
-              ${(
-                // No active highlight for public routes (e.g., team-members)
-                isPublicCustomerRoute(router.asPath)
-                  ? false
-                  : (activeTopMenu === menu.keyword ||
-                    (menu.keyword === 'services' && (router.asPath.startsWith('/documents') || router.asPath.startsWith('/services/administration-tasks')))) || activeDropdown === menu.keyword
-              )
-                ? 'text-secondary bg-secondary-10 rounded-md'
-                : 'text-font-color'
-              }
-            `}
-          >
-            {renderIcon(menu)}
-            <span className="whitespace-nowrap">{menu.title}</span>
-            {menu.isDropdown && (
-              <IconChevronDown className={`w-[16px] h-[16px] transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
-            )}
-          </button>
+      {visibleMenus.map((menu) => {
+        const firstRoute = getFirstRoute(menu.keyword);
+        const isActive = !isPublicCustomerRoute(router.asPath) && (
+          activeTopMenu === menu.keyword ||
+          (menu.keyword === 'services' && (router.asPath.startsWith('/documents') || router.asPath.startsWith('/services/administration-tasks'))) ||
+          activeDropdown === menu.keyword
+        );
 
-          {/* Dropdown menu */}
-          {menu.isDropdown && activeDropdown === menu.keyword && menu.dropdownMenus && (
+        return (
+          <div key={menu.keyword} className="relative">
+            {firstRoute ? (
+              <Link
+                href={firstRoute}
+                onClick={() => {
+                  setActiveTopMenu(menu.keyword);
+                  setShowOverflowMenu(false);
+                  setActiveDropdown(null);
+                }}
+                className={`
+                  flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
+                  ${isActive
+                    ? 'text-secondary bg-secondary-10 rounded-md'
+                    : 'text-font-color'
+                  }
+                `}
+              >
+                {renderIcon(menu)}
+                <span className="whitespace-nowrap">{menu.title}</span>
+                {menu.isDropdown && (
+                  <IconChevronDown className={`w-[16px] h-[16px] transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
+                )}
+              </Link>
+            ) : (
+              <button
+                onClick={() => handleMenuClick(menu.keyword)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
+                  ${isActive
+                    ? 'text-secondary bg-secondary-10 rounded-md'
+                    : 'text-font-color'
+                  }
+                `}
+              >
+                {renderIcon(menu)}
+                <span className="whitespace-nowrap">{menu.title}</span>
+                {menu.isDropdown && (
+                  <IconChevronDown className={`w-[16px] h-[16px] transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
+                )}
+              </button>
+            )}
+
+            {/* Dropdown menu */}
+            {menu.isDropdown && activeDropdown === menu.keyword && menu.dropdownMenus && (
             <div
               ref={el => { dropdownRefs.current[menu.keyword] = el; }}
               className="absolute top-full left-0 mt-1 bg-card-color text-font-color z-[1] rounded-xl min-w-[200px] shadow-shadow-lg border border-border-color"
@@ -361,8 +410,9 @@ const TopMenu: React.FC = () => {
               </ul>
             </div>
           )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
 
       {/* Overflow menu - using Luno dropdown pattern */}
       {overflowMenus.length > 0 && (
@@ -384,25 +434,54 @@ const TopMenu: React.FC = () => {
               ${showOverflowMenu ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}
             `}
           >
-            {overflowMenus.map((menu) => (
-              <li key={menu.keyword}>
-                <button
-                  onClick={() => handleOverflowMenuClick(menu.keyword)}
-                  className={`
-                    w-full px-4 py-2 flex items-center text-left transition-all hover:text-secondary
-                    whitespace-nowrap
-                    ${activeTopMenu === menu.keyword || activeDropdown === menu.keyword
-                      ? 'text-secondary bg-secondary-10'
-                      : 'hover:bg-gray-100'
-                    }
-                  `}
-                >
-                  <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>
-                  {menu.title}
-                  {menu.isDropdown && (
-                    <IconChevronDown className={`w-[16px] h-[16px] ml-auto transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
+            {overflowMenus.map((menu) => {
+              const firstRoute = getFirstRoute(menu.keyword);
+              const isActive = activeTopMenu === menu.keyword || activeDropdown === menu.keyword;
+
+              return (
+                <li key={menu.keyword}>
+                  {firstRoute ? (
+                    <Link
+                      href={firstRoute}
+                      onClick={() => {
+                        setActiveTopMenu(menu.keyword);
+                        setShowOverflowMenu(false);
+                        setActiveDropdown(null);
+                      }}
+                      className={`
+                        w-full px-4 py-2 flex items-center text-left transition-all hover:text-secondary
+                        whitespace-nowrap
+                        ${isActive
+                          ? 'text-secondary bg-secondary-10'
+                          : 'hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>
+                      {menu.title}
+                      {menu.isDropdown && (
+                        <IconChevronDown className={`w-[16px] h-[16px] ml-auto transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
+                      )}
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => handleOverflowMenuClick(menu.keyword)}
+                      className={`
+                        w-full px-4 py-2 flex items-center text-left transition-all hover:text-secondary
+                        whitespace-nowrap
+                        ${isActive
+                          ? 'text-secondary bg-secondary-10'
+                          : 'hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>
+                      {menu.title}
+                      {menu.isDropdown && (
+                        <IconChevronDown className={`w-[16px] h-[16px] ml-auto transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
+                      )}
+                    </button>
                   )}
-                </button>
                 
                 {/* Dropdown items in overflow menu */}
                 {menu.isDropdown && activeDropdown === menu.keyword && menu.dropdownMenus && (
@@ -429,8 +508,9 @@ const TopMenu: React.FC = () => {
                     })}
                   </ul>
                 )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

@@ -640,7 +640,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   <li key={key} className='sidebar-listitem'>
                     <button
                       onClick={() => menuToggle(key)}
-                      className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
+                      className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                     >
                       {renderIcon(item)}
                       <span className='link'>{item.title}</span>
@@ -656,9 +656,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                             href={sub.route} 
                             onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
                             className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-26.5px] rtl:before:right-[-26.5px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.route ? 'text-secondary before:!block' : ''}`}
-                          >
-                            {sub.title}
-                          </Link>
+                            dangerouslySetInnerHTML={{ __html: sub.title }}
+                          />
                         </li>
                       ))}
                     </ul>
@@ -687,7 +686,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               <li key={key} className='sidebar-listitem'>
                 <button
                   onClick={() => menuToggle(key)}
-                  className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${(sidebarAutoCollapse ? menuActive === key : activeMenus.has(key)) || shouldHighlightParent(item) ? 'text-secondary' : ''}`}
+                  className={`sidebar-list-button flex items-center gap-2.5 w-full py-2.5 transition-all hover:text-secondary ${shouldHighlightParent(item) ? 'text-secondary' : ''}`}
                 >
                   {renderIcon(item)}
                   <span className='link'>{item.title}</span>
@@ -703,9 +702,8 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                         href={sub.route} 
                         onClick={() => { window.innerWidth < 1200 && setMobileNav && setMobileNav(false) }}
                         className={`py-1 text-[14px]/[20px] flex relative before:hidden before:absolute before:rounded-full before:h-[9px] before:w-[9px] ltr:before:left-[-26.5px] rtl:before:right-[-26.5px] before:top-[50%] before:translate-y-[-50%] before:bg-secondary hover:text-secondary hover:before:block transition-all ${pageUrl === sub.route ? 'text-secondary before:!block' : ''}`}
-                      >
-                        {sub.title}
-                      </Link>
+                        dangerouslySetInnerHTML={{ __html: sub.title }}
+                      />
                     </li>
                   ))}
                 </ul>
