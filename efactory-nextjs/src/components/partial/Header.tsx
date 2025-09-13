@@ -166,6 +166,16 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
         // Dispatch custom event to notify other components
         window.dispatchEvent(new CustomEvent('themePreferencesChanged'));
     };
+
+    // top menu icons visibility setting
+    const [showTopMenuIcons, setShowTopMenuIcons] = useState(false);
+    const handleTopMenuIconsToggle = (checked: boolean) => {
+        setShowTopMenuIcons(checked);
+        // Save immediately to localStorage
+        saveThemePreferences({ showTopMenuIcons: checked });
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('themePreferencesChanged'));
+    };
     useEffect(() => {
         document.body.setAttribute("data-luno-theme", selectedTheme);
     }, [selectedTheme]);
@@ -174,6 +184,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
     useEffect(() => {
         const themePrefs = getThemePreferences();
         setSidebarAutoCollapse(themePrefs.sidebarAutoCollapse);
+        setShowTopMenuIcons(themePrefs.showTopMenuIcons);
     }, []);
 
     // dynamic color setting
@@ -752,6 +763,18 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                         className="form-check-input"
                                     />
                                     <label className="form-check-label" htmlFor="sidebar_auto_collapse_checkbox">Auto-collapse sidebar menus</label>
+                                </div>
+                            </li>
+                            <li className='py-3 px-4 hover:bg-primary-10'>
+                                <div className="form-check form-switch">
+                                    <input
+                                        type="checkbox"
+                                        id="show_top_menu_icons_checkbox"
+                                        onChange={(e) => handleTopMenuIconsToggle(e.target.checked)}
+                                        checked={showTopMenuIcons}
+                                        className="form-check-input"
+                                    />
+                                    <label className="form-check-label" htmlFor="show_top_menu_icons_checkbox">Show top menu icons</label>
                                 </div>
                             </li>
                         </ul>

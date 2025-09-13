@@ -146,6 +146,8 @@ export interface NavigationContextType {
   userApps: number[];
   activeTopMenu: string | null;
   setActiveTopMenu: (menu: string | null) => void;
+  showTopMenuIcons: boolean;
+  setShowTopMenuIcons: (show: boolean) => void;
 }
 
 // ============================================================================

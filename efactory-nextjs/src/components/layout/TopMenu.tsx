@@ -12,10 +12,14 @@ import {
 
 const TopMenu: React.FC = () => {
   const router = useRouter();
-  const { userApps, activeTopMenu, setActiveTopMenu } = useNavigation();
+  const { userApps, activeTopMenu, setActiveTopMenu, showTopMenuIcons } = useNavigation();
 
   // Helper function to render icons (Tabler components or CSS classes)
   const renderIcon = (menu: TopMenuConfig) => {
+    if (!showTopMenuIcons) {
+      return null;
+    }
+    
     if (menu.iconComponent) {
       const IconComponent = menu.iconComponent;
       return <IconComponent className="w-[18px] h-[18px]" />;
@@ -79,9 +83,9 @@ const TopMenu: React.FC = () => {
     // Add one button per menu to measure
     allMenus.forEach(menu => {
       const button = document.createElement('button');
-      button.className = 'flex items-center gap-2 px-4 py-2 text-sm font-medium';
+      button.className = `flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-0'} px-4 py-2 text-sm font-medium`;
       button.innerHTML = `
-        <div class="w-[18px] h-[18px]"></div>
+        ${showTopMenuIcons ? '<div class="w-[18px] h-[18px]"></div>' : ''}
         <span class="whitespace-nowrap">${menu.title}</span>
         ${menu.isDropdown ? '<div class="w-[16px] h-[16px]"></div>' : ''}
       `;
@@ -91,7 +95,7 @@ const TopMenu: React.FC = () => {
     // Add sample overflow button
     const overflowBtn = document.createElement('button');
     overflowBtn.className = 'flex items-center gap-1 px-3 py-2 text-sm font-medium';
-    overflowBtn.innerHTML = '<div class="w-[18px] h-[18px]"></div>';
+    overflowBtn.innerHTML = showTopMenuIcons ? '<div class="w-[18px] h-[18px]"></div>' : '';
     measureDiv.appendChild(overflowBtn);
 
     document.body.appendChild(measureDiv);
@@ -192,7 +196,7 @@ const TopMenu: React.FC = () => {
       window.removeEventListener('resize', scheduleMeasure);
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [allMenus]);
+  }, [allMenus, showTopMenuIcons]);
 
   // Handle click outside for overflow menu and dropdowns
   useEffect(() => {
@@ -346,7 +350,7 @@ const TopMenu: React.FC = () => {
                   setActiveDropdown(null);
                 }}
                 className={`
-                  flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
+                  flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-0'} px-4 py-2 text-sm font-medium transition-all hover:text-secondary
                   ${isActive
                     ? 'text-secondary bg-secondary-10 rounded-md'
                     : 'text-font-color'
@@ -363,7 +367,7 @@ const TopMenu: React.FC = () => {
               <button
                 onClick={() => handleMenuClick(menu.keyword)}
                 className={`
-                  flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all hover:text-secondary
+                  flex items-center ${showTopMenuIcons ? 'gap-2' : 'gap-0'} px-4 py-2 text-sm font-medium transition-all hover:text-secondary
                   ${isActive
                     ? 'text-secondary bg-secondary-10 rounded-md'
                     : 'text-font-color'
@@ -457,7 +461,7 @@ const TopMenu: React.FC = () => {
                         }
                       `}
                     >
-                      <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>
+                      {showTopMenuIcons && <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>}
                       {menu.title}
                       {menu.isDropdown && (
                         <IconChevronDown className={`w-[16px] h-[16px] ml-auto transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />
@@ -475,7 +479,7 @@ const TopMenu: React.FC = () => {
                         }
                       `}
                     >
-                      <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>
+                      {showTopMenuIcons && <span className="mr-3 flex-shrink-0">{renderIcon(menu)}</span>}
                       {menu.title}
                       {menu.isDropdown && (
                         <IconChevronDown className={`w-[16px] h-[16px] ml-auto transition-transform duration-200 ${activeDropdown === menu.keyword ? 'rotate-180' : ''}`} />

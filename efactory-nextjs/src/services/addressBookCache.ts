@@ -51,7 +51,7 @@ class AddressBookCacheService {
       action: 'read_addresses',
       page_num,
       page_size,
-      filter: filter ? { and: [{ field: 'name', oper: '=', value: filter }] } : undefined
+      filter: filter ? { field: 'name', value: filter } : null
     });
 
     const data = response.rows || [];

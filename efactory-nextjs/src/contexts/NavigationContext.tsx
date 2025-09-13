@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/router';
 import { NavigationContextType } from '../types/api/auth';
 import { getActiveTopMenu, getVisibleTopMenus } from '../config/navigation';
+import { getThemePreferences } from '../lib/themeStorage';
 
 const NavigationContext = createContext<NavigationContextType | undefined>(undefined);
 
@@ -16,6 +17,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
 }) => {
   const router = useRouter();
   const [activeTopMenu, setActiveTopMenu] = useState<string | null>(null);
+  const [showTopMenuIcons, setShowTopMenuIcons] = useState<boolean>(false);
 
   // Initialize with first available menu if no active menu
   useEffect(() => {
@@ -26,6 +28,24 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
       }
     }
   }, [userApps, activeTopMenu]);
+
+  // Load theme preferences on mount and listen for changes
+  useEffect(() => {
+    const themePrefs = getThemePreferences();
+    setShowTopMenuIcons(themePrefs.showTopMenuIcons);
+
+    // Listen for theme changes
+    const handleThemeChange = () => {
+      const newThemePrefs = getThemePreferences();
+      setShowTopMenuIcons(newThemePrefs.showTopMenuIcons);
+    };
+    
+    window.addEventListener('themePreferencesChanged', handleThemeChange);
+    
+    return () => {
+      window.removeEventListener('themePreferencesChanged', handleThemeChange);
+    };
+  }, []);
 
   // Update active top menu when route changes
   useEffect(() => {
@@ -47,7 +67,9 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   const value: NavigationContextType = {
     userApps,
     activeTopMenu,
-    setActiveTopMenu
+    setActiveTopMenu,
+    showTopMenuIcons,
+    setShowTopMenuIcons
   };
 
   return (

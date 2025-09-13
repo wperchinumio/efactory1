@@ -84,7 +84,8 @@ const TestComponents = () => {
       lunoTheme: currentTheme as any,
       rtlMode: false,
       fontFamily: 'Mulish, sans-serif',
-      sidebarAutoCollapse: false
+      sidebarAutoCollapse: false,
+      showTopMenuIcons: false
     });
     saveThemePreferences({ lunoTheme: currentTheme as any });
   }, [currentTheme]);

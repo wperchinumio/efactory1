@@ -12,6 +12,7 @@ export interface ThemePreferences {
   rtlMode: boolean;
   fontFamily: string;
   sidebarAutoCollapse: boolean;
+  showTopMenuIcons: boolean;
   dynamicColors?: Array<{
     variable: string;
     colorValue: { r: number; g: number; b: number; a: number };
@@ -30,7 +31,8 @@ export function getThemePreferences(): ThemePreferences {
       lunoTheme: 'indigo',
       rtlMode: false,
       fontFamily: 'Mulish, sans-serif',
-      sidebarAutoCollapse: false
+      sidebarAutoCollapse: false,
+      showTopMenuIcons: false
     };
   }
 
@@ -44,6 +46,7 @@ export function getThemePreferences(): ThemePreferences {
         rtlMode: parsed.rtlMode || false,
         fontFamily: parsed.fontFamily || 'Mulish, sans-serif',
         sidebarAutoCollapse: parsed.sidebarAutoCollapse !== undefined ? parsed.sidebarAutoCollapse : true,
+        showTopMenuIcons: parsed.showTopMenuIcons !== undefined ? parsed.showTopMenuIcons : false,
         dynamicColors: parsed.dynamicColors || []
       };
     }
@@ -57,7 +60,8 @@ export function getThemePreferences(): ThemePreferences {
     lunoTheme: 'indigo',
     rtlMode: false,
     fontFamily: 'Mulish, sans-serif',
-    sidebarAutoCollapse: true
+    sidebarAutoCollapse: true,
+    showTopMenuIcons: false
   };
 }
 
