@@ -51,6 +51,7 @@ export async function httpRequest<TResponse = unknown, TBody = unknown>(
 		headers,
 		body: options.body ? JSON.stringify(options.body) : null,
 		credentials: 'include',
+		signal: AbortSignal.timeout(30000), // 30 second timeout
 	});
 
 	const isJson = res.headers.get('content-type')?.includes('application/json');
@@ -112,6 +113,7 @@ export async function httpRequestRaw<TResponse = unknown, TBody = unknown>(
 		headers,
 		body: options.body ? JSON.stringify(options.body) : null,
 		credentials: 'include',
+		signal: AbortSignal.timeout(30000), // 30 second timeout
 	});
 
 	const isJson = res.headers.get('content-type')?.includes('application/json');

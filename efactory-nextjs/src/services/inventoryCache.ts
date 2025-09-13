@@ -63,7 +63,7 @@ class InventoryCacheService {
       data,
       timestamp: Date.now(),
       filters: {
-        warehouses,
+        warehouses: warehouses || '',
         omit_zero_qty: true
       }
     };
@@ -114,11 +114,13 @@ class InventoryCacheService {
     
     Object.keys(this.cache).forEach(key => {
       const entry = this.cache[key];
-      info[key] = {
-        timestamp: entry.timestamp,
-        count: entry.data.length,
-        valid: this.isCacheValid(entry)
-      };
+      if (entry) {
+        info[key] = {
+          timestamp: entry.timestamp,
+          count: entry.data.length,
+          valid: this.isCacheValid(entry)
+        };
+      }
     });
 
     return info;

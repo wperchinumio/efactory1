@@ -100,7 +100,7 @@ export default function BrowseItemsDialog({
       data.forEach((item: InventoryItemForCartDto) => {
         hash[item.item_number] = {
           ...item,
-          quantity: 0,
+          quantity: 0, // Keep as 0 for internal state
           price: 0,
         };
       });
@@ -115,13 +115,27 @@ export default function BrowseItemsDialog({
   }, [currentPage, itemFilter, showZeroQty, warehouses, warehouse, pageSize, cacheType]);
 
   const updateInventoryField = (itemNumber: string, field: 'quantity' | 'price', value: string) => {
-    setInventory(prev => ({
-      ...prev,
-      [itemNumber]: {
-        ...prev[itemNumber],
-        [field]: field === 'quantity' ? parseInt(value) || 0 : parseFloat(value) || 0,
-      } as InventoryItemForCartDto & { quantity: number; price: number }
-    }));
+    // For quantity field, only allow digits (no decimals, no negative signs)
+    if (field === 'quantity') {
+      // Remove any non-digit characters
+      const digitsOnly = value.replace(/[^0-9]/g, '');
+      setInventory(prev => ({
+        ...prev,
+        [itemNumber]: {
+          ...prev[itemNumber],
+          [field]: parseInt(digitsOnly) || 0,
+        } as InventoryItemForCartDto & { quantity: number; price: number }
+      }));
+    } else {
+      // For price field, allow decimals
+      setInventory(prev => ({
+        ...prev,
+        [itemNumber]: {
+          ...prev[itemNumber],
+          [field]: parseFloat(value) || 0,
+        } as InventoryItemForCartDto & { quantity: number; price: number }
+      }));
+    }
   };
 
   const addSelectedItemsToOrder = () => {
@@ -270,21 +284,18 @@ export default function BrowseItemsDialog({
                         {cacheType === 'auth' ? (
                           <>
                             <td className="py-1 px-3 text-right w-20">
-                              <Input
-                                value={String(quantityInCart)}
-                                disabled={true}
-                                className="text-right bg-body-color border-border-color text-font-color w-full h-8 text-xs"
-                                type="number"
-                                min="0"
-                              />
+                              <div className="text-right text-font-color text-xs h-8 flex items-center justify-end">
+                                {quantityInCart > 0 ? String(quantityInCart) : ''}
+                              </div>
                             </td>
                             <td className="py-1 px-3 text-right w-20">
                               <Input
-                                value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
+                                value={it.quantity > 0 ? String(it.quantity) : ''}
                                 onChange={e => updateInventoryField(it.item_number, 'quantity', e.target.value)}
                                 className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
                                 type="number"
                                 min="0"
+                                placeholder=""
                               />
                             </td>
                           </>
@@ -292,21 +303,23 @@ export default function BrowseItemsDialog({
                           <>
                             <td className="py-1 px-3 text-right w-20">
                               <Input
-                                value={typeof it.quantity === 'number' ? String(it.quantity) : ''}
+                                value={it.quantity > 0 ? String(it.quantity) : ''}
                                 onChange={e => updateInventoryField(it.item_number, 'quantity', e.target.value)}
                                 className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
                                 type="number"
                                 min="0"
+                                placeholder=""
                               />
                             </td>
                             <td className="py-1 px-3 text-right w-24">
                               <Input
-                                value={typeof it.price === 'number' ? String(it.price) : ''}
+                                value={it.price > 0 ? String(it.price) : ''}
                                 onChange={e => updateInventoryField(it.item_number, 'price', e.target.value)}
                                 className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
                                 type="number"
                                 step="0.01"
                                 min="0"
+                                placeholder=""
                               />
                             </td>
                             <td className="py-1 px-3 text-right text-font-color font-mono whitespace-nowrap w-20">{it.qty_net}</td>

@@ -1920,23 +1920,43 @@ export default function OrderPointsPage() {
   }, [showAddressBook, addressBookPage, addressBookFilter])
 
   function updateInventoryField(item_number: string, field: 'quantity' | 'price', value: string) {
-    const v = value.trim()
-    if (v !== '' && !isFiniteNumber(v)) return
-    setInventory(prev => {
-      const current = prev[item_number]
-      if (!current) return prev
-      return {
-        ...prev,
-        [item_number]: {
-          ...current,
-          [field]: v === '' ? undefined : +v
+    // For quantity field, only allow digits (no decimals, no negative signs)
+    if (field === 'quantity') {
+      // Remove any non-digit characters
+      const digitsOnly = value.replace(/[^0-9]/g, '');
+      setInventory(prev => {
+        const current = prev[item_number]
+        if (!current) return prev
+        return {
+          ...prev,
+          [item_number]: {
+            ...current,
+            [field]: digitsOnly === '' ? 0 : parseInt(digitsOnly)
+          }
         }
-      }
-    })
+      })
+    } else {
+      // For price field, allow decimals and international format (comma as decimal separator)
+      // First normalize: replace comma with dot for international format support
+      const normalizedValue = value.replace(',', '.');
+      const v = normalizedValue.trim()
+      if (v !== '' && !isFiniteNumber(v)) return
+      setInventory(prev => {
+        const current = prev[item_number]
+        if (!current) return prev
+        return {
+          ...prev,
+          [item_number]: {
+            ...current,
+            [field]: v === '' ? 0 : +v
+          }
+        }
+      })
+    }
   }
 
   function addSelectedItemsToOrder() {
-    const items = Object.values(inventory).filter((it): it is NonNullable<typeof inventory[string]> => isFiniteNumber((it as any).quantity))
+    const items = Object.values(inventory).filter((it): it is NonNullable<typeof inventory[string]> => (it as any).quantity > 0)
     if (!items.length) { setBrowseOpen(false); return }
     const hash = new Map(orderDetail.map(od => [od.item_number, od]))
     let next = [...orderDetail]
@@ -2045,7 +2065,7 @@ export default function OrderPointsPage() {
                         </SelectTrigger>
                         <SelectContent className="bg-card-color border-border-color">
                             <SelectItem value="" className="text-font-color hover:bg-body-color">
-                              
+                              <span className="text-gray-400">Select...</span>
                             </SelectItem>
                             {getAccountOptions().map(option => (
                               <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
@@ -2610,7 +2630,6 @@ export default function OrderPointsPage() {
                   variant="outline"
                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={openShippingDetailsModal}
-                  title="Edit"
                 >
                   <IconEdit className="h-3 w-3" />
                 </Button>
@@ -2644,7 +2663,6 @@ export default function OrderPointsPage() {
                   variant="outline"
                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={() => setBillingExpanded(!billingExpanded)}
-                  title={billingExpanded ? 'Collapse' : 'Expand'}
                 >
                   <IconChevronDown className={`h-3 w-3 transition-transform ${billingExpanded ? 'rotate-180' : ''}`} />
                 </Button>
@@ -2653,7 +2671,6 @@ export default function OrderPointsPage() {
                   variant="outline"
                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={openBillingAddressModal}
-                  title="Edit"
                 >
                   <IconEdit className="h-3 w-3" />
                 </Button>
@@ -2706,7 +2723,6 @@ export default function OrderPointsPage() {
                   variant="outline"
                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={() => setAmountsExpanded(!amountsExpanded)}
-                  title={amountsExpanded ? 'Collapse' : 'Expand'}
                 >
                   <IconChevronDown className={`h-3 w-3 transition-transform ${amountsExpanded ? 'rotate-180' : ''}`} />
                 </Button>
@@ -2715,7 +2731,6 @@ export default function OrderPointsPage() {
                   variant="outline"
                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={openAmountsModal}
-                  title="Edit"
                 >
                   <IconEdit className="h-3 w-3" />
                 </Button>
@@ -2794,7 +2809,6 @@ export default function OrderPointsPage() {
                   variant="outline"
                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={() => setExtraFieldsExpanded(!extraFieldsExpanded)}
-                  title={extraFieldsExpanded ? 'Collapse' : 'Expand'}
                 >
                   <IconChevronDown className={`h-3 w-3 transition-transform ${extraFieldsExpanded ? 'rotate-180' : ''}`} />
                 </Button>
@@ -2803,7 +2817,6 @@ export default function OrderPointsPage() {
                   variant="outline"
                   className="text-sm px-2 py-1 h-6 text-gray-600 border-gray-300"
                   onClick={openExtraFieldsModal}
-                  title="Edit"
                 >
                   <IconEdit className="h-3 w-3" />
                 </Button>
@@ -3212,7 +3225,11 @@ export default function OrderPointsPage() {
                   type="number"
                   className="mt-1" 
                   value={editLineData.quantity || 0} 
-                  onChange={e=>setEditLineData(d=>({ ...d, quantity: Number(e.target.value) }))} 
+                  onChange={e => {
+                    // Only allow digits for quantity
+                    const digitsOnly = e.target.value.replace(/[^0-9]/g, '');
+                    setEditLineData(d => ({ ...d, quantity: parseInt(digitsOnly) || 0 }));
+                  }} 
                 />
               </div>
             </div>
@@ -3225,7 +3242,11 @@ export default function OrderPointsPage() {
                   step="0.01"
                   className="mt-1" 
                   value={editLineData.price || 0} 
-                  onChange={e=>setEditLineData(d=>({ ...d, price: Number(e.target.value) }))} 
+                  onChange={e => {
+                    // Allow decimals and international format (comma as decimal separator)
+                    const normalizedValue = e.target.value.replace(',', '.');
+                    setEditLineData(d => ({ ...d, price: Number(normalizedValue) || 0 }));
+                  }} 
                 />
               </div>
               <div>

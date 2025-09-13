@@ -69,7 +69,7 @@ class ReturnTrakInventoryCacheService {
       data,
       timestamp: Date.now(),
       filters: {
-        warehouses,
+        warehouses: warehouses || '',
         omit_zero_qty: true
       }
     };
@@ -133,20 +133,24 @@ class ReturnTrakInventoryCacheService {
     
     Object.keys(this.authCache).forEach(key => {
       const entry = this.authCache[key];
-      authInfo[key] = {
-        timestamp: entry.timestamp,
-        count: entry.data.length,
-        valid: this.isCacheValid(entry)
-      };
+      if (entry) {
+        authInfo[key] = {
+          timestamp: entry.timestamp,
+          count: entry.data.length,
+          valid: this.isCacheValid(entry)
+        };
+      }
     });
 
     Object.keys(this.shipCache).forEach(key => {
       const entry = this.shipCache[key];
-      shipInfo[key] = {
-        timestamp: entry.timestamp,
-        count: entry.data.length,
-        valid: this.isCacheValid(entry)
-      };
+      if (entry) {
+        shipInfo[key] = {
+          timestamp: entry.timestamp,
+          count: entry.data.length,
+          valid: this.isCacheValid(entry)
+        };
+      }
     });
 
     return { auth: authInfo, ship: shipInfo };

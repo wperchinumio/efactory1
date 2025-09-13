@@ -42,7 +42,7 @@ export default function ReturnTrakDraftsPage() {
     <div className="container mx-auto max-w-[1000px] px-4 py-4">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">ReturnTrak - Drafts</h2>
-        <Button variant="destructive" size="sm" onClick={onDeleteSelected} disabled={loading}>Delete Selected</Button>
+        <Button variant="danger" size="small" onClick={onDeleteSelected} disabled={loading}>Delete Selected</Button>
       </div>
       <Card>
         <CardHeader>

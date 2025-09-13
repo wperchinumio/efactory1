@@ -8,7 +8,8 @@ import BrowseItemsDialog from '@/components/common/BrowseItemsDialog';
 import CountryFilterCombobox from '@/components/filters/CountryFilterCombobox';
 import StateFilterCombobox from '@/components/filters/StateFilterCombobox';
 import { toast } from '@/components/ui/use-toast';
-import { IconFileText, IconTruck, IconPackage, IconCurrency, IconSettings, IconEdit, IconChevronDown } from '@tabler/icons-react';
+import { IconFileText, IconTruck, IconPackage, IconCurrency, IconSettings, IconEdit, IconChevronDown, IconTriangleFilled } from '@tabler/icons-react';
+import { CheckBox } from '@/components/ui';
 import {
   readReturnTrakSettings,
   generateRmaNumber,
@@ -91,6 +92,48 @@ export default function ReturnTrakEntryPage() {
   const [showBrowseItemsModal, setShowBrowseItemsModal] = useState(false);
   const [validateOpen, setValidateOpen] = useState(false);
   const [validateResult, setValidateResult] = useState<any>(null);
+  
+  // Cart selection and edit state
+  const [selectedAuthRows, setSelectedAuthRows] = useState<number[]>([]);
+  const [selectedShipRows, setSelectedShipRows] = useState<number[]>([]);
+  const [editLineOpen, setEditLineOpen] = useState(false);
+  const [editLineIndex, setEditLineIndex] = useState<number>(-1);
+  const [editLineType, setEditLineType] = useState<'auth' | 'ship'>('auth');
+  const [editLineData, setEditLineData] = useState({
+    quantity: 0,
+    unit_price: '0.00',
+    serialnumber: '',
+    description: ''
+  });
+
+  // RMA Type Configuration (matching legacy)
+  const rmaTypeConfig: Record<string, [[number, number, number, number], [number, number]]> = {
+    'T01': [[1,1,1,1], [1,1]],
+    'T02': [[1,0,1,1], [0,1]],
+    'T03': [[1,1,1,1], [1,1]],
+    'T11': [[1,1,0,1], [1,0]],
+    'T12': [[1,0,0,1], [0,0]],
+    'T13': [[1,1,0,1], [1,0]],
+    'T21': [[1,1,0,1], [1,0]],
+    'T22': [[1,0,0,1], [0,0]],
+    'T23': [[1,1,0,1], [1,0]],
+    'T24': [[1,1,0,1], [1,0]],
+    'T25': [[1,0,0,1], [0,0]],
+    'T26': [[1,1,0,1], [1,0]],
+    'T31': [[1,1,1,1], [1,1]],
+    'T32': [[1,0,1,1], [0,1]],
+    'T33': [[1,1,1,1], [1,1]],
+    'T81': [[1,1,0,1], [1,0]],
+    'T82': [[1,0,0,1], [0,0]],
+    'T99': [[1,0,0,1], [0,0]]
+  };
+
+  // Check if Ship WH should be enabled based on RMA type
+  const isToShipEnabled = useMemo(() => {
+    if (!rmaType) return false;
+    const config = rmaTypeConfig[rmaType];
+    return config ? config[1][1] === 1 : false;
+  }, [rmaType]);
 
   // Derived: accounts list from authToken (calc_account_regions)
   const accountsMap = useMemo(() => {
@@ -112,18 +155,18 @@ export default function ReturnTrakEntryPage() {
     if (accountOptions.length === 1 && !accountReceivingWarehouse) {
       setAccountReceivingWarehouse(accountOptions[0]?.value || '');
     }
-    if (accountOptions.length === 1 && !accountShippingWarehouse) {
+    if (accountOptions.length === 1 && !accountShippingWarehouse && isToShipEnabled) {
       setAccountShippingWarehouse(accountOptions[0]?.value || '');
     }
-  }, [accountOptions, accountReceivingWarehouse, accountShippingWarehouse]);
+  }, [accountOptions, accountReceivingWarehouse, accountShippingWarehouse, isToShipEnabled]);
 
-  const isToShipEnabled = useMemo(() => {
-    if (!rmaType || !rmaSettings) return false;
-    // Legacy mapping uses table-config where [1][1] indicates To Ship capability
-    const map = rmaSettings.rma_types?.find(rt => rt.code === rmaType);
-    // We don't have the table config here; enable To Ship when shipping warehouse is chosen
-    return !!accountShippingWarehouse;
-  }, [rmaType, rmaSettings, accountShippingWarehouse]);
+  // Clear Ship WH when RMA type doesn't support shipping (like legacy)
+  useEffect(() => {
+    if (!isToShipEnabled) {
+      setAccountShippingWarehouse('');
+    }
+  }, [isToShipEnabled]);
+
 
   useEffect(() => {
     let mounted = true;
@@ -164,6 +207,7 @@ export default function ReturnTrakEntryPage() {
     setToReceive(prev => [...prev, item]);
     
     // If RMA type requires both receive and ship (like T1), also add to ship
+    // This matches the legacy logic: when adding to auth, also add to ship if isToShipButtonBlue
     if (isToShipEnabled) {
       addShipItem(item_number, description);
     }
@@ -182,6 +226,107 @@ export default function ReturnTrakEntryPage() {
       voided: false,
     };
     setToShip(prev => [...prev, item]);
+  }
+
+  // Remove selected rows
+  function removeSelectedRows() {
+    if (activeCartTab === 'auth') {
+      setToReceive(prev => prev.filter((_, index) => !selectedAuthRows.includes(index)));
+      setSelectedAuthRows([]);
+    } else {
+      setToShip(prev => prev.filter((_, index) => !selectedShipRows.includes(index)));
+      setSelectedShipRows([]);
+    }
+  }
+
+  // Handle row selection
+  function handleRowSelection(index: number, checked: boolean) {
+    if (activeCartTab === 'auth') {
+      if (checked) {
+        setSelectedAuthRows(prev => [...prev, index]);
+      } else {
+        setSelectedAuthRows(prev => prev.filter(i => i !== index));
+      }
+    } else {
+      if (checked) {
+        setSelectedShipRows(prev => [...prev, index]);
+      } else {
+        setSelectedShipRows(prev => prev.filter(i => i !== index));
+      }
+    }
+  }
+
+  // Handle edit line
+  function handleEditLine(type: 'auth' | 'ship', index: number) {
+    setEditLineType(type);
+    setEditLineIndex(index);
+    
+    if (type === 'auth') {
+      const item = toReceive[index];
+      if (item) {
+        setEditLineData({
+          quantity: item.quantity,
+          unit_price: '0.00',
+          serialnumber: item.serialnumber || '',
+          description: item.description || ''
+        });
+      }
+    } else {
+      const item = toShip[index];
+      if (item) {
+        setEditLineData({
+          quantity: item.quantity,
+          unit_price: String(item.unit_price || '0.00'),
+          serialnumber: '',
+          description: item.description || ''
+        });
+      }
+    }
+    
+    setEditLineOpen(true);
+  }
+
+  // Save edited line
+  function saveEditedLine() {
+    if (editLineType === 'auth') {
+      const updatedItem = toReceive[editLineIndex];
+      if (updatedItem) {
+        setToReceive(prev => prev.map((item, index) => 
+          index === editLineIndex 
+            ? { ...item, quantity: editLineData.quantity, serialnumber: editLineData.serialnumber }
+            : item
+        ));
+        
+        // If RMA type supports shipping, sync quantity to ship item (legacy logic)
+        if (isToShipEnabled) {
+          setToShip(prev => {
+            const shipItemIndex = prev.findIndex(s => s.item_number === updatedItem.item_number);
+            if (shipItemIndex >= 0) {
+              // Calculate total quantity from all auth items with same item_number
+              const totalAuthQuantity = toReceive
+                .filter((item, idx) => item.item_number === updatedItem.item_number && idx !== editLineIndex)
+                .reduce((sum, item) => sum + item.quantity, 0) + editLineData.quantity;
+              
+              return prev.map((item, index) => 
+                index === shipItemIndex 
+                  ? { ...item, quantity: totalAuthQuantity }
+                  : item
+              );
+            }
+            return prev;
+          });
+        }
+      }
+    } else {
+      setToShip(prev => prev.map((item, index) => 
+        index === editLineIndex 
+          ? { ...item, quantity: editLineData.quantity, unit_price: editLineData.unit_price }
+          : item
+      ));
+    }
+    
+    setEditLineOpen(false);
+    setEditLineIndex(-1);
   }
 
   async function onAddItem() {
@@ -377,30 +522,54 @@ export default function ReturnTrakEntryPage() {
   }
   
   function handleAddItemsToCart(items: any[]) {
-    // Add items to the appropriate cart based on activeCartTab
-    if (activeCartTab === 'auth') {
-      setToReceive(prev => [...prev, ...items.map(item => ({
-        ...item,
-        line_number: prev.length + 1,
-        item_number: item.item_number,
-        description: item.description,
-        quantity: item.quantity || 1,
-        price: item.price || 0,
-        qty_net: item.qty_net || 0,
-        // Add other required fields for RmaAuthItemDto
-      }))]);
-    } else {
-      setToShip(prev => [...prev, ...items.map(item => ({
-        ...item,
-        line_number: prev.length + 1,
-        item_number: item.item_number,
-        description: item.description,
-        quantity: item.quantity || 1,
-        price: item.price || 0,
-        qty_net: item.qty_net || 0,
-        // Add other required fields for RmaShipItemDto
-      }))]);
-    }
+    // Add items using the proper functions that handle dual-line logic
+    items.forEach(item => {
+      if (activeCartTab === 'auth') {
+        // Create auth item with quantity and price from Browse Items
+        const maxLine = toReceive.reduce((m, i) => Math.max(m, i.line_number), 0);
+        const newLine = maxLine + 1;
+        const newItem: RmaAuthItemDto = {
+          detail_id: 0, // 0 for new line
+          line_number: newLine,
+          item_number: item.item_number,
+          description: item.description || '',
+          quantity: item.quantity || 0,
+          serialnumber: '',
+          voided: false,
+        };
+        setToReceive(prev => [...prev, newItem]);
+        
+        // If RMA type requires both receive and ship, also add to ship
+        if (isToShipEnabled) {
+          const maxShipLine = toShip.reduce((m, i) => Math.max(m, i.line_number), 0);
+          const newShipLine = maxShipLine + 1;
+          const newShipItem: RmaShipItemDto = {
+            detail_id: 0, // 0 for new line
+            line_number: newShipLine,
+            item_number: item.item_number,
+            description: item.description || '',
+            quantity: item.quantity || 0,
+            unit_price: String(item.price || 0),
+            voided: false,
+          };
+          setToShip(prev => [...prev, newShipItem]);
+        }
+      } else {
+        // Create ship item with quantity and price from Browse Items
+        const maxLine = toShip.reduce((m, i) => Math.max(m, i.line_number), 0);
+        const newLine = maxLine + 1;
+        const newItem: RmaShipItemDto = {
+          detail_id: 0, // 0 for new line
+          line_number: newLine,
+          item_number: item.item_number,
+          description: item.description || '',
+          quantity: item.quantity || 0,
+          unit_price: String(item.price || 0),
+          voided: false,
+        };
+        setToShip(prev => [...prev, newItem]);
+      }
+    });
   }
   
   // Get the appropriate warehouse based on active tab
@@ -552,9 +721,6 @@ export default function ReturnTrakEntryPage() {
                   <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                     <IconFileText className="w-3.5 h-3.5" />
                     RMA
-                    <div className="ml-auto text-sm font-medium">
-                      NEW RMA
-                    </div>
                   </CardTitle>
             </CardHeader>
                 <CardContent className="p-3">
@@ -791,6 +957,17 @@ export default function ReturnTrakEntryPage() {
                       <IconTruck className="w-3.5 h-3.5" />
                       RMA ADDRESS
                     </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        size="small" 
+                        variant="outline"
+                        className="border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-green-500 disabled:hover:text-green-600 text-sm px-3 py-1"
+                        onClick={onValidateAddress}
+                        disabled={!canValidateAddress()}
+                      >
+                        Validate Address
+                      </Button>
+                    </div>
                   </div>
             </CardHeader>
                 <CardContent className="p-3">
@@ -927,17 +1104,6 @@ export default function ReturnTrakEntryPage() {
                           onChange={e=>setShippingAddress({...shippingAddress,email:e.target.value})} 
                         />
                       </div>
-                    </div>
-                    <div className="flex justify-end pt-2">
-                      <Button
-                        size="small" 
-                        variant="outline"
-                        className="border-green-500 text-green-600 hover:bg-green-50 hover:border-green-600 hover:text-green-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-green-500 disabled:hover:text-green-600 text-sm px-3 py-1"
-                        onClick={onValidateAddress}
-                        disabled={!canValidateAddress()}
-                      >
-                        Validate Address
-                      </Button>
                 </div>
               </div>
             </CardContent>
@@ -978,13 +1144,14 @@ export default function ReturnTrakEntryPage() {
            >
              Browse Items…
            </Button>
-                    <Button
-                      size="small"
-                      variant="outline"
+                    <Button 
+                      size="small" 
+                      variant="outline" 
                       className="whitespace-nowrap border-red-500 text-red-600 hover:!bg-red-50 hover:!border-red-600 hover:!text-red-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!bg-transparent disabled:hover:!border-red-500 disabled:hover:!text-red-600 transition-colors duration-200"
-                      disabled={true}
+                      onClick={removeSelectedRows}
+                      disabled={(activeCartTab === 'auth' ? selectedAuthRows.length : selectedShipRows.length) === 0}
                     >
-                      Remove selected
+                      Remove selected {(activeCartTab === 'auth' ? selectedAuthRows.length : selectedShipRows.length) > 0 && `(${activeCartTab === 'auth' ? selectedAuthRows.length : selectedShipRows.length})`}
                     </Button>
               </div>
                 </div>
@@ -999,72 +1166,98 @@ export default function ReturnTrakEntryPage() {
                     <table className="w-full text-sm">
                   <thead className="bg-muted/50">
                     <tr>
+                          <th className="text-left p-2 font-medium text-font-color-100 w-12">
+                            <CheckBox
+                              checked={(selectedAuthRows.length > 0 || selectedShipRows.length > 0) && 
+                                       selectedAuthRows.length === toReceive.length && 
+                                       selectedShipRows.length === toShip.length}
+                              onChange={(checked: boolean) => {
+                                if (checked) {
+                                  // Select all rows in both Auth and To Ship sections
+                                  setSelectedAuthRows(toReceive.map((_, i) => i));
+                                  setSelectedShipRows(toShip.map((_, i) => i));
+                                } else {
+                                  // Deselect all rows in both sections
+                                  setSelectedAuthRows([]);
+                                  setSelectedShipRows([]);
+                                }
+                              }}
+                              size="normal"
+                              mode="emulated"
+                            />
+                          </th>
                           <th className="text-left p-2 font-medium text-font-color-100">#</th>
                           <th className="text-left p-2 font-medium text-font-color-100">Item # / Description</th>
                           <th className="text-right p-2 font-medium text-font-color-100">Auth.<br/>Qty</th>
                           <th className="text-center p-2 font-medium text-font-color-100">Auth.<br/>Serial #</th>
                           <th className="text-right p-2 font-medium text-font-color-100">Ship Qty</th>
                           <th className="text-right p-2 font-medium text-font-color-100">Unit Price</th>
+                          <th className="text-center p-2 font-medium text-font-color-100">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {toReceive.map((row, idx) => (
                           <tr key={`auth-${row.item_number}-${row.line_number}`} className="border-t border-border-color hover:bg-body-color/30">
+                        <td className="p-2">
+                              <CheckBox
+                                checked={selectedAuthRows.includes(idx)}
+                                onChange={(checked: boolean) => handleRowSelection(idx, checked)}
+                                size="normal"
+                                mode="emulated"
+                              />
+                            </td>
                             <td className="p-2 text-font-color-100">
                               <div className="flex items-center gap-2">
                                 <span>{idx+1}</span>
-                                <div className="text-red-500 text-lg">↓</div>
+                                <IconTriangleFilled className="text-red-500 w-3 h-3" style={{ transform: 'rotate(180deg)' }} />
                               </div>
                             </td>
                         <td className="p-2">
                               <div className="font-medium text-font-color">{row.item_number}</div>
                           <div className="text-[11px] text-font-color-100">{row.description}</div>
                         </td>
-                        <td className="p-2 text-right">
-                          <Input
-                                className="w-20 text-right h-7 text-xs"
-                            value={String(row.quantity)}
-                            onChange={e=>{
-                              const val = Math.max(0, parseInt(e.target.value || '0', 10));
-                              setToReceive(prev => prev.map(r => r.line_number===row.line_number?{...r, quantity: val}:r));
-                              // If To Ship enabled, sync total quantity per item
-                              if (isToShipEnabled) {
-                                setToShip(prev => {
-                                  const idxShip = prev.findIndex(s => s.item_number === row.item_number);
-                                  if (idxShip >= 0) {
-                                    const clone = [...prev];
-                                    clone[idxShip] = { 
-                                      ...clone[idxShip], 
-                                      quantity: val
-                                    } as RmaShipItemDto;
-                                    return clone;
-                                  }
-                                  return prev;
-                                });
-                              }
-                            }}
-                          />
+                        <td className="p-2 text-right text-font-color">
+                          {row.quantity}
                         </td>
-                        <td className="p-2 text-center">
-                          <Input
-                                className="w-32 text-center h-7 text-xs"
-                            value={row.serialnumber || ''}
-                            onChange={e=>{
-                              setToReceive(prev => prev.map(r => r.line_number===row.line_number?{...r, serialnumber: e.target.value}:r));
-                            }}
-                            placeholder="Empty"
-                          />
+                        <td className="p-2 text-center text-font-color">
+                          {row.serialnumber || 'Empty'}
                         </td>
                             <td className="p-2 text-right text-font-color-100">—</td>
                             <td className="p-2 text-right text-font-color-100">—</td>
+                            <td className="p-2 text-center">
+                              <Button
+                                size="small"
+                                variant="outline"
+                                className="text-sm px-2 py-1"
+                                onClick={() => handleEditLine('auth', idx)}
+                              >
+                                Edit
+                              </Button>
+                            </td>
                       </tr>
                     ))}
+                    {isToShipEnabled && toShip.length > 0 && (
+                      <tr>
+                        <td colSpan={8} className="p-0">
+                          <div className="border-t-2 border-gray-600"></div>
+                          <div className="border-t border-gray-300"></div>
+                        </td>
+                      </tr>
+                    )}
                     {isToShipEnabled && toShip.map((row, idx) => (
                           <tr key={`ship-${row.item_number}-${row.line_number}`} className="border-t border-border-color hover:bg-body-color/30">
+                        <td className="p-2">
+                              <CheckBox
+                                checked={selectedShipRows.includes(idx)}
+                                onChange={(checked: boolean) => handleRowSelection(idx, checked)}
+                                size="normal"
+                                mode="emulated"
+                              />
+                            </td>
                             <td className="p-2 text-font-color-100">
                               <div className="flex items-center gap-2">
-                                <span>{toReceive.length + idx + 1}</span>
-                                <div className="text-blue-500 text-lg">↑</div>
+                                <span>{idx + 1}</span>
+                                <IconTriangleFilled className="text-blue w-3 h-3" />
                               </div>
                             </td>
                         <td className="p-2">
@@ -1073,25 +1266,21 @@ export default function ReturnTrakEntryPage() {
                         </td>
                             <td className="p-2 text-right text-font-color-100">—</td>
                             <td className="p-2 text-center text-font-color-100">—</td>
-                        <td className="p-2 text-right">
-                          <Input
-                                className="w-20 text-right h-7 text-xs"
-                            value={String(row.quantity)}
-                            onChange={e=>{
-                              const val = Math.max(0, parseInt(e.target.value || '0', 10));
-                              setToShip(prev => prev.map(r => r.line_number===row.line_number?{...r, quantity: val}:r));
-                            }}
-                          />
+                        <td className="p-2 text-right text-font-color">
+                          {row.quantity}
                         </td>
-                        <td className="p-2 text-right">
-                          <Input
-                                className="w-24 text-right h-7 text-xs"
-                            value={String(row.unit_price || '0.00')}
-                            onChange={e=>{
-                              const v = e.target.value;
-                              setToShip(prev => prev.map(r => r.line_number===row.line_number?{...r, unit_price: v}:r));
-                            }}
-                          />
+                        <td className="p-2 text-right text-font-color">
+                          {parseFloat(row.unit_price || '0').toFixed(2)}
+                        </td>
+                        <td className="p-2 text-center">
+                              <Button
+                                size="small"
+                                variant="outline"
+                                className="text-sm px-2 py-1"
+                                onClick={() => handleEditLine('ship', idx)}
+                              >
+                                Edit
+                              </Button>
                         </td>
                       </tr>
                     ))}
@@ -1595,6 +1784,61 @@ export default function ReturnTrakEntryPage() {
           cacheType={activeCartTab as 'auth' | 'ship'}
           existingCartItems={activeCartTab === 'auth' ? toReceive : toShip}
         />
+
+      {/* Edit Line Modal */}
+      <Dialog open={editLineOpen} onOpenChange={setEditLineOpen}>
+        <DialogContent style={{ maxWidth: 500 }}>
+          <DialogHeader>
+            <DialogTitle>Edit {editLineType === 'auth' ? 'Auth' : 'Ship'} Item</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-font-color-100 text-sm">Quantity</Label>
+              <Input
+                value={editLineData.quantity}
+                onChange={e => setEditLineData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))}
+                className="h-9 text-sm mt-1"
+                type="number"
+                min="0"
+              />
+            </div>
+            
+            {editLineType === 'auth' && (
+              <div>
+                <Label className="text-font-color-100 text-sm">Serial Number</Label>
+                <Input
+                  value={editLineData.serialnumber}
+                  onChange={e => setEditLineData(prev => ({ ...prev, serialnumber: e.target.value }))}
+                  className="h-9 text-sm mt-1"
+                  placeholder="Enter serial number"
+                />
+              </div>
+            )}
+            
+            {editLineType === 'ship' && (
+              <div>
+                <Label className="text-font-color-100 text-sm">Unit Price</Label>
+                <Input
+                  value={editLineData.unit_price}
+                  onChange={e => setEditLineData(prev => ({ ...prev, unit_price: e.target.value }))}
+                  className="h-9 text-sm mt-1"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditLineOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveEditedLine}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Validate Address Modal */}
       <Dialog open={validateOpen} onOpenChange={setValidateOpen}>
