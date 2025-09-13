@@ -20,53 +20,53 @@ interface DateRange {
 const predefinedRanges: DateRange[] = [
   {
     label: 'Today',
-    start: new Date().toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
+    start: new Date().toISOString().split('T')[0] || '',
+    end: new Date().toISOString().split('T')[0] || ''
   },
   {
     label: 'Yesterday',
-    start: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    start: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '',
+    end: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] || ''
   },
   {
     label: 'This Week',
-    start: getWeekStart(new Date()).toISOString().split('T')[0],
-    end: getWeekEnd(new Date()).toISOString().split('T')[0]
+    start: getWeekStart(new Date()).toISOString().split('T')[0] || '',
+    end: getWeekEnd(new Date()).toISOString().split('T')[0] || ''
   },
   {
     label: 'Last Week',
-    start: getWeekStart(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0],
-    end: getWeekEnd(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
+    start: getWeekStart(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0] || '',
+    end: getWeekEnd(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0] || ''
   },
   {
     label: 'Last 10 Days',
-    start: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
+    start: new Date(Date.now() - 9 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '',
+    end: new Date().toISOString().split('T')[0] || ''
   },
   {
     label: 'Last 30 Days',
-    start: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
+    start: new Date(Date.now() - 29 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '',
+    end: new Date().toISOString().split('T')[0] || ''
   },
   {
     label: 'Last 90 Days',
-    start: new Date(Date.now() - 89 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
+    start: new Date(Date.now() - 89 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] || '',
+    end: new Date().toISOString().split('T')[0] || ''
   },
   {
     label: 'This Month',
-    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0]
+    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0] || '',
+    end: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0] || ''
   },
   {
     label: 'Last Month',
-    start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0],
-    end: new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().split('T')[0]
+    start: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1).toISOString().split('T')[0] || '',
+    end: new Date(new Date().getFullYear(), new Date().getMonth(), 0).toISOString().split('T')[0] || ''
   },
   {
     label: 'This Year',
-    start: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0],
-    end: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0]
+    start: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0] || '',
+    end: new Date(new Date().getFullYear(), 11, 31).toISOString().split('T')[0] || ''
   }
 ];
 
@@ -190,8 +190,8 @@ export default function FilterDateRangeAdvanced({
     if (!showCustomRange) {
       setSelectedRange({
         label: 'Custom Range',
-        start: customStart || new Date().toISOString().split('T')[0],
-        end: customEnd || new Date().toISOString().split('T')[0],
+        start: customStart || new Date().toISOString().split('T')[0] || '',
+        end: customEnd || new Date().toISOString().split('T')[0] || '',
         isCustom: true
       });
     }

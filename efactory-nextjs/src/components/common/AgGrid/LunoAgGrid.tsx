@@ -9,7 +9,7 @@ import { getCachedView, setCachedView } from '@/lib/grid/viewCache';
 import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView } from '@/types/api/grid';
 import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer } from './renderers';
-import GridFilters from '@/components/filters/GridFilters';
+import GridFilters from '@/components/filters/grid/GridFilters';
 
 export interface LunoAgGridProps<T = any> {
   resource: string; // e.g., 'fulfillment-open'
@@ -378,7 +378,19 @@ export function LunoAgGrid<T = any>({
     
     // Add filter state conditions
     Object.values(currentFilterState).forEach(filterValue => {
-      if (filterValue && filterValue.value !== null && filterValue.value !== '') {
+      if (Array.isArray(filterValue)) {
+        // Handle array of FilterValue (date ranges, etc.)
+        filterValue.forEach(fv => {
+          if (fv && fv.value !== null && fv.value !== '') {
+            filterConditions.push({
+              field: fv.field,
+              oper: fv.oper,
+              value: fv.value,
+            });
+          }
+        });
+      } else if (filterValue && filterValue.value !== null && filterValue.value !== '') {
+        // Handle single FilterValue
         // Handle multi-select values (comma-separated)
         if (filterValue.value.includes(',')) {
           // Multi-select: use 'in' operator

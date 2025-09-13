@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import FilterDateRangeCustom from '@/components/filters/FilterDateRangeCustom';
-import type { DateRangeCustomFilterConfig } from '@/types/api/filters';
+import FilterDateRangeCustom from '@/components/filters/grid/FilterDateRangeCustom';
+import type { DateRangeFilterConfig } from '@/types/api/filters';
 
 export default function DemoDateFilterPage() {
   const [value, setValue] = useState<{ start: string; end: string } | null>(null);
 
-  const config: DateRangeCustomFilterConfig = {
+  const config: DateRangeFilterConfig = {
     field: 'received_date',
     title: 'RECEIVED DATE',
-    type: 'DATE_RANGE_CUSTOM_QF',
+    type: 'DATE_RANGE_QF',
     iconClassName: 'fa fa-calendar',
     width: '200px',
     allowClear: true

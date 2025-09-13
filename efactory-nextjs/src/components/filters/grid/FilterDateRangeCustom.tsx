@@ -63,7 +63,7 @@ const FilterDateRangeCustom = ({
       setShowCustomPanel(true);
       setIsOpen(false);
       // Initialize with current date
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0] || '';
       setCustomStartDate(today);
       setCustomEndDate(today);
     } else if (optionValue === '') {
@@ -80,7 +80,7 @@ const FilterDateRangeCustom = ({
 
   const convertPredefinedToDateRange = (optionValue: string): { start: string; end: string } | null => {
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0] || '';
 
     switch (optionValue) {
       case '0D': // Today
@@ -89,7 +89,7 @@ const FilterDateRangeCustom = ({
       case '-1D': // Yesterday
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
-        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        const yesterdayStr = yesterday.toISOString().split('T')[0] || '';
         return { start: yesterdayStr, end: yesterdayStr };
       
       case '0W': // This Week
@@ -105,32 +105,32 @@ const FilterDateRangeCustom = ({
       case '-10D': // Last 10 Days
         const tenDaysAgo = new Date(today);
         tenDaysAgo.setDate(today.getDate() - 9);
-        return { start: tenDaysAgo.toISOString().split('T')[0], end: todayStr };
+        return { start: tenDaysAgo.toISOString().split('T')[0] || '', end: todayStr };
       
       case '-30D': // Last 30 Days
         const thirtyDaysAgo = new Date(today);
         thirtyDaysAgo.setDate(today.getDate() - 29);
-        return { start: thirtyDaysAgo.toISOString().split('T')[0], end: todayStr };
+        return { start: thirtyDaysAgo.toISOString().split('T')[0] || '', end: todayStr };
       
       case '-90D': // Last 90 Days
         const ninetyDaysAgo = new Date(today);
         ninetyDaysAgo.setDate(today.getDate() - 89);
-        return { start: ninetyDaysAgo.toISOString().split('T')[0], end: todayStr };
+        return { start: ninetyDaysAgo.toISOString().split('T')[0] || '', end: todayStr };
       
       case '0M': // This Month
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
         const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        return { start: monthStart.toISOString().split('T')[0], end: monthEnd.toISOString().split('T')[0] };
+        return { start: monthStart.toISOString().split('T')[0] || '', end: monthEnd.toISOString().split('T')[0] || '' };
       
       case '-1M': // Last Month
         const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-        return { start: lastMonthStart.toISOString().split('T')[0], end: lastMonthEnd.toISOString().split('T')[0] };
+        return { start: lastMonthStart.toISOString().split('T')[0] || '', end: lastMonthEnd.toISOString().split('T')[0] || '' };
       
       case '0Y': // This Year
         const yearStart = new Date(today.getFullYear(), 0, 1);
         const yearEnd = new Date(today.getFullYear(), 11, 31);
-        return { start: yearStart.toISOString().split('T')[0], end: yearEnd.toISOString().split('T')[0] };
+        return { start: yearStart.toISOString().split('T')[0] || '', end: yearEnd.toISOString().split('T')[0] || '' };
       
       default:
         return null;
@@ -142,7 +142,7 @@ const FilterDateRangeCustom = ({
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
     d.setDate(diff);
-    return d.toISOString().split('T')[0];
+    return d.toISOString().split('T')[0] || '';
   };
 
   const getWeekEnd = (date: Date): string => {
@@ -150,7 +150,7 @@ const FilterDateRangeCustom = ({
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? 0 : 7); // Adjust when day is Sunday
     d.setDate(diff);
-    return d.toISOString().split('T')[0];
+    return d.toISOString().split('T')[0] || '';
   };
 
   const handleCustomApply = () => {
@@ -211,7 +211,7 @@ const FilterDateRangeCustom = ({
       // Handle custom range with pipe separator
       if (value.start.includes('|')) {
         const [startDate, endDate] = value.start.split('|');
-        return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+        return `${formatDate(startDate || '')} - ${formatDate(endDate || '')}`;
       }
       
       return value.start;
@@ -384,8 +384,8 @@ const FilterDateRangeCustom = ({
                         const startDate = new Date(today);
                         startDate.setDate(today.getDate() - quick.days);
                         
-                        const startDateStr = startDate.toISOString().split('T')[0];
-                        const todayStr = today.toISOString().split('T')[0];
+                        const startDateStr = startDate.toISOString().split('T')[0] || '';
+                        const todayStr = today.toISOString().split('T')[0] || '';
                         setCustomStartDate(startDateStr);
                         setCustomEndDate(todayStr);
                       }}
