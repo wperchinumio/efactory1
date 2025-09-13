@@ -349,10 +349,10 @@ export default function DraftsPage() {
                           <div className="text-sm">
                             {shipLine ? (
                               <>
-                                <div className="text-blue-600 dark:text-blue-400 italic font-medium">
+                                <div className="text-secondary italic font-medium">
                                   {shipLine}
                                 </div>
-                                <div className="text-font-color-100 text-xs mt-1">
+                                <div className="text-font-color text-xs mt-1">
                                   {shipCity}
                                 </div>
                               </>

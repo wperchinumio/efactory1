@@ -180,18 +180,19 @@ export default function ReturnTrakDraftsPage() {
                   </Button>
                   
                   {showBulkActions && (
-                    <div className="absolute right-0 top-full mt-1 w-48 bg-card-color border border-border-color rounded-lg shadow-lg z-10">
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-card-color border border-border-color rounded-lg shadow-lg z-10">
                       <div className="p-2">
-                        <Button
+                        <Button 
+                          variant="danger" 
+                          size="small" 
+                          className="w-full justify-start"
                           onClick={() => {
                             setShowDeleteConfirm(true);
                             setShowBulkActions(false);
                           }}
-                          variant="outline"
-                          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           <IconTrash className="w-4 h-4 mr-2" />
-                          Delete Selected ({selectedCount})
+                          Delete Selected
                         </Button>
                       </div>
                     </div>
@@ -311,10 +312,10 @@ export default function ReturnTrakDraftsPage() {
                           <div className="text-sm">
                             {shipLine ? (
                               <>
-                                <div className="text-blue-600 dark:text-blue-400 italic font-medium">
+                                <div className="text-secondary italic font-medium">
                                   {shipLine}
                                 </div>
-                                <div className="text-font-color-100 text-xs mt-1">
+                                <div className="text-font-color text-xs mt-1">
                                   {shipCity}
                                 </div>
                               </>
