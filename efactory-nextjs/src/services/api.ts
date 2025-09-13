@@ -1,4 +1,4 @@
-import { postJson, getJson, httpRequest, postJsonRaw, postFormData } from '@/lib/api/http';
+import { postJson, getJson, httpRequest, postJsonRaw, postFormData, httpRequestRaw } from '@/lib/api/http';
 import type {
   ActivityPointDto,
   FulfillmentRowDto,
@@ -65,6 +65,7 @@ import type {
   ValidateAddressBody,
   ReadGeneralSettingsRequest,
   ReadGeneralSettingsResponse,
+  ExportAddressesRequest,
 } from '@/types/api/orderpoints';
 import type {
   FeedbackSubmissionRequest,
@@ -272,6 +273,20 @@ export async function readAddresses(body: ReadAddressesBody): Promise<ReadAddres
 export async function validateAddress(body: ValidateAddressBody): Promise<AddressValidationResult> {
   const res = await postJson<AddressValidationResult>('/api/orderpoints', body as any);
   return res.data;
+}
+
+// Address Book Export / Import
+export async function exportAddresses(filter?: unknown): Promise<void> {
+  const body: ExportAddressesRequest = { action: 'export', page_num: 1, page_size: 100000, filter } as any;
+  // Use raw XHR download pattern via http helper
+  const headers = { 'X-Download-Params': JSON.stringify(body) } as any;
+  await httpRequestRaw<Blob>({ method: 'get', path: '/api/orderpoints', headers });
+}
+
+export async function importAddresses(file: File, action: string = 'import'): Promise<void> {
+  const form = new FormData();
+  form.append('file', file);
+  await postFormData('/api/upload', form, { 'X-Upload-Params': JSON.stringify({ func: 'address_upload', action }) });
 }
 
 // Drafts

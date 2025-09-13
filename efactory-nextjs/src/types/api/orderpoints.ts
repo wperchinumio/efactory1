@@ -158,6 +158,19 @@ export interface DeleteAddressBody {
   id: number | string;
 }
 
+// Address Book Export / Import
+export interface ExportAddressesRequest {
+  action: 'export';
+  page_num: number;
+  page_size: number;
+  filter?: unknown;
+}
+
+export interface ImportAddressesUploadParams {
+  func: 'address_upload';
+  action: 'import' | 'replace' | string;
+}
+
 export interface ReadAddressesBody {
   action: 'read_addresses';
   page_num: number;

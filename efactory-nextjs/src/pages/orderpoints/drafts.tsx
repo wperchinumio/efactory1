@@ -76,7 +76,7 @@ export default function DraftsPage() {
   const rows = getVisibleDrafts()
 
   return (
-    <div className="md:px-6 sm:px-3 pt-6 md:pt-8 min-h-screen bg-body-color">
+    <div className="md:px-6 sm:px-3 pt-6 md:pt-8 bg-body-color">
       <div className="container-fluid mb-6">
         <div className="max-w-[1400px] mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">

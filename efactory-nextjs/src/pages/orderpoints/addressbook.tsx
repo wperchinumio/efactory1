@@ -1,49 +1,218 @@
-import React, { useEffect, useState } from 'react'
-import { Button, Card, Input, ScrollArea } from '@/components/ui'
-import { readAddresses, createAddress, updateAddress, deleteAddress, validateAddress } from '@/services/api'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, Label, Textarea } from '@/components/ui'
+import CountryFilterCombobox from '@/components/filters/CountryFilterCombobox'
+import StateFilterCombobox from '@/components/filters/StateFilterCombobox'
+import { validateAddress as apiValidateAddress } from '@/services/api'
+import { readAddresses, createAddress, updateAddress, deleteAddress as apiDeleteAddress, validateAddress, exportAddresses, importAddresses } from '@/services/api'
+import { toast } from '@/components/ui/use-toast'
 import type { AddressDto, ReadAddressesResponse } from '@/types/api/orderpoints'
+import { IconDownload, IconUpload, IconPlus, IconCopy, IconTrash, IconEdit, IconLayoutGrid, IconTable, IconSearch } from '@tabler/icons-react'
 
 export default function AddressBookPage() {
   const [rows, setRows] = useState<ReadAddressesResponse['rows']>([])
   const [filter, setFilter] = useState('')
   const [activePagination, setActivePagination] = useState(1)
-  const [pageSize] = useState(100)
+  const [pageSize] = useState(50)
+  const [loading, setLoading] = useState(false)
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('table')
+  const [selected, setSelected] = useState<number | string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editMode, setEditMode] = useState<'add'|'edit'|'duplicate'>('add')
+  const [editData, setEditData] = useState<any>(null)
 
   async function reload() {
-    const res = await readAddresses({ action: 'read_addresses', page_num: activePagination, page_size: pageSize, filter: filter ? { and: [{ field: 'name', oper: '=', value: filter }] } as any : undefined })
-    setRows(res.rows || [])
+    setLoading(true)
+    try {
+      const res = await readAddresses({ action: 'read_addresses', page_num: activePagination, page_size: pageSize, filter: filter ? { and: [{ field: 'title', oper: 'like', value: filter }] } as any : undefined })
+      setRows(res.rows || [])
+    } catch (err: any) {
+      const msg = err?.error_message || err?.message || 'Failed to load addresses'
+      toast({ title: 'Error', description: msg, variant: 'destructive' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(()=>{ reload() }, [activePagination])
 
+  function openEditDialog(mode: 'add'|'edit'|'duplicate', row?: any) {
+    setEditMode(mode)
+    setEditData(mode==='add' ? null : (row || rows.find(r => r.id===selected)))
+    setEditOpen(true)
+  }
+
+  async function onDuplicate(row?: any) {
+    openEditDialog('duplicate', row)
+  }
+
+  async function onDelete(row?: any) {
+    const id = (row?.id) ?? selected
+    if (!id) return
+    try {
+      const res = await apiDeleteAddress({ action: 'delete_address', id: id as any })
+      const successMsg = res?.message || 'Address deleted successfully'
+      toast({ title: 'Success', description: successMsg })
+      await reload()
+    } catch (err: any) {
+      const msg = err?.error_message || err?.message || err?.detail || 'Failed to delete address'
+      toast({ title: 'Error', description: msg, variant: 'destructive' })
+    }
+  }
+
+  async function onExport() {
+    try {
+      // Legacy pattern: GET with X-Download-Params header via proxy
+      const apiProxy = process.env.NEXT_PUBLIC_USE_API_PROXY === 'true'
+      const base = apiProxy ? '/api/proxy' : (process.env.NEXT_PUBLIC_API_BASE_URL || '')
+      const url = `${base}/api/orderpoints`
+      const headerParams = {
+        action: 'export',
+        page_num: 1,
+        page_size: 100000,
+        filter: filter ? { and: [{ field: 'title', oper: 'like', value: filter }] } : undefined,
+      }
+      const headers: Record<string, string> = { 'Accept': 'application/json' }
+      try {
+        const raw = window.localStorage.getItem('authToken')
+        const token = raw ? (JSON.parse(raw)?.api_token || '') : ''
+        if (token) headers['X-Access-Token'] = token
+      } catch {}
+      headers['X-Download-Params'] = JSON.stringify(headerParams)
+
+      const res = await fetch(url, { method: 'GET', headers, credentials: 'include' })
+      if (!res.ok) {
+        try { 
+          const payload = await res.json()
+          const errorMsg = payload?.error_message || payload?.message || payload?.detail || `HTTP ${res.status}: ${res.statusText}`
+          throw new Error(errorMsg)
+        } catch (e:any) { 
+          throw new Error(e.message || `HTTP ${res.status}: ${res.statusText}`)
+        }
+      }
+      const blob = await res.blob()
+      let filename = 'address-book.xlsx'
+      const disposition = res.headers.get('Content-Disposition')
+      if (disposition && disposition.indexOf('attachment') !== -1) {
+        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
+        const matches = filenameRegex.exec(disposition)
+        if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '')
+      }
+      const URLobj = window.URL || (window as any).webkitURL
+      const downloadUrl = URLobj.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      setTimeout(() => { URLobj.revokeObjectURL(downloadUrl) }, 100)
+      toast({ title: 'Export Success', description: 'Your file is downloading.' })
+    } catch (err: any) {
+      const msg = err?.message || err?.error_message || 'Failed to export addresses'
+      toast({ title: 'Export Error', description: msg, variant: 'destructive' })
+    }
+  }
+
+  async function onImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const res = await importAddresses(file, 'import')
+      const successMsg = res?.message || 'Addresses imported successfully'
+      toast({ title: 'Import Success', description: successMsg })
+      e.currentTarget.value = ''
+      await reload()
+    } catch (err:any) {
+      const msg = err?.error_message || err?.message || err?.detail || 'Failed to import addresses'
+      toast({ title: 'Import Error', description: msg, variant: 'destructive' })
+    }
+  }
+
   return (
-    <div className="p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <Input placeholder="Search" value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>{ if (e.key==='Enter') reload() }} style={{ maxWidth: 260 }} />
-        <Button onClick={reload}>Search</Button>
+    <div className="md:px-6 sm:px-3 pt-6 md:pt-8 bg-body-color">
+      <div className="container-fluid mb-4">
+        <div className="max-w-[1600px] mx-auto">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <Input placeholder="Search contact title..." value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>{ if (e.key==='Enter') reload() }} style={{ maxWidth: 320 }} />
+              <Button onClick={reload}><IconSearch className="w-4 h-4"/>Search</Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button onClick={()=>setViewMode(viewMode==='table'?'card':'table')}>
+                {viewMode==='table' ? <IconLayoutGrid className="w-4 h-4"/> : <IconTable className="w-4 h-4"/>}
+                {viewMode==='table' ? 'Card View' : 'Table View'}
+              </Button>
+              <Button onClick={()=>openEditDialog('add')}><IconPlus className="w-4 h-4"/>Add</Button>
+              <Button onClick={()=>openEditDialog('edit')} disabled={!selected}><IconEdit className="w-4 h-4"/>Edit</Button>
+              <Button onClick={()=>onDuplicate()} disabled={!selected}><IconCopy className="w-4 h-4"/>Duplicate</Button>
+              <Button variant="danger" onClick={onDelete} disabled={!selected}><IconTrash className="w-4 h-4"/>Delete</Button>
+              <div className="relative">
+                <Button onClick={onExport}><IconDownload className="w-4 h-4"/>Export</Button>
+              </div>
+              <input ref={fileInputRef} type="file" className="hidden" onChange={onImport} />
+              <Button onClick={()=>fileInputRef.current?.click()}><IconUpload className="w-4 h-4"/>Import...</Button>
+            </div>
+          </div>
+
+          <Card className="shadow-sm border-border-color">
+            <CardContent className="p-0">
+              {viewMode === 'table' ? (
+                  <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px]">
+                    <thead className="bg-body-color border-b border-border-color">
+                      <tr className="text-left text-font-color text-[13px] font-semibold">
+                        <th className="py-2.5 px-3">Title</th>
+                        <th className="py-2.5 px-3">Shipping Address</th>
+                        <th className="py-2.5 px-3">Billing Address</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.length === 0 ? (
+                        <tr><td className="px-4 py-8 text-center text-font-color-100" colSpan={3}>{loading? 'Loading...' : 'No contacts found'}</td></tr>
+                      ) : rows.map((r:any) => (
+                        <tr key={r.id} className={`border-b border-border-color hover:bg-primary-10 transition-colors ${selected===r.id?'bg-primary-10':''}`} onClick={()=>setSelected(r.id)}>
+                          <td className="py-2.5 px-3 text-primary underline cursor-pointer" onClick={()=>openEditDialog('edit', r)}>{r.title}</td>
+                          <td className="py-2.5 px-3">{displayRich(r.ship_to)}</td>
+                          <td className="py-2.5 px-3">{displayRich(r.bill_to)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
+                  {rows.map((r:any)=>(
+                    <Card key={r.id} className={`border-border-color ${selected===r.id?'ring-2 ring-primary':''}`}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="flex items-center justify-between text-sm">
+                          <button className="text-primary underline" onClick={()=>openEditDialog('edit', r)}>{r.title}</button>
+                          <div className="flex items-center gap-2">
+                            <Button size="small" variant="outline" onClick={()=>onDuplicate(r)}><IconCopy className="w-4 h-4"/></Button>
+                            <Button size="small" variant="danger" onClick={()=>onDelete(r)}><IconTrash className="w-4 h-4"/></Button>
+                          </div>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="text-sm">
+                        <div className="mb-2">
+                          <div className="text-font-color-100">Shipping</div>
+                          <div>{displayRich(r.ship_to)}</div>
+                        </div>
+                        <div>
+                          <div className="text-font-color-100">Billing</div>
+                          <div>{displayRich(r.bill_to)}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
-      <Card>
-        <ScrollArea style={{ maxHeight: 520 }}>
-          <table className="min-w-full text-xs">
-            <thead>
-              <tr>
-                <th className="p-2 text-left">Title</th>
-                <th className="p-2 text-left">Ship To</th>
-                <th className="p-2 text-left">Bill To</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(r => (
-                <tr key={r.id} className="border-t">
-                  <td className="p-2">{r.title}</td>
-                  <td className="p-2">{displayAddr(r.ship_to)}</td>
-                  <td className="p-2">{displayAddr(r.bill_to)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ScrollArea>
-      </Card>
+
+      {/* Add/Edit Dialog */}
+      <EditDialog open={editOpen} onOpenChange={setEditOpen} mode={editMode} data={editData} onSaved={reload} />
     </div>
   )
 }
@@ -52,6 +221,401 @@ function displayAddr(a?: AddressDto) {
   if (!a) return '-'
   const parts = [a.address1, a.address2, a.city, a.state_province, a.postal_code].filter(Boolean)
   return parts.join(', ')
+}
+
+function displayRich(a?: AddressDto) {
+  if (!a) return '-'
+  const top = `${a.company || ''}${a.company && a.attention ? ' | ' : ''}${a.attention || ''}`
+  const line = `${a.address1 || ''}${a.address2 ? ', ' + a.address2 : ''}`
+  const city = `${a.city ? a.city + ',' : ''} ${a.state_province || ''} ${a.postal_code || ''} ${a.country || ''}`
+  return (
+    <div className="text-[13px]">
+      <i className="text-info">{top}</i>
+      <div>{line}</div>
+      <div className="text-font-color-100">{city}</div>
+    </div>
+  )
+}
+
+function EditDialog({ open, onOpenChange, mode, data, onSaved }: { open: boolean; onOpenChange: (v:boolean)=>void; mode: 'add'|'edit'|'duplicate'; data: any; onSaved: ()=>void }){
+  const [title, setTitle] = useState<string>(data?.title || '')
+  const [ship, setShip] = useState<AddressDto>(data?.ship_to || {})
+  const [bill, setBill] = useState<AddressDto>(data?.bill_to || {})
+  const [validateOpen, setValidateOpen] = useState(false)
+  const [validateResult, setValidateResult] = useState<{warnings?: any; errors?: any; correct_address?: AddressDto}>({})
+  const [validatingAddress, setValidatingAddress] = useState<'shipping' | 'billing' | null>(null)
+  useEffect(()=>{ if (open){ setTitle(data?.title||''); setShip(data?.ship_to||{}); setBill(data?.bill_to||{}) } }, [open, data])
+
+  async function onSave(){
+    if (mode==='add' || mode==='duplicate'){
+      try {
+        const res = await createAddress({ action: 'create_address', data: { title, ship_to: ship, bill_to: bill, is_validate: false } })
+        const successMsg = res?.message || 'Address created successfully'
+        toast({ title: 'Success', description: successMsg })
+        onOpenChange(false); onSaved()
+      } catch (err:any) {
+        const msg = err?.error_message || err?.message || err?.detail || 'Failed to create address'
+        toast({ title: 'Error', description: msg, variant: 'destructive' })
+        return
+      }
+    } else {
+      // Legacy expects flat data fields under data with ship_to/bill_to
+      try {
+        const res = await updateAddress({ action: 'update_address', data: { id: data?.id, title, ship_to: ship, bill_to: bill } as any })
+        const successMsg = res?.message || 'Address updated successfully'
+        toast({ title: 'Success', description: successMsg })
+        onOpenChange(false); onSaved()
+      } catch (err:any) {
+        const msg = err?.error_message || err?.message || err?.detail || 'Failed to update address'
+        toast({ title: 'Error', description: msg, variant: 'destructive' })
+        return
+      }
+    }
+  }
+
+  function copyShipping(){ setBill({ ...ship }) }
+
+  async function onValidateAddress() {
+    setValidatingAddress('shipping')
+    try {
+      const res = await apiValidateAddress({ action: 'validate_address', data: {
+        address1: ship.address1 || '',
+        address2: ship.address2 || '',
+        city: ship.city || '',
+        state_province: ship.state_province || '',
+        postal_code: ship.postal_code || ''
+      } })
+      console.log('Validation API response:', res)
+      
+      // Only show dialog if there are warnings or errors
+      if (res.warnings || res.errors) {
+        setValidateResult(res as any)
+        setValidateOpen(true)
+        // Don't reset validatingAddress here - keep it for the Accept button
+      } else if (res.correct_address) {
+        // Auto-update address on success (no warnings/errors)
+        const corrected = { ...res.correct_address, country: 'US' }
+        setShip(prev => ({ ...prev, ...corrected }))
+        toast({
+          title: 'Address Validated Successfully!',
+          description: 'The address has been validated and updated automatically.',
+        })
+        setValidatingAddress(null) // Reset here for auto-update
+      } else {
+        setValidatingAddress(null) // Reset here if no correct_address
+      }
+    } catch (err: any) {
+      const msg = err?.error_message || err?.message || 'Address validation failed'
+      toast({ title: 'Error', description: msg, variant: 'destructive' })
+      setValidatingAddress(null) // Reset here on error
+    }
+  }
+
+  function onAcceptCorrectAddress() {
+    if (validateResult?.correct_address) {
+      const corrected = { ...validateResult.correct_address, country: 'US' }
+      console.log('Accepting corrected address:', corrected)
+      
+      // Only update shipping address since that's the only one with validation
+      setShip(prev => {
+        const updated = { ...prev, ...corrected }
+        console.log('Updated shipping address:', updated)
+        return updated
+      })
+      toast({ title: 'Success', description: 'Shipping address updated with validated information' })
+    }
+    setValidateOpen(false)
+    setValidatingAddress(null)
+  }
+
+  return (
+    <>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent style={{ maxWidth: 1100 }}>
+        <DialogHeader>
+          <DialogTitle>{mode==='add'?'Add Address': mode==='edit'?'Edit Address':'Duplicate Address'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <Label className="text-font-color-100 text-sm flex items-center">Address Title</Label>
+            <Input className="h-8 text-sm mt-1" value={title} onChange={e=>setTitle(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold">Shipping Address</div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-font-color-100">USA only validation</div>
+                  <Button size="small" variant="outline" disabled={!canValidate(ship) || validatingAddress === 'shipping'} onClick={onValidateAddress}>
+                    {validatingAddress === 'shipping' ? 'Validating...' : 'Validate Address'}
+                  </Button>
+                </div>
+              </div>
+              {renderAddressForm(ship, setShip)}
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold">Billing Address</div>
+                <Button size="small" variant="outline" onClick={copyShipping}>Copy Shipping Address</Button>
+              </div>
+              {renderAddressForm(bill, setBill)}
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={()=>onOpenChange(false)}>Cancel</Button>
+          <Button onClick={onSave}>{mode==='edit'?'Save':'Add'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Validate Address Modal */}
+    <Dialog open={validateOpen} onOpenChange={setValidateOpen}>
+      <DialogContent style={{ maxWidth: 800 }}>
+        <DialogHeader>
+          <DialogTitle>Address validation</DialogTitle>
+          <DialogDescription>
+            The address verification program has suggested an update to the address you entered. Please{' '}
+            <strong>Accept</strong> the updated address, or <strong>Cancel</strong> to return to the previous page.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Address As-Entered Column */}
+            <div>
+              <h4 className="text-yellow-500 font-bold mb-4">Address As-Entered</h4>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium">Address 1:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validatingAddress === 'shipping' ? (ship.address1 || '') : (bill.address1 || '')} 
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Address 2:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validatingAddress === 'shipping' ? (ship.address2 || '') : (bill.address2 || '')} 
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">City:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validatingAddress === 'shipping' ? (ship.city || '') : (bill.city || '')} 
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">State:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validatingAddress === 'shipping' ? (ship.state_province || '') : (bill.state_province || '')} 
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Postal Code:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validatingAddress === 'shipping' ? (ship.postal_code || '') : (bill.postal_code || '')} 
+                    disabled
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Updated Address Column */}
+            <div>
+              <h4 className="text-yellow-500 font-bold mb-4">Updated Address</h4>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium">Address 1:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validateResult?.correct_address?.address1 || ''} 
+                    onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address1: e.target.value } }))} 
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Address 2:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validateResult?.correct_address?.address2 || ''} 
+                    onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), address2: e.target.value } }))} 
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">City:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validateResult?.correct_address?.city || ''} 
+                    onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), city: e.target.value } }))} 
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">State:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validateResult?.correct_address?.state_province || ''} 
+                    onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), state_province: e.target.value } }))} 
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Postal Code:</Label>
+                  <Input 
+                    className="mt-1" 
+                    value={validateResult?.correct_address?.postal_code || ''} 
+                    onChange={e=>setValidateResult(v=>({ ...v, correct_address: { ...(v.correct_address||{}), postal_code: e.target.value } }))} 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Status Messages at Bottom */}
+          <div className="mt-4 space-y-2">
+            {validateResult?.errors && (
+              <div className="text-red-600 font-bold text-sm">
+                Errors: {Array.isArray(validateResult.errors) ? validateResult.errors.join(', ') : validateResult.errors}
+              </div>
+            )}
+            {validateResult?.warnings && (
+              <div className="text-yellow-600 font-bold text-sm">
+                Warnings: {Array.isArray(validateResult.warnings) ? validateResult.warnings.join(', ') : validateResult.warnings}
+              </div>
+            )}
+            {!validateResult?.errors && !validateResult?.warnings && (
+              <div className="text-green-600 font-bold text-sm">
+                Status: VALIDATED_CHANGED
+              </div>
+            )}
+          </div>
+        </div>
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            className="border-border-color text-font-color hover:bg-body-color"
+            onClick={()=>setValidateOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            className="bg-primary text-white hover:bg-primary/90"
+            disabled={!!validateResult?.errors}
+            onClick={onAcceptCorrectAddress}
+          >
+            Accept
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
+  )
+}
+
+function renderAddressForm(value: AddressDto, setValue: (v: AddressDto)=>void){
+  return (
+    <div className="space-y-3">
+      {/* Row 1: Company | Attention */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-font-color-100 text-sm flex items-center">Company</Label>
+          <Input className="h-8 text-sm mt-1" value={value.company||''} onChange={e=>setValue({ ...value, company: e.target.value })} />
+        </div>
+        <div>
+          <Label className="text-font-color-100 text-sm flex items-center">Attention</Label>
+          <Input className="h-8 text-sm mt-1" value={value.attention||''} onChange={e=>setValue({ ...value, attention: e.target.value })} />
+        </div>
+      </div>
+      
+      {/* Row 2: Address 1 | Address 2 */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">Address 1</Label>
+          <Input className="h-9 text-sm mt-1" value={value.address1||''} onChange={e=>setValue({ ...value, address1: e.target.value })} />
+        </div>
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">Address 2</Label>
+          <Input className="h-9 text-sm mt-1" value={value.address2||''} onChange={e=>setValue({ ...value, address2: e.target.value })} />
+        </div>
+      </div>
+      
+      {/* Row 3: City | Postal Code */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">City</Label>
+          <Input className="h-9 text-sm mt-1" value={value.city||''} onChange={e=>setValue({ ...value, city: e.target.value })} />
+        </div>
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">Postal Code</Label>
+          <Input className="h-9 text-sm mt-1" value={value.postal_code||''} onChange={e=>setValue({ ...value, postal_code: e.target.value })} />
+        </div>
+      </div>
+      
+      {/* Row 4: Country | State */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">Country</Label>
+          <div className="mt-1">
+            <div className="relative">
+              <CountryFilterCombobox
+                value={value.country||''}
+                onValueChange={(v: string) => setValue({ ...value, country: v, state_province: '' })}
+                boldWhenSelected={true}
+              />
+              <style jsx>{`
+                .relative :global(label) {
+                  display: none !important;
+                }
+              `}</style>
+            </div>
+          </div>
+        </div>
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">State</Label>
+          <div className="mt-1">
+            <div className="relative">
+              <StateFilterCombobox
+                value={value.state_province||''}
+                onValueChange={(v: string) => setValue({ ...value, state_province: v })}
+                countryValue={value.country||''}
+                boldWhenSelected={true}
+              />
+              <style jsx>{`
+                .relative :global(label) {
+                  display: none !important;
+                }
+              `}</style>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Row 5: Phone | Email */}
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">Phone</Label>
+          <Input className="h-9 text-sm mt-1" value={value.phone||''} onChange={e=>setValue({ ...value, phone: e.target.value })} />
+        </div>
+        <div>
+          <Label className="text-font-color-100 text-sm font-medium flex items-center">Email</Label>
+          <Input className="h-9 text-sm mt-1" type="email" value={value.email||''} onChange={e=>setValue({ ...value, email: e.target.value })} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function canValidate(addr: AddressDto){
+  const { address1, country } = addr || {}
+  const hasAddress1 = address1 && String(address1).trim().length > 0
+  const c = (country || '').toUpperCase()
+  const isUS = c === 'US' || c === 'UNITED STATES' || c.startsWith('US -')
+  return Boolean(hasAddress1 && isUS)
 }
 
 
