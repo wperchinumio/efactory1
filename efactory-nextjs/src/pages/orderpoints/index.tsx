@@ -491,7 +491,7 @@ export default function OrderPointsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
-  const [pageSize] = useState(100)
+  const [pageSize] = useState(50)
   // Amounts & extra fields
   const [amounts, setAmounts] = useState({
     shipping_handling: 0,
@@ -2887,7 +2887,9 @@ export default function OrderPointsPage() {
             </label>
             <Select value={warehouses} onValueChange={setWarehouses}>
                 <SelectTrigger className={`h-8 text-sm mt-1 ${warehouses ? 'font-medium' : ''}`} style={{ width: '200px' }}>
-                <SelectValue placeholder="Warehouse: All" />
+                <span className={`truncate ${warehouses ? 'font-medium' : ''}`}>
+                  {getWarehouseOptions().find(opt => opt.value === warehouses)?.label ?? "Warehouse: All"}
+                </span>
               </SelectTrigger>
                 <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
                 <SelectItem value="" className="text-font-color hover:bg-body-color">Warehouse: All</SelectItem>
@@ -2988,7 +2990,7 @@ export default function OrderPointsPage() {
           
           <DialogFooter className="flex-shrink-0 flex flex-col gap-4">
             {/* Pagination Controls */}
-            {totalItems > pageSize && (
+            {totalItems > 0 && (
               <div className="flex items-center justify-between p-4 border-t border-border-color">
                 <div className="flex items-center gap-2">
                   <Button

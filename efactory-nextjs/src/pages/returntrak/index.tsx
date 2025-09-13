@@ -282,20 +282,49 @@ export default function ReturnTrakEntryPage() {
     setModalAmounts(prev => ({ ...prev, [field]: numValue }));
   };
 
-  // Derived: accounts list from authToken (calc_account_regions)
+  // Derived: accounts list from authToken (warehouses - same as OrderPoints)
   const accountsMap = useMemo(() => {
     try {
       if (typeof window === 'undefined') return {} as Record<string, string>;
       const raw = window.localStorage.getItem('authToken');
       if (!raw) return {} as Record<string, string>;
       const token = JSON.parse(raw);
-      return token?.user_data?.calc_account_regions || {};
+      const warehousesData = token?.user_data?.warehouses;
+      
+      if (!warehousesData || typeof warehousesData !== 'object') return {};
+      
+      const options: Record<string, string> = {};
+      
+      // Process warehouses exactly like OrderPoints
+      Object.keys(warehousesData).forEach((aWarehouse) => {
+        const branches = warehousesData[aWarehouse];
+        if (Array.isArray(branches)) {
+          branches.forEach((branchObj: any) => {
+            if (branchObj && typeof branchObj === 'object') {
+              Object.keys(branchObj).forEach((anInvType) => {
+                const optionValue = `${aWarehouse}-${anInvType}`;
+                const optionLabel = `${aWarehouse} - ${anInvType}`;
+                options[optionValue] = optionLabel;
+              });
+            }
+          });
+        }
+      });
+      
+      return options;
     } catch {
       return {} as Record<string, string>;
     }
   }, []);
 
-  const accountOptions = useMemo(() => Object.entries(accountsMap).map(([value, label]) => ({ value, label: String(label) })), [accountsMap]);
+  const accountOptions = useMemo(() => {
+    const entries = Object.entries(accountsMap).map(([value, label]) => ({ value, label: String(label) }));
+    // Remove duplicates based on value
+    const uniqueEntries = entries.filter((entry, index, self) => 
+      index === self.findIndex(e => e.value === entry.value)
+    );
+    return uniqueEntries;
+  }, [accountsMap]);
 
   // Auto-select first account if only one option available (like legacy)
   useEffect(() => {
@@ -2106,6 +2135,7 @@ export default function ReturnTrakEntryPage() {
           cacheType={activeCartTab as 'auth' | 'ship'}
           existingCartItems={activeCartTab === 'auth' ? toReceive : toShip}
           disabled={!hasValidWarehouseAndRmaType()}
+          warehouseOptions={accountOptions}
         />
 
       {/* Edit Line Modal */}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, ScrollArea } from '@/components/ui';
 import { Input, Label, Button, Select, SelectTrigger, SelectValue, SelectContent, SelectItem, CheckBox } from '@/components/ui';
 import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from '@tabler/icons-react';
@@ -16,6 +16,7 @@ interface BrowseItemsDialogProps {
   cacheType?: 'auth' | 'ship';
   existingCartItems?: Array<{ item_number: string; quantity: number; voided?: boolean }>;
   disabled?: boolean;
+  warehouseOptions?: Array<{ value: string; label: string }>;
 }
 
 export default function BrowseItemsDialog({
@@ -27,7 +28,8 @@ export default function BrowseItemsDialog({
   warningMessage,
   cacheType = 'auth',
   existingCartItems = [],
-  disabled = false
+  disabled = false,
+  warehouseOptions = []
 }: BrowseItemsDialogProps) {
   const [inventory, setInventory] = useState<Record<string, InventoryItemForCartDto & { quantity: number; price: number }>>({});
   const [itemFilter, setItemFilter] = useState('');
@@ -38,6 +40,7 @@ export default function BrowseItemsDialog({
   const [browseItemsLoading, setBrowseItemsLoading] = useState(false);
   const [refreshingInventory, setRefreshingInventory] = useState(false);
   const [pageSize] = useState(50);
+  const prevWarehouseRef = useRef<string>('');
 
   // Helper function to get quantity in cart for auth mode
   const getQuantityInCart = (itemNumber: string): number => {
@@ -52,16 +55,21 @@ export default function BrowseItemsDialog({
       setCurrentPage(1);
       setItemFilter('');
       setInventory({});
+      // Set the warehouse from prop when dialog opens
+      setWarehouses(warehouse);
       reloadInventory(1, true);
     }
   }, [open, warehouse]);
 
-  // Load inventory when filters change
+  // Update warehouse when prop changes and refresh inventory
   useEffect(() => {
-    if (open) {
-      reloadInventory(1, false);
+    if (open && warehouse && warehouse !== prevWarehouseRef.current) {
+      setWarehouses(warehouse);
+      prevWarehouseRef.current = warehouse;
+      // Force refresh inventory when warehouse changes
+      reloadInventory(1, true);
     }
-  }, [itemFilter, showZeroQty, warehouses]);
+  }, [warehouse, open]);
 
   const reloadInventory = useCallback(async (page = currentPage, showLoading = false) => {
     if (showLoading) {
@@ -71,8 +79,8 @@ export default function BrowseItemsDialog({
     }
 
     try {
-      // Use cache for better performance
-      const warehouseValue = warehouses || warehouse;
+      // Use cache for better performance - prioritize warehouse prop over internal state
+      const warehouseValue = warehouse || warehouses;
       const hasCache = returntrakInventoryCache.hasValidCache(warehouseValue, cacheType);
       
       let data: InventoryItemForCartDto[];
@@ -82,13 +90,18 @@ export default function BrowseItemsDialog({
         data = returntrakInventoryCache.searchInCache(warehouseValue, '', cacheType);
         setTotalItems(data.length);
       } else {
-        // Fetch fresh data from API
-        data = await returntrakInventoryCache.getInventoryData(warehouseValue, cacheType, true);
+        // Get data (from cache if available, otherwise fetch fresh)
+        if (hasCache) {
+          data = returntrakInventoryCache.searchInCache(warehouseValue, '', cacheType);
+        } else {
+          data = await returntrakInventoryCache.getInventoryData(warehouseValue, cacheType, true);
+        }
         
-        // Apply filters to cached data
+        // Apply filters to data
         if (itemFilter) {
           data = data.filter(item => 
-            item.item_number.toLowerCase().includes(itemFilter.toLowerCase())
+            item.item_number.toLowerCase().includes(itemFilter.toLowerCase()) ||
+            (item.description && item.description.toLowerCase().includes(itemFilter.toLowerCase()))
           );
         }
         if (!showZeroQty) {
@@ -115,6 +128,13 @@ export default function BrowseItemsDialog({
       setRefreshingInventory(false);
     }
   }, [currentPage, itemFilter, showZeroQty, warehouses, warehouse, pageSize, cacheType]);
+
+  // Load inventory when filters change
+  useEffect(() => {
+    if (open) {
+      reloadInventory(1, false);
+    }
+  }, [itemFilter, showZeroQty, warehouses, reloadInventory, open]);
 
   const updateInventoryField = (itemNumber: string, field: 'quantity' | 'price', value: string) => {
     // For quantity field, only allow digits (no decimals, no negative signs)
@@ -157,7 +177,17 @@ export default function BrowseItemsDialog({
   const goToLastPage = () => setCurrentPage(Math.ceil(totalItems / pageSize));
 
   const getWarehouseOptions = () => {
-    // This should be passed as a prop or loaded from context
+    // Use passed warehouse options or fallback to default
+    if (warehouseOptions.length > 0) {
+      // Remove duplicates based on value
+      const uniqueOptions = warehouseOptions.filter((option, index, self) => 
+        index === self.findIndex(opt => opt.value === option.value)
+      );
+      return [
+        { value: '', label: 'Warehouse: All' },
+        ...uniqueOptions
+      ];
+    }
     return [
       { value: '', label: 'Warehouse: All' },
       { value: 'warehouse1', label: 'Warehouse 1' },
@@ -201,12 +231,11 @@ export default function BrowseItemsDialog({
             </label>
             <Select value={warehouses} onValueChange={setWarehouses}>
               <SelectTrigger className={`h-8 text-sm mt-1 ${warehouses ? 'font-medium' : ''}`} style={{ width: '200px' }}>
-                <SelectValue placeholder="Warehouse: All" />
+                <span className={`truncate ${warehouses ? 'font-medium' : ''}`}>
+                  {getWarehouseOptions().find(opt => opt.value === warehouses)?.label ?? "Warehouse: All"}
+                </span>
               </SelectTrigger>
               <SelectContent className="bg-card-color border-border-color" style={{ width: '200px' }}>
-                <SelectItem value="" className="text-font-color hover:bg-body-color">
-                  Warehouse: All
-                </SelectItem>
                 {getWarehouseOptions().map(option => (
                   <SelectItem key={option.value} value={option.value} className="text-font-color hover:bg-body-color">
                     <span className="whitespace-nowrap">{option.label}</span>
@@ -341,7 +370,7 @@ export default function BrowseItemsDialog({
         
         <DialogFooter className="flex-shrink-0 flex flex-col gap-4">
           {/* Pagination Controls */}
-          {totalItems > pageSize && (
+          {totalItems > 0 && (
             <div className="flex items-center justify-between p-4 border-t border-border-color">
               <div className="flex items-center gap-2">
                 <Button
