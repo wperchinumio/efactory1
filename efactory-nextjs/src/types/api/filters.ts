@@ -7,7 +7,8 @@ export type FilterType =
   | 'DROPDOWN_QF' 
   | 'BOOLEAN_QF'
   | 'DATE_QF'
-  | 'INPUT_TEXT_QF';
+  | 'INPUT_TEXT_QF'
+  | 'TOTAL_QF';
 
 export interface FilterOption {
   key: string;
@@ -55,6 +56,10 @@ export interface TextInputFilterConfig extends BaseFilterConfig {
   type: 'INPUT_TEXT_QF';
 }
 
+export interface TotalFilterConfig extends BaseFilterConfig {
+  type: 'TOTAL_QF';
+}
+
 export type FilterConfig = 
   | DropdownFilterConfig 
   | DateRangeFilterConfig 
@@ -62,7 +67,8 @@ export type FilterConfig =
   | DateRangeCustomFilterConfig
   | DateFilterConfig 
   | BooleanFilterConfig 
-  | TextInputFilterConfig;
+  | TextInputFilterConfig
+  | TotalFilterConfig;
 
 export interface FilterValue {
   field: string;

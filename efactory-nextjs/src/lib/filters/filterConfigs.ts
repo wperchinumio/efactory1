@@ -112,12 +112,7 @@ export const warehouseQF: FilterConfig = {
 export const totalTypeQF: FilterConfig = {
   field: 'total',
   title: 'TOTAL',
-  type: 'DROPDOWN_QF',
-  options: [
-    { key: 'Total - By Item', value: 'item', oper: '=' },
-    { key: 'Total - By Warehouse', value: 'warehouse', oper: '=' },
-    { key: 'Total - By Account', value: 'account', oper: '=' }
-  ]
+  type: 'TOTAL_QF'
 };
 
 // Grid-specific filter configurations

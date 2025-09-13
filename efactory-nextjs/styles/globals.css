@@ -236,7 +236,7 @@ body[data-luno-theme="dynamic"] {
 @media (min-height: 401px) and (min-width: 768px) {
   .grid-container {
     /* Full viewport height minus header, padding, and pagination space */
-    height: calc(100vh - 120px);
+    height: calc(100vh - 230px);
     min-height: 400px;
   }
 }
@@ -244,7 +244,7 @@ body[data-luno-theme="dynamic"] {
 /* For very large screens, ensure minimum usable height */
 @media (min-height: 800px) and (min-width: 1024px) {
   .grid-container {
-    height: calc(100vh - 120px);
+    height: calc(100vh - 230px);
     min-height: 500px;
   }
 }
@@ -259,7 +259,7 @@ body[data-luno-theme="dynamic"] {
 
 @media (min-height: 401px) and (min-width: 768px) {
   .grid-container-compact {
-    height: calc(100vh - 180px);
+    height: calc(100vh - 220px);
     min-height: 300px;
   }
 }
@@ -273,7 +273,7 @@ body[data-luno-theme="dynamic"] {
 
 @media (min-height: 401px) and (min-width: 768px) {
   .grid-container-large {
-    height: calc(100vh - 120px);
+    height: calc(100vh - 200px);
     min-height: 500px;
   }
 }
@@ -295,7 +295,7 @@ body[data-luno-theme="dynamic"] {
   .grid-container-large .flex-1 {
     flex: 1;
     min-height: 200px;
-    height: calc(100vh - 120px); /* Full height minus pagination space */
+    height: calc(100vh - 180px); /* Full height minus pagination space */
   }
 }
 

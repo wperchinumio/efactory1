@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDownIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { DropdownFilterConfig, FilterOption } from '@/types/api/filters';
 import { getAuthToken } from '@/lib/auth/storage';
 import { useGlobalFilterData } from '@/hooks/useGlobalFilterData';
@@ -83,7 +83,10 @@ export default function GridSingleSelectFilter({
   };
 
   const getDisplayText = () => {
-    if (selectedValue === '' || !selectedValue) return 'All';
+    if (selectedValue === '' || !selectedValue) {
+      // Show "No totals" for total filter, "All" for others
+      return config.field === 'total' ? 'No totals' : 'All';
+    }
     const option = options.find(o => o.value === selectedValue);
     return option ? option.key : selectedValue;
   };
@@ -141,6 +144,24 @@ export default function GridSingleSelectFilter({
               ) 
             }}
           >
+            {/* Clear Option for Total Filter */}
+            {config.field === 'total' && hasActiveSelection && (
+              <div className="px-2 pt-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+                <button
+                  type="button"
+                  onClick={() => handleSelectOption('')}
+                  className="w-full flex items-center px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors rounded-lg group text-left text-gray-600 dark:text-gray-400"
+                >
+                  <div className="flex items-center justify-center w-3 h-3 mr-2">
+                    <XMarkIcon className="w-3 h-3" />
+                  </div>
+                  <span className="text-xs flex-1 truncate group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
+                    No totals
+                  </span>
+                </button>
+              </div>
+            )}
+
             {/* Options List */}
             <div className="max-h-[300px] overflow-y-auto px-2 pb-2">
               {loading ? (
@@ -162,11 +183,11 @@ export default function GridSingleSelectFilter({
                       type="button"
                       onClick={() => handleSelectOption(optionValue)}
                       className={`
-                        w-full flex items-center gap-2 px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors rounded-lg group text-left
+                        w-full flex items-center px-2 py-1 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors rounded-lg group text-left
                         ${isSelected ? 'bg-primary/10 text-primary' : 'text-gray-900 dark:text-gray-100'}
                       `}
                     >
-                      <div className="flex items-center justify-center w-4 h-4">
+                      <div className="flex items-center justify-center w-3 h-3 mr-2">
                         {isSelected && (
                           <CheckIcon className="w-3 h-3 text-primary" />
                         )}

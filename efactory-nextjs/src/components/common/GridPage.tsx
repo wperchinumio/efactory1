@@ -19,26 +19,33 @@ export interface GridPageProps {
 function deriveTitleFromPath(pathname: string): string {
   // Map URL paths to proper titles based on legacy routes
   const pathToTitle: Record<string, { pageTitle: string; pageSubtitle: string }> = {
+    // Orders
     '/orders/open': { pageTitle: 'ORDERS', pageSubtitle: 'OPEN' },
     '/orders/shipped': { pageTitle: 'ORDERS', pageSubtitle: 'SHIPPED' },
-    '/orders/on-hold': { pageTitle: 'ORDERS', pageSubtitle: 'ON HOLD' },
-    '/orders/back-orders': { pageTitle: 'ORDERS', pageSubtitle: 'BACK ORDERS' },
-    '/orders/pre-release': { pageTitle: 'ORDERS', pageSubtitle: 'PRE-RELEASE' },
+    '/orders/onhold': { pageTitle: 'ORDERS', pageSubtitle: 'ON HOLD' },
+    '/orders/backorders': { pageTitle: 'ORDERS', pageSubtitle: 'BACK ORDERS' },
+    '/orders/prerelease': { pageTitle: 'ORDERS', pageSubtitle: 'PRE-RELEASE' },
     '/orders/canceled': { pageTitle: 'ORDERS', pageSubtitle: 'CANCELED' },
     '/orders/all': { pageTitle: 'ORDERS', pageSubtitle: 'ALL' },
+    
+    // Order Lines
     '/order-lines/open': { pageTitle: 'ORDER LINES', pageSubtitle: 'OPEN' },
     '/order-lines/shipped': { pageTitle: 'ORDER LINES', pageSubtitle: 'SHIPPED' },
-    '/order-lines/on-hold': { pageTitle: 'ORDER LINES', pageSubtitle: 'ON HOLD' },
-    '/order-lines/back-orders': { pageTitle: 'ORDER LINES', pageSubtitle: 'BACK ORDERS' },
-    '/order-lines/pre-release': { pageTitle: 'ORDER LINES', pageSubtitle: 'PRE-RELEASE' },
+    '/order-lines/onhold': { pageTitle: 'ORDER LINES', pageSubtitle: 'ON HOLD' },
+    '/order-lines/backorders': { pageTitle: 'ORDER LINES', pageSubtitle: 'BACK ORDERS' },
+    '/order-lines/prerelease': { pageTitle: 'ORDER LINES', pageSubtitle: 'PRE-RELEASE' },
     '/order-lines/canceled': { pageTitle: 'ORDER LINES', pageSubtitle: 'CANCELED' },
     '/order-lines/all': { pageTitle: 'ORDER LINES', pageSubtitle: 'ALL' },
-    '/order-items/backlog-items': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'BACKLOG ITEMS' },
-    '/order-items/shipped-items': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'SHIPPED ITEMS' },
-    '/order-items/all-items': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'ALL ITEMS' },
-    '/orders/package': { pageTitle: 'ORDERS', pageSubtitle: 'PACKAGE' },
-    '/orders/serial': { pageTitle: 'ORDERS', pageSubtitle: 'SERIAL' },
-    '/orders/freight': { pageTitle: 'ORDERS', pageSubtitle: 'FREIGHT' },
+    
+    // Order Items
+    '/order-items/backlog': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'BACKLOG ITEMS' },
+    '/order-items/shipped': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'SHIPPED ITEMS' },
+    '/order-items/all': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'ALL ITEMS' },
+    
+    // Ship Detail
+    '/detail/freight': { pageTitle: 'SHIP DETAIL', pageSubtitle: 'FREIGHT' },
+    '/detail/package': { pageTitle: 'SHIP DETAIL', pageSubtitle: 'PACKAGE' },
+    '/detail/serial': { pageTitle: 'SHIP DETAIL', pageSubtitle: 'SERIAL/LOT #' },
     '/rmas/open': { pageTitle: 'RMAS', pageSubtitle: 'OPEN' },
     '/rmas/all': { pageTitle: 'RMAS', pageSubtitle: 'ALL' },
     '/rmas/items': { pageTitle: 'RMAS', pageSubtitle: 'ITEMS' },

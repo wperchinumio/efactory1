@@ -49,6 +49,7 @@ export default function GridMultiSelectFilter({
       switch (config.field) {
         case 'location':
         case 'warehouse':
+        case 'inv_type_region':
           // Use warehouses data like legacy code
           const warehouses = (authToken.user_data as any).warehouses || {};
           Object.keys(warehouses).forEach(aWarehouse => {

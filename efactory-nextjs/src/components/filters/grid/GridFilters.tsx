@@ -7,6 +7,7 @@ import FilterDateRangeAdvanced from './FilterDateRangeAdvanced';
 import FilterDateRangeCustom from './FilterDateRangeCustom';
 import FilterBoolean from './FilterBoolean';
 import FilterTextInput from './FilterTextInput';
+import FilterTotal from './FilterTotal';
 import type { FilterConfig, FilterState, FilterValue, DateRangeValue } from '@/types/api/filters';
 
 interface GridFiltersProps {
@@ -83,11 +84,16 @@ export default function GridFilters({
       }
     } else if (typeof value === 'boolean') {
       // Boolean values: convert to FilterValue format
-      newFilterState[field] = {
-        value: value.toString(),
-        oper: '=',
-        field: field
-      };
+      if (value) {
+        newFilterState[field] = {
+          value: value.toString(),
+          oper: '=',
+          field: field
+        };
+      } else {
+        // Remove the filter when unchecked
+        delete newFilterState[field];
+      }
     } else {
       // Single values: convert to FilterValue format
       newFilterState[field] = {
@@ -239,11 +245,13 @@ export default function GridFilters({
         );
       
       case 'BOOLEAN_QF':
+        // Extract boolean value from FilterValue object
+        const booleanValue = value ? (value.value === 'true') : false;
         return (
           <FilterBoolean
             key={key}
             config={config}
-            value={value as any}
+            value={booleanValue}
             onChange={(val) => handleFilterChange(key, val)}
           />
         );
@@ -258,6 +266,17 @@ export default function GridFilters({
           />
         );
       
+      case 'TOTAL_QF':
+        // Custom total filter - extract string value from FilterValue object
+        const totalValue = value ? (value as FilterValue).value || '' : '';
+        return (
+          <FilterTotal
+            key={key}
+            value={totalValue}
+            onChange={(val) => handleFilterChange(key, val)}
+          />
+        );
+      
       default:
         return null;
     }
@@ -265,31 +284,9 @@ export default function GridFilters({
 
   return (
     <div className={`bg-white dark:bg-gray-800 ${className}`}>
-      {/* Filter Controls */}
+      {/* Filter Panel - Always Visible */}
       <div className="px-6 py-1">
-        <div className="flex items-center justify-between space-x-4">
-          <div className="flex-1">
-            {/* Empty space for layout balance */}
-          </div>
-
-          {/* Filter Controls */}
-          <div className="flex items-center space-x-2">
-            {/* Clear All Filters */}
-            {getActiveFilterCount() > 0 && (
-              <button
-                type="button"
-                onClick={handleClearAllFilters}
-                className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-              >
-                <ArrowPathIcon className="h-4 w-4" />
-                <span>Clear All</span>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Filter Panel - Always Visible */}
-        <div className="my-1 pt-0.5 flex items-center">
+        <div className="flex items-center justify-between">
           <div className="flex flex-wrap items-center gap-2">
             {Object.entries(filters).map(([key, config]) => (
               <div key={key} className="flex-shrink-0">
@@ -301,6 +298,18 @@ export default function GridFilters({
               </div>
             ))}
           </div>
+
+          {/* Clear All Filters - On the same row, right side */}
+          {getActiveFilterCount() > 0 && (
+            <button
+              type="button"
+              onClick={handleClearAllFilters}
+              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+            >
+              <ArrowPathIcon className="h-4 w-4" />
+              <span>Clear All</span>
+            </button>
+          )}
         </div>
       </div>
     </div>
