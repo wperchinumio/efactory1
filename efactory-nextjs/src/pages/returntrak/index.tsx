@@ -1208,53 +1208,59 @@ export default function ReturnTrakEntryPage() {
 
   return (
     <div className="bg-body-color">
-      {/* Header */}
-      <div className="bg-card-color border-b border-border-color">
-        <div className="w-full max-w-7xl mx-auto px-6 py-4" style={{ maxWidth: '1600px' }}>
-          <div className="flex items-center justify-between">
-        <div>
-              <h1 className="text-xl font-semibold text-font-color">ReturnTrak - RMA Entry</h1>
-              <p className="text-sm text-font-color-100 mt-1">
-                Create and manage RMAs
-                {hasUnsavedChanges && (
-                  <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded text-xs">
-                    <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
-                    Unsaved changes
-                  </span>
-                )}
-                {savingDraft && (
-                  <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-xs">
-                    <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
-                    Saving draft...
-                  </span>
-                )}
-                {placing && (
-                  <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded text-xs">
-                    <span className="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></span>
-                    Placing RMA...
-                  </span>
-                )}
-              </p>
-        </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-              <Button 
-                variant="outline" 
-                size="small" 
-                onClick={() => onPlaceRma(true)} 
-                disabled={savingDraft || placing}
-                className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2 touch-manipulation"
-              >
-                {savingDraft ? "Saving..." : "Save Draft"}
-          </Button>
-              <Button 
-                size="small" 
-                onClick={() => onPlaceRma(false)} 
-                disabled={placing || !rmaType || !accountReceivingWarehouse}
-                className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-              >
-                {placing ? "Placing RMA..." : "Place RMA"}
-          </Button>
-            </div>
+      {/* Header with Title and Actions */}
+      <div className="bg-card-color border-b border-border-color px-6 py-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-font-color mb-0.5 flex items-center gap-2">
+              ReturnTrak - RMA Entry
+            </h1>
+            <p className="text-sm text-font-color-100">
+              Create and manage RMAs
+              {hasUnsavedChanges && (
+                <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded text-xs">
+                  <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                  Unsaved changes
+                </span>
+              )}
+              {savingDraft && (
+                <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-xs">
+                  <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                  Saving draft...
+                </span>
+              )}
+              {placing && (
+                <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded text-xs">
+                  <span className="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></span>
+                  Placing RMA...
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <Button 
+              onClick={() => router.push('/returntrak')}
+              disabled={placing || savingDraft}
+              variant="outline"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+            >
+              New RMA
+            </Button>
+            <Button 
+              onClick={() => onPlaceRma(true)} 
+              disabled={savingDraft || placing}
+              variant="outline" 
+              className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2 touch-manipulation"
+            >
+              {savingDraft ? "Saving..." : "Save Draft"}
+            </Button>
+            <Button 
+              onClick={() => onPlaceRma(false)} 
+              disabled={placing || !rmaType || !accountReceivingWarehouse}
+              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+            >
+              {placing ? "Placing RMA..." : "Place RMA"}
+            </Button>
           </div>
         </div>
       </div>
