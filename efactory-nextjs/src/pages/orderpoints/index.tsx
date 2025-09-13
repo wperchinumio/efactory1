@@ -3543,76 +3543,106 @@ export default function OrderPointsPage() {
             <DialogTitle>Edit Amounts</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-font-color-100 text-sm">S & H</Label>
-                <Input
-                  className="h-8 text-sm"
-                  type="number"
-                  step="0.01"
-                  value={tempAmounts.shipping_handling}
-                  onChange={e => setTempAmounts(p => ({ ...p, shipping_handling: +e.target.value || 0 }))}
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Sales Taxes</Label>
-                <Input
-                  className="h-8 text-sm"
-                  type="number"
-                  step="0.01"
-                  value={tempAmounts.sales_tax}
-                  onChange={e => setTempAmounts(p => ({ ...p, sales_tax: +e.target.value || 0 }))}
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Amount Paid</Label>
-                <Input
-                  className="h-8 text-sm"
-                  type="number"
-                  step="0.01"
-                  value={tempAmounts.amount_paid}
-                  onChange={e => setTempAmounts(p => ({ ...p, amount_paid: +e.target.value || 0 }))}
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Discount/Add. Chgs.</Label>
-                <Input
-                  className="h-8 text-sm"
-                  type="number"
-                  step="0.01"
-                  value={tempAmounts.international_handling}
-                  onChange={e => setTempAmounts(p => ({ ...p, international_handling: +e.target.value || 0 }))}
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Balance Due (US)</Label>
-                <Input
-                  className="h-8 text-sm"
-                  type="number"
-                  step="0.01"
-                  value={tempAmounts.balance_due_us}
-                  onChange={e => setTempAmounts(p => ({ ...p, balance_due_us: +e.target.value || 0 }))}
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Int. Decl. Value</Label>
-                <Input
-                  className="h-8 text-sm"
-                  type="number"
-                  step="0.01"
-                  value={tempAmounts.international_declared_value}
-                  onChange={e => setTempAmounts(p => ({ ...p, international_declared_value: +e.target.value || 0 }))}
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Insurance</Label>
-                <Input
-                  className="h-8 text-sm"
-                  type="number"
-                  step="0.01"
-                  value={tempAmounts.insurance}
-                  onChange={e => setTempAmounts(p => ({ ...p, insurance: +e.target.value || 0 }))}
-                />
+            <div className="space-y-4">
+              {/* Read-only calculated fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-font-color-100 text-sm font-semibold">Order Amount:</Label>
+                  <Input
+                    className="h-8 text-sm bg-gray-50"
+                    type="text"
+                    value={orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">S & H:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={tempAmounts.shipping_handling}
+                    onChange={e => setTempAmounts(p => ({ ...p, shipping_handling: +e.target.value || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Sales Taxes:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={tempAmounts.sales_tax}
+                    onChange={e => setTempAmounts(p => ({ ...p, sales_tax: +e.target.value || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Discount/Add. Chgs.:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={tempAmounts.international_handling}
+                    onChange={e => setTempAmounts(p => ({ ...p, international_handling: +e.target.value || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm font-semibold">Total Amount:</Label>
+                  <Input
+                    className="h-8 text-sm bg-gray-50"
+                    type="text"
+                    value={(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + tempAmounts.shipping_handling + tempAmounts.sales_tax + tempAmounts.international_handling).toFixed(2)}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Amount Paid:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={tempAmounts.amount_paid}
+                    onChange={e => setTempAmounts(p => ({ ...p, amount_paid: +e.target.value || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm font-semibold">Net Due:</Label>
+                  <Input
+                    className="h-8 text-sm bg-gray-50"
+                    type="text"
+                    value={((orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + tempAmounts.shipping_handling + tempAmounts.sales_tax + tempAmounts.international_handling) - tempAmounts.amount_paid).toFixed(2)}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Balance Due (US):</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={tempAmounts.balance_due_us}
+                    onChange={e => setTempAmounts(p => ({ ...p, balance_due_us: +e.target.value || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Int. Decl. Value:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={tempAmounts.international_declared_value}
+                    onChange={e => setTempAmounts(p => ({ ...p, international_declared_value: +e.target.value || 0 }))}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Insurance:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={tempAmounts.insurance}
+                    onChange={e => setTempAmounts(p => ({ ...p, insurance: +e.target.value || 0 }))}
+                  />
+                </div>
               </div>
             </div>
           </div>

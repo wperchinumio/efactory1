@@ -74,6 +74,20 @@ export default function ReturnTrakEntryPage() {
     return_weight_lb: '' as any,
   });
 
+  // Amounts
+  const [amounts, setAmounts] = useState({
+    order_subtotal: 0,
+    shipping_handling: 0,
+    sales_tax: 0,
+    international_handling: 0,
+    total_due: 0,
+    amount_paid: 0,
+    net_due_currency: 0,
+    balance_due_us: 0,
+    international_declared_value: 0,
+    insurance: 0
+  });
+
   // Items
   const [activeCartTab, setActiveCartTab] = useState<'auth' | 'ship'>('auth');
   const [toReceive, setToReceive] = useState<RmaAuthItemDto[]>([]);
@@ -92,6 +106,29 @@ export default function ReturnTrakEntryPage() {
   const [showBrowseItemsModal, setShowBrowseItemsModal] = useState(false);
   const [validateOpen, setValidateOpen] = useState(false);
   const [validateResult, setValidateResult] = useState<any>(null);
+
+  // Modal form states (for temporary editing)
+  const [modalOthers, setModalOthers] = useState({
+    original_order_number: '',
+    original_account_number: '',
+    customer_number: '',
+    shipping_instructions: '',
+    comments: '',
+    return_weight_lb: ''
+  });
+
+  const [modalAmounts, setModalAmounts] = useState({
+    order_subtotal: 0,
+    shipping_handling: 0,
+    sales_tax: 0,
+    international_handling: 0,
+    total_due: 0,
+    amount_paid: 0,
+    net_due_currency: 0,
+    balance_due_us: 0,
+    international_declared_value: 0,
+    insurance: 0
+  });
   
   // Cart selection and edit state
   const [selectedAuthRows, setSelectedAuthRows] = useState<number[]>([]);
@@ -198,6 +235,53 @@ export default function ReturnTrakEntryPage() {
     return emailSettings.issue || emailSettings.receive || emailSettings.ship || emailSettings.cancel;
   }, [rmaSettings]);
 
+  // Modal handlers (OrderPoints pattern)
+  const handleOthersModalOpen = () => {
+    // Copy current others data to modal state
+    setModalOthers({ ...others });
+    setShowOthersModal(true);
+  };
+
+  const handleOthersModalSave = () => {
+    // Save modal data to main state
+    setOthers(modalOthers);
+    setShowOthersModal(false);
+  };
+
+  const handleOthersModalCancel = () => {
+    // Just close modal without saving
+    setShowOthersModal(false);
+  };
+
+  const handleOthersModalChange = (field: string, value: string) => {
+    // Update modal state only (not main state)
+    setModalOthers(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Amounts modal handlers (OrderPoints pattern)
+  const handleAmountsModalOpen = () => {
+    // Copy current amounts data to modal state
+    setModalAmounts({ ...amounts });
+    setShowAmountsModal(true);
+  };
+
+  const handleAmountsModalSave = () => {
+    // Save modal data to main state
+    setAmounts(modalAmounts);
+    setShowAmountsModal(false);
+  };
+
+  const handleAmountsModalCancel = () => {
+    // Just close modal without saving
+    setShowAmountsModal(false);
+  };
+
+  const handleAmountsModalChange = (field: string, value: string) => {
+    // Update modal state only (not main state)
+    const numValue = isNaN(Number(value)) ? 0 : Number(value);
+    setModalAmounts(prev => ({ ...prev, [field]: numValue }));
+  };
+
   // Derived: accounts list from authToken (calc_account_regions)
   const accountsMap = useMemo(() => {
     try {
@@ -245,6 +329,26 @@ export default function ReturnTrakEntryPage() {
     })();
     return () => { mounted = false };
   }, []);
+
+  // Prepopulate shipping fields when RMA settings are loaded
+  useEffect(() => {
+    if (!rmaSettings?.general?.shipping) return;
+    
+    const { domestic, international } = rmaSettings.general.shipping;
+    
+    // Use domestic settings as defaults (you could add logic to choose domestic vs international)
+    setShipping(prev => ({
+      ...prev,
+      shipping_carrier: domestic.carrier || prev.shipping_carrier,
+      shipping_service: domestic.service || prev.shipping_service,
+      packing_list_type: domestic.packing_list_type?.toString() || prev.packing_list_type,
+      freight_account: domestic.freight_account || prev.freight_account,
+      consignee_number: domestic.consignee_number || prev.consignee_number,
+      terms: domestic.terms || prev.terms,
+      fob: domestic.fob || prev.fob,
+      int_code: domestic.int_code?.toString() || prev.int_code,
+    }));
+  }, [rmaSettings]);
 
   async function onGenerateRmaNumber() {
     if (!rmaSettings) return;
@@ -541,25 +645,30 @@ export default function ReturnTrakEntryPage() {
 
   // Helper functions for panels
   function getAmountsFieldsWithValues() {
+    const orderAmount = 0; // RMA doesn't have order items, so always 0
+    const totalAmount = amounts.shipping_handling + amounts.sales_tax + amounts.international_handling;
+    const netDue = totalAmount - amounts.amount_paid;
+    
     const fields = [
-      { key: 'order_amount', label: 'Order Amount', value: '0.00' },
-      { key: 'shipping_handling', label: 'S & H', value: '0.00' },
-      { key: 'sales_tax', label: 'Sales Taxes', value: '0.00' },
-      { key: 'discount', label: 'Discount/Add. Chgs.', value: '0.00' },
-      { key: 'total_amount', label: 'Total Amount', value: '0.00' },
-      { key: 'amount_paid', label: 'Amount Paid', value: '0.00' },
-      { key: 'net_due', label: 'Net Due', value: '0.00' },
-      { key: 'balance_due', label: 'Balance Due (US)', value: '0.00' },
-      { key: 'int_declared', label: 'Int. Decl. Value', value: '0.00' },
-      { key: 'insurance', label: 'Insurance', value: '0.00' }
+      { key: 'order_amount', label: 'Order Amount', value: orderAmount.toFixed(2), alwaysShow: true },
+      { key: 'shipping_handling', label: 'S & H', value: amounts.shipping_handling.toFixed(2) },
+      { key: 'sales_tax', label: 'Sales Taxes', value: amounts.sales_tax.toFixed(2) },
+      { key: 'discount', label: 'Discount/Add. Chgs.', value: amounts.international_handling.toFixed(2) },
+      { key: 'total_amount', label: 'Total Amount', value: totalAmount.toFixed(2), alwaysShow: true, isBold: true },
+      { key: 'amount_paid', label: 'Amount Paid', value: amounts.amount_paid.toFixed(2) },
+      { key: 'net_due', label: 'Net Due', value: netDue.toFixed(2), alwaysShow: true, isBold: true },
+      { key: 'balance_due', label: 'Balance Due (US)', value: amounts.balance_due_us.toFixed(2) },
+      { key: 'int_declared', label: 'Int. Decl. Value', value: amounts.international_declared_value.toFixed(2) },
+      { key: 'insurance', label: 'Insurance', value: amounts.insurance.toFixed(2) }
     ];
-    return fields.filter(field => field.value !== '0.00' && field.value !== '');
+    return fields.filter(field => field.alwaysShow || parseFloat(field.value) !== 0);
   }
 
   function getOthersFieldsWithValues() {
     const fields = [
       { key: 'original_order', label: 'Original Order #', value: others.original_order_number },
       { key: 'customer_number', label: 'Customer Number', value: others.customer_number },
+      { key: 'return_weight_lb', label: 'Est. Weight for RS Label (lb)', value: others.return_weight_lb },
       { key: 'shipping_instructions', label: 'Shipping Instructions', value: others.shipping_instructions },
       { key: 'comments', label: 'Comments', value: others.comments }
     ];
@@ -572,11 +681,11 @@ export default function ReturnTrakEntryPage() {
   }
 
   function openAmountsModal() {
-    setShowAmountsModal(true);
+    handleAmountsModalOpen();
   }
 
   function openOthersModal() {
-    setShowOthersModal(true);
+    handleOthersModalOpen();
   }
   
   // Browse Items handlers
@@ -1468,40 +1577,40 @@ export default function ReturnTrakEntryPage() {
                       </div>
                       <div className="flex justify-between items-center py-0.5">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
-                        <span className="font-mono text-right truncate max-w-[120px] text-font-color-100" title="0.00">0.00</span>
+                        <span className={`font-mono text-right truncate max-w-[120px] ${amounts.shipping_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.shipping_handling.toFixed(2)}>{amounts.shipping_handling.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center py-0.5">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Sales Taxes:</span>
-                        <span className="font-mono text-right truncate max-w-[120px] text-font-color-100" title="0.00">0.00</span>
+                        <span className={`font-mono text-right truncate max-w-[120px] ${amounts.sales_tax > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.sales_tax.toFixed(2)}>{amounts.sales_tax.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center py-0.5">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Discount/Add. Chgs.:</span>
-                        <span className="font-mono text-right truncate max-w-[120px] text-font-color-100" title="0.00">0.00</span>
+                        <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.international_handling.toFixed(2)}>{amounts.international_handling.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
                         <span className="text-font-color whitespace-nowrap">Total Amount:</span>
-                        <span className="font-mono text-font-color text-right truncate max-w-[120px]" title="0.00">0.00</span>
+                        <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={(amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}>{(amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center py-0.5">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
-                        <span className="font-mono text-right truncate max-w-[120px] text-font-color-100" title="0.00">0.00</span>
+                        <span className={`font-mono text-right truncate max-w-[120px] ${amounts.amount_paid > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.amount_paid.toFixed(2)}>{amounts.amount_paid.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
                         <span className="text-font-color whitespace-nowrap">Net Due:</span>
-                        <span className="font-mono text-font-color text-right truncate max-w-[120px]" title="0.00">0.00</span>
+                        <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={((amounts.shipping_handling + amounts.sales_tax + amounts.international_handling) - amounts.amount_paid).toFixed(2)}>{((amounts.shipping_handling + amounts.sales_tax + amounts.international_handling) - amounts.amount_paid).toFixed(2)}</span>
                       </div>
                       <div className="h-px bg-border-color my-2" />
                       <div className="flex justify-between items-center py-0.5">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
-                        <span className="font-mono text-right truncate max-w-[120px] text-font-color-100" title="0.00">0.00</span>
+                        <span className={`font-mono text-right truncate max-w-[120px] ${amounts.balance_due_us > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.balance_due_us.toFixed(2)}>{amounts.balance_due_us.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center py-0.5">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Int. Decl. Value:</span>
-                        <span className="font-mono text-right truncate max-w-[120px] text-font-color-100" title="0.00">0.00</span>
+                        <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_declared_value > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.international_declared_value.toFixed(2)}>{amounts.international_declared_value.toFixed(2)}</span>
                       </div>
                       <div className="flex justify-between items-center py-0.5">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Insurance:</span>
-                        <span className="font-mono text-right truncate max-w-[120px] text-font-color-100" title="0.00">0.00</span>
+                        <span className={`font-mono text-right truncate max-w-[120px] ${amounts.insurance > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.insurance.toFixed(2)}>{amounts.insurance.toFixed(2)}</span>
                       </div>
                     </>
                   ) : (
@@ -1556,6 +1665,7 @@ export default function ReturnTrakEntryPage() {
                     <>
                       <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Original Order #:</span> <span className={`text-right truncate max-w-[120px] ${others.original_order_number ? 'text-font-color' : 'text-font-color-100'}`} title={others.original_order_number || '-'}>{others.original_order_number || '-'}</span></div>
                       <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Customer Number:</span> <span className={`text-right truncate max-w-[120px] ${others.customer_number ? 'text-font-color' : 'text-font-color-100'}`} title={others.customer_number || '-'}>{others.customer_number || '-'}</span></div>
+                      <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Est. Weight for RS Label (lb):</span> <span className={`text-right truncate max-w-[120px] ${others.return_weight_lb ? 'text-font-color' : 'text-font-color-100'}`} title={others.return_weight_lb || '-'}>{others.return_weight_lb || '-'}</span></div>
                       <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Shipping Instructions:</span> <span className={`text-right truncate max-w-[120px] ${others.shipping_instructions ? 'text-font-color' : 'text-font-color-100'}`} title={others.shipping_instructions || '-'}>{others.shipping_instructions || '-'}</span></div>
                       <div className="flex justify-between items-center py-0.5"><span className="font-medium text-font-color-100 whitespace-nowrap">Comments:</span> <span className={`text-right truncate max-w-[120px] ${others.comments ? 'text-font-color' : 'text-font-color-100'}`} title={others.comments || '-'}>{others.comments || '-'}</span></div>
                     </>
@@ -1686,122 +1796,125 @@ export default function ReturnTrakEntryPage() {
 
       {/* Amounts Modal */}
       <Dialog open={showAmountsModal} onOpenChange={setShowAmountsModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent style={{ maxWidth: 500 }}>
           <DialogHeader>
             <DialogTitle>Edit Amounts</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-font-color-100 text-sm">Order Amount</Label>
-                <Input 
-                  className="h-8 text-sm mt-1" 
-                  value="0.00" 
-                  readOnly
-                  disabled
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">S & H</Label>
-                <Input 
-                  className="h-8 text-sm mt-1" 
-                  value="0.00" 
-                  onChange={e => {/* Handle S&H change */}} 
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-font-color-100 text-sm">Sales Taxes</Label>
-                <Input 
-                  className="h-8 text-sm mt-1" 
-                  value="0.00" 
-                  onChange={e => {/* Handle sales tax change */}} 
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Discount/Add. Chgs.</Label>
-                <Input 
-                  className="h-8 text-sm mt-1" 
-                  value="0.00" 
-                  onChange={e => {/* Handle discount change */}} 
-                />
-              </div>
-            </div>
-            <div className="border-t border-border-color pt-4">
+            <div className="space-y-4">
+              {/* Read-only calculated fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-font-color-100 text-sm font-semibold">Total Amount</Label>
-                  <Input 
-                    className="h-8 text-sm mt-1 font-mono" 
-                    value="0.00" 
-                    readOnly
+                  <Label className="text-font-color-100 text-sm font-semibold">Order Amount:</Label>
+                  <Input
+                    className="h-8 text-sm bg-gray-50"
+                    type="text"
+                    value="0.00"
                     disabled
                   />
                 </div>
                 <div>
-                  <Label className="text-font-color-100 text-sm">Amount Paid</Label>
-                  <Input 
-                    className="h-8 text-sm mt-1" 
-                    value="0.00" 
-                    onChange={e => {/* Handle amount paid change */}} 
+                  <Label className="text-font-color-100 text-sm">S & H:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={modalAmounts.shipping_handling}
+                    onChange={e => handleAmountsModalChange('shipping_handling', e.target.value)}
                   />
                 </div>
-              </div>
-            </div>
-            <div className="border-t border-border-color pt-4">
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-font-color-100 text-sm font-semibold">Net Due</Label>
-                  <Input 
-                    className="h-8 text-sm mt-1 font-mono" 
-                    value="0.00" 
-                    readOnly
+                  <Label className="text-font-color-100 text-sm">Sales Taxes:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={modalAmounts.sales_tax}
+                    onChange={e => handleAmountsModalChange('sales_tax', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Discount/Add. Chgs.:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={modalAmounts.international_handling}
+                    onChange={e => handleAmountsModalChange('international_handling', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm font-semibold">Total Amount:</Label>
+                  <Input
+                    className="h-8 text-sm bg-gray-50"
+                    type="text"
+                    value={(modalAmounts.shipping_handling + modalAmounts.sales_tax + modalAmounts.international_handling).toFixed(2)}
                     disabled
                   />
                 </div>
                 <div>
-                  <Label className="text-font-color-100 text-sm">Balance Due (US)</Label>
-                  <Input 
-                    className="h-8 text-sm mt-1" 
-                    value="0.00" 
-                    onChange={e => {/* Handle balance due change */}} 
+                  <Label className="text-font-color-100 text-sm">Amount Paid:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={modalAmounts.amount_paid}
+                    onChange={e => handleAmountsModalChange('amount_paid', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm font-semibold">Net Due:</Label>
+                  <Input
+                    className="h-8 text-sm bg-gray-50"
+                    type="text"
+                    value={((modalAmounts.shipping_handling + modalAmounts.sales_tax + modalAmounts.international_handling) - modalAmounts.amount_paid).toFixed(2)}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Balance Due (US):</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={modalAmounts.balance_due_us}
+                    onChange={e => handleAmountsModalChange('balance_due_us', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Int. Decl. Value:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={modalAmounts.international_declared_value}
+                    onChange={e => handleAmountsModalChange('international_declared_value', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label className="text-font-color-100 text-sm">Insurance:</Label>
+                  <Input
+                    className="h-8 text-sm"
+                    type="number"
+                    step="0.01"
+                    value={modalAmounts.insurance}
+                    onChange={e => handleAmountsModalChange('insurance', e.target.value)}
                   />
                 </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-font-color-100 text-sm">Int. Decl. Value</Label>
-                <Input 
-                  className="h-8 text-sm mt-1" 
-                  value="0.00" 
-                  onChange={e => {/* Handle int declared value change */}} 
-                />
-              </div>
-              <div>
-                <Label className="text-font-color-100 text-sm">Insurance</Label>
-                <Input 
-                  className="h-8 text-sm mt-1" 
-                  value="0.00" 
-                  onChange={e => {/* Handle insurance change */}} 
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={() => setShowAmountsModal(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => setShowAmountsModal(false)}
-              >
-                Save
-              </Button>
             </div>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleAmountsModalCancel}>
+              Cancel
+            </Button>
+            <Button 
+              className="bg-primary text-white hover:bg-primary/90"
+              onClick={handleAmountsModalSave}
+            >
+              Save
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1817,16 +1930,16 @@ export default function ReturnTrakEntryPage() {
                 <Label className="text-font-color-100 text-sm">Original Order #</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
-                  value={others.original_order_number} 
-                  onChange={e=>setOthers({...others, original_order_number: e.target.value})} 
+                  value={modalOthers.original_order_number} 
+                  onChange={e=>handleOthersModalChange('original_order_number', e.target.value)} 
                 />
               </div>
               <div>
                 <Label className="text-font-color-100 text-sm">Customer Number</Label>
                 <Input 
                   className="h-8 text-sm mt-1" 
-                  value={others.customer_number} 
-                  onChange={e=>setOthers({...others, customer_number: e.target.value})} 
+                  value={modalOthers.customer_number} 
+                  onChange={e=>handleOthersModalChange('customer_number', e.target.value)} 
                 />
               </div>
               </div>
@@ -1836,16 +1949,16 @@ export default function ReturnTrakEntryPage() {
                 className="h-8 text-sm mt-1" 
                 type="number"
                 step="0.01"
-                value={others.return_weight_lb} 
-                onChange={e=>setOthers({...others, return_weight_lb: e.target.value})} 
+                value={modalOthers.return_weight_lb} 
+                onChange={e=>handleOthersModalChange('return_weight_lb', e.target.value)} 
               />
               </div>
               <div>
               <Label className="text-font-color-100 text-sm">Shipping Instructions</Label>
               <Textarea 
                 className="text-sm mt-1 min-h-[80px]" 
-                value={others.shipping_instructions} 
-                onChange={e=>setOthers({...others, shipping_instructions: e.target.value})} 
+                value={modalOthers.shipping_instructions} 
+                onChange={e=>handleOthersModalChange('shipping_instructions', e.target.value)} 
                 placeholder="Enter shipping instructions..."
               />
               </div>
@@ -1853,20 +1966,20 @@ export default function ReturnTrakEntryPage() {
               <Label className="text-font-color-100 text-sm">Comments</Label>
               <Textarea 
                 className="text-sm mt-1 min-h-[80px]" 
-                value={others.comments} 
-                onChange={e=>setOthers({...others, comments: e.target.value})} 
+                value={modalOthers.comments} 
+                onChange={e=>handleOthersModalChange('comments', e.target.value)} 
                 placeholder="Enter additional comments..."
               />
         </div>
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 variant="outline"
-                onClick={() => setShowOthersModal(false)}
+                onClick={handleOthersModalCancel}
               >
                 Cancel
               </Button>
               <Button
-                onClick={() => setShowOthersModal(false)}
+                onClick={handleOthersModalSave}
               >
                 Save
               </Button>
