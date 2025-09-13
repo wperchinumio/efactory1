@@ -1957,48 +1957,48 @@ export default function ReturnTrakEntryPage() {
                 </div>
               </CardHeader>
               <CardContent className="p-3">
-                <div className="space-y-1 text-xs">
+                <div className="space-y-1 text-xs leading-5">
                   {amountsExpanded ? (
                     // Show all fields when expanded
                     <>
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Order Amount:</span>
                         <span className="font-mono text-font-color text-right truncate max-w-[120px]" title="0.00">0.00</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
                         <span className={`font-mono text-right truncate max-w-[120px] ${amounts.shipping_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.shipping_handling.toFixed(2)}>{amounts.shipping_handling.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Sales Taxes:</span>
                         <span className={`font-mono text-right truncate max-w-[120px] ${amounts.sales_tax > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.sales_tax.toFixed(2)}>{amounts.sales_tax.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Discount/Add. Chgs.:</span>
                         <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_handling > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.international_handling.toFixed(2)}>{amounts.international_handling.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
+                      <div className="flex justify-between items-center py-0 border-t border-border-color pt-1 font-bold">
                         <span className="text-font-color whitespace-nowrap">Total Amount:</span>
                         <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={(amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}>{(amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
                         <span className={`font-mono text-right truncate max-w-[120px] ${amounts.amount_paid > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.amount_paid.toFixed(2)}>{amounts.amount_paid.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
+                      <div className="flex justify-between items-center py-0 border-t border-border-color pt-1 font-bold">
                         <span className="text-font-color whitespace-nowrap">Net Due:</span>
                         <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={((amounts.shipping_handling + amounts.sales_tax + amounts.international_handling) - amounts.amount_paid).toFixed(2)}>{((amounts.shipping_handling + amounts.sales_tax + amounts.international_handling) - amounts.amount_paid).toFixed(2)}</span>
                       </div>
                       <div className="h-px bg-border-color my-2" />
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
                         <span className={`font-mono text-right truncate max-w-[120px] ${amounts.balance_due_us > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.balance_due_us.toFixed(2)}>{amounts.balance_due_us.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Int. Decl. Value:</span>
                         <span className={`font-mono text-right truncate max-w-[120px] ${amounts.international_declared_value > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.international_declared_value.toFixed(2)}>{amounts.international_declared_value.toFixed(2)}</span>
                       </div>
-                      <div className="flex justify-between items-center py-0.5">
+                      <div className="flex justify-between items-center py-0">
                         <span className="font-medium text-font-color-100 whitespace-nowrap">Insurance:</span>
                         <span className={`font-mono text-right truncate max-w-[120px] ${amounts.insurance > 0 ? 'text-font-color' : 'text-font-color-100'}`} title={amounts.insurance.toFixed(2)}>{amounts.insurance.toFixed(2)}</span>
                       </div>
@@ -2007,7 +2007,7 @@ export default function ReturnTrakEntryPage() {
                     // Show only fields with values when collapsed
                     getAmountsFieldsWithValues().length > 0 ? (
                       getAmountsFieldsWithValues().map(field => (
-                        <div key={field.key} className="flex justify-between items-center py-0.5">
+                        <div key={field.key} className="flex justify-between items-center py-0">
                           <span className="font-medium text-font-color-100 whitespace-nowrap">{field.label}:</span>
                           <span className="text-right truncate max-w-[120px] text-font-color" title={field.value}>{field.value}</span>
                         </div>

@@ -209,8 +209,7 @@ export default function AddressBookPage() {
       </div>
 
       {/* Page Content */}
-      <div className="px-6 py-3">
-        <div className="max-w-[1600px] mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <Card className="shadow-sm border-border-color">
             <CardContent className="p-0">
                   <div className="overflow-x-auto">
@@ -237,7 +236,6 @@ export default function AddressBookPage() {
                 </div>
             </CardContent>
           </Card>
-        </div>
       </div>
 
       {/* Add/Edit Dialog */}
