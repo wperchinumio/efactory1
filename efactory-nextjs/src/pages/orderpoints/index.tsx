@@ -2702,16 +2702,16 @@ export default function OrderPointsPage() {
               </div>
                 <div className="mt-4 grid grid-cols-3">
                   <div></div><div></div>
-                  <div className="justify-self-end space-y-2 text-sm">
-                    <div className="flex justify-between gap-4 text-font-color">
+                  <div className="justify-self-end space-y-1 text-sm">
+                    <div className="flex justify-between gap-4 text-font-color leading-5">
                       <span>Total Lines:</span>
                       <span className="font-mono font-semibold">{orderDetail.length}</span>
                     </div>
-                    <div className="flex justify-between gap-4 text-font-color">
+                    <div className="flex justify-between gap-4 text-font-color leading-5">
                       <span>Total Qty:</span>
                       <span className="font-mono font-semibold">{orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0), 0)}</span>
                     </div>
-                    <div className="flex justify-between gap-4 text-font-color">
+                    <div className="flex justify-between gap-4 text-font-color leading-5">
                       <span>Total Ext Price:</span>
                       <span className="font-mono font-semibold">{orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0)*(Number(l.price)||0), 0).toFixed(2)}</span>
                     </div>
