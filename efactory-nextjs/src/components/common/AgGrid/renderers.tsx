@@ -1,21 +1,34 @@
 import React from 'react';
 
-export function NumberRenderer({ value }: { value: any }) {
-  if (value === null || value === undefined) return null;
-  return <span>{Number(value).toLocaleString()}</span>;
+export function DateRenderer({ value }: { value: any }) {
+  if (!value) return <span />;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return <span />;
+  return <span>{d.toISOString().slice(0, 10)}</span>;
 }
 
-export function DateRenderer({ value }: { value: any }) {
-  if (!value) return null;
+export function DateTimeRenderer({ value }: { value: any }) {
+  if (!value) return <span />;
   const d = new Date(value);
-  return <span>{isNaN(d.getTime()) ? '' : d.toLocaleDateString()}</span>;
+  if (Number.isNaN(d.getTime())) return <span />;
+  const iso = d.toISOString().replace('T', ' ').slice(0, 19);
+  return <span>{iso}</span>;
+}
+
+export function NumberRenderer({ value, decimals = 0, strong = false, dimZero = false, hideNull = false }: { value: any; decimals?: number; strong?: boolean; dimZero?: boolean; hideNull?: boolean }) {
+  if (hideNull && (value === null || value === undefined)) return <span />;
+  const num = Number(value ?? 0);
+  const formatted = num.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  const cls = [strong ? 'font-semibold' : '', dimZero && num === 0 ? 'opacity-60' : ''].join(' ');
+  return <span className={cls.trim()}>{formatted}</span>;
 }
 
 export function PrimaryLinkRenderer({ value }: { value: any }) {
-  return <span className="text-primary font-semibold">{value ?? ''}</span>;
+  if (!value) return <span />;
+  return <a className="text-primary" href="#">{String(value)}</a>;
 }
 
-// Map legacy order type to color class
+// Map order type to a color class similar to legacy
 export function getOrderTypePillClass(orderType?: string): string {
   switch ((orderType || '').toUpperCase()) {
     case 'EDE':
@@ -39,7 +52,7 @@ export function getOrderTypePillClass(orderType?: string): string {
       return 'bg-blue-600 text-white';
     case 'OPEF':
     case 'RTEF':
-      return 'bg-emerald-600 text-white'; // legacy green-haze
+      return 'bg-emerald-600 text-white';
     default:
       return 'bg-gray-500 text-white';
   }
@@ -54,32 +67,19 @@ export function OrderTypePill({ orderType }: { orderType?: string }) {
   );
 }
 
-// Order Stage renderer (bar + label) matching legacy colors
-export function getOrderStageBarClass(stage?: number): string {
-  const s = Number(stage ?? 0);
-  if (s === 2) return 'bg-neutral-800'; // dark
-  if (s > 2 && s < 10) return 'bg-red-700'; // red-thunderbird
-  if (s === 10) return 'bg-red-500'; // red
-  if (s === 20) return 'bg-yellow-500'; // yellow-gold
-  if (s === 40) return 'bg-yellow-400'; // yellow-haze
-  if (s > 40 && s < 60) return 'bg-yellow-300'; // yellow-mint
-  if (s >= 60) return 'bg-green-400'; // green-soft
-  return 'bg-yellow-500';
-}
-
+// Legacy-like order stage: color-coded bar with label (kept as originally implemented)
 export function OrderStageRenderer({ value, data }: { value: number; data?: any }) {
   const stage = Number(value || 0);
   const label: string = data?.stage_description || '';
-  // Legacy hex colors
   const colorMap = {
-    dark: '#111827',            // approx for "dark"
-    redThunderbird: '#D91E18',  // red-thunderbird
-    red: '#EF4444',             // fallback red
-    yellowGold: '#E87E04',      // yellow-gold
-    yellowHaze: '#c5bf66',      // yellow-haze
-    yellowMint: '#c5b96b',      // yellow-mint
-    greenSoft: '#3faba4',       // green-soft
-  };
+    dark: '#111827',            // dark
+    redThunderbird: '#D91E18',  // thunderbird
+    red: '#EF4444',
+    yellowGold: '#E87E04',
+    yellowHaze: '#c5bf66',
+    yellowMint: '#c5b96b',
+    greenSoft: '#3faba4',
+  } as const;
   let barColor: string = colorMap.yellowGold;
   if (stage === 2) barColor = colorMap.dark;
   else if (stage > 2 && stage < 10) barColor = colorMap.redThunderbird;
@@ -103,4 +103,53 @@ export function OrderStageRenderer({ value, data }: { value: number; data?: any 
   );
 }
 
+export function OrderStatusRenderer({ value }: { value: any }) {
+  const status = Number(value);
+  const label = status === 0 ? 'On Hold' : status === 1 ? 'Normal' : status === 2 ? 'Rush' : 'Unknown';
+  const cls = status === 0 ? 'text-red-500 font-semibold' : status === 2 ? 'text-purple-600 font-semibold' : '';
+  return <span className={cls}>{label}</span>;
+}
 
+export function ShipToRenderer({ data }: { data: any }) {
+  const shipping = data?.shipping_address || {};
+  const line1 = `${shipping.company || ''}${shipping.company && shipping.attention ? ' | ' : ''}${shipping.attention || ''}`;
+  const line2 = `${shipping.city || ''}, ${shipping.state_province || ''} ${shipping.postal_code || ''} - ${shipping.country || ''}`;
+  return (
+    <div className="leading-tight">
+      <div className="text-primary italic">{line1.trim()}</div>
+      <div className="text-xs text-muted">{line2.trim()}</div>
+    </div>
+  );
+}
+
+export function CarrierRenderer({ data }: { data: any }) {
+  const carrier = data?.shipping_carrier || '';
+  const service = data?.shipping_service || '';
+  const tr = data?.tr || '';
+  const trl = data?.trl || '';
+  return (
+    <span className="leading-tight text-[14px]">
+      <span className="font-semibold">{carrier}</span> - <span>{service}</span>
+      <br />
+      {trl ? (
+        <a href={trl} target="_blank" rel="noreferrer" className="text-primary text-[14px]">{tr}</a>
+      ) : (
+        <span className="text-primary font-semibold text-[14px]">{tr}</span>
+      )}
+    </span>
+  );
+}
+
+export function TrackingRenderer({ data, field }: { data: any; field: string }) {
+  if (field !== 'trl') return <span>Unknown</span>;
+  const trl = data?.trl;
+  const tr = data?.tr;
+  if (trl) {
+    return (
+      <span className="text-primary font-semibold">
+        <a href={trl} target="_blank" rel="noreferrer">{tr}</a>
+      </span>
+    );
+  }
+  return <span className="text-primary font-semibold">{tr}</span>;
+}

@@ -8,7 +8,7 @@ import { getAuthToken } from '@/lib/auth/storage';
 import { getCachedView, setCachedView } from '@/lib/grid/viewCache';
 import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView } from '@/types/api/grid';
 import type { FilterConfig, FilterState } from '@/types/api/filters';
-import { DateRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer } from './renderers';
+import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer } from './renderers';
 import GridFilters from '@/components/filters/grid/GridFilters';
 
 export interface LunoAgGridProps<T = any> {
@@ -29,6 +29,8 @@ export interface LunoAgGridProps<T = any> {
   // Filter system
   filters?: Record<string, FilterConfig>; // Filter configurations for this grid
   showFilters?: boolean; // Whether to show the filter panel
+  // Emit raw filter state when it changes (for toolbar badges, etc.)
+  onFilterStateChange?: (state: FilterState) => void;
 }
 
 // Ensure community modules are registered once
@@ -66,35 +68,38 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
   // Special renderers mapping placeholder (extend later):
   // Examples: fmtorderlink, fmtdate, fmtnumber
   if (field.render) {
-    const id = field.render.trim();
+    // Support parameterized fmtnumber, e.g. fmtnumber,2,false,true
+    const tokens = field.render.split(',').map(s => s.trim());
+    const id = (tokens[0] || '').trim();
+    const args = tokens.slice(1);
     if (id === 'fmtdate') {
       colDef.cellRenderer = (p: any) => <DateRenderer value={p.value} />;
-    } else if (id.startsWith('fmtnumber')) {
-      colDef.cellRenderer = (p: any) => <NumberRenderer value={p.value} />;
+    } else if (id === 'fmtdatetime') {
+      colDef.cellRenderer = (p: any) => <DateTimeRenderer value={p.value} />;
+    } else if (id === 'fmtnumber') {
+      const [dec = '0', strong = 'false', dimZero = 'false', hideNull = 'false'] = args;
+      colDef.cellRenderer = (p: any) => (
+        <NumberRenderer
+          value={p.value}
+          decimals={Number(dec)}
+          strong={String(strong).toLowerCase() === 'true'}
+          dimZero={String(dimZero).toLowerCase() === 'true'}
+          hideNull={String(hideNull).toLowerCase() === 'true'}
+        />
+      );
       colDef.type = 'numericColumn';
     } else if (id === 'fmtorderlink') {
       colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} />;
     } else if (id === 'fmtorderstage') {
       colDef.cellRenderer = (p: any) => <OrderStageRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtorderstatus') {
-      colDef.cellRenderer = (p: any) => {
-        const status = Number(p.value);
-        const label = status === 0 ? 'On Hold' : status === 1 ? 'Normal' : status === 2 ? 'Rush' : 'Unknown';
-        const cls = status === 0 ? 'text-red-500 font-semibold' : status === 2 ? 'text-purple-600 font-semibold' : '';
-        return <span className={cls}>{label}</span>;
-      };
+      colDef.cellRenderer = (p: any) => <OrderStatusRenderer value={p.value} />;
     } else if (id === 'fmtshipto') {
-      colDef.cellRenderer = (p: any) => {
-        const shipping = p.data?.shipping_address || {};
-        const line1 = `${shipping.company || ''}${shipping.company && shipping.attention ? ' | ' : ''}${shipping.attention || ''}`;
-        const line2 = `${shipping.city || ''}, ${shipping.state_province || ''} ${shipping.postal_code || ''} - ${shipping.country || ''}`;
-        return (
-          <div className="leading-tight">
-            <div className="text-primary italic">{line1.trim()}</div>
-            <div className="text-xs text-muted">{line2.trim()}</div>
-          </div>
-        );
-      };
+      colDef.cellRenderer = (p: any) => <ShipToRenderer data={p.data} />;
+    } else if (id === 'fmtcarrier') {
+      colDef.cellRenderer = (p: any) => <CarrierRenderer data={p.data} />;
+    } else if (id === 'fmttracking') {
+      colDef.cellRenderer = (p: any) => <TrackingRenderer data={p.data} field={p.colDef.field} />;
     }
   }
 
@@ -194,6 +199,7 @@ export function LunoAgGrid<T = any>({
   containerSize = 'default',
   filters = {},
   showFilters = true,
+  onFilterStateChange,
 }: LunoAgGridProps<T>) {
   const gridApiRef = useRef<GridApi | null>(null);
   const [rows, setRows] = useState<T[]>([]);
@@ -207,6 +213,7 @@ export function LunoAgGrid<T = any>({
   // Handle filter changes
   const handleFiltersChange = (newFilterState: FilterState) => {
     setFilterState(newFilterState);
+    onFilterStateChange?.(newFilterState);
     setPage(1); // Reset to first page when filters change
     fetchPage(1, newFilterState);
   };
@@ -678,7 +685,9 @@ export function LunoAgGrid<T = any>({
             defaultColDef={{ 
               resizable: true, 
               sortable: true,
-              unSortIcon: false // Hide unsort icon since we only have asc/desc
+              unSortIcon: false, // Hide unsort icon since we only have asc/desc
+              // As of AG Grid v33+, use defaultColDef.sortingOrder instead of top-level prop
+              sortingOrder: ['asc', 'desc']
             }}
             onColumnResized={handleColumnResized}
             onColumnMoved={handleColumnMoved}
@@ -694,8 +703,6 @@ export function LunoAgGrid<T = any>({
               checkboxes: false,
               enableClickSelection: true
             }}
-            // Server-side sorting configuration - only ASC/DESC, no unsorted state
-            sortingOrder={['asc', 'desc']}
             multiSortKey="ctrl"
             getRowStyle={(params) => ({
               backgroundColor: (params.node?.rowIndex ?? 0) % 2 === 0 ? 'var(--ag-even-row-background-color)' : 'var(--ag-odd-row-background-color)',

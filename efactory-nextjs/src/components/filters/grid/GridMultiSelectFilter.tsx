@@ -32,7 +32,12 @@ export default function GridMultiSelectFilter({
   // Load options dynamically if not provided in config
   useEffect(() => {
     if (config.options && config.options.length > 0) {
-      setOptions(config.options);
+      // Avoid infinite render loops by only updating when actually changed
+      setOptions(prev => {
+        const prevKey = JSON.stringify(prev);
+        const nextKey = JSON.stringify(config.options);
+        return prevKey === nextKey ? prev : config.options!;
+      });
       return;
     }
 
@@ -101,7 +106,12 @@ export default function GridMultiSelectFilter({
           apiOptions = [];
       }
 
-      setOptions(apiOptions);
+      // Avoid loops if provider causes frequent rerenders; set only on change
+      setOptions(prev => {
+        const prevKey = JSON.stringify(prev);
+        const nextKey = JSON.stringify(apiOptions);
+        return prevKey === nextKey ? prev : apiOptions;
+      });
     }
   }, [config.field, config.options, globalData]);
 

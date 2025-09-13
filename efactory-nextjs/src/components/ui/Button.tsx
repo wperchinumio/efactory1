@@ -17,7 +17,7 @@ export interface ButtonProps {
   fullWidth?: boolean;
 }
 
-const Button = ({ 
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ 
   onClick, 
   children, 
   disabled = false,
@@ -31,7 +31,7 @@ const Button = ({
   className = '',
   type = 'button',
   fullWidth = false
-}: ButtonProps) => {
+}, ref) => {
   const [isPressed, setIsPressed] = useState(false);
   // Base classes
   const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md leading-none box-border transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
@@ -160,6 +160,7 @@ const Button = ({
 
   return (
     <button
+      ref={ref}
       type={type}
       onClick={handleClick}
       disabled={isDisabled}
@@ -169,6 +170,8 @@ const Button = ({
       {renderContent()}
     </button>
   );
-};
+});
+
+Button.displayName = 'Button';
 
 export default Button;

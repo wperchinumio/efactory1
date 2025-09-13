@@ -87,3 +87,108 @@ export interface GridRowResponse<T = any> {
 }
 
 
+// ======================
+// Saved Filters (Views API: resource = 'filter')
+// ======================
+
+export interface GridSavedFilterItem {
+  id: number;
+  name: string;
+  description?: string;
+  selected?: boolean;
+}
+
+export interface ListSavedFiltersRequest {
+  action: 'list';
+  resource: 'filter';
+  view: string; // resource key, e.g., 'fulfillment-shipped'
+}
+
+export type ListSavedFiltersResponse = {
+  data: GridSavedFilterItem[];
+};
+
+export interface SelectSavedFilterRequest {
+  action: 'select';
+  resource: 'filter';
+  id: number; // filter id
+}
+
+export interface UnsetSavedFilterRequest {
+  action: 'unset';
+  resource: 'filter';
+  view: string; // resource key
+}
+
+export interface GetAvailableFieldsRequest {
+  action: 'detail';
+  view: string; // resource key
+  id: number; // selected view id (not filter id!)
+}
+
+export interface AvailableFieldDef {
+  title: string;
+  field: string;
+  queryable?: boolean;
+}
+
+export interface GetAvailableFieldsResponse {
+  data: {
+    available_fields: AvailableFieldDef[];
+    [key: string]: any;
+  };
+}
+
+export interface CreateSavedFilterRequest {
+  action: 'create';
+  resource: 'filter';
+  view: string; // resource key
+  data: {
+    name: string;
+    description?: string;
+    filter: GridFilter;
+  };
+}
+
+export interface UpdateSavedFilterRequest {
+  action: 'update';
+  resource: 'filter';
+  id: number;
+  data: {
+    name: string;
+    description?: string;
+    filter: GridFilter;
+  };
+}
+
+export interface DeleteSavedFilterRequest {
+  action: 'delete';
+  resource: 'filter';
+  id: number;
+}
+
+export interface GetSavedFilterDetailRequest {
+  action: 'get';
+  resource: 'filter';
+  id: number;
+}
+
+export interface SavedFilterDetailResponse {
+  data: {
+    name: string;
+    description?: string;
+    filter: GridFilter;
+  };
+}
+
+// ======================
+// Export (Rows endpoint)
+// ======================
+
+export type ExportFormat = 'excel' | 'csv' | 'zip';
+
+export interface ExportGridRowsRequest extends Omit<ReadGridRowsRequest, 'action'> {
+  action: 'export';
+  format: ExportFormat;
+}
+

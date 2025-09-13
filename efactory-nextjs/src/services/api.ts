@@ -7,7 +7,28 @@ import type {
   ListGridViewsResponse,
   ReadGridRowsRequest,
   SelectGridViewRequest,
+  // Saved filters & export
+  ListSavedFiltersRequest,
+  ListSavedFiltersResponse,
+  SelectSavedFilterRequest,
+  UnsetSavedFilterRequest,
+  GetAvailableFieldsRequest,
+  GetAvailableFieldsResponse,
+  CreateSavedFilterRequest,
+  UpdateSavedFilterRequest,
+  DeleteSavedFilterRequest,
+  ExportGridRowsRequest,
+  GetSavedFilterDetailRequest,
+  SavedFilterDetailResponse,
 } from '@/types/api/grid';
+import type {
+  CreateScheduleRequest,
+  DeleteScheduleRequest,
+  ReadSchedulesRequest,
+  ReadSchedulesResponse,
+  SchedulerTask,
+  UpdateScheduleRequest,
+} from '@/types/api/scheduler';
 import type {
   ActivityPointDto,
   FulfillmentRowDto,
@@ -188,6 +209,89 @@ export async function selectGridView(resource: string, id: number): Promise<Grid
 export async function readGridRows<T = any>(rowsUrl: string, payload: ReadGridRowsRequest): Promise<GridRowResponse<T>> {
   const res = await postJson<{ data: GridRowResponse<T> }>(rowsUrl, payload as any);
   return res.data as unknown as GridRowResponse<T>;
+}
+
+// ==========================
+// Grid Saved Filters (Views API)
+// ==========================
+
+export async function listSavedFilters(resource: string): Promise<ListSavedFiltersResponse['data']> {
+  const body: ListSavedFiltersRequest = { action: 'list', resource: 'filter', view: resource } as any;
+  const res = await postJson<ListSavedFiltersResponse>('/api/views', body as any);
+  return (res.data as unknown) as any;
+}
+
+export async function selectSavedFilter(id: number): Promise<void> {
+  const body: SelectSavedFilterRequest = { action: 'select', resource: 'filter', id } as any;
+  await postJson<Record<string, never>>('/api/views', body as any);
+}
+
+export async function unsetSavedFilter(resource: string): Promise<void> {
+  const body: UnsetSavedFilterRequest = { action: 'unset', resource: 'filter', view: resource } as any;
+  await postJson<Record<string, never>>('/api/views', body as any);
+}
+
+export async function getAvailableFieldsForView(resource: string, viewId: number) {
+  const body: GetAvailableFieldsRequest = { action: 'detail', view: resource, id: viewId } as any;
+  const res = await postJson<GetAvailableFieldsResponse>('/api/views', body as any);
+  return res.data;
+}
+
+export async function createSavedFilter(resource: string, name: string, description: string | undefined, filter: any): Promise<void> {
+  const body: CreateSavedFilterRequest = { action: 'create', resource: 'filter', view: resource, data: { name, description, filter } } as any;
+  await postJson<Record<string, never>>('/api/views', body as any);
+}
+
+export async function updateSavedFilter(id: number, name: string, description: string | undefined, filter: any): Promise<void> {
+  const body: UpdateSavedFilterRequest = { action: 'update', resource: 'filter', id, data: { name, description, filter } } as any;
+  await postJson<Record<string, never>>('/api/views', body as any);
+}
+
+export async function deleteSavedFilter(id: number): Promise<void> {
+  const body: DeleteSavedFilterRequest = { action: 'delete', resource: 'filter', id } as any;
+  await postJson<Record<string, never>>('/api/views', body as any);
+}
+
+export async function getSavedFilterDetail(id: number): Promise<SavedFilterDetailResponse['data']> {
+  const body: GetSavedFilterDetailRequest = { action: 'get', resource: 'filter', id } as any;
+  const res = await postJson<SavedFilterDetailResponse>('/api/views', body as any);
+  return res.data as any;
+}
+
+// ==========================
+// Grid Export (Rows endpoint)
+// ==========================
+
+export async function exportGridRows(rowsUrl: string, request: ExportGridRowsRequest): Promise<void> {
+  // Use httpRequestRaw to trigger browser download; legacy expects JSON in X-Download-Params
+  const headers = { 'X-Download-Params': JSON.stringify(request) } as any;
+  await httpRequestRaw<Blob>({ method: 'get', path: rowsUrl, headers });
+}
+
+// ==========================
+// Scheduler API
+// ==========================
+
+export async function readSchedules(): Promise<ReadSchedulesResponse['data']> {
+  const body: ReadSchedulesRequest = { action: 'read_tasks' };
+  const res = await postJson<ReadSchedulesResponse>('/api/scheduler', body as any);
+  return res.data as any;
+}
+
+export async function createSchedule(task: SchedulerTask): Promise<{ id?: number }> {
+  const body: CreateScheduleRequest = { action: 'create_task', task } as any;
+  const res = await postJson<{ data: { id?: number } }>('/api/scheduler', body as any);
+  return (res.data as any) || {};
+}
+
+export async function updateSchedule(id: number, task: SchedulerTask): Promise<void> {
+  const body: UpdateScheduleRequest = { action: 'update_task', id, task } as any;
+  await postJson<Record<string, never>>('/api/scheduler', body as any);
+}
+
+export async function deleteSchedule(id: number): Promise<void> {
+  const body: DeleteScheduleRequest = { action: 'delete_task', id } as any;
+  await postJson<Record<string, never>>('/api/scheduler', body as any);
 }
 
 // Notes API
