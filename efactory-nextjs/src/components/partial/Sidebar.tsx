@@ -219,7 +219,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                 {/* Admin quick dropdown removed per request */}
             </div>
             {!isMiniSidebar && (
-                <div className='create-new-project px-3 py-4 flex gap-1.5'>
+                <div className='create-new-project px-3 pt-4 flex gap-1.5'>
                     {/* <select className="select-project form-select cursor-pointer rounded-full bg-card-color py-[6px] ps-15 pe-8 text-[14px]/[20px] w-full appearance-none border border-border-color focus:outline-0 focus:border-primary">
                         <option defaultValue="">Select Project</option>
                         <option value="1">Luno University</option>
@@ -264,7 +264,7 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
                 ))}
             </ul>
             {/* bottom shortcuts unchanged */}
-            <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-3 border border-dashed rounded-xl p-2 mt-auto'>
+            <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-0 px-3 py-2 border-t border-dashed border-border-color mt-auto sticky bottom-0 bg-body-color z-10 transition-all duration-300 ease-in-out'>
                 <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-[2px] after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
                     <span title='My Schedule'>
                         <IconCalendar className='stroke-[1.5] w-[20px] h-[20px]' />

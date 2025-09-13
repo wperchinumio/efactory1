@@ -213,17 +213,23 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   useEffect(() => {
     const checkMiniSidebar = () => {
       const adminWrapper = document.querySelector('.admin-wrapper');
-      setIsMiniSidebar(adminWrapper?.classList.contains('mini-sidebar') || false);
+      const isMini = adminWrapper?.classList.contains('mini-sidebar') || false;
+      setIsMiniSidebar(isMini);
     };
 
     // Check initial state
     checkMiniSidebar();
 
-    // Create a MutationObserver to watch for class changes
+    // Create a MutationObserver to watch for class changes with debouncing
+    let timeoutId: NodeJS.Timeout;
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          checkMiniSidebar();
+          // Debounce the state update to prevent rapid changes
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            checkMiniSidebar();
+          }, 50);
         }
       });
     });
@@ -235,6 +241,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
     }
 
     return () => {
+      clearTimeout(timeoutId);
       observer.disconnect();
     };
   }, []);
@@ -579,7 +586,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
 
       {/* Contextual search box (from navigation config) - hide when sidebar is collapsed */}
       {searchPlaceholder && !isMiniSidebar && (
-        <div className='px-3 py-4'>
+        <div className='px-3 pt-4'>
           <div className='relative flex-1 max-w-md'>
             <IconSearch className='w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2' />
             <input
@@ -592,7 +599,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       )}
 
       {/* Menu items - exact Luno structure */}
-      <ul className='sidebar-list px-3 mb-4 main-menu'>
+      <ul className='sidebar-list px-3 pt-4 main-menu'>
         {!activeTopMenu || visibleMenus.length === 0 ? (
           // Default customer menu when no top menu selected - exact Luno pattern
           <>
@@ -723,33 +730,35 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
           })
         )}
       </ul>
-      <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-3 border border-dashed rounded-xl p-2 mt-auto'>
-  <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+      
+      {/* Sticky bottom section */}
+      <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-0 px-3 py-2 border-t border-dashed border-border-color mt-auto sticky bottom-0 bg-body-color z-10 transition-all duration-300 ease-in-out'>
+  <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
     <span title='My Schedule'>
       <IconCalendar className='stroke-[1.5] w-[20px] h-[20px]' />
     </span>
   </button>
-  <button onClick={toggleNote} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:transition-all after:duration-500 after:ease-in-out ${note ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+  <button onClick={toggleNote} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${note ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
     <span title='My Note'>
       <IconNote className='stroke-[1.5] w-[20px] h-[20px]' />
     </span>
   </button>
-  <button onClick={toggleCalculator} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:transition-all after:duration-500 after:ease-in-out ${calculatorOpen ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+  <button onClick={toggleCalculator} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${calculatorOpen ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
     <span title='Calculator'>
       <IconCalculator className='stroke-[1.5] w-[20px] h-[20px]' />
     </span>
   </button>
-  <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary' onClick={() => {
+  <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary hover:scale-105' onClick={() => {
     import('@/lib/auth/storage').then(({ clearAuthToken }) => clearAuthToken());
   }}>
     <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
   </Link>
 </div>
-{calculatorOpen && (
-  <div className='fixed inset-0 z-50 flex items-center justify-center'>
-    <Calculator onClose={() => setCalculatorOpen(false)} />
-  </div>
-)}
+      {calculatorOpen && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center'>
+          <Calculator onClose={() => setCalculatorOpen(false)} />
+        </div>
+      )}
     </>
   );
 };
