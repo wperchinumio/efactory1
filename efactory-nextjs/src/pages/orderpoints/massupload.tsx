@@ -177,10 +177,10 @@ export default function MassUploadPage(){
                   </div>
                   
                   {/* Critical Warning - Compact */}
-                  <div className="bg-red-50 border border-red-200 rounded p-3">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3">
                     <div className="flex items-start gap-2">
-                      <IconInfoCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0"/>
-                      <div className="text-red-800 text-[13px]">
+                      <IconInfoCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0"/>
+                      <div className="text-red-800 dark:text-red-200 text-[13px]">
                         <div className="font-semibold">IMPORTANT:</div>
                         <div>Partial upload is not allowed; all orders must be valid or the whole batch is rejected.</div>
                       </div>
@@ -194,7 +194,7 @@ export default function MassUploadPage(){
                       <RadioButton name="mu" value="sandbox" label="Sandbox" checked={environment==='sandbox'} onChange={()=>setEnvironment('sandbox')} />
                       <RadioButton name="mu" value="production" label="Production" checked={environment==='production'} onChange={()=>setEnvironment('production')} />
                     </div>
-                    <div className="text-[12px] text-font-color-100 bg-gray-50 p-2 rounded border-l-2 border-primary">{envHelp}</div>
+                    <div className="text-[12px] text-font-color-100 bg-gray-50 dark:bg-gray-800 dark:text-gray-200 p-2 rounded border-l-2 border-primary">{envHelp}</div>
                   </div>
                 </div>
 
@@ -202,15 +202,15 @@ export default function MassUploadPage(){
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <h3 className="font-semibold text-sm text-font-color">Upload Excel File</h3>
-                      <div className="text-xs text-gray-500 hidden sm:block">
-                        <kbd className="px-1 py-0.5 bg-gray-100 rounded text-xs">Ctrl+U</kbd> to select file
+                      <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+                        <kbd className="px-1 py-0.5 bg-gray-100 dark:bg-gray-700 dark:text-gray-300 rounded text-xs">Ctrl+U</kbd> to select file
                       </div>
                     </div>
                     <div
                       className={`rounded-lg border-2 border-dashed p-4 flex flex-col items-center justify-center text-center min-h-[120px] transition-all duration-200 touch-manipulation ${
                         isDragging 
-                          ? 'bg-primary-50 border-primary-400 scale-[1.02]' 
-                          : 'bg-gray-50 border-gray-300 hover:border-primary-300 hover:bg-primary-25'
+                          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-400 scale-[1.02]' 
+                          : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-500 hover:bg-primary-25 dark:hover:bg-primary-900/10'
                       }`}
                       onDragEnter={e=>{ e.preventDefault(); setIsDragging(true) }}
                       onDragOver={e=>{ e.preventDefault(); setIsDragging(true) }}
@@ -230,10 +230,10 @@ export default function MassUploadPage(){
                       
                       <div className="mb-3">
                         <IconUpload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-primary-600' : 'text-gray-400'}`} />
-                        <h4 className={`text-sm font-medium mb-1 ${isDragging ? 'text-primary-700' : 'text-gray-700'}`}>
+                        <h4 className={`text-sm font-medium mb-1 ${isDragging ? 'text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200'}`}>
                           {isDragging ? 'Drop your file here' : 'Drop files here or click to upload'}
                         </h4>
-                        <p className="text-gray-500 text-xs">
+                        <p className="text-gray-500 dark:text-gray-400 text-xs">
                           {isDragging 
                             ? 'Release to upload immediately' 
                             : 'Upload starts immediately'
@@ -255,7 +255,7 @@ export default function MassUploadPage(){
                         {file && !uploading && (
                           <Button 
                             onClick={onUpload} 
-                            variant="default"
+                            variant="primary"
                             size="small"
                             className="w-full sm:w-auto"
                           >
@@ -265,16 +265,16 @@ export default function MassUploadPage(){
                       </div>
                       
                       {file && (
-                        <div className="mt-2 p-2 bg-white rounded border text-left w-full max-w-sm mx-auto">
+                        <div className="mt-2 p-2 bg-white dark:bg-gray-700 rounded border dark:border-gray-600 text-left w-full max-w-sm mx-auto">
                           <div className="flex items-center gap-1">
-                            <IconFileSpreadsheet className="w-3 h-3 text-green-600 flex-shrink-0" />
-                            <span className="text-xs font-medium text-gray-700">Selected:</span>
+                            <IconFileSpreadsheet className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
+                            <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Selected:</span>
                           </div>
-                          <div className="text-xs text-gray-600 mt-1 truncate" title={file.name}>{file.name}</div>
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 truncate" title={file.name}>{file.name}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                             {file.size > 10 * 1024 * 1024 && (
-                              <span className="text-red-500 ml-1">(Too large)</span>
+                              <span className="text-red-500 dark:text-red-400 ml-1">(Too large)</span>
                             )}
                           </div>
                         </div>
@@ -286,11 +286,11 @@ export default function MassUploadPage(){
                           <div className="flex items-center gap-2 mb-1">
                             <div className="animate-spin rounded-full h-3 w-3 border-2 border-primary-600 border-t-transparent"></div>
                             <span className="text-xs font-medium text-primary-600">Uploading...</span>
-                            <span className="text-xs text-gray-500 ml-auto">{uploadProgress}%</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{uploadProgress}%</span>
                           </div>
-                          <div className="bg-gray-200 rounded-full h-1.5">
+                          <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                             <div 
-                              className="bg-primary-600 h-1.5 rounded-full transition-all duration-300" 
+                              className="bg-primary-600 dark:bg-primary-500 h-1.5 rounded-full transition-all duration-300" 
                               style={{width: `${uploadProgress}%`}}
                             ></div>
                           </div>
@@ -299,7 +299,7 @@ export default function MassUploadPage(){
 
                       {/* Success State */}
                       {uploadStatus === 'success' && (
-                        <div className="mt-2 flex items-center gap-2 text-green-600">
+                        <div className="mt-2 flex items-center gap-2 text-green-600 dark:text-green-400">
                           <IconCheck className="w-4 h-4" />
                           <span className="text-xs font-medium">Upload successful!</span>
                         </div>
@@ -307,7 +307,7 @@ export default function MassUploadPage(){
 
                       {/* Error State */}
                       {uploadStatus === 'error' && (
-                        <div className="mt-2 flex items-center gap-2 text-red-600">
+                        <div className="mt-2 flex items-center gap-2 text-red-600 dark:text-red-400">
                           <IconX className="w-4 h-4" />
                           <span className="text-xs font-medium">Upload failed</span>
                         </div>
