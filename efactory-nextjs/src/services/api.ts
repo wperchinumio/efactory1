@@ -1,5 +1,14 @@
 import { postJson, getJson, httpRequest, postJsonRaw, postFormData, httpRequestRaw } from '@/lib/api/http';
 import type {
+  GridRowResponse,
+  GridSelectedView,
+  GridViewListData,
+  ListGridViewsRequest,
+  ListGridViewsResponse,
+  ReadGridRowsRequest,
+  SelectGridViewRequest,
+} from '@/types/api/grid';
+import type {
   ActivityPointDto,
   FulfillmentRowDto,
   Get30DaysActivityBody,
@@ -155,6 +164,30 @@ export async function saveOverviewLayout(layout: OverviewLayout): Promise<Overvi
     data: { overview_layout: layout },
   } as SaveOverviewLayoutRequest);
   return res.data.overview_layout;
+}
+
+// ==========================
+// Grid Views + Rows (AG Grid) API
+// ==========================
+
+// Fetch view definitions (columns, filters, defaults) for a resource
+export async function listGridViews(resource: string): Promise<GridViewListData> {
+  const body: ListGridViewsRequest = { action: 'list', views: [resource] };
+  const res = await postJson<ListGridViewsResponse>('/api/views', body);
+  return res.data[0];
+}
+
+// Select a saved view by id for a resource (server returns updated structure)
+export async function selectGridView(resource: string, id: number): Promise<GridViewListData> {
+  const body: SelectGridViewRequest = { action: 'select', view: resource, id } as any;
+  const res = await postJson<ListGridViewsResponse>('/api/views', body as any);
+  return res.data[0];
+}
+
+// Read rows from the rows endpoint provided by the view response
+export async function readGridRows<T = any>(rowsUrl: string, payload: ReadGridRowsRequest): Promise<GridRowResponse<T>> {
+  const res = await postJson<{ data: GridRowResponse<T> }>(rowsUrl, payload as any);
+  return res.data;
 }
 
 // Notes API

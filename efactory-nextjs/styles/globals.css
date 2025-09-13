@@ -200,8 +200,13 @@ body[data-luno-theme="dynamic"] {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  scroll-behavior: smooth;
-  scroll-padding-block-start: 24px;
+}
+
+/* AG Grid: avoid smooth scrolling which desynchronizes header/body sync */
+.ag-body-viewport,
+.ag-center-cols-viewport,
+.ag-body-horizontal-scroll-viewport {
+  scroll-behavior: auto !important;
 }
 
 .custom-scrollbar {
