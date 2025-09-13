@@ -676,7 +676,7 @@ export default function ReturnTrakEntryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-body-color">
+    <div className="bg-body-color">
       {/* Header */}
       <div className="bg-card-color border-b border-border-color">
         <div className="w-full max-w-7xl mx-auto px-6 py-4" style={{ maxWidth: '1600px' }}>
