@@ -50,8 +50,8 @@ export default function AddressBookPage() {
     const id = (row?.id) ?? selected
     if (!id) return
     try {
-      const res = await apiDeleteAddress({ action: 'delete_address', id: id as any })
-      const successMsg = res?.message || 'Address deleted successfully'
+      await apiDeleteAddress({ action: 'delete_address', id: id as any })
+      const successMsg = 'Address deleted successfully'
       toast({ title: 'Success', description: successMsg })
       await reload()
     } catch (err: any) {
@@ -117,8 +117,8 @@ export default function AddressBookPage() {
     const file = e.target.files?.[0]
     if (!file) return
     try {
-      const res = await importAddresses(file, 'import')
-      const successMsg = res?.message || 'Addresses imported successfully'
+      await importAddresses(file, 'import')
+      const successMsg = 'Addresses imported successfully'
       toast({ title: 'Import Success', description: successMsg })
       e.currentTarget.value = ''
       await reload()
@@ -249,8 +249,8 @@ function EditDialog({ open, onOpenChange, mode, data, onSaved }: { open: boolean
   async function onSave(){
     if (mode==='add' || mode==='duplicate'){
       try {
-        const res = await createAddress({ action: 'create_address', data: { title, ship_to: ship, bill_to: bill, is_validate: false } })
-        const successMsg = res?.message || 'Address created successfully'
+        await createAddress({ action: 'create_address', data: { title, ship_to: ship, bill_to: bill, is_validate: false } })
+        const successMsg = 'Address created successfully'
         toast({ title: 'Success', description: successMsg })
         onOpenChange(false); onSaved()
       } catch (err:any) {
@@ -261,8 +261,8 @@ function EditDialog({ open, onOpenChange, mode, data, onSaved }: { open: boolean
     } else {
       // Legacy expects flat data fields under data with ship_to/bill_to
       try {
-        const res = await updateAddress({ action: 'update_address', data: { id: data?.id, title, ship_to: ship, bill_to: bill } as any })
-        const successMsg = res?.message || 'Address updated successfully'
+        await updateAddress({ action: 'update_address', data: { id: data?.id, title, ship_to: ship, bill_to: bill } as any })
+        const successMsg = 'Address updated successfully'
         toast({ title: 'Success', description: successMsg })
         onOpenChange(false); onSaved()
       } catch (err:any) {
