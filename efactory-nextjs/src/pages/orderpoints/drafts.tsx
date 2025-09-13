@@ -15,6 +15,7 @@ export default function DraftsPage() {
   const [deleting, setDeleting] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showBulkActions, setShowBulkActions] = useState(false)
+  const bulkMenuRef = React.useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   async function reload() {
@@ -31,6 +32,22 @@ export default function DraftsPage() {
   }
 
   useEffect(()=>{ reload() }, [])
+
+  // Close bulk actions menu on outside click / Escape
+  useEffect(() => {
+    function onDocClick(e: MouseEvent){
+      if (!showBulkActions) return
+      const t = e.target as Node
+      if (bulkMenuRef.current && t && !bulkMenuRef.current.contains(t)) setShowBulkActions(false)
+    }
+    function onKey(e: KeyboardEvent){ if (e.key === 'Escape') setShowBulkActions(false) }
+    document.addEventListener('mousedown', onDocClick)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [showBulkActions])
 
   async function onDelete() {
     const ids = Object.keys(selected).filter(k => selected[+k]).map(k => +k)
@@ -178,7 +195,7 @@ export default function DraftsPage() {
               
               
               {selectedCount > 0 && (
-                <div className="relative">
+                <div className="relative" ref={bulkMenuRef as any}>
                   <Button 
                     variant="outline" 
                     onClick={() => setShowBulkActions(!showBulkActions)}
@@ -235,7 +252,7 @@ export default function DraftsPage() {
               </div>
               <div className="flex gap-3">
                 <Select value={typeFilter} onValueChange={(v: string) => setTypeFilter(v as any)}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-56 sm:w-64">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>

@@ -20,6 +20,7 @@ export default function ReturnTrakDraftsPage() {
   const [filter, setFilter] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBulkActions, setShowBulkActions] = useState(false);
+  const bulkMenuRef = React.useRef<HTMLDivElement>(null);
 
   async function reload() {
     setLoading(true);
@@ -67,6 +68,22 @@ export default function ReturnTrakDraftsPage() {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [selected]);
+
+  // Close bulk actions on outside click / Escape
+  useEffect(() => {
+    function onDocClick(e: MouseEvent){
+      if (!showBulkActions) return;
+      const t = e.target as Node;
+      if (bulkMenuRef.current && t && !bulkMenuRef.current.contains(t)) setShowBulkActions(false);
+    }
+    function onKey(e: KeyboardEvent){ if (e.key === 'Escape') setShowBulkActions(false); }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [showBulkActions]);
 
   async function onDelete() {
     const ids = Object.keys(selected).filter(k => selected[+k]).map(k => +k);
@@ -165,7 +182,7 @@ export default function ReturnTrakDraftsPage() {
               </Button>
               
               {selectedCount > 0 && (
-                <div className="relative">
+                <div className="relative" ref={bulkMenuRef as any}>
                   <Button
                     onClick={() => setShowBulkActions(!showBulkActions)}
                     variant="outline"
@@ -211,8 +228,8 @@ export default function ReturnTrakDraftsPage() {
         <Card className="overflow-hidden">
           {/* Search Bar */}
           <div className="p-6 border-b border-border-color bg-card-color">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="relative w-full sm:w-96">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
                 <IconSearch className="w-4 h-4 text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input 
                   className="pl-10" 

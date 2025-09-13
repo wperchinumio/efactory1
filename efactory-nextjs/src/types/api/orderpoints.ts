@@ -148,9 +148,9 @@ export interface UpdateAddressBody {
   data: {
     id?: number | string;
     title?: string;
-    billingAddress?: AddressDto;
-    shippingAddress?: AddressDto;
-  } | AddressDto;
+    ship_to?: AddressDto;
+    bill_to?: AddressDto;
+  };
 }
 
 export interface DeleteAddressBody {
@@ -163,7 +163,7 @@ export interface ExportAddressesRequest {
   action: 'export';
   page_num: number;
   page_size: number;
-  filter?: unknown;
+  filter?: AddressBookFilter | null;
 }
 
 export interface ImportAddressesUploadParams {
@@ -171,11 +171,13 @@ export interface ImportAddressesUploadParams {
   action: 'import' | 'replace' | string;
 }
 
+export type AddressBookFilter = { field: string; value: string };
+
 export interface ReadAddressesBody {
   action: 'read_addresses';
   page_num: number;
   page_size: number;
-  filter?: unknown;
+  filter?: AddressBookFilter | null;
 }
 
 export interface ValidateAddressBody {

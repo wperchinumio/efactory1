@@ -177,10 +177,10 @@ export default function MassUploadPage(){
                   </div>
                   
                   {/* Critical Warning - Compact */}
-                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded p-3">
+                  <div className="bg-danger/10 border border-danger/30 rounded p-3">
                     <div className="flex items-start gap-2">
-                      <IconInfoCircle className="w-4 h-4 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0"/>
-                      <div className="text-red-800 dark:text-red-200 text-[13px]">
+                      <IconInfoCircle className="w-4 h-4 text-danger mt-0.5 flex-shrink-0"/>
+                      <div className="text-danger text-[13px]">
                         <div className="font-semibold">IMPORTANT:</div>
                         <div>Partial upload is not allowed; all orders must be valid or the whole batch is rejected.</div>
                       </div>
@@ -194,7 +194,7 @@ export default function MassUploadPage(){
                       <RadioButton name="mu" value="sandbox" label="Sandbox" checked={environment==='sandbox'} onChange={()=>setEnvironment('sandbox')} />
                       <RadioButton name="mu" value="production" label="Production" checked={environment==='production'} onChange={()=>setEnvironment('production')} />
                     </div>
-                    <div className="text-[12px] text-font-color-100 bg-gray-50 dark:bg-gray-800 dark:text-gray-200 p-2 rounded border-l-2 border-primary">{envHelp}</div>
+                    <div className="text-[12px] text-font-color-100 bg-primary-10 dark:bg-primary-900/10 dark:text-gray-200 p-2 rounded border-l-2 border-primary">{envHelp}</div>
                   </div>
                 </div>
 
@@ -209,8 +209,8 @@ export default function MassUploadPage(){
                     <div
                       className={`rounded-lg border-2 border-dashed p-4 flex flex-col items-center justify-center text-center min-h-[120px] transition-all duration-200 touch-manipulation ${
                         isDragging 
-                          ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-400 scale-[1.02]' 
-                          : 'bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-500 hover:bg-primary-25 dark:hover:bg-primary-900/10'
+                          ? 'bg-primary-10 dark:bg-primary-900/20 border-primary scale-[1.02]' 
+                          : 'bg-card-color border-border-color hover:bg-primary-10 dark:hover:bg-primary-900/10 hover:border-primary'
                       }`}
                       onDragEnter={e=>{ e.preventDefault(); setIsDragging(true) }}
                       onDragOver={e=>{ e.preventDefault(); setIsDragging(true) }}
@@ -229,11 +229,11 @@ export default function MassUploadPage(){
                       <input ref={inputRef} type="file" accept=".xlsx" className="hidden" onChange={onFileChange} />
                       
                       <div className="mb-3">
-                        <IconUpload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-primary-600' : 'text-gray-400'}`} />
-                        <h4 className={`text-sm font-medium mb-1 ${isDragging ? 'text-primary-700 dark:text-primary-300' : 'text-gray-700 dark:text-gray-200'}`}>
+                        <IconUpload className={`w-8 h-8 mx-auto mb-2 ${isDragging ? 'text-primary-600' : 'text-font-color-100'}`} />
+                        <h4 className={`text-sm font-medium mb-1 ${isDragging ? 'text-primary-700 dark:text-primary-300' : 'text-font-color'}`}>
                           {isDragging ? 'Drop your file here' : 'Drop files here or click to upload'}
                         </h4>
-                        <p className="text-gray-500 dark:text-gray-400 text-xs">
+                        <p className="text-font-color-100 text-xs">
                           {isDragging 
                             ? 'Release to upload immediately' 
                             : 'Upload starts immediately'
@@ -265,13 +265,13 @@ export default function MassUploadPage(){
                       </div>
                       
                       {file && (
-                        <div className="mt-2 p-2 bg-white dark:bg-gray-700 rounded border dark:border-gray-600 text-left w-full max-w-sm mx-auto">
+                        <div className="mt-2 p-2 bg-card-color rounded border border-border-color text-left w-full max-w-sm mx-auto">
                           <div className="flex items-center gap-1">
                             <IconFileSpreadsheet className="w-3 h-3 text-green-600 dark:text-green-400 flex-shrink-0" />
-                            <span className="text-xs font-medium text-gray-700 dark:text-gray-200">Selected:</span>
+                            <span className="text-xs font-medium text-font-color">Selected:</span>
                           </div>
-                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 truncate" title={file.name}>{file.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-font-color-100 mt-1 truncate" title={file.name}>{file.name}</div>
+                          <div className="text-xs text-font-color-100">
                             {(file.size / 1024 / 1024).toFixed(2)} MB
                             {file.size > 10 * 1024 * 1024 && (
                               <span className="text-red-500 dark:text-red-400 ml-1">(Too large)</span>

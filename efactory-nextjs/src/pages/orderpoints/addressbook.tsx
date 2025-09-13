@@ -6,7 +6,7 @@ import { validateAddress as apiValidateAddress } from '@/services/api'
 import { readAddresses, createAddress, updateAddress, deleteAddress as apiDeleteAddress, validateAddress, exportAddresses, importAddresses } from '@/services/api'
 import { toast } from '@/components/ui/use-toast'
 import type { AddressDto, ReadAddressesResponse } from '@/types/api/orderpoints'
-import { IconDownload, IconUpload, IconPlus, IconCopy, IconTrash, IconEdit, IconLayoutGrid, IconTable, IconSearch } from '@tabler/icons-react'
+import { IconDownload, IconUpload, IconPlus, IconCopy, IconTrash, IconEdit, IconSearch, IconChevronDown } from '@tabler/icons-react'
 
 export default function AddressBookPage() {
   const [rows, setRows] = useState<ReadAddressesResponse['rows']>([])
@@ -14,7 +14,9 @@ export default function AddressBookPage() {
   const [activePagination, setActivePagination] = useState(1)
   const [pageSize] = useState(50)
   const [loading, setLoading] = useState(false)
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table')
+  const [exporting, setExporting] = useState(false)
+  const [showActions, setShowActions] = useState(false)
+  const actionsRef = useRef<HTMLDivElement>(null)
   const [selected, setSelected] = useState<number | string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [editOpen, setEditOpen] = useState(false)
@@ -24,7 +26,7 @@ export default function AddressBookPage() {
   async function reload() {
     setLoading(true)
     try {
-      const res = await readAddresses({ action: 'read_addresses', page_num: activePagination, page_size: pageSize, filter: filter ? { and: [{ field: 'title', oper: 'like', value: filter }] } as any : undefined })
+      const res = await readAddresses({ action: 'read_addresses', page_num: activePagination, page_size: pageSize, filter: filter ? { field: '*', value: filter } : null })
       setRows(res.rows || [])
     } catch (err: any) {
       const msg = err?.error_message || err?.message || 'Failed to load addresses'
@@ -35,6 +37,26 @@ export default function AddressBookPage() {
   }
 
   useEffect(()=>{ reload() }, [activePagination])
+
+  // Close actions menu on outside click or Escape
+  useEffect(() => {
+    function handleDocumentClick(e: MouseEvent){
+      if (!showActions) return
+      const target = e.target as Node | null
+      if (actionsRef.current && target && !actionsRef.current.contains(target)) {
+        setShowActions(false)
+      }
+    }
+    function handleKey(e: KeyboardEvent){
+      if (e.key === 'Escape') setShowActions(false)
+    }
+    document.addEventListener('mousedown', handleDocumentClick)
+    document.addEventListener('keydown', handleKey)
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick)
+      document.removeEventListener('keydown', handleKey)
+    }
+  }, [showActions])
 
   function openEditDialog(mode: 'add'|'edit'|'duplicate', row?: any) {
     setEditMode(mode)
@@ -62,54 +84,14 @@ export default function AddressBookPage() {
 
   async function onExport() {
     try {
-      // Legacy pattern: GET with X-Download-Params header via proxy
-      const apiProxy = process.env.NEXT_PUBLIC_USE_API_PROXY === 'true'
-      const base = apiProxy ? '/api/proxy' : (process.env.NEXT_PUBLIC_API_BASE_URL || '')
-      const url = `${base}/api/orderpoints`
-      const headerParams = {
-        action: 'export',
-        page_num: 1,
-        page_size: 100000,
-        filter: filter ? { and: [{ field: 'title', oper: 'like', value: filter }] } : undefined,
-      }
-      const headers: Record<string, string> = { 'Accept': 'application/json' }
-      try {
-        const raw = window.localStorage.getItem('authToken')
-        const token = raw ? (JSON.parse(raw)?.api_token || '') : ''
-        if (token) headers['X-Access-Token'] = token
-      } catch {}
-      headers['X-Download-Params'] = JSON.stringify(headerParams)
-
-      const res = await fetch(url, { method: 'GET', headers, credentials: 'include' })
-      if (!res.ok) {
-        try { 
-          const payload = await res.json()
-          const errorMsg = payload?.error_message || payload?.message || payload?.detail || `HTTP ${res.status}: ${res.statusText}`
-          throw new Error(errorMsg)
-        } catch (e:any) { 
-          throw new Error(e.message || `HTTP ${res.status}: ${res.statusText}`)
-        }
-      }
-      const blob = await res.blob()
-      let filename = 'address-book.xlsx'
-      const disposition = res.headers.get('Content-Disposition')
-      if (disposition && disposition.indexOf('attachment') !== -1) {
-        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/
-        const matches = filenameRegex.exec(disposition)
-        if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '')
-      }
-      const URLobj = window.URL || (window as any).webkitURL
-      const downloadUrl = URLobj.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = downloadUrl
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      setTimeout(() => { URLobj.revokeObjectURL(downloadUrl) }, 100)
+      setExporting(true)
+      await exportAddresses(filter ? { field: '*', value: filter } : null)
       toast({ title: 'Export Success', description: 'Your file is downloading.' })
     } catch (err: any) {
       const msg = err?.message || err?.error_message || 'Failed to export addresses'
       toast({ title: 'Export Error', description: msg, variant: 'destructive' })
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -129,34 +111,108 @@ export default function AddressBookPage() {
   }
 
   return (
-    <div className="md:px-6 sm:px-3 pt-6 md:pt-8 bg-body-color">
-      <div className="container-fluid mb-4">
-        <div className="max-w-[1600px] mx-auto">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <Input placeholder="Search contact title..." value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>{ if (e.key==='Enter') reload() }} style={{ maxWidth: 320 }} />
-              <Button onClick={reload}><IconSearch className="w-4 h-4"/>Search</Button>
-            </div>
+    <div className="min-h-screen bg-body-color">
+      {/* Header with Title and Actions */}
+      <div className="bg-card-color border-b border-border-color px-6 py-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-font-color mb-0.5 flex items-center gap-2">
+              Address Books
+            </h1>
+            <p className="text-sm text-font-color-100">
+              Manage your saved shipping and billing contacts
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <div className="flex items-center gap-2">
-              <Button onClick={()=>setViewMode(viewMode==='table'?'card':'table')}>
-                {viewMode==='table' ? <IconLayoutGrid className="w-4 h-4"/> : <IconTable className="w-4 h-4"/>}
-                {viewMode==='table' ? 'Card View' : 'Table View'}
+              <Input className="w-56 sm:w-64 md:w-72" placeholder="Search contact title..." value={filter} onChange={e=>setFilter(e.target.value)} onKeyDown={e=>{ if (e.key==='Enter') reload() }} />
+              <Button onClick={reload} disabled={loading} aria-label="Search">
+                {loading ? (
+                  <span className="w-4 h-4 border-2 border-white/60 border-t-white rounded-full animate-spin"></span>
+                ) : (
+                  <IconSearch className="w-4 h-4"/>
+                )}
               </Button>
+            </div>
+            <div className="hidden sm:block w-px self-stretch bg-border-color" />
+            <div className="flex items-center gap-2">
               <Button onClick={()=>openEditDialog('add')}><IconPlus className="w-4 h-4"/>Add</Button>
               <Button onClick={()=>openEditDialog('edit')} disabled={!selected}><IconEdit className="w-4 h-4"/>Edit</Button>
-              <Button onClick={()=>onDuplicate()} disabled={!selected}><IconCopy className="w-4 h-4"/>Duplicate</Button>
-              <Button variant="danger" onClick={onDelete} disabled={!selected}><IconTrash className="w-4 h-4"/>Delete</Button>
-              <div className="relative">
-                <Button onClick={onExport}><IconDownload className="w-4 h-4"/>Export</Button>
+              <div className="relative" ref={actionsRef}>
+                <Button 
+                  variant="outline"
+                  onClick={()=>setShowActions(!showActions)}
+                  className="flex items-center gap-2"
+                >
+                  <IconChevronDown className="w-4 h-4" />
+                  Actions
+                </Button>
+                {showActions && (
+                  <div className="absolute right-0 top-full mt-2 w-44 bg-card-color border border-border-color rounded-lg shadow-lg z-10">
+                    <div className="p-2 text-left">
+                      <Button
+                        size="small"
+                        variant="ghost"
+                        className="w-full !justify-start !text-left text-sm hover:bg-primary-10 rounded-md flex items-center h-8 px-3"
+                        onClick={()=>{ onDuplicate(); setShowActions(false) }}
+                        disabled={!selected}
+                      >
+                        <span className="w-4 inline-flex justify-start mr-2">
+                          <IconCopy className="w-4 h-4" />
+                        </span>
+                        <span>Duplicate</span>
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="ghost"
+                        className="w-full !justify-start !text-left text-sm hover:bg-primary-10 rounded-md mt-1 flex items-center h-8 px-3"
+                        onClick={()=>{ onExport(); setShowActions(false) }}
+                        disabled={exporting}
+                      >
+                        <span className="w-4 inline-flex justify-start mr-2">
+                          <IconDownload className="w-4 h-4" />
+                        </span>
+                        <span>Export</span>
+                      </Button>
+                      <input ref={fileInputRef} type="file" className="hidden" onChange={onImport} />
+                      <Button
+                        size="small"
+                        variant="ghost"
+                        className="w-full !justify-start !text-left text-sm hover:bg-primary-10 rounded-md mt-1 flex items-center h-8 px-3"
+                        onClick={()=>{ fileInputRef.current?.click(); setShowActions(false) }}
+                      >
+                        <span className="w-4 inline-flex justify-start mr-2">
+                          <IconUpload className="w-4 h-4" />
+                        </span>
+                        <span>Import...</span>
+                      </Button>
+                      <div className="my-2 border-t border-border-color" />
+                      <Button
+                        size="small"
+                        variant="ghost"
+                        className="w-full !justify-start !text-left text-sm rounded-md flex items-center text-danger hover:bg-danger/10 h-8 px-3"
+                        onClick={()=>{ onDelete(); setShowActions(false) }}
+                        disabled={!selected}
+                      >
+                        <span className="w-4 inline-flex justify-start mr-2 text-danger">
+                          <IconTrash className="w-4 h-4" />
+                        </span>
+                        <span>Delete</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <input ref={fileInputRef} type="file" className="hidden" onChange={onImport} />
-              <Button onClick={()=>fileInputRef.current?.click()}><IconUpload className="w-4 h-4"/>Import...</Button>
             </div>
           </div>
+        </div>
+      </div>
 
+      {/* Page Content */}
+      <div className="px-6 py-3">
+        <div className="max-w-[1600px] mx-auto">
           <Card className="shadow-sm border-border-color">
             <CardContent className="p-0">
-              {viewMode === 'table' ? (
                   <div className="overflow-x-auto">
                   <table className="w-full min-w-[900px]">
                     <thead className="bg-body-color border-b border-border-color">
@@ -179,33 +235,6 @@ export default function AddressBookPage() {
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 p-4">
-                  {rows.map((r:any)=>(
-                    <Card key={r.id} className={`border-border-color ${selected===r.id?'ring-2 ring-primary':''}`}>
-                      <CardHeader className="pb-2">
-                        <CardTitle className="flex items-center justify-between text-sm">
-                          <button className="text-primary underline" onClick={()=>openEditDialog('edit', r)}>{r.title}</button>
-                          <div className="flex items-center gap-2">
-                            <Button size="small" variant="outline" onClick={()=>onDuplicate(r)}><IconCopy className="w-4 h-4"/></Button>
-                            <Button size="small" variant="danger" onClick={()=>onDelete(r)}><IconTrash className="w-4 h-4"/></Button>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="text-sm">
-                        <div className="mb-2">
-                          <div className="text-font-color-100">Shipping</div>
-                          <div>{displayRich(r.ship_to)}</div>
-                        </div>
-                        <div>
-                          <div className="text-font-color-100">Billing</div>
-                          <div>{displayRich(r.bill_to)}</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

@@ -66,6 +66,7 @@ import type {
   ReadGeneralSettingsRequest,
   ReadGeneralSettingsResponse,
   ExportAddressesRequest,
+  AddressBookFilter,
   MassUploadEnvironment,
 } from '@/types/api/orderpoints';
 import type {
@@ -281,8 +282,8 @@ export async function validateAddress(body: ValidateAddressBody): Promise<Addres
 }
 
 // Address Book Export / Import
-export async function exportAddresses(filter?: unknown): Promise<void> {
-  const body: ExportAddressesRequest = { action: 'export', page_num: 1, page_size: 100000, filter } as any;
+export async function exportAddresses(filter?: AddressBookFilter | null): Promise<void> {
+  const body: ExportAddressesRequest = { action: 'export', page_num: 1, page_size: 100000, filter: filter ?? null } as any;
   // Use raw XHR download pattern via http helper
   const headers = { 'X-Download-Params': JSON.stringify(body) } as any;
   await httpRequestRaw<Blob>({ method: 'get', path: '/api/orderpoints', headers });
