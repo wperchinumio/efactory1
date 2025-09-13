@@ -399,7 +399,7 @@ const TopMenu: React.FC = () => {
                         <button
                           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleDropdownItemClick(route); }}
                           onClick={(e) => { e.preventDefault(); }}
-                          className={`w-full px-4 py-2 text-left text-sm transition-all whitespace-nowrap ${isActiveChild ? 'text-secondary bg-secondary-10' : 'hover:bg-gray-100'}`}
+                          className={`w-full px-4 py-2 text-left text-sm transition-all whitespace-nowrap ${isActiveChild ? 'text-secondary bg-secondary-10' : 'hover:bg-primary-10'}`}
                         >
                           {dropdownItem.title}
                         </button>
@@ -453,7 +453,7 @@ const TopMenu: React.FC = () => {
                         whitespace-nowrap
                         ${isActive
                           ? 'text-secondary bg-secondary-10'
-                          : 'hover:bg-gray-100'
+                          : 'hover:bg-primary-10'
                         }
                       `}
                     >
@@ -471,7 +471,7 @@ const TopMenu: React.FC = () => {
                         whitespace-nowrap
                         ${isActive
                           ? 'text-secondary bg-secondary-10'
-                          : 'hover:bg-gray-100'
+                          : 'hover:bg-primary-10'
                         }
                       `}
                     >

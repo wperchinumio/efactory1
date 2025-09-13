@@ -456,6 +456,26 @@ export default function OrderPointsPage() {
     return false;
   };
 
+  // Enhanced validation with field-specific messages
+  const getFieldValidation = (fieldName: string, value: any) => {
+    const isEmpty = isRequiredFieldEmpty(value);
+    if (isEmpty) {
+      return {
+        isValid: false,
+        message: `${fieldName} is required`,
+        className: 'border-red-500 focus:border-red-500'
+      };
+    }
+    return {
+      isValid: true,
+      message: '',
+      className: 'border-gray-300 focus:border-primary-500'
+    };
+  };
+
+  // Real-time validation state
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
   // Helper function to check if at least one of two fields has a value
   const hasAtLeastOne = (value1: any, value2: any) => {
     return !isRequiredFieldEmpty(value1) || !isRequiredFieldEmpty(value2);
@@ -558,6 +578,40 @@ export default function OrderPointsPage() {
   // Loading states for better UX
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + S: Save Draft
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!isSavingDraft && !isPlacingOrder) {
+          onSaveDraft();
+        }
+      }
+      // Ctrl/Cmd + Enter: Place Order
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!isPlacingOrder && !isSavingDraft) {
+          onPlaceOrder();
+        }
+      }
+      // Ctrl/Cmd + N: New Order
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        if (!isPlacingOrder && !isSavingDraft) {
+          onNewOrder();
+        }
+      }
+      // Escape: Clear form (if no modal is open)
+      if (e.key === 'Escape' && !browseOpen) {
+        onNewOrder();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSavingDraft, isPlacingOrder, browseOpen, onSaveDraft, onPlaceOrder, onNewOrder]);
   
   // Track if form has unsaved changes - simpler approach
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -710,6 +764,7 @@ export default function OrderPointsPage() {
       if (hasUnsavedChanges) {
         pendingRouteRef.current = url
         setShowLeaveConfirm(true)
+        // Prevent navigation by throwing an error (this is the correct way)
         throw 'Route change aborted by user'
       }
     }
@@ -1133,28 +1188,35 @@ export default function OrderPointsPage() {
     }))
     
     const res = await saveDraft(header, convertedOrderDetail)
+    
+    // Debug logging to see what we're getting
+    console.log('SaveDraft response:', res)
+    
+    // Check for order_number in the response (could be at root level or nested)
+    const orderNumber = res?.order_number || res?.draft_order?.order_header?.order_number
+    
+    if (orderNumber) {
+      // Show success toaster for draft save
+      toast({
+        title: "Draft Saved Successfully!",
+        description: `Draft #${orderNumber} has been saved.`,
+        variant: "default",
+      })
       
-      if (res?.order_number) {
-        // Show success toaster for draft save
-        toast({
-          title: "Draft Saved Successfully!",
-          description: `Draft #${res.order_number} has been saved.`,
-          variant: "default",
-        })
-        
-        // Update order header with new order number
-        setOrderHeader({ ...orderHeader, order_number: res.order_number })
-        
-        // Reset unsaved changes state
-        markAsClean()
-      } else {
-        // Show error toaster if no order number returned
-        toast({
-          title: "Draft Save Failed",
-          description: "Failed to save draft. Please try again.",
-          variant: "destructive",
-        })
-      }
+      // Update order header with new order number
+      setOrderHeader({ ...orderHeader, order_number: orderNumber })
+      
+      // Reset unsaved changes state
+      markAsClean()
+    } else {
+      // Show error toaster if no order number returned
+      console.error('No order number in response:', res)
+      toast({
+        title: "Draft Save Failed",
+        description: `Failed to save draft. Response: ${JSON.stringify(res)}`,
+        variant: "destructive",
+      })
+    }
     } catch (error: any) {
       // Show error toaster with error message
       const errorMessage = error?.error_message || error?.message || "An error occurred while saving the draft."
@@ -1403,8 +1465,8 @@ export default function OrderPointsPage() {
         setBrowseOpen(true)
         return
       } else {
-        // No matches in cache - clear input
-        setFindItemValue('')
+        // No matches in cache - open browse modal
+        setBrowseOpen(true)
         return
       }
     }
@@ -1455,9 +1517,11 @@ export default function OrderPointsPage() {
       } else if (matches.length > 1) {
         // Multiple matches - open browse modal
         setBrowseOpen(true)
+        setSearchingItems(false)
       } else {
-        // No matches - clear input
-        setFindItemValue('')
+        // No matches - open browse modal
+        setBrowseOpen(true)
+        setSearchingItems(false)
       }
     } catch (error) {
       console.error('Error searching for items:', error)
@@ -2019,21 +2083,32 @@ export default function OrderPointsPage() {
             </h1>
             <p className="text-sm text-font-color-100">
               Create and manage purchase orders
-              {hasUnsavedChanges && <span className="text-orange-500 ml-2">• Unsaved changes detected</span>}
-              <button 
-                onClick={() => {}}
-                className="ml-2 text-sm bg-blue-500 text-white px-2 py-1 rounded"
-              >
-                Debug
-              </button>
+              {hasUnsavedChanges && (
+                <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded text-xs">
+                  <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                  Unsaved changes
+                </span>
+              )}
+              {isSavingDraft && (
+                <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-xs">
+                  <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                  Saving draft...
+                </span>
+              )}
+              {isPlacingOrder && (
+                <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded text-xs">
+                  <span className="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></span>
+                  Placing order...
+                </span>
+              )}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <Button 
               onClick={onNewOrder} 
               disabled={isPlacingOrder || isSavingDraft}
               variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
             >
               New Order
             </Button>
@@ -2041,14 +2116,14 @@ export default function OrderPointsPage() {
               onClick={onSaveDraft} 
               disabled={isSavingDraft || isPlacingOrder}
               variant="outline" 
-              className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2"
+              className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2 touch-manipulation"
             >
               {isSavingDraft ? "Saving..." : "Save Draft"}
             </Button>
             <Button 
               onClick={onPlaceOrder} 
               disabled={isPlacingOrder || isSavingDraft}
-              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
             >
               {isPlacingOrder ? "Placing Order..." : "Place Order"}
             </Button>
@@ -2056,15 +2131,15 @@ export default function OrderPointsPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto p-6 space-y-6" style={{ maxWidth: '1600px' }}>
+      <div className="w-full max-w-7xl mx-auto p-4 space-y-4" style={{ maxWidth: '1600px' }}>
 
-        {/* Main Layout: Left side (9) + Right Sidebar (3) */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-9 space-y-4">
+        {/* Main Layout: Left side (8) + Right Sidebar (4) - Better proportions */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+          <div className="xl:col-span-8 space-y-4">
             {/* Order Header and Shipping Address on same row */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-            {/* Order Header - 40% width (5 columns) */}
-              <Card className="shadow-sm border-border-color xl:col-span-5">
+            {/* Order Header - 50% width (6 columns) */}
+              <Card className="shadow-sm border-border-color xl:col-span-6">
                 <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                 <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                   <IconFileText className="w-3.5 h-3.5" />
@@ -2258,8 +2333,8 @@ export default function OrderPointsPage() {
             </CardContent>
           </Card>
 
-              {/* Shipping Address - 60% width (7 columns) */}
-            <Card className="shadow-sm border-border-color xl:col-span-7">
+            {/* Shipping Address - 50% width (6 columns) */}
+              <Card className="shadow-sm border-border-color xl:col-span-6">
               <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
@@ -2444,6 +2519,11 @@ export default function OrderPointsPage() {
                   <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                     <IconShoppingCart className="w-3.5 h-3.5" />
                     ITEMS
+                    {orderDetail.length > 0 && (
+                      <span className="ml-2 px-2 py-0.5 bg-primary-100 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 rounded text-xs">
+                        {orderDetail.length} item{orderDetail.length !== 1 ? 's' : ''}
+                      </span>
+                    )}
                   </CardTitle>
                   <div className="flex items-center gap-2">
                     <div className="relative w-48 sm:w-64 md:w-72 lg:w-80 xl:w-96">
@@ -2464,7 +2544,7 @@ export default function OrderPointsPage() {
                     <Button
                       size="small"
                       variant="outline"
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50 whitespace-nowrap text-sm disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
                       onClick={onBrowseItems}
                       disabled={isPlacingOrder || isSavingDraft}
                     >
@@ -2473,7 +2553,7 @@ export default function OrderPointsPage() {
                     <Button
                       size="small"
                       variant="outline"
-                      className="whitespace-nowrap border-red-500 text-red-600 hover:!bg-red-50 hover:!border-red-600 hover:!text-red-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!bg-transparent disabled:hover:!border-red-500 disabled:hover:!text-red-600 transition-colors duration-200"
+                      className="whitespace-nowrap border-red-500 text-red-600 hover:!bg-red-50 hover:!border-red-600 hover:!text-red-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!bg-transparent disabled:hover:!border-red-500 disabled:hover:!text-red-600 transition-colors duration-200 touch-manipulation"
                       onClick={onRemoveSelected}
                       disabled={selectedRowsCount === 0 || isPlacingOrder || isSavingDraft}
                     >
@@ -2486,7 +2566,9 @@ export default function OrderPointsPage() {
               <div className="overflow-x-auto">
                 {orderDetail.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    No items in cart
+                    <IconShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm">No items in cart</p>
+                    <p className="text-xs text-gray-400 mt-1">Add items using the search box above or browse items</p>
                   </div>
                 ) : (
                   <table className="w-full text-sm">
@@ -3788,7 +3870,7 @@ export default function OrderPointsPage() {
                   <Button
                     size="small"
                     variant="outline"
-                    className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className="border-border-color text-font-color hover:bg-primary-10"
                     onClick={() => loadAddressBook(false, true)}
                     disabled={addressBookLoading}
                   >
@@ -3835,7 +3917,7 @@ export default function OrderPointsPage() {
             <div className="flex-1 overflow-hidden border border-border-color rounded-lg">
               <div className="h-full flex flex-col">
                 {/* Table Header */}
-                <div className="flex-shrink-0 bg-gray-50 border-b border-border-color">
+                <div className="flex-shrink-0 bg-primary-10 border-b border-border-color">
                   <div className="grid grid-cols-12 gap-2 px-3 py-2 text-xs font-semibold text-font-color-100 uppercase">
                     <div className="col-span-1">#</div>
                     <div className="col-span-3">TITLE</div>
@@ -3859,8 +3941,8 @@ export default function OrderPointsPage() {
                       addressBookData.map((address, index) => (
                         <div
                           key={address.id || index}
-                          className={`grid grid-cols-12 gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${
-                            selectedAddress?.id === address.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                          className={`grid grid-cols-12 gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-primary-10 ${
+                            selectedAddress?.id === address.id ? 'bg-primary-10 border-l-4 border-primary' : ''
                           }`}
                           onClick={() => setSelectedAddress(address)}
                           onDoubleClick={() => handleAddressSelect(address)}

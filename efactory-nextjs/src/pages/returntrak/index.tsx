@@ -8,7 +8,7 @@ import BrowseItemsDialog from '@/components/common/BrowseItemsDialog';
 import CountryFilterCombobox from '@/components/filters/CountryFilterCombobox';
 import StateFilterCombobox from '@/components/filters/StateFilterCombobox';
 import { toast } from '@/components/ui/use-toast';
-import { IconFileText, IconTruck, IconPackage, IconCurrency, IconSettings, IconEdit, IconChevronDown, IconTriangleFilled } from '@tabler/icons-react';
+import { IconFileText, IconTruck, IconPackage, IconCurrency, IconSettings, IconEdit, IconChevronDown, IconTriangleFilled, IconShoppingCart } from '@tabler/icons-react';
 import { CheckBox } from '@/components/ui';
 import {
   readReturnTrakSettings,
@@ -39,6 +39,8 @@ export default function ReturnTrakEntryPage() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const pendingRouteRef = useRef<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
   // Prefill from ReturnTrak Drafts if present
   useEffect(() => {
     const draft = consumeRmaDraft();
@@ -442,6 +444,41 @@ export default function ReturnTrakEntryPage() {
 
   // Prepopulate shipping fields when RMA settings are loaded (only if not coming from draft)
   const [didApplyDefaultShipping, setDidApplyDefaultShipping] = useState(false);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl/Cmd + S: Save Draft
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (!savingDraft && !placing) {
+          onPlaceRma(true);
+        }
+      }
+      // Ctrl/Cmd + Enter: Place RMA
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!placing && !savingDraft) {
+          onPlaceRma(false);
+        }
+      }
+      // Ctrl/Cmd + N: New RMA
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        if (!placing && !savingDraft) {
+          // Reset form
+          setRmaNumber('');
+          setToReceive([]);
+          setToShip([]);
+          setHasUnsavedChanges(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [savingDraft, placing]);
+
   useEffect(() => {
     if (!rmaSettings?.general?.shipping) return;
     if (didApplyDefaultShipping) return;
@@ -521,10 +558,13 @@ export default function ReturnTrakEntryPage() {
 
   // Remove selected rows
   function removeSelectedRows() {
-    if (activeCartTab === 'auth') {
+    // Remove selected items from both Auth and Ship tabs
+    if (selectedAuthRows.length > 0) {
       setToReceive(prev => prev.filter((_, index) => !selectedAuthRows.includes(index)));
       setSelectedAuthRows([]);
-    } else {
+    }
+    
+    if (selectedShipRows.length > 0) {
       setToShip(prev => prev.filter((_, index) => !selectedShipRows.includes(index)));
       setSelectedShipRows([]);
     }
@@ -771,19 +811,90 @@ export default function ReturnTrakEntryPage() {
       };
 
       const res = await saveRma(header, toReceive, toShip);
-      // On success, reset minimal state or stay for draft edit
-      if (!to_draft) {
-        setToReceive([]);
-        setToShip([]);
-        setRmaNumber('');
+      
+      // Debug logging to see what we're getting
+      console.log('SaveRma response:', res);
+      
+      // Check for rma_number in the response (could be at root level or nested)
+      const responseRmaNumber = res?.rma_number || res?.draft_rma?.rma_header?.rma_number || res?.rma_header?.rma_number;
+      
+      if (responseRmaNumber) {
+        // Show success toaster
+        toast({
+          title: to_draft ? "RMA Draft Saved Successfully!" : "RMA Placed Successfully!",
+          description: `RMA #${responseRmaNumber} has been ${to_draft ? 'saved as draft' : 'placed'}.`,
+          variant: "default",
+        });
+        
+        // Update RMA number if it was generated
+        if (!rmaNumber || rmaNumber !== responseRmaNumber) {
+          setRmaNumber(responseRmaNumber);
+        }
+        
+        // On success, reset minimal state or stay for draft edit
+        if (!to_draft) {
+          setToReceive([]);
+          setToShip([]);
+          setRmaNumber('');
+        }
+        markAsClean();
+      } else {
+        // Show error toaster if no RMA number returned
+        console.error('No RMA number in response:', res);
+        toast({
+          title: to_draft ? "RMA Draft Save Failed" : "RMA Placement Failed",
+          description: `Failed to ${to_draft ? 'save draft' : 'place RMA'}. Response: ${JSON.stringify(res)}`,
+          variant: "destructive",
+        });
       }
-      markAsClean();
+    } catch (error: any) {
+      // Show error toaster with error message
+      const errorMessage = error?.error_message || error?.message || `An error occurred while ${to_draft ? 'saving the draft' : 'placing the RMA'}.`;
+      toast({
+        title: to_draft ? "RMA Draft Save Failed" : "RMA Placement Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       to_draft ? setSavingDraft(false) : setPlacing(false);
     }
   }
 
   const isManualNumbering = !!rmaSettings?.general?.auto_number?.manual;
+
+  // Form validation helper
+  const getFieldValidation = (fieldName: string) => {
+    const error = validationErrors[fieldName];
+    return {
+      isValid: !error,
+      message: error,
+      className: error ? 'border-red-500 focus:border-red-500' : ''
+    };
+  };
+
+  // Helper function to safely render description text
+  const renderDescription = (description: string | undefined) => {
+    if (!description) return '';
+    
+    // Strip any HTML tags and return plain text
+    const stripped = description.replace(/<[^>]*>/g, '');
+    return stripped;
+  };
+
+  // Real-time validation
+  useEffect(() => {
+    const errors: Record<string, string> = {};
+    
+    if (!rmaType) errors.rmaType = 'RMA Type is required';
+    if (!accountReceivingWarehouse) errors.accountReceivingWarehouse = 'Receiving Account is required';
+    if (!shippingAddress.attention?.trim()) errors.shippingAddress = 'Shipping address attention is required';
+    if (!shippingAddress.address1?.trim()) errors.shippingAddress = 'Shipping address is required';
+    if (!shippingAddress.city?.trim()) errors.shippingAddress = 'Shipping city is required';
+    if (!shippingAddress.state_province?.trim()) errors.shippingAddress = 'Shipping state is required';
+    if (!shippingAddress.postal_code?.trim()) errors.shippingAddress = 'Shipping postal code is required';
+    
+    setValidationErrors(errors);
+  }, [rmaType, accountReceivingWarehouse, shippingAddress]);
 
 
   // Helper functions for panels
@@ -1075,16 +1186,20 @@ export default function ReturnTrakEntryPage() {
 
   // Intercept Next.js route changes
   useEffect(() => {
-    const handler = (url: string) => {
+    const routeChangeHandler = (url: string) => {
       if (hasUnsavedChanges) {
         pendingRouteRef.current = url;
         setShowLeaveConfirm(true);
-        // cancel navigation
+        // Prevent navigation by throwing an error (this is the correct way)
         throw 'Route change aborted due to unsaved changes';
       }
     };
-    router.events.on('routeChangeStart', handler as any);
-    return () => router.events.off('routeChangeStart', handler as any);
+    
+    router.events.on('routeChangeStart', routeChangeHandler);
+    
+    return () => {
+      router.events.off('routeChangeStart', routeChangeHandler);
+    };
   }, [hasUnsavedChanges, router]);
 
   function markAsClean() {
@@ -1101,16 +1216,33 @@ export default function ReturnTrakEntryPage() {
               <h1 className="text-xl font-semibold text-font-color">ReturnTrak - RMA Entry</h1>
               <p className="text-sm text-font-color-100 mt-1">
                 Create and manage RMAs
-                {hasUnsavedChanges && <span className="text-orange-500 ml-2">• Unsaved changes detected</span>}
+                {hasUnsavedChanges && (
+                  <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded text-xs">
+                    <span className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></span>
+                    Unsaved changes
+                  </span>
+                )}
+                {savingDraft && (
+                  <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded text-xs">
+                    <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></span>
+                    Saving draft...
+                  </span>
+                )}
+                {placing && (
+                  <span className="inline-flex items-center gap-1 ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded text-xs">
+                    <span className="w-3 h-3 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></span>
+                    Placing RMA...
+                  </span>
+                )}
               </p>
         </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
               <Button 
                 variant="outline" 
                 size="small" 
                 onClick={() => onPlaceRma(true)} 
                 disabled={savingDraft || placing}
-                className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2"
+                className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2 touch-manipulation"
               >
                 {savingDraft ? "Saving..." : "Save Draft"}
           </Button>
@@ -1118,7 +1250,7 @@ export default function ReturnTrakEntryPage() {
                 size="small" 
                 onClick={() => onPlaceRma(false)} 
                 disabled={placing || !rmaType || !accountReceivingWarehouse}
-                className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
               >
                 {placing ? "Placing RMA..." : "Place RMA"}
           </Button>
@@ -1127,15 +1259,15 @@ export default function ReturnTrakEntryPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-7xl mx-auto p-6 space-y-6" style={{ maxWidth: '1600px' }}>
+      <div className="w-full max-w-7xl mx-auto p-4 space-y-4" style={{ maxWidth: '1600px' }}>
 
-        {/* Main Layout: Left side (9) + Right Sidebar (3) */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          <div className="xl:col-span-9 space-y-4">
+        {/* Main Layout: Left side (8) + Right Sidebar (4) - Better proportions */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
+          <div className="xl:col-span-8 space-y-4">
             {/* RMA Header and RMA Address on same row */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-              {/* RMA Header - 40% width (5 columns) */}
-              <Card className="shadow-sm border-border-color xl:col-span-5">
+              {/* RMA Header - 50% width (6 columns) */}
+              <Card className="shadow-sm border-border-color xl:col-span-6">
                 <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                   <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
                     <IconFileText className="w-3.5 h-3.5" />
@@ -1153,7 +1285,10 @@ export default function ReturnTrakEntryPage() {
                             <span className="text-red-500 ml-1">*</span>
                           )}
                         </Label>
-                  <Select value={accountReceivingWarehouse} onValueChange={setAccountReceivingWarehouse}>
+                  <Select value={accountReceivingWarehouse} onValueChange={(v) => {
+                    setAccountReceivingWarehouse(v);
+                    setHasUnsavedChanges(true);
+                  }}>
                           <SelectTrigger className="h-9 text-sm mt-1">
                             <span className={`truncate ${accountReceivingWarehouse ? 'font-medium' : ''}`}>
                               {accountOptions.find(opt => opt.value === accountReceivingWarehouse)?.label ?? "Select..."}
@@ -1181,6 +1316,7 @@ export default function ReturnTrakEntryPage() {
                   <Select value={rmaType} onValueChange={(v) => {
                     setRmaType(v);
                     setDisposition('');
+                    setHasUnsavedChanges(true);
                   }}>
                           <SelectTrigger className="h-9 text-sm mt-1">
                             <span className={`truncate ${rmaType ? 'font-medium' : ''}`}>
@@ -1213,7 +1349,10 @@ export default function ReturnTrakEntryPage() {
                             <span className="text-red-500 ml-1">*</span>
                           )}
                         </Label>
-                  <Select value={accountShippingWarehouse} onValueChange={setAccountShippingWarehouse}>
+                  <Select value={accountShippingWarehouse} onValueChange={(v) => {
+                    setAccountShippingWarehouse(v);
+                    setHasUnsavedChanges(true);
+                  }}>
                           <SelectTrigger className="h-9 text-sm mt-1" disabled={!isToShipEnabled}>
                             <span className={`truncate ${accountShippingWarehouse ? 'font-medium' : ''}`}>
                               {accountOptions.find(opt => opt.value === accountShippingWarehouse)?.label ?? "Select..."}
@@ -1238,7 +1377,10 @@ export default function ReturnTrakEntryPage() {
                             <span className="text-red-500 ml-1">*</span>
                           )}
                         </Label>
-                  <Select value={disposition} onValueChange={setDisposition}>
+                  <Select value={disposition} onValueChange={(v) => {
+                    setDisposition(v);
+                    setHasUnsavedChanges(true);
+                  }}>
                           <SelectTrigger className="h-9 text-sm mt-1" disabled={!rmaType}>
                             <span className={`truncate ${disposition ? 'font-medium' : ''}`}>
                               {rmaSettings?.dispositions?.find(d => d.code === disposition) ? 
@@ -1304,7 +1446,7 @@ export default function ReturnTrakEntryPage() {
                           <Input 
                             className={`h-9 text-sm mt-1 ${rmaNumber ? 'font-medium' : ''}`} 
                             value={rmaNumber || ''} 
-                            onChange={e => { setRmaNumber(e.target.value); setHasUnsavedChanges(true); }} 
+                            onChange={e => { setRmaNumber(e.target.value); setHasUnsavedChanges(true); }}
                           />
                     )}
                   </div>
@@ -1357,8 +1499,8 @@ export default function ReturnTrakEntryPage() {
             </CardContent>
           </Card>
 
-              {/* RMA Address - 60% width (7 columns) */}
-              <Card className="shadow-sm border-border-color xl:col-span-7">
+              {/* RMA Address - 50% width (6 columns) */}
+              <Card className="shadow-sm border-border-color xl:col-span-6">
                 <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
@@ -1600,9 +1742,9 @@ export default function ReturnTrakEntryPage() {
                       variant="outline" 
                       className="whitespace-nowrap border-red-500 text-red-600 hover:!bg-red-50 hover:!border-red-600 hover:!text-red-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:!bg-transparent disabled:hover:!border-red-500 disabled:hover:!text-red-600 transition-colors duration-200"
                       onClick={removeSelectedRows}
-                      disabled={(activeCartTab === 'auth' ? selectedAuthRows.length : selectedShipRows.length) === 0}
+                      disabled={(selectedAuthRows.length + selectedShipRows.length) === 0}
                     >
-                      Remove selected {(activeCartTab === 'auth' ? selectedAuthRows.length : selectedShipRows.length) > 0 && `(${activeCartTab === 'auth' ? selectedAuthRows.length : selectedShipRows.length})`}
+                      Remove selected {(selectedAuthRows.length + selectedShipRows.length) > 0 && `(${selectedAuthRows.length + selectedShipRows.length})`}
                     </Button>
               </div>
                 </div>
@@ -1611,7 +1753,9 @@ export default function ReturnTrakEntryPage() {
                 <div className="overflow-x-auto">
                   {toReceive.length === 0 && toShip.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
-                      No items in cart
+                      <IconShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                      <p className="text-sm">No items in cart</p>
+                      <p className="text-xs text-gray-400 mt-1">Add items using the search box above or browse items</p>
                     </div>
                   ) : (
                     <table className="w-full text-sm">
@@ -1665,7 +1809,7 @@ export default function ReturnTrakEntryPage() {
                             </td>
                         <td className="p-2">
                               <div className="font-medium text-font-color">{row.item_number}</div>
-                          <div className="text-[11px] text-font-color-100">{row.description}</div>
+                          <div className="text-[11px] text-font-color-100">{renderDescription(row.description)}</div>
                         </td>
                         <td className="p-2 text-right text-font-color">
                           {row.quantity}
@@ -1713,7 +1857,7 @@ export default function ReturnTrakEntryPage() {
                             </td>
                         <td className="p-2">
                               <div className="font-medium text-font-color">{row.item_number}</div>
-                          <div className="text-[11px] text-font-color-100">{row.description}</div>
+                          <div className="text-[11px] text-font-color-100">{renderDescription(row.description)}</div>
                         </td>
                             <td className="p-2 text-right text-font-color-100">—</td>
                             <td className="p-2 text-center text-font-color-100">—</td>

@@ -76,6 +76,11 @@ export async function httpRequest<TResponse = unknown, TBody = unknown>(
 		throw error;
 	}
 
+	// Debug logging for successful responses
+	if (res.status === 201) {
+		console.log('HTTP 201 response:', { status: res.status, payload, url });
+	}
+
 	return payload as ApiResponse<TResponse>;
 }
 

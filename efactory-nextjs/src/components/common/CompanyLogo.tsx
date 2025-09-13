@@ -21,7 +21,7 @@ export default function CompanyLogo({ className, miniMode = false }: CompanyLogo
 
     // Show full logo with text
     return (
-        <svg className={className} viewBox="0 0 106 29" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
+        <svg className={`topbar-logo ${className || ''}`} viewBox="0 0 106 29" xmlns="http://www.w3.org/2000/svg" aria-label="Logo">
             <desc>Logo</desc>
             <path d="M18.3,5.1l3.6-3.6c1.3-1.3,2.4-1.3,3.1-1.1c0.9,0.2,1.8,0.7,2.5,1.4c1.4,1.3,2.5,3.3,0.3,5.5 l-3.6,3.6c-1.3,1.3-2.4,1.3-3.1,1.1c-0.4-0.1-0.8-0.2-1.2-0.5l1.7-1.7c0.6-0.6,0.6-1.6,0-2.2l0,0c-0.6-0.6-1.6-0.6-2.2,0l-1.7,1.7 C16.9,8.1,16.7,6.6,18.3,5.1"></path>
             <path d="M10.8,23.9l-3.6,3.6c-1.3,1.3-2.4,1.3-3.1,1.1c-0.9-0.2-1.8-0.7-2.5-1.4c-1.4-1.3-2.5-3.3-0.3-5.5 l3.6-3.6C6.2,16.9,7.3,16.9,8,17c0.4,0.1,0.8,0.2,1.2,0.5l-1.7,1.7c-0.6,0.6-0.6,1.6,0,2.2l0,0c0.6,0.6,1.6,0.6,2.2,0l1.7-1.7 C12.3,20.9,12.4,22.4,10.8,23.9"></path>

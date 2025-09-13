@@ -7,6 +7,10 @@ module.exports = {
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  safelist: [
+    // Ensure gray hover utility is always generated
+    'hover:bg-gray-50'
+  ],
   // safelist: [
   //   // Common padding classes for development/debugging
   //   'pl-10', 'pr-10', 'pt-10', 'pb-10', 'px-10', 'py-10',

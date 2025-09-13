@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Button, Card, ScrollArea, Input, CheckBox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge } from '@/components/ui'
+import { Button, Card, ScrollArea, Input, CheckBox, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Badge, Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui'
 import { listDrafts, deleteDrafts, readOrderPoints, toggleDraftTemplate } from '@/services/api'
 import type { ListDraftsResponse } from '@/types/api/orderpoints'
 import { useRouter } from 'next/router'
-import { IconRefresh, IconTrash, IconEdit, IconFilter, IconCube, IconSearch } from '@tabler/icons-react'
+import { IconRefresh, IconTrash, IconEdit, IconFilter, IconCube, IconSearch, IconPlus, IconClock, IconCalendar, IconBuilding, IconMapPin, IconShoppingCart, IconTemplate, IconFileText, IconChevronDown, IconX } from '@tabler/icons-react'
 import { storeOrderDraft } from '@/services/orderEntryCache'
 
 export default function DraftsPage() {
@@ -11,12 +11,23 @@ export default function DraftsPage() {
   const [selected, setSelected] = useState<Record<number, boolean>>({})
   const [filter, setFilter] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'draft' | 'template'>('all')
+  const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showBulkActions, setShowBulkActions] = useState(false)
   const router = useRouter()
 
   async function reload() {
-    const res = await listDrafts()
-    setDrafts(res.draft_orders || [])
-    setSelected({})
+    setLoading(true)
+    try {
+      const res = await listDrafts()
+      setDrafts(res.draft_orders || [])
+      setSelected({})
+    } catch (error) {
+      console.error('Failed to load drafts:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(()=>{ reload() }, [])
@@ -24,8 +35,17 @@ export default function DraftsPage() {
   async function onDelete() {
     const ids = Object.keys(selected).filter(k => selected[+k]).map(k => +k)
     if (!ids.length) return
-    await deleteDrafts(ids)
-    await reload()
+    
+    setDeleting(true)
+    try {
+      await deleteDrafts(ids)
+      await reload()
+      setShowDeleteConfirm(false)
+    } catch (error) {
+      console.error('Failed to delete drafts:', error)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   async function onEdit(order_id: number) {
@@ -69,128 +89,361 @@ export default function DraftsPage() {
   }
 
   async function onToggleTemplate(order_id: number, current: boolean) {
-    await toggleDraftTemplate(order_id, !current)
-    await reload()
+    try {
+      await toggleDraftTemplate(order_id, !current)
+      await reload()
+    } catch (error) {
+      console.error('Failed to toggle template:', error)
+    }
   }
 
+
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'r':
+            e.preventDefault()
+            reload()
+            break
+          case 'a':
+            e.preventDefault()
+            toggleAll()
+            break
+          case 'd':
+            e.preventDefault()
+            if (Object.values(selected).some(Boolean)) {
+              setShowDeleteConfirm(true)
+            }
+            break
+        }
+      }
+      if (e.key === 'Escape') {
+        setShowDeleteConfirm(false)
+        setShowBulkActions(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selected])
+
   const rows = getVisibleDrafts()
+  const selectedCount = Object.values(selected).filter(Boolean).length
+  const draftCount = drafts.filter(d => !d.is_template).length
+  const templateCount = drafts.filter(d => d.is_template).length
 
   return (
-    <div className="md:px-6 sm:px-3 pt-6 md:pt-8 bg-body-color">
-      <div className="container-fluid mb-6">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-            <div>
-              <h1 className="text-[24px]/[32px] font-bold text-font-color mb-1">OrderPoints Drafts</h1>
-              <p className="text-font-color-100 text-[14px]/[20px]">Manage your saved drafts and templates</p>
+    <div className="min-h-screen bg-body-color">
+      {/* Header Section */}
+      <div className="bg-card-color border-b border-border-color">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-font-color mb-2">OrderPoints Drafts</h1>
+              <p className="text-font-color-100 text-sm">Manage your saved drafts and templates</p>
+              
+              {/* Status Cards */}
+              <div className="flex flex-wrap gap-4 mt-4">
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <IconFileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    {draftCount} Drafts
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <IconTemplate className="w-4 h-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    {templateCount} Templates
+                  </span>
+                </div>
+                {selectedCount > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                    <IconShoppingCart className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                    <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                      {selectedCount} Selected
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={reload}>
-                <IconRefresh className="w-4 h-4" />
+            
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Button 
+                variant="outline" 
+                onClick={reload} 
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <IconRefresh className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 Refresh
               </Button>
-              <Button variant="danger" onClick={onDelete} disabled={!Object.values(selected).some(Boolean)}>
-                <IconTrash className="w-4 h-4" />
-                Delete Selected
+              
+              
+              {selectedCount > 0 && (
+                <div className="relative">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowBulkActions(!showBulkActions)}
+                    className="flex items-center gap-2"
+                  >
+                    <IconChevronDown className="w-4 h-4" />
+                    Bulk Actions
+                  </Button>
+                  
+                  {showBulkActions && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-card-color border border-border-color rounded-lg shadow-lg z-10">
+                      <div className="p-2">
+                        <Button 
+                          variant="danger" 
+                          size="small" 
+                          className="w-full justify-start"
+                          onClick={() => setShowDeleteConfirm(true)}
+                        >
+                          <IconTrash className="w-4 h-4 mr-2" />
+                          Delete Selected
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <Button 
+                onClick={() => router.push('/orderpoints')}
+                className="flex items-center gap-2"
+              >
+                <IconPlus className="w-4 h-4" />
+                New Order
               </Button>
             </div>
           </div>
+        </div>
+      </div>
 
-          <Card className="p-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
-              <div className="relative w-full sm:w-[340px]">
-                <IconSearch className="w-[16px] h-[16px] text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2" />
-                <Input className="pl-9" placeholder="Search drafts..." value={filter} onChange={e=>setFilter(e.target.value)} />
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <Card className="overflow-hidden">
+          {/* Search and Filter Bar */}
+          <div className="p-6 border-b border-border-color bg-card-color">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <IconSearch className="w-4 h-4 text-font-color-100 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input 
+                  className="pl-10" 
+                  placeholder="Search drafts by ID, order number, account, warehouse, PO, or address..." 
+                  value={filter} 
+                  onChange={e => setFilter(e.target.value)} 
+                />
               </div>
-              <div className="flex items-center gap-3">
-                <Select value={typeFilter} onValueChange={(v: string)=>setTypeFilter(v as any)}>
-                  <SelectTrigger className="min-w-[160px]">
+              <div className="flex gap-3">
+                <Select value={typeFilter} onValueChange={(v: string) => setTypeFilter(v as any)}>
+                  <SelectTrigger className="w-40">
                     <SelectValue placeholder="All Types" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="draft">Drafts</SelectItem>
-                    <SelectItem value="template">Templates</SelectItem>
+                    <SelectItem value="draft">Drafts Only</SelectItem>
+                    <SelectItem value="template">Templates Only</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+          </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px]">
-                <thead className="bg-body-color border-b border-border-color">
-                  <tr className="text-left text-font-color text-[13px] font-semibold">
-                    <th className="py-2.5 px-3 w-[44px]">
+          {/* Table Content */}
+          <div className="overflow-x-auto">
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="flex items-center gap-3">
+                  <IconRefresh className="w-5 h-5 animate-spin text-primary" />
+                  <span className="text-font-color-100">Loading drafts...</span>
+                </div>
+              </div>
+            ) : rows.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                    <IconFileText className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium text-font-color mb-1">No drafts found</h3>
+                    <p className="text-font-color-100 text-sm">
+                      {filter ? 'Try adjusting your search criteria' : 'Create your first draft to get started'}
+                    </p>
+                  </div>
+                  {!filter && (
+                    <Button onClick={() => router.push('/orderpoints')} className="mt-2">
+                      <IconPlus className="w-4 h-4 mr-2" />
+                      Create New Draft
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <table className="w-full min-w-[1200px]">
+                <thead className="bg-primary-10 border-b border-border-color">
+                  <tr className="text-left text-font-color text-sm font-semibold">
+                    <th className="py-4 px-4 w-12">
                       <CheckBox checked={allChecked} onChange={toggleAll} />
                     </th>
-                    <th className="py-2.5 px-3">Draft #</th>
-                    <th className="py-2.5 px-3">Order #</th>
-                    <th className="py-2.5 px-3">Account</th>
-                    <th className="py-2.5 px-3">Warehouse</th>
-                    <th className="py-2.5 px-3">PO #</th>
-                    <th className="py-2.5 px-3">Ship To</th>
-                    <th className="py-2.5 px-3 text-center">Type</th>
-                    <th className="py-2.5 px-3 text-right">Actions</th>
+                    <th className="py-4 px-4">Draft #</th>
+                    <th className="py-4 px-4">Order #</th>
+                    <th className="py-4 px-4">Account</th>
+                    <th className="py-4 px-4">Warehouse</th>
+                    <th className="py-4 px-4">PO #</th>
+                    <th className="py-4 px-4">Ship To</th>
+                    <th className="py-4 px-4 text-center">Type</th>
+                    <th className="py-4 px-4 text-right w-56">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {rows.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-font-color-100">No drafts found</td>
-                    </tr>
-                  ) : (
-                    rows.map((d: any) => {
-                      const isSelected = !!selected[d.order_id]
-                      const shipLine = d?.shipping_address ? `${d.shipping_address.company || ''}${(d.shipping_address.company && d.shipping_address.attention) ? ' | ' : ''}${d.shipping_address.attention || ''}` : ''
-                      const shipCity = d?.shipping_address ? `${d.shipping_address.city ? d.shipping_address.city + ',' : ''} ${d.shipping_address.state_province || ''} ${d.shipping_address.postal_code ? d.shipping_address.postal_code + '-' : ''} ${d.shipping_address.country || ''}` : ''
-                      return (
-                        <tr key={d.order_id} className="border-b border-border-color hover:bg-primary-10 transition-colors">
-                          <td className="py-2.5 px-3">
-                            <CheckBox checked={isSelected} onChange={()=>setSelected(prev=>({ ...prev, [d.order_id]: !isSelected }))} />
-                          </td>
-                          <td className="py-2.5 px-3">
-                            <button className="text-primary hover:underline font-semibold flex items-center gap-2" onClick={()=>onEdit(d.order_id)}>
-                              {d.is_template && <IconCube className="w-4 h-4 text-info" />}
-                              {String(d.order_id).padStart(6, '0')}
-                            </button>
-                          </td>
-                          <td className="py-2.5 px-3">{d.order_number || '-'}</td>
-                          <td className="py-2.5 px-3">{d.account_number || '-'}</td>
-                          <td className="py-2.5 px-3">{d.location || '-'}</td>
-                          <td className="py-2.5 px-3 whitespace-nowrap">{d.po_number || '-'}</td>
-                          <td className="py-2.5 px-3">
-                            <div className="text-[13px] text-font-color">
-                              <i className="text-info">{shipLine}</i>
-                              <div className="text-font-color-100">{shipCity}</div>
-                            </div>
-                          </td>
-                          <td className="py-2.5 px-3 text-center">
-                            {d.is_template ? (
-                              <Badge className="min-w-[84px] justify-center" variant="info" outline>Template</Badge>
+                <tbody className="divide-y divide-border-color">
+                  {rows.map((d: any) => {
+                    const isSelected = !!selected[d.order_id]
+                    const shipLine = d?.shipping_address ? `${d.shipping_address.company || ''}${(d.shipping_address.company && d.shipping_address.attention) ? ' | ' : ''}${d.shipping_address.attention || ''}` : ''
+                    const shipCity = d?.shipping_address ? `${d.shipping_address.city ? d.shipping_address.city + ',' : ''} ${d.shipping_address.state_province || ''} ${d.shipping_address.postal_code ? d.shipping_address.postal_code + '-' : ''} ${d.shipping_address.country || ''}` : ''
+                    return (
+                      <tr 
+                        key={d.order_id} 
+                        className={`hover:bg-primary-10 transition-colors ${isSelected ? 'bg-primary-10' : ''}`}
+                      >
+                        <td className="py-4 px-4">
+                          <CheckBox 
+                            checked={isSelected} 
+                            onChange={() => setSelected(prev => ({ ...prev, [d.order_id]: !isSelected }))} 
+                          />
+                        </td>
+                        <td className="py-4 px-4">
+                          <button 
+                            className="text-primary hover:underline font-semibold flex items-center gap-2 group" 
+                            onClick={() => onEdit(d.order_id)}
+                          >
+                            {d.is_template && <IconCube className="w-4 h-4 text-green-600 dark:text-green-400" />}
+                            <span className="font-mono text-sm">{String(d.order_id).padStart(6, '0')}</span>
+                          </button>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="font-mono text-sm text-font-color">
+                            {d.order_number || '-'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-sm text-font-color">
+                            {d.account_number || '-'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-sm text-font-color">
+                            {d.location || '-'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className="text-sm text-font-color whitespace-nowrap">
+                            {d.po_number || '-'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="text-sm">
+                            {shipLine ? (
+                              <>
+                                <div className="text-blue-600 dark:text-blue-400 italic font-medium">
+                                  {shipLine}
+                                </div>
+                                <div className="text-font-color-100 text-xs mt-1">
+                                  {shipCity}
+                                </div>
+                              </>
                             ) : (
-                              <Badge className="min-w-[84px] justify-center" variant="default" outline>Draft</Badge>
+                              <span className="text-font-color-100">-</span>
                             )}
-                          </td>
-                          <td className="py-2.5 px-3 text-right">
-                            <Button size="small" className="mr-2" onClick={()=>onEdit(d.order_id)}>
-                              <IconEdit className="w-4 h-4" />
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          {d.is_template ? (
+                            <Badge className="bg-green-600 text-white dark:bg-green-700 dark:text-green-100 border-green-600 dark:border-green-700">
+                              <IconTemplate className="w-3 h-3 mr-1" />
+                              Template
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-blue-600 text-white dark:bg-blue-700 dark:text-blue-100 border-blue-600 dark:border-blue-700">
+                              <IconFileText className="w-3 h-3 mr-1" />
+                              Draft
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="py-4 px-4 text-right w-56">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button 
+                              size="small" 
+                              variant="outline"
+                              onClick={() => onEdit(d.order_id)}
+                              className="flex items-center gap-1 whitespace-nowrap"
+                            >
+                              <IconEdit className="w-3 h-3" />
                               Edit
                             </Button>
-                            <Button size="small" variant="outline" onClick={()=>onToggleTemplate(d.order_id, !!d.is_template)}>
-                              <IconFilter className="w-4 h-4" />
+                            <Button 
+                              size="small" 
+                              variant="outline"
+                              onClick={() => onToggleTemplate(d.order_id, !!d.is_template)}
+                              className="flex items-center gap-1 whitespace-nowrap"
+                            >
+                              <IconFilter className="w-3 h-3" />
                               {d.is_template ? 'Unset Template' : 'Set Template'}
                             </Button>
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
-            </div>
-          </Card>
-        </div>
+            )}
+          </div>
+        </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Selected Drafts</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {selectedCount} selected draft{selectedCount > 1 ? 's' : ''}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleting}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="danger" 
+              onClick={onDelete}
+              disabled={deleting}
+              className="flex items-center gap-2"
+            >
+              {deleting ? (
+                <>
+                  <IconRefresh className="w-4 h-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <IconTrash className="w-4 h-4" />
+                  Delete {selectedCount} Draft{selectedCount > 1 ? 's' : ''}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

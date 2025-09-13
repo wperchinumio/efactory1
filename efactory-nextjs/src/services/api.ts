@@ -219,6 +219,10 @@ export async function saveDraft(order_header: OrderHeaderDto, order_detail: Orde
     data: { order_header, order_detail },
   };
   const res = await postJson<CreateOrderPointsResponse>('/api/orderpoints', body as any);
+  
+  // Debug logging to see the full response
+  console.log('SaveDraft API response:', res);
+  
   return res.data;
 }
 
@@ -426,6 +430,10 @@ export async function saveRma(
 ): Promise<SaveRmaEntryResponse> {
   const body: SaveRmaEntryRequest = { action: 'save', data: { rma_header, to_receive, to_ship } } as any;
   const res = await postJson<SaveRmaEntryResponse>('/api/returntrak', body);
+  
+  // Debug logging to see the full response
+  console.log('SaveRma API response:', res);
+  
   return res.data as any;
 }
 

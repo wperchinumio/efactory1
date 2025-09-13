@@ -1091,9 +1091,9 @@ body .apexcharts-legend-marker {
 [data-theme="dark"] .sidebar-header svg path,
 [data-theme="dark"] .sidebar-header svg polygon,
 [data-theme="dark"] .sidebar-header svg text,
-[data-theme="dark"] .flex.items-center.gap-3 svg path,
-[data-theme="dark"] .flex.items-center.gap-3 svg polygon,
-[data-theme="dark"] .flex.items-center.gap-3 svg text {
+[data-theme="dark"] .topbar-logo svg path,
+[data-theme="dark"] .topbar-logo svg polygon,
+[data-theme="dark"] .topbar-logo svg text {
   fill: white !important;
 }
 

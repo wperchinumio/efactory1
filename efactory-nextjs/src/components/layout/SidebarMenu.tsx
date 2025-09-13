@@ -563,7 +563,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
                   <button
                     onClick={() => { setActiveTopMenu(menu.keyword); setTopSwitchOpen(false); }}
                     className={`w-full px-4 py-2 flex items-center gap-2 text-left text-sm transition-all whitespace-nowrap
-                      ${activeTopMenu === menu.keyword ? 'text-secondary bg-secondary-10' : 'hover:bg-gray-100'}`}
+                      ${activeTopMenu === menu.keyword ? 'text-secondary bg-secondary-10' : 'hover:bg-primary-10'}`}
                   >
                     <span className='flex items-center w-[18px] h-[18px]'>
                       {renderTopIcon(menu)}

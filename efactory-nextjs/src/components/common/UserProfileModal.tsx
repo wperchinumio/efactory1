@@ -80,7 +80,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
             <button
               onClick={handleClose}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              className="p-1 hover:bg-primary-10 rounded-md transition-colors"
             >
               <IconX className="w-5 h-5" />
             </button>
