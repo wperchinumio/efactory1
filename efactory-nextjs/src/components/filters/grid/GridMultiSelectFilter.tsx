@@ -20,13 +20,15 @@ export default function GridMultiSelectFilter({
   const [isOpen, setIsOpen] = useState(false);
   const [options, setOptions] = useState<FilterOption[]>(config.options || []);
   const [loading, setLoading] = useState(false);
-  const [selectedValues, setSelectedValues] = useState<string[]>(value);
+  const [selectedValues, setSelectedValues] = useState<string[]>(value); // Applied values
+  const [tempSelectedValues, setTempSelectedValues] = useState<string[]>(value); // Temporary selections
   const containerRef = useRef<HTMLDivElement>(null);
   const globalData = useGlobalFilterData();
 
   // Sync with external value changes
   useEffect(() => {
     setSelectedValues(value);
+    setTempSelectedValues(value);
   }, [value]);
 
   // Load options dynamically if not provided in config
@@ -133,23 +135,28 @@ export default function GridMultiSelectFilter({
 
 
   const handleToggleOption = (optionValue: string) => {
-    const newSelectedValues = selectedValues.includes(optionValue)
-      ? selectedValues.filter(v => v !== optionValue)
-      : [...selectedValues, optionValue];
+    const newTempSelectedValues = tempSelectedValues.includes(optionValue)
+      ? tempSelectedValues.filter(v => v !== optionValue)
+      : [...tempSelectedValues, optionValue];
     
-    setSelectedValues(newSelectedValues);
+    setTempSelectedValues(newTempSelectedValues);
   };
 
   const handleApply = () => {
-    onChange(selectedValues);
+    setSelectedValues(tempSelectedValues);
+    onChange(tempSelectedValues);
     setIsOpen(false);
   };
 
   const handleClearAll = () => {
-    setSelectedValues([]);
+    setTempSelectedValues([]);
   };
 
   const handleToggle = () => {
+    if (!isOpen) {
+      // Reset temporary values to match current applied values when opening
+      setTempSelectedValues(selectedValues);
+    }
     setIsOpen(!isOpen);
   };
 
@@ -230,18 +237,12 @@ export default function GridMultiSelectFilter({
               ) : (
                 filteredOptions.map((option, index) => {
                   const optionValue = option.value || option.key;
-                  const isSelected = selectedValues.includes(optionValue);
+                  const isSelected = tempSelectedValues.includes(optionValue);
                   
                   return (
                     <label
                       key={index}
                       className="flex items-center gap-2 px-2 py-1 hover:bg-primary-10 cursor-pointer transition-colors rounded-lg group"
-                      onClick={(e) => {
-                        // Only handle click if it's not on the button itself
-                        if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'SPAN') {
-                          handleToggleOption(optionValue);
-                        }
-                      }}
                     >
                       <button
                         type="button"
@@ -268,7 +269,14 @@ export default function GridMultiSelectFilter({
                           </svg>
                         )}
                       </button>
-                      <span className="text-sm text-font-color flex-1 truncate group-hover:text-primary transition-colors">
+                      <span 
+                        className="text-sm text-font-color flex-1 truncate group-hover:text-primary transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleToggleOption(optionValue);
+                        }}
+                      >
                         {option.key}
                       </span>
                     </label>
@@ -292,7 +300,7 @@ export default function GridMultiSelectFilter({
                 onClick={handleApply}
               >
                 <CheckIcon className="w-3 h-3" />
-                Apply ({selectedValues.length})
+                Apply ({tempSelectedValues.length})
               </button>
             </div>
           </div>
