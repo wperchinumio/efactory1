@@ -15,6 +15,7 @@ interface BrowseItemsDialogProps {
   warningMessage?: string;
   cacheType?: 'auth' | 'ship';
   existingCartItems?: Array<{ item_number: string; quantity: number; voided?: boolean }>;
+  disabled?: boolean;
 }
 
 export default function BrowseItemsDialog({
@@ -25,7 +26,8 @@ export default function BrowseItemsDialog({
   title = "Browse Items",
   warningMessage,
   cacheType = 'auth',
-  existingCartItems = []
+  existingCartItems = [],
+  disabled = false
 }: BrowseItemsDialogProps) {
   const [inventory, setInventory] = useState<Record<string, InventoryItemForCartDto & { quantity: number; price: number }>>({});
   const [itemFilter, setItemFilter] = useState('');
@@ -292,10 +294,11 @@ export default function BrowseItemsDialog({
                               <Input
                                 value={it.quantity > 0 ? String(it.quantity) : ''}
                                 onChange={e => updateInventoryField(it.item_number, 'quantity', e.target.value)}
-                                className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
+                                className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 type="number"
                                 min="0"
                                 placeholder=""
+                                disabled={disabled}
                               />
                             </td>
                           </>
@@ -305,21 +308,23 @@ export default function BrowseItemsDialog({
                               <Input
                                 value={it.quantity > 0 ? String(it.quantity) : ''}
                                 onChange={e => updateInventoryField(it.item_number, 'quantity', e.target.value)}
-                                className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
+                                className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 type="number"
                                 min="0"
                                 placeholder=""
+                                disabled={disabled}
                               />
                             </td>
                             <td className="py-1 px-3 text-right w-24">
                               <Input
                                 value={it.price > 0 ? String(it.price) : ''}
                                 onChange={e => updateInventoryField(it.item_number, 'price', e.target.value)}
-                                className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs"
+                                className="text-right bg-card-color border-border-color text-font-color w-full h-8 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 placeholder=""
+                                disabled={disabled}
                               />
                             </td>
                             <td className="py-1 px-3 text-right text-font-color font-mono whitespace-nowrap w-20">{it.qty_net}</td>

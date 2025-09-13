@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { getAuthState } from '@/lib/auth/guards';
 import Button from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui';
-import { Input, Label, Tabs, TabsList, TabsTrigger, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Textarea, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui';
+import { Input, Label, Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, Textarea, Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui';
 import BrowseItemsDialog from '@/components/common/BrowseItemsDialog';
 import CountryFilterCombobox from '@/components/filters/CountryFilterCombobox';
 import StateFilterCombobox from '@/components/filters/StateFilterCombobox';
@@ -759,7 +759,7 @@ export default function ReturnTrakEntryPage() {
     return warehouse && warehouse.trim() !== '';
   }
 
-  // Always enable Browse Items (as requested by user)
+  // Always enable Browse Items button (as requested by user)
   function shouldEnableBrowseItems() {
     return true; // Always enabled as per user request
   }
@@ -1340,12 +1340,29 @@ export default function ReturnTrakEntryPage() {
                         disabled={!hasValidWarehouse()}
                 />
                     </div>
-                <Tabs value={activeCartTab} onValueChange={v=>setActiveCartTab(v as any)}>
-                      <TabsList className="h-8">
-                        <TabsTrigger value="auth" className="text-xs px-3">Auth</TabsTrigger>
-                        <TabsTrigger value="ship" disabled={!isToShipEnabled} className="text-xs px-3">To Ship</TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                {/* Custom Toggle Switch for Auth/To Ship */}
+                <div className="flex items-center bg-gray-100 rounded-lg p-1 h-8">
+                  <button
+                    onClick={() => setActiveCartTab('auth')}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
+                      activeCartTab === 'auth'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    Auth
+                  </button>
+                  <button
+                    onClick={() => setActiveCartTab('ship')}
+                    className={`px-3 py-1 text-xs font-medium rounded-md transition-all duration-200 ${
+                      activeCartTab === 'ship'
+                        ? 'bg-white text-gray-900 shadow-sm'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    To Ship
+                  </button>
+                </div>
            <Button
              size="small"
              variant="outline"
@@ -1998,6 +2015,7 @@ export default function ReturnTrakEntryPage() {
           warningMessage={!hasValidWarehouse() ? "Please select a warehouse to browse items" : ""}
           cacheType={activeCartTab as 'auth' | 'ship'}
           existingCartItems={activeCartTab === 'auth' ? toReceive : toShip}
+          disabled={!hasValidWarehouse()}
         />
 
       {/* Edit Line Modal */}
