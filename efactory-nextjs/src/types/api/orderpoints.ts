@@ -275,6 +275,22 @@ export interface ListDraftsResponse {
 
 export type ApiEnvelope<T> = ApiResponse<T>;
 
+// ==========================
+// Mass Upload
+// ==========================
+export type MassUploadEnvironment = 'verify' | 'sandbox' | 'production';
+
+export interface MassUploadParamsHeader {
+  func: 'mass_upload';
+  environment: MassUploadEnvironment;
+}
+
+export interface MassUploadResponse {
+  // Legacy upload returns 200 with { data: ... } or { error_message }
+  // On success, UI only logs a success timestamp; server may return additional info
+  message?: string;
+}
+
 // OrderPoints Settings
 export interface OrderSettingsDto {
   manual: boolean;

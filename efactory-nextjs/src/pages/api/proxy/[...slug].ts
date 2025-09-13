@@ -93,11 +93,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 			redirect: 'manual',
 		});
 
-		const contentType = upstream.headers.get('content-type') || 'application/json';
-		const text = await upstream.text();
+		const contentType = upstream.headers.get('content-type') || '';
+		const disposition = upstream.headers.get('content-disposition') || '';
 		res.status(upstream.status);
-		res.setHeader('content-type', contentType);
-		return res.send(text);
+		if (contentType) res.setHeader('content-type', contentType);
+		if (disposition) res.setHeader('content-disposition', disposition);
+
+		// Stream binary (like .xlsx) correctly; use text only for JSON/text
+		if (contentType.includes('application/json') || contentType.startsWith('text/')) {
+			const text = await upstream.text();
+			return res.send(text);
+		} else {
+			const arrayBuffer = await upstream.arrayBuffer();
+			const buffer = Buffer.from(arrayBuffer);
+			return res.send(buffer);
+		}
 	} catch (e: any) {
 		return res.status(502).json({ error_message: 'Proxy error', details: e?.message });
 	}

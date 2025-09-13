@@ -66,6 +66,7 @@ import type {
   ReadGeneralSettingsRequest,
   ReadGeneralSettingsResponse,
   ExportAddressesRequest,
+  MassUploadEnvironment,
 } from '@/types/api/orderpoints';
 import type {
   FeedbackSubmissionRequest,
@@ -287,6 +288,17 @@ export async function importAddresses(file: File, action: string = 'import'): Pr
   const form = new FormData();
   form.append('file', file);
   await postFormData('/api/upload', form, { 'X-Upload-Params': JSON.stringify({ func: 'address_upload', action }) });
+}
+
+// Mass Upload - OrderPoints
+export async function uploadMassOrders(file: File, environment: MassUploadEnvironment): Promise<{ message?: string }> {
+  const form = new FormData();
+  form.append('file', file);
+  const headers = { 'X-Upload-Params': JSON.stringify({ func: 'mass_upload', environment }) } as Record<string, string>;
+  const res = await postFormData<{ data?: { message?: string }; message?: string; error_message?: string }>('/api/upload', form, headers);
+  // Normalize message from legacy which may return { data } or plain { message }
+  const message = (res as any)?.data?.message || (res as any)?.message;
+  return { message };
 }
 
 // Drafts
