@@ -32,6 +32,8 @@ export interface LunoAgGridProps<T = any> {
   showFilters?: boolean; // Whether to show the filter panel
   // Emit raw filter state when it changes (for toolbar badges, etc.)
   onFilterStateChange?: (state: FilterState) => void;
+  // Provide refresh/reset controls to parent without remounting (preserve AG Grid filter model)
+  onProvideRefresh?: (api: { refresh: () => void; resetAll: () => void }) => void;
 }
 
 // Ensure community modules are registered once
@@ -237,6 +239,7 @@ export function LunoAgGrid<T = any>({
   filters = {},
   showFilters = true,
   onFilterStateChange,
+  onProvideRefresh,
 }: LunoAgGridProps<T>) {
   const gridApiRef = useRef<GridApi | null>(null);
   const [rows, setRows] = useState<T[]>([]);
@@ -685,6 +688,24 @@ export function LunoAgGrid<T = any>({
       fetchPage(1);
     }
   }, [rowsUrl, cachedView, selectedView]);
+
+  // Expose refresh/reset API to parent so refresh does not reset grid filters
+  useEffect(() => {
+    if (!onProvideRefresh) return;
+    const api = {
+      refresh: () => {
+        // Re-fetch current page using current AG Grid filter model and sort
+        const nextPage = page || 1;
+        fetchPage(nextPage);
+      },
+      resetAll: () => {
+        handleResetAll();
+      }
+    };
+    try {
+      onProvideRefresh(api);
+    } catch {}
+  }, [onProvideRefresh, page, selectedView, rowsUrl, cachedView]);
 
   // Handle window resize to refresh grid on mobile/desktop transitions
   useEffect(() => {

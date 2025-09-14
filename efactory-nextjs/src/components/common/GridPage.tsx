@@ -97,6 +97,7 @@ export default function GridPage({
   const [filterState, setFilterState] = useState<FilterState>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const loadedResourceRef = React.useRef<string | null>(null);
+  const gridControlsRef = React.useRef<{ refresh: () => void; resetAll: () => void } | null>(null);
 
   useEffect(() => {
     // Always attempt load once per mount; allow rerun if resource changes
@@ -171,8 +172,14 @@ export default function GridPage({
   }, [router]);
 
   const handleRefresh = useCallback(() => {
-    // Refresh the grid by incrementing the refresh key
-    // This will force the LunoAgGrid to re-fetch data
+    // Prefer grid-level refresh to preserve AG Grid header filters
+    if (gridControlsRef.current) {
+      try {
+        gridControlsRef.current.refresh();
+        return;
+      } catch {}
+    }
+    // Fallback: remount grid (may reset header filters)
     setRefreshKey(prev => prev + 1);
   }, []);
 
@@ -247,6 +254,7 @@ export default function GridPage({
         filters={filters}
         showFilters={true}
         onFilterStateChange={(state) => setFilterState(state)}
+        onProvideRefresh={(api) => { gridControlsRef.current = api; }}
       />
     </div>
   );
