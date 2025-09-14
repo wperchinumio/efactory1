@@ -82,12 +82,12 @@ export default function ManageFiltersModal({ open, onOpenChange, resource }: Pro
               {filters.map((f) => (
                 <div key={f.id} className="flex items-center justify-between">
                   <button className="text-left text-sm" onClick={() => startEdit(f.id)}>{f.name}</button>
-                  <Button size="sm" variant="outline" onClick={() => handleDelete(f.id)}>Delete</Button>
+                  <Button size="small" variant="outline" onClick={() => handleDelete(f.id)}>Delete</Button>
                 </div>
               ))}
               {filters.length === 0 && <div className="text-xs text-muted">No filters yet.</div>}
             </div>
-            <Button className="mt-2" size="sm" onClick={startCreate}>New Filter</Button>
+            <Button className="mt-2" size="small" onClick={startCreate}>New Filter</Button>
           </div>
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -111,13 +111,14 @@ export default function ManageFiltersModal({ open, onOpenChange, resource }: Pro
                 }}
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
-              <Button onClick={handleSave} disabled={saving || !name}>{saving ? 'Saving…' : 'Save'}</Button>
-            </div>
           </div>
         </div>
-        <DialogFooter />
+        <DialogFooter>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+            <Button onClick={handleSave} disabled={saving || !name}>{saving ? 'Saving…' : 'Save'}</Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

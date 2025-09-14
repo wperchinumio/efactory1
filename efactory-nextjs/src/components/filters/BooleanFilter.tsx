@@ -1,5 +1,5 @@
 import React from 'react';
-import CheckBox from '@/components/ui/checkbox';
+import CheckBox from '@/components/ui/CheckBox';
 
 interface BooleanFilterProps {
   label: string;

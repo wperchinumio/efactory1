@@ -246,7 +246,7 @@ export default function GridFilters({
       
       case 'BOOLEAN_QF':
         // Extract boolean value from FilterValue object
-        const booleanValue = value ? (value.value === 'true') : false;
+        const booleanValue = value && !Array.isArray(value) ? (value.value === 'true') : false;
         return (
           <FilterBoolean
             key={key}
