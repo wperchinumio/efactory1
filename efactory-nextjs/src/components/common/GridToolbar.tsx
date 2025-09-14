@@ -145,18 +145,21 @@ export default function GridToolbar({
       />
       <ManageFiltersModal open={manageOpen} onOpenChange={setManageOpen} resource={resource} />
       
-      {/* Luno-themed toolbar */}
-      <div className="bg-card-color border border-border-color rounded-lg p-3 mb-4">
-        <div className="flex items-center justify-between">
-          {/* Left side - Title */}
-          <div className="flex items-center">
-            <h2 className="text-sm font-semibold text-font-color">
-              {title}
-            </h2>
+    {/* Luno-themed toolbar with gradient header */}
+    <div className="bg-gradient-to-r from-card-color to-card-color/95 border border-border-color p-3 mb-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
+          {/* Left side - Title with gradient accent */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-1 h-6 bg-gradient-to-b from-primary to-primary/70 rounded-full"></div>
+              <h2 className="text-lg font-bold text-font-color tracking-tight">
+                {title}
+              </h2>
+            </div>
           </div>
 
           {/* Right side - Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Views Split Button */}
             <div className="inline-flex rounded-md border border-border-color bg-card-color shadow-sm">
               {/* Left side - Refresh button */}

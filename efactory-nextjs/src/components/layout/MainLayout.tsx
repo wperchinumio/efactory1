@@ -23,7 +23,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, userApps }) => {
 
   return (
     <NavigationProvider userApps={userApps}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--body-color)' }}>
         {/* Main header with logo and navigation */}
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8">

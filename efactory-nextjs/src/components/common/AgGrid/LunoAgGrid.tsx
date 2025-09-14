@@ -10,7 +10,7 @@ import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, Gr
 import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer } from './renderers';
 import GridFilters from '@/components/filters/grid/GridFilters';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import LoadingSpinner, { SkeletonGrid } from '@/components/common/LoadingSpinner';
 
 export interface LunoAgGridProps<T = any> {
   resource: string; // e.g., 'fulfillment-open'
@@ -196,8 +196,8 @@ function getThemeAwareStyles(): React.CSSProperties {
     '--ag-header-font-size': '14px',
     '--ag-cell-horizontal-padding': '12px',
     '--ag-cell-vertical-padding': '8px',
-    '--ag-header-height': '40px',
-    '--ag-row-height': '40px',
+    '--ag-header-height': '44px',
+    '--ag-row-height': '44px',
     '--ag-border-radius': '6px',
     '--ag-header-column-separator-display': 'block',
     '--ag-header-column-separator-color': isDark ? '#4c4c4c' : '#e7e7e7',
@@ -428,23 +428,27 @@ export function LunoAgGrid<T = any>({
       preCols.push({
         headerName: '#',
         field: '__row_index__',
-        width: 70,
-        minWidth: 50,
-        maxWidth: 90,
+        width: 80,
+        minWidth: 60,
+        maxWidth: 100,
         pinned: 'left',
         suppressHeaderMenuButton: true,
         sortable: false,
         valueGetter: (p) => (p.data?.row_id ? p.data.row_id : (p.node?.rowIndex ?? 0) + 1),
-        cellClass: 'text-right font-medium',
-        cellStyle: { color: 'var(--ag-foreground-color)' },
+        cellClass: 'text-right font-semibold text-font-color-100',
+        cellStyle: { 
+          color: 'var(--ag-foreground-color)',
+          fontSize: '13px',
+          letterSpacing: '0.025em'
+        },
       });
     }
     if (showOrderTypeColumn) {
       preCols.push({
         headerName: '',
         field: '__order_type__',
-        width: 110,
-        minWidth: 90,
+        width: 130,
+        minWidth: 110,
         pinned: 'left',
         sortable: false,
         cellRenderer: (p: any) => {
@@ -453,13 +457,19 @@ export function LunoAgGrid<T = any>({
           const status: number = Number(p.data?.order_status ?? 1);
           const statusLabel = status === 0 ? 'ON HOLD' : status === 2 ? 'RUSH' : '';
           return (
-            <div className="flex flex-col gap-0.5 leading-tight">
+            <div className="flex flex-col gap-1 leading-tight p-1">
               <div className="flex items-center justify-between gap-2">
                 <OrderTypePill orderType={orderType} />
-                <span className="text-xs text-[var(--font-color-100)]">{location || ''}</span>
+                <span className="text-xs font-medium text-font-color-100 bg-card-color/50 px-2 py-0.5 rounded-full">
+                  {location || ''}
+                </span>
               </div>
               {statusLabel ? (
-                <span className="mt-0.5 inline-block px-1.5 py-0.5 rounded text-[10px] bg-neutral-800 text-white">
+                <span className={`mt-1 inline-block px-2 py-1 rounded-full text-[10px] font-bold tracking-wide ${
+                  statusLabel === 'ON HOLD' 
+                    ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                    : 'bg-red-100 text-red-800 border border-red-200'
+                }`}>
                   {statusLabel}
                 </span>
               ) : null}
@@ -708,15 +718,8 @@ export function LunoAgGrid<T = any>({
     };
     
     return (
-      <div 
-        className="flex items-center justify-between px-4 py-3 text-sm border-t min-h-[48px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-        style={{
-          color: 'var(--ag-foreground-color)',
-          backgroundColor: 'var(--ag-header-background-color)',
-          borderColor: 'var(--ag-border-color)'
-        }}
-      >
-        <div className="font-medium">
+      <div className="custom-pagination-panel flex items-center justify-between px-4 py-3 text-sm border-t min-h-[48px] bg-card-color border-border-color">
+        <div className="pagination-text font-medium text-font-color">
           {total > 0 ? `${startRow} to ${endRow} of ${total.toLocaleString()} ${paginationWord}` : `0 ${paginationWord}`}
         </div>
         {total > 0 && (
@@ -724,19 +727,19 @@ export function LunoAgGrid<T = any>({
             <button
               onClick={() => fetchPage(1, undefined, undefined, currentSort)}
               disabled={page === 1}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+              className="pagination-button btn btn-outline-secondary px-3 py-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               First
             </button>
             <button
               onClick={() => fetchPage(page - 1, undefined, undefined, currentSort)}
               disabled={page === 1}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+              className="pagination-button btn btn-outline-secondary px-3 py-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
             <div className="flex items-center space-x-1 px-2">
-              <span className="text-xs text-gray-600 dark:text-gray-400">Page</span>
+              <span className="text-xs text-font-color-100">Page</span>
               <input
                 type="number"
                 value={pageInput}
@@ -745,21 +748,21 @@ export function LunoAgGrid<T = any>({
                 onBlur={handlePageInputBlur}
                 min="1"
                 max={totalPages}
-                className="w-12 px-2 py-1 text-xs text-center border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="pagination-input w-12 px-2 py-1 text-xs text-center border border-border-color rounded bg-card-color text-font-color focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
-              <span className="text-xs text-gray-600 dark:text-gray-400">of {totalPages}</span>
+              <span className="text-xs text-font-color-100">of {totalPages}</span>
             </div>
             <button
               onClick={() => fetchPage(page + 1, undefined, undefined, currentSort)}
               disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+              className="pagination-button btn btn-outline-secondary px-3 py-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
             <button
               onClick={() => fetchPage(totalPages, undefined, undefined, currentSort)}
               disabled={page >= totalPages}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
+              className="pagination-button btn btn-outline-secondary px-3 py-1.5 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Last
             </button>
@@ -770,13 +773,22 @@ export function LunoAgGrid<T = any>({
   };
 
   const containerClass = containerSize === 'compact' 
-    ? 'grid-container-compact' 
+    ? 'modern-grid-container grid-container-compact' 
     : containerSize === 'large' 
-    ? 'grid-container-large' 
-    : 'grid-container';
+    ? 'modern-grid-container grid-container-large' 
+    : 'modern-grid-container grid-container';
 
   
   
+  // Show skeleton loader during initial load
+  if (isInitialLoad && loading) {
+    return (
+      <div className="w-full">
+        <SkeletonGrid rows={8} columns={6} />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       {/* Filter Panel */}
@@ -834,7 +846,7 @@ export function LunoAgGrid<T = any>({
               color: 'var(--ag-foreground-color)',
             })}
             headerHeight={44}
-            rowHeight={48}
+            rowHeight={44}
             suppressRowTransform={true}
             suppressNoRowsOverlay={loading || !rowsUrl}
           />

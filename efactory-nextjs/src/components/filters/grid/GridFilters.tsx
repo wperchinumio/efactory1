@@ -285,15 +285,15 @@ export default function GridFilters({
   };
 
   return (
-    <div className={`bg-card-color border-b border-border-color ${className}`} aria-disabled={disabled}>
+    <div className={`bg-card-color border-l border-r border-b border-border-color ${className}`} aria-disabled={disabled}>
       {/* Filter Panel - Always Visible */}
-      <div className="px-6 py-1">
+      <div className="px-6 pt-1 pb-3">
         <div className="flex items-center justify-between">
           <div className={`flex flex-wrap items-center gap-2 ${disabled ? 'pointer-events-none opacity-60' : ''}`}>
             {Object.entries(filters).map(([key, config]) => (
-              <div key={key} className="flex-shrink-0">
+              <div key={key} className="flex-shrink-0 flex flex-col items-start">
                 {/* Filter Label */}
-                <div className="text-[10px] font-medium text-font-color-100">
+                <div className="text-[10px] font-medium text-font-color-100 mb-1 pl-1">
                   {config.title}
                 </div>
                 {renderFilter(key, config)}

@@ -1,0 +1,2063 @@
+/* Modern AG Grid Styling - Consistent with Luno Theme */
+
+/* Grid Container */
+.modern-grid-container {
+  overflow: hidden;
+  background: var(--card-color);
+  border: 1px solid var(--border-color);
+  border-radius: 0 !important;
+}
+
+/* Override AG Grid default border radius */
+.modern-grid-container .ag-root-wrapper {
+  border-radius: 0 !important;
+}
+
+.modern-grid-container .ag-root {
+  border-radius: 0 !important;
+}
+
+/* AG Grid Input Filters - Target ALL actual input elements inside header filters */
+.modern-grid-container .ag-floating-filter-input input,
+.modern-grid-container .ag-text-field-input,
+.modern-grid-container .ag-number-field-input,
+.modern-grid-container .ag-date-field-input,
+.modern-grid-container .ag-floating-filter-body input,
+.modern-grid-container .ag-floating-filter-wrapper input,
+.modern-grid-container .ag-header-cell input,
+.modern-grid-container .ag-header-cell-wrapper input,
+.modern-grid-container input[class*="ag-"]:not([type="checkbox"]):not([type="radio"]) {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 28px !important;
+}
+
+.modern-grid-container .ag-floating-filter-input input:focus,
+.modern-grid-container .ag-text-field-input:focus,
+.modern-grid-container .ag-number-field-input:focus,
+.modern-grid-container .ag-date-field-input:focus,
+.modern-grid-container .ag-floating-filter-body input:focus,
+.modern-grid-container .ag-floating-filter-wrapper input:focus,
+.modern-grid-container .ag-header-cell input:focus,
+.modern-grid-container .ag-header-cell-wrapper input:focus,
+.modern-grid-container input[class*="ag-"]:not([type="checkbox"]):not([type="radio"]):focus {
+  outline: none !important;
+  border-radius: 6px !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.modern-grid-container .ag-floating-filter-input input:hover,
+.modern-grid-container .ag-text-field-input:hover,
+.modern-grid-container .ag-number-field-input:hover,
+.modern-grid-container .ag-date-field-input:hover,
+.modern-grid-container .ag-floating-filter-body input:hover,
+.modern-grid-container .ag-floating-filter-wrapper input:hover,
+.modern-grid-container .ag-header-cell input:hover,
+.modern-grid-container .ag-header-cell-wrapper input:hover,
+.modern-grid-container input[class*="ag-"]:not([type="checkbox"]):not([type="radio"]):hover {
+  border-color: var(--primary-10) !important;
+}
+
+.modern-grid-container .ag-floating-filter-input input::placeholder,
+.modern-grid-container .ag-text-field-input::placeholder,
+.modern-grid-container .ag-number-field-input::placeholder,
+.modern-grid-container .ag-date-field-input::placeholder,
+.modern-grid-container .ag-floating-filter-body input::placeholder,
+.modern-grid-container .ag-floating-filter-wrapper input::placeholder,
+.modern-grid-container .ag-header-cell input::placeholder,
+.modern-grid-container .ag-header-cell-wrapper input::placeholder,
+.modern-grid-container input[class*="ag-"]:not([type="checkbox"]):not([type="radio"])::placeholder {
+  color: var(--font-color-100) !important;
+  opacity: 0.7 !important;
+}
+
+/* Remove vertical bars and corner styling from AG Grid */
+.modern-grid-container .ag-floating-filter-input::before,
+.modern-grid-container .ag-floating-filter-input::after {
+  display: none !important;
+}
+
+.modern-grid-container .ag-floating-filter-input .ag-floating-filter-button {
+  border-radius: 0 !important;
+}
+
+/* Dark mode support for AG Grid inputs - Target ALL actual input elements */
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-input input,
+[data-theme="dark"] .modern-grid-container .ag-text-field-input,
+[data-theme="dark"] .modern-grid-container .ag-number-field-input,
+[data-theme="dark"] .modern-grid-container .ag-date-field-input,
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-body input,
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-wrapper input,
+[data-theme="dark"] .modern-grid-container .ag-header-cell input,
+[data-theme="dark"] .modern-grid-container .ag-header-cell-wrapper input,
+[data-theme="dark"] .modern-grid-container input[class*="ag-"]:not([type="checkbox"]):not([type="radio"]) {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-input input:focus,
+[data-theme="dark"] .modern-grid-container .ag-text-field-input:focus,
+[data-theme="dark"] .modern-grid-container .ag-number-field-input:focus,
+[data-theme="dark"] .modern-grid-container .ag-date-field-input:focus,
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-body input:focus,
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-wrapper input:focus,
+[data-theme="dark"] .modern-grid-container .ag-header-cell input:focus,
+[data-theme="dark"] .modern-grid-container .ag-header-cell-wrapper input:focus,
+[data-theme="dark"] .modern-grid-container input[class*="ag-"]:not([type="checkbox"]):not([type="radio"]):focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-input input:hover,
+[data-theme="dark"] .modern-grid-container .ag-text-field-input:hover,
+[data-theme="dark"] .modern-grid-container .ag-number-field-input:hover,
+[data-theme="dark"] .modern-grid-container .ag-date-field-input:hover,
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-body input:hover,
+[data-theme="dark"] .modern-grid-container .ag-floating-filter-wrapper input:hover,
+[data-theme="dark"] .modern-grid-container .ag-header-cell input:hover,
+[data-theme="dark"] .modern-grid-container .ag-header-cell-wrapper input:hover,
+[data-theme="dark"] .modern-grid-container input[class*="ag-"]:not([type="checkbox"]):not([type="radio"]):hover {
+  border-color: var(--primary-10) !important;
+}
+
+/* Additional aggressive targeting for any missed AG Grid inputs */
+.modern-grid-container .ag-header input[type="text"],
+.modern-grid-container .ag-header input[type="number"],
+.modern-grid-container .ag-header input[type="date"],
+.modern-grid-container .ag-header input[type="search"],
+.modern-grid-container .ag-floating-filter input[type="text"],
+.modern-grid-container .ag-floating-filter input[type="number"],
+.modern-grid-container .ag-floating-filter input[type="date"],
+.modern-grid-container .ag-floating-filter input[type="search"] {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 28px !important;
+}
+
+.modern-grid-container .ag-header input[type="text"]:focus,
+.modern-grid-container .ag-header input[type="number"]:focus,
+.modern-grid-container .ag-header input[type="date"]:focus,
+.modern-grid-container .ag-header input[type="search"]:focus,
+.modern-grid-container .ag-floating-filter input[type="text"]:focus,
+.modern-grid-container .ag-floating-filter input[type="number"]:focus,
+.modern-grid-container .ag-floating-filter input[type="date"]:focus,
+.modern-grid-container .ag-floating-filter input[type="search"]:focus {
+  outline: none !important;
+  border-radius: 6px !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.modern-grid-container .ag-header input[type="text"]:hover,
+.modern-grid-container .ag-header input[type="number"]:hover,
+.modern-grid-container .ag-header input[type="date"]:hover,
+.modern-grid-container .ag-header input[type="search"]:hover,
+.modern-grid-container .ag-floating-filter input[type="text"]:hover,
+.modern-grid-container .ag-floating-filter input[type="number"]:hover,
+.modern-grid-container .ag-floating-filter input[type="date"]:hover,
+.modern-grid-container .ag-floating-filter input[type="search"]:hover {
+  border-color: var(--primary-10) !important;
+}
+
+/* AG Grid Popup Filters - Target input elements in filter popups/menus */
+.ag-filter-popup input[type="text"],
+.ag-filter-popup input[type="number"],
+.ag-filter-popup input[type="date"],
+.ag-filter-popup input[type="search"],
+.ag-menu input[type="text"],
+.ag-menu input[type="number"],
+.ag-menu input[type="date"],
+.ag-menu input[type="search"],
+.ag-popup input[type="text"],
+.ag-popup input[type="number"],
+.ag-popup input[type="date"],
+.ag-popup input[type="search"],
+.ag-filter-body input[type="text"],
+.ag-filter-body input[type="number"],
+.ag-filter-body input[type="date"],
+.ag-filter-body input[type="search"],
+.ag-text-field-input-wrapper input,
+.ag-number-field-input-wrapper input,
+.ag-date-field-input-wrapper input {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important; /* Normal padding */
+  text-indent: 20px !important; /* Move text to avoid icon overlap */
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 28px !important;
+}
+
+.ag-filter-popup input[type="text"]:focus,
+.ag-filter-popup input[type="number"]:focus,
+.ag-filter-popup input[type="date"]:focus,
+.ag-filter-popup input[type="search"]:focus,
+.ag-menu input[type="text"]:focus,
+.ag-menu input[type="number"]:focus,
+.ag-menu input[type="date"]:focus,
+.ag-menu input[type="search"]:focus,
+.ag-popup input[type="text"]:focus,
+.ag-popup input[type="number"]:focus,
+.ag-popup input[type="date"]:focus,
+.ag-popup input[type="search"]:focus,
+.ag-filter-body input[type="text"]:focus,
+.ag-filter-body input[type="number"]:focus,
+.ag-filter-body input[type="date"]:focus,
+.ag-filter-body input[type="search"]:focus,
+.ag-text-field-input-wrapper input:focus,
+.ag-number-field-input-wrapper input:focus,
+.ag-date-field-input-wrapper input:focus {
+  outline: none !important;
+  border-radius: 6px !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-filter-popup input[type="text"]:hover,
+.ag-filter-popup input[type="number"]:hover,
+.ag-filter-popup input[type="date"]:hover,
+.ag-filter-popup input[type="search"]:hover,
+.ag-menu input[type="text"]:hover,
+.ag-menu input[type="number"]:hover,
+.ag-menu input[type="date"]:hover,
+.ag-menu input[type="search"]:hover,
+.ag-popup input[type="text"]:hover,
+.ag-popup input[type="number"]:hover,
+.ag-popup input[type="date"]:hover,
+.ag-popup input[type="search"]:hover,
+.ag-filter-body input[type="text"]:hover,
+.ag-filter-body input[type="number"]:hover,
+.ag-filter-body input[type="date"]:hover,
+.ag-filter-body input[type="search"]:hover,
+.ag-text-field-input-wrapper input:hover,
+.ag-number-field-input-wrapper input:hover,
+.ag-date-field-input-wrapper input:hover {
+  border-color: var(--primary-10) !important;
+}
+
+.ag-filter-popup input::placeholder,
+.ag-menu input::placeholder,
+.ag-popup input::placeholder,
+.ag-filter-body input::placeholder,
+.ag-text-field-input-wrapper input::placeholder,
+.ag-number-field-input-wrapper input::placeholder,
+.ag-date-field-input-wrapper input::placeholder {
+  color: var(--font-color-100) !important;
+  opacity: 0.7 !important;
+}
+
+/* Dark mode support for AG Grid popup filters */
+[data-theme="dark"] .ag-filter-popup input[type="text"],
+[data-theme="dark"] .ag-filter-popup input[type="number"],
+[data-theme="dark"] .ag-filter-popup input[type="date"],
+[data-theme="dark"] .ag-filter-popup input[type="search"],
+[data-theme="dark"] .ag-menu input[type="text"],
+[data-theme="dark"] .ag-menu input[type="number"],
+[data-theme="dark"] .ag-menu input[type="date"],
+[data-theme="dark"] .ag-menu input[type="search"],
+[data-theme="dark"] .ag-popup input[type="text"],
+[data-theme="dark"] .ag-popup input[type="number"],
+[data-theme="dark"] .ag-popup input[type="date"],
+[data-theme="dark"] .ag-popup input[type="search"],
+[data-theme="dark"] .ag-filter-body input[type="text"],
+[data-theme="dark"] .ag-filter-body input[type="number"],
+[data-theme="dark"] .ag-filter-body input[type="date"],
+[data-theme="dark"] .ag-filter-body input[type="search"],
+[data-theme="dark"] .ag-text-field-input-wrapper input,
+[data-theme="dark"] .ag-number-field-input-wrapper input,
+[data-theme="dark"] .ag-date-field-input-wrapper input {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+[data-theme="dark"] .ag-filter-popup input:focus,
+[data-theme="dark"] .ag-menu input:focus,
+[data-theme="dark"] .ag-popup input:focus,
+[data-theme="dark"] .ag-filter-body input:focus,
+[data-theme="dark"] .ag-text-field-input-wrapper input:focus,
+[data-theme="dark"] .ag-number-field-input-wrapper input:focus,
+[data-theme="dark"] .ag-date-field-input-wrapper input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+[data-theme="dark"] .ag-filter-popup input:hover,
+[data-theme="dark"] .ag-menu input:hover,
+[data-theme="dark"] .ag-popup input:hover,
+[data-theme="dark"] .ag-filter-body input:hover,
+[data-theme="dark"] .ag-text-field-input-wrapper input:hover,
+[data-theme="dark"] .ag-number-field-input-wrapper input:hover,
+[data-theme="dark"] .ag-date-field-input-wrapper input:hover {
+  border-color: var(--primary-10) !important;
+}
+
+/* Theme variant support for AG Grid popup filters */
+html[data-luno-theme="indigo"] .ag-filter-popup input:focus,
+html[data-luno-theme="indigo"] .ag-menu input:focus,
+html[data-luno-theme="indigo"] .ag-popup input:focus,
+html[data-luno-theme="indigo"] .ag-filter-body input:focus,
+html[data-luno-theme="indigo"] .ag-text-field-input-wrapper input:focus,
+html[data-luno-theme="blue"] .ag-filter-popup input:focus,
+html[data-luno-theme="blue"] .ag-menu input:focus,
+html[data-luno-theme="blue"] .ag-popup input:focus,
+html[data-luno-theme="blue"] .ag-filter-body input:focus,
+html[data-luno-theme="blue"] .ag-text-field-input-wrapper input:focus,
+html[data-luno-theme="cyan"] .ag-filter-popup input:focus,
+html[data-luno-theme="cyan"] .ag-menu input:focus,
+html[data-luno-theme="cyan"] .ag-popup input:focus,
+html[data-luno-theme="cyan"] .ag-filter-body input:focus,
+html[data-luno-theme="cyan"] .ag-text-field-input-wrapper input:focus,
+html[data-luno-theme="green"] .ag-filter-popup input:focus,
+html[data-luno-theme="green"] .ag-menu input:focus,
+html[data-luno-theme="green"] .ag-popup input:focus,
+html[data-luno-theme="green"] .ag-filter-body input:focus,
+html[data-luno-theme="green"] .ag-text-field-input-wrapper input:focus,
+html[data-luno-theme="orange"] .ag-filter-popup input:focus,
+html[data-luno-theme="orange"] .ag-menu input:focus,
+html[data-luno-theme="orange"] .ag-popup input:focus,
+html[data-luno-theme="orange"] .ag-filter-body input:focus,
+html[data-luno-theme="orange"] .ag-text-field-input-wrapper input:focus,
+html[data-luno-theme="blush"] .ag-filter-popup input:focus,
+html[data-luno-theme="blush"] .ag-menu input:focus,
+html[data-luno-theme="blush"] .ag-popup input:focus,
+html[data-luno-theme="blush"] .ag-filter-body input:focus,
+html[data-luno-theme="blush"] .ag-text-field-input-wrapper input:focus,
+html[data-luno-theme="red"] .ag-filter-popup input:focus,
+html[data-luno-theme="red"] .ag-menu input:focus,
+html[data-luno-theme="red"] .ag-popup input:focus,
+html[data-luno-theme="red"] .ag-filter-body input:focus,
+html[data-luno-theme="red"] .ag-text-field-input-wrapper input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Additional comprehensive targeting for AG Grid popup inputs */
+.ag-filter input,
+.ag-filter-wrapper input,
+.ag-filter-condition input,
+.ag-filter-from input,
+.ag-filter-to input,
+.ag-simple-filter input,
+.ag-number-filter input,
+.ag-text-filter input,
+.ag-date-filter input,
+.ag-set-filter input,
+.ag-multi-filter input,
+.ag-column-drop input,
+.ag-tool-panel input {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important; /* Normal padding */
+  text-indent: 20px !important; /* Move text to avoid icon overlap */
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 28px !important;
+}
+
+.ag-filter input:focus,
+.ag-filter-wrapper input:focus,
+.ag-filter-condition input:focus,
+.ag-filter-from input:focus,
+.ag-filter-to input:focus,
+.ag-simple-filter input:focus,
+.ag-number-filter input:focus,
+.ag-text-filter input:focus,
+.ag-date-filter input:focus,
+.ag-set-filter input:focus,
+.ag-multi-filter input:focus,
+.ag-column-drop input:focus,
+.ag-tool-panel input:focus {
+  outline: none !important;
+  border-radius: 6px !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-filter input:hover,
+.ag-filter-wrapper input:hover,
+.ag-filter-condition input:hover,
+.ag-filter-from input:hover,
+.ag-filter-to input:hover,
+.ag-simple-filter input:hover,
+.ag-number-filter input:hover,
+.ag-text-filter input:hover,
+.ag-date-filter input:hover,
+.ag-set-filter input:hover,
+.ag-multi-filter input:hover,
+.ag-column-drop input:hover,
+.ag-tool-panel input:hover {
+  border-color: var(--primary-10) !important;
+}
+
+/* Fix AG Grid filter input icon overlap - use text-indent approach */
+.ag-filter-popup .ag-input-wrapper input,
+.ag-menu .ag-input-wrapper input,
+.ag-popup .ag-input-wrapper input,
+.ag-filter .ag-input-wrapper input,
+.ag-filter-popup input[placeholder],
+.ag-menu input[placeholder],
+.ag-popup input[placeholder],
+.ag-filter input[placeholder] {
+  text-indent: 20px !important; /* Move text to the right to avoid icon overlap - slightly less */
+  padding-left: 8px !important; /* Keep normal padding */
+}
+
+/* Remove this - we want to show our custom icon instead */
+
+/* Simple approach - just position the text correctly and let AG Grid handle its own icons */
+
+/* More specific AG Grid filter input targeting */
+.ag-text-field-input[placeholder*="Filter"],
+.ag-text-field-input[placeholder*="filter"],
+input[placeholder*="Filter"].ag-text-field-input,
+input[placeholder*="filter"].ag-text-field-input {
+  text-indent: 20px !important; /* Move text to the right to avoid icon overlap - slightly less */
+  padding-left: 8px !important; /* Keep normal padding */
+}
+
+/* Let AG Grid handle its own icons, just ensure text doesn't overlap */
+
+/* Try targeting the specific filter input container */
+.ag-filter-body-wrapper input,
+.ag-simple-filter-body-wrapper input {
+  text-indent: 20px !important; /* Move text to the right to avoid icon overlap - slightly less */
+  padding-left: 8px !important; /* Keep normal padding */
+}
+
+/* Global AG Grid input targeting - catch any remaining inputs */
+.ag-root input[type="text"]:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="number"]:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="date"]:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="search"]:not([type="checkbox"]):not([type="radio"]) {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important; /* Normal padding */
+  text-indent: 20px !important; /* Move text to avoid icon overlap */
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 28px !important;
+}
+
+.ag-root input[type="text"]:focus:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="number"]:focus:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="date"]:focus:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="search"]:focus:not([type="checkbox"]):not([type="radio"]) {
+  outline: none !important;
+  border-radius: 6px !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-root input[type="text"]:hover:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="number"]:hover:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="date"]:hover:not([type="checkbox"]):not([type="radio"]),
+.ag-root input[type="search"]:hover:not([type="checkbox"]):not([type="radio"]) {
+  border-color: var(--primary-10) !important;
+}
+
+/* AG Grid Filter Popup Buttons - Reset and Apply */
+.ag-filter-popup button,
+.ag-menu button,
+.ag-popup button,
+.ag-filter button,
+.ag-filter-apply-panel button,
+.ag-simple-filter button {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  min-height: 32px !important;
+}
+
+.ag-filter-popup button:hover,
+.ag-menu button:hover,
+.ag-popup button:hover,
+.ag-filter button:hover,
+.ag-filter-apply-panel button:hover,
+.ag-simple-filter button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+.ag-filter-popup button:focus,
+.ag-menu button:focus,
+.ag-popup button:focus,
+.ag-filter button:focus,
+.ag-filter-apply-panel button:focus,
+.ag-simple-filter button:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Apply button - primary styling */
+.ag-filter-popup button[data-ref="applyButton"],
+.ag-menu button[data-ref="applyButton"],
+.ag-popup button[data-ref="applyButton"],
+.ag-filter button[data-ref="applyButton"],
+.ag-filter-apply-panel button[data-ref="applyButton"],
+.ag-simple-filter button[data-ref="applyButton"] {
+  background-color: var(--primary) !important;
+  color: white !important;
+  border-color: var(--primary) !important;
+}
+
+.ag-filter-popup button[data-ref="applyButton"]:hover,
+.ag-menu button[data-ref="applyButton"]:hover,
+.ag-popup button[data-ref="applyButton"]:hover,
+.ag-filter button[data-ref="applyButton"]:hover,
+.ag-filter-apply-panel button[data-ref="applyButton"]:hover,
+.ag-simple-filter button[data-ref="applyButton"]:hover {
+  background-color: var(--primary) !important;
+  opacity: 0.9 !important;
+}
+
+.ag-filter-popup button[data-ref="applyButton"]:focus,
+.ag-menu button[data-ref="applyButton"]:focus,
+.ag-popup button[data-ref="applyButton"]:focus,
+.ag-filter button[data-ref="applyButton"]:focus,
+.ag-filter-apply-panel button[data-ref="applyButton"]:focus,
+.ag-simple-filter button[data-ref="applyButton"]:focus {
+  box-shadow: 0 0 0 1px white, 0 0 0 3px var(--primary) !important;
+}
+
+/* Reset button - secondary styling */
+.ag-filter-popup button[data-ref="resetButton"],
+.ag-menu button[data-ref="resetButton"],
+.ag-popup button[data-ref="resetButton"],
+.ag-filter button[data-ref="resetButton"],
+.ag-filter-apply-panel button[data-ref="resetButton"],
+.ag-simple-filter button[data-ref="resetButton"] {
+  background-color: transparent !important;
+  color: var(--font-color-100) !important;
+  border-color: var(--border-color) !important;
+}
+
+.ag-filter-popup button[data-ref="resetButton"]:hover,
+.ag-menu button[data-ref="resetButton"]:hover,
+.ag-popup button[data-ref="resetButton"]:hover,
+.ag-filter button[data-ref="resetButton"]:hover,
+.ag-filter-apply-panel button[data-ref="resetButton"]:hover,
+.ag-simple-filter button[data-ref="resetButton"]:hover {
+  background-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+/* AG Grid Filter Dropdown Options */
+.ag-filter-popup select,
+.ag-menu select,
+.ag-popup select,
+.ag-filter select,
+.ag-simple-filter select {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  min-height: 32px !important;
+}
+
+.ag-filter-popup select:hover,
+.ag-menu select:hover,
+.ag-popup select:hover,
+.ag-filter select:hover,
+.ag-simple-filter select:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.ag-filter-popup select:focus,
+.ag-menu select:focus,
+.ag-popup select:focus,
+.ag-filter select:focus,
+.ag-simple-filter select:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* AG Grid Filter Dropdown List Items */
+.ag-list-item,
+.ag-virtual-list-item,
+.ag-select-list .ag-list-item {
+  padding: 8px 12px !important;
+  color: var(--font-color) !important;
+  background-color: var(--card-color) !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+}
+
+.ag-list-item:hover,
+.ag-virtual-list-item:hover,
+.ag-select-list .ag-list-item:hover {
+  background-color: var(--primary-10) !important;
+  color: var(--font-color) !important;
+}
+
+.ag-list-item:focus,
+.ag-virtual-list-item:focus,
+.ag-select-list .ag-list-item:focus {
+  outline: none !important;
+  background-color: var(--primary-10) !important;
+  box-shadow: inset 0 0 0 1px var(--primary) !important;
+}
+
+.ag-list-item.ag-active-item,
+.ag-virtual-list-item.ag-active-item,
+.ag-select-list .ag-list-item.ag-active-item {
+  background-color: var(--primary) !important;
+  color: white !important;
+}
+
+/* AG Grid Select Dropdown Container */
+.ag-select-list,
+.ag-popup-child,
+.ag-select-agg-func-popup {
+  background-color: var(--card-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden !important;
+}
+
+/* Dark mode support for dropdown */
+[data-theme="dark"] .ag-list-item,
+[data-theme="dark"] .ag-virtual-list-item,
+[data-theme="dark"] .ag-select-list .ag-list-item {
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+}
+
+[data-theme="dark"] .ag-list-item:hover,
+[data-theme="dark"] .ag-virtual-list-item:hover,
+[data-theme="dark"] .ag-select-list .ag-list-item:hover {
+  background-color: var(--primary-10) !important;
+}
+
+[data-theme="dark"] .ag-select-list,
+[data-theme="dark"] .ag-popup-child,
+[data-theme="dark"] .ag-select-agg-func-popup {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* AG Grid Filter Combo/Select Dropdown Trigger - Style the actual picker field */
+.ag-filter-popup .ag-picker-field,
+.ag-menu .ag-picker-field,
+.ag-popup .ag-picker-field,
+.ag-filter .ag-picker-field,
+.ag-simple-filter .ag-picker-field,
+.ag-filter-popup .ag-select,
+.ag-menu .ag-select,
+.ag-popup .ag-select,
+.ag-filter .ag-select,
+.ag-simple-filter .ag-select {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  min-height: 32px !important;
+  cursor: pointer !important;
+}
+
+.ag-filter-popup .ag-picker-field:hover,
+.ag-menu .ag-picker-field:hover,
+.ag-popup .ag-picker-field:hover,
+.ag-filter .ag-picker-field:hover,
+.ag-simple-filter .ag-picker-field:hover,
+.ag-filter-popup .ag-select:hover,
+.ag-menu .ag-select:hover,
+.ag-popup .ag-select:hover,
+.ag-filter .ag-select:hover,
+.ag-simple-filter .ag-select:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.ag-filter-popup .ag-picker-field:focus,
+.ag-menu .ag-picker-field:focus,
+.ag-popup .ag-picker-field:focus,
+.ag-filter .ag-picker-field:focus,
+.ag-simple-filter .ag-picker-field:focus,
+.ag-filter-popup .ag-select:focus,
+.ag-menu .ag-select:focus,
+.ag-popup .ag-select:focus,
+.ag-filter .ag-select:focus,
+.ag-simple-filter .ag-select:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* AG Grid Filter Combo/Select Wrapper - Remove styling to avoid double border */
+.ag-filter-popup .ag-picker-field-wrapper,
+.ag-menu .ag-picker-field-wrapper,
+.ag-popup .ag-picker-field-wrapper,
+.ag-filter .ag-picker-field-wrapper,
+.ag-simple-filter .ag-picker-field-wrapper {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* AG Grid Filter Combo/Select Display Value */
+.ag-filter-popup .ag-picker-field-display,
+.ag-menu .ag-picker-field-display,
+.ag-popup .ag-picker-field-display,
+.ag-filter .ag-picker-field-display,
+.ag-simple-filter .ag-picker-field-display {
+  color: var(--font-color) !important;
+  padding: 4px 8px !important;
+  font-size: 13px !important;
+}
+
+/* AG Grid Filter Combo/Select Arrow Icon */
+.ag-filter-popup .ag-picker-field-icon,
+.ag-menu .ag-picker-field-icon,
+.ag-popup .ag-picker-field-icon,
+.ag-filter .ag-picker-field-icon,
+.ag-simple-filter .ag-picker-field-icon {
+  color: var(--font-color-100) !important;
+  opacity: 0.7 !important;
+}
+
+/* Dark mode support for combo */
+[data-theme="dark"] .ag-filter-popup .ag-picker-field,
+[data-theme="dark"] .ag-menu .ag-picker-field,
+[data-theme="dark"] .ag-popup .ag-picker-field,
+[data-theme="dark"] .ag-filter .ag-picker-field,
+[data-theme="dark"] .ag-simple-filter .ag-picker-field,
+[data-theme="dark"] .ag-filter-popup .ag-select,
+[data-theme="dark"] .ag-menu .ag-select,
+[data-theme="dark"] .ag-popup .ag-select,
+[data-theme="dark"] .ag-filter .ag-select,
+[data-theme="dark"] .ag-simple-filter .ag-select {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+/* Dark mode wrapper styling removed to avoid double border */
+
+/* NUCLEAR OVERRIDE - Force remove all blue radio button styling */
+* input[type="radio"],
+*[class*="ag"] input[type="radio"],
+.ag-root-wrapper input[type="radio"],
+.ag-root input[type="radio"],
+.ag-popup input[type="radio"],
+.ag-filter input[type="radio"],
+.ag-menu input[type="radio"],
+[class*="ag-"] input[type="radio"],
+input[type="radio"][class*="ag"],
+div[class*="ag"] input[type="radio"] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: none !important;
+  accent-color: var(--primary) !important;
+  color: var(--primary) !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 50% !important;
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  width: 16px !important;
+  height: 16px !important;
+  position: relative !important;
+}
+
+* input[type="radio"]:checked,
+*[class*="ag"] input[type="radio"]:checked,
+.ag-root-wrapper input[type="radio"]:checked,
+.ag-root input[type="radio"]:checked,
+.ag-popup input[type="radio"]:checked,
+.ag-filter input[type="radio"]:checked,
+.ag-menu input[type="radio"]:checked,
+[class*="ag-"] input[type="radio"]:checked,
+input[type="radio"][class*="ag"]:checked,
+div[class*="ag"] input[type="radio"]:checked {
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+  border-color: var(--primary) !important;
+  accent-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+* input[type="radio"]:checked::after,
+*[class*="ag"] input[type="radio"]:checked::after,
+.ag-root-wrapper input[type="radio"]:checked::after,
+.ag-root input[type="radio"]:checked::after,
+.ag-popup input[type="radio"]:checked::after,
+.ag-filter input[type="radio"]:checked::after,
+.ag-menu input[type="radio"]:checked::after,
+[class*="ag-"] input[type="radio"]:checked::after,
+input[type="radio"][class*="ag"]:checked::after,
+div[class*="ag"] input[type="radio"]:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background-color: white !important;
+  background: white !important;
+}
+
+/* AG Grid Filter Radio Buttons - Force override with maximum specificity */
+.ag-filter-popup input[type="radio"],
+.ag-menu input[type="radio"],
+.ag-popup input[type="radio"],
+.ag-filter input[type="radio"],
+.ag-simple-filter input[type="radio"],
+.ag-filter-popup .ag-radio-button input,
+.ag-menu .ag-radio-button input,
+.ag-popup .ag-radio-button input,
+.ag-filter .ag-radio-button input,
+.ag-simple-filter .ag-radio-button input,
+.ag-filter-popup .ag-radio-button-input,
+.ag-menu .ag-radio-button-input,
+.ag-popup .ag-radio-button-input,
+.ag-filter .ag-radio-button-input,
+.ag-simple-filter .ag-radio-button-input,
+.ag-radio-button input[type="radio"],
+.ag-radio-button-input,
+input[type="radio"].ag-radio-button-input,
+.ag-filter-popup input[type="radio"].ag-radio-button-input,
+.ag-menu input[type="radio"].ag-radio-button-input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
+  max-width: 16px !important;
+  max-height: 16px !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 50% !important;
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  background-image: none !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.2s ease-in-out !important;
+  margin-right: 8px !important;
+  flex-shrink: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+  accent-color: var(--primary) !important;
+}
+
+.ag-filter-popup input[type="radio"]:hover,
+.ag-menu input[type="radio"]:hover,
+.ag-popup input[type="radio"]:hover,
+.ag-filter input[type="radio"]:hover,
+.ag-simple-filter input[type="radio"]:hover,
+.ag-filter-popup .ag-radio-button input:hover,
+.ag-menu .ag-radio-button input:hover,
+.ag-popup .ag-radio-button input:hover,
+.ag-filter .ag-radio-button input:hover,
+.ag-simple-filter .ag-radio-button input:hover,
+.ag-filter-popup .ag-radio-button-input:hover,
+.ag-menu .ag-radio-button-input:hover,
+.ag-popup .ag-radio-button-input:hover,
+.ag-filter .ag-radio-button-input:hover,
+.ag-simple-filter .ag-radio-button-input:hover,
+.ag-radio-button input[type="radio"]:hover,
+.ag-radio-button-input:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.ag-filter-popup input[type="radio"]:focus,
+.ag-menu input[type="radio"]:focus,
+.ag-popup input[type="radio"]:focus,
+.ag-filter input[type="radio"]:focus,
+.ag-simple-filter input[type="radio"]:focus,
+.ag-filter-popup .ag-radio-button input:focus,
+.ag-menu .ag-radio-button input:focus,
+.ag-popup .ag-radio-button input:focus,
+.ag-filter .ag-radio-button input:focus,
+.ag-simple-filter .ag-radio-button input:focus,
+.ag-filter-popup .ag-radio-button-input:focus,
+.ag-menu .ag-radio-button-input:focus,
+.ag-popup .ag-radio-button-input:focus,
+.ag-filter .ag-radio-button-input:focus,
+.ag-simple-filter .ag-radio-button-input:focus,
+.ag-radio-button input[type="radio"]:focus,
+.ag-radio-button-input:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-filter-popup input[type="radio"]:checked,
+.ag-menu input[type="radio"]:checked,
+.ag-popup input[type="radio"]:checked,
+.ag-filter input[type="radio"]:checked,
+.ag-simple-filter input[type="radio"]:checked,
+.ag-filter-popup .ag-radio-button input:checked,
+.ag-menu .ag-radio-button input:checked,
+.ag-popup .ag-radio-button input:checked,
+.ag-filter .ag-radio-button input:checked,
+.ag-simple-filter .ag-radio-button input:checked,
+.ag-filter-popup .ag-radio-button-input:checked,
+.ag-menu .ag-radio-button-input:checked,
+.ag-popup .ag-radio-button-input:checked,
+.ag-filter .ag-radio-button-input:checked,
+.ag-simple-filter .ag-radio-button-input:checked,
+.ag-radio-button input[type="radio"]:checked,
+.ag-radio-button-input:checked,
+input[type="radio"].ag-radio-button-input:checked,
+.ag-filter-popup input[type="radio"].ag-radio-button-input:checked,
+.ag-menu input[type="radio"].ag-radio-button-input:checked {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  accent-color: var(--primary) !important;
+}
+
+.ag-filter-popup input[type="radio"]:checked::after,
+.ag-menu input[type="radio"]:checked::after,
+.ag-popup input[type="radio"]:checked::after,
+.ag-filter input[type="radio"]:checked::after,
+.ag-simple-filter input[type="radio"]:checked::after,
+.ag-filter-popup .ag-radio-button input:checked::after,
+.ag-menu .ag-radio-button input:checked::after,
+.ag-popup .ag-radio-button input:checked::after,
+.ag-filter .ag-radio-button input:checked::after,
+.ag-simple-filter .ag-radio-button input:checked::after,
+.ag-filter-popup .ag-radio-button-input:checked::after,
+.ag-menu .ag-radio-button-input:checked::after,
+.ag-popup .ag-radio-button-input:checked::after,
+.ag-filter .ag-radio-button-input:checked::after,
+.ag-simple-filter .ag-radio-button-input:checked::after,
+.ag-radio-button input[type="radio"]:checked::after,
+.ag-radio-button-input:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background-color: white !important;
+}
+
+/* Radio button labels */
+.ag-filter-popup .ag-radio-button-label,
+.ag-menu .ag-radio-button-label,
+.ag-popup .ag-radio-button-label,
+.ag-filter .ag-radio-button-label,
+.ag-simple-filter .ag-radio-button-label {
+  color: var(--font-color) !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+}
+
+/* Dark mode support for radio buttons */
+[data-theme="dark"] .ag-filter-popup input[type="radio"],
+[data-theme="dark"] .ag-menu input[type="radio"],
+[data-theme="dark"] .ag-popup input[type="radio"],
+[data-theme="dark"] .ag-filter input[type="radio"],
+[data-theme="dark"] .ag-simple-filter input[type="radio"],
+[data-theme="dark"] .ag-filter-popup .ag-radio-button input,
+[data-theme="dark"] .ag-menu .ag-radio-button input,
+[data-theme="dark"] .ag-popup .ag-radio-button input,
+[data-theme="dark"] .ag-filter .ag-radio-button input,
+[data-theme="dark"] .ag-simple-filter .ag-radio-button input,
+[data-theme="dark"] .ag-filter-popup .ag-radio-button-input,
+[data-theme="dark"] .ag-menu .ag-radio-button-input,
+[data-theme="dark"] .ag-popup .ag-radio-button-input,
+[data-theme="dark"] .ag-filter .ag-radio-button-input,
+[data-theme="dark"] .ag-simple-filter .ag-radio-button-input,
+[data-theme="dark"] .ag-radio-button input[type="radio"],
+[data-theme="dark"] .ag-radio-button-input {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .ag-filter-popup .ag-radio-button-label,
+[data-theme="dark"] .ag-menu .ag-radio-button-label,
+[data-theme="dark"] .ag-popup .ag-radio-button-label,
+[data-theme="dark"] .ag-filter .ag-radio-button-label,
+[data-theme="dark"] .ag-simple-filter .ag-radio-button-label {
+  color: var(--font-color) !important;
+}
+
+/* Theme variant support - ensure ring color matches theme - Target actual input elements */
+html[data-luno-theme="indigo"] .modern-grid-container .ag-floating-filter-input input:focus,
+html[data-luno-theme="indigo"] .modern-grid-container .ag-text-field-input:focus,
+html[data-luno-theme="indigo"] .modern-grid-container .ag-number-field-input:focus,
+html[data-luno-theme="indigo"] .modern-grid-container .ag-date-field-input:focus,
+html[data-luno-theme="indigo"] .modern-grid-container .ag-floating-filter-body input:focus,
+html[data-luno-theme="blue"] .modern-grid-container .ag-floating-filter-input input:focus,
+html[data-luno-theme="blue"] .modern-grid-container .ag-text-field-input:focus,
+html[data-luno-theme="blue"] .modern-grid-container .ag-number-field-input:focus,
+html[data-luno-theme="blue"] .modern-grid-container .ag-date-field-input:focus,
+html[data-luno-theme="blue"] .modern-grid-container .ag-floating-filter-body input:focus,
+html[data-luno-theme="cyan"] .modern-grid-container .ag-floating-filter-input input:focus,
+html[data-luno-theme="cyan"] .modern-grid-container .ag-text-field-input:focus,
+html[data-luno-theme="cyan"] .modern-grid-container .ag-number-field-input:focus,
+html[data-luno-theme="cyan"] .modern-grid-container .ag-date-field-input:focus,
+html[data-luno-theme="cyan"] .modern-grid-container .ag-floating-filter-body input:focus,
+html[data-luno-theme="green"] .modern-grid-container .ag-floating-filter-input input:focus,
+html[data-luno-theme="green"] .modern-grid-container .ag-text-field-input:focus,
+html[data-luno-theme="green"] .modern-grid-container .ag-number-field-input:focus,
+html[data-luno-theme="green"] .modern-grid-container .ag-date-field-input:focus,
+html[data-luno-theme="green"] .modern-grid-container .ag-floating-filter-body input:focus,
+html[data-luno-theme="orange"] .modern-grid-container .ag-floating-filter-input input:focus,
+html[data-luno-theme="orange"] .modern-grid-container .ag-text-field-input:focus,
+html[data-luno-theme="orange"] .modern-grid-container .ag-number-field-input:focus,
+html[data-luno-theme="orange"] .modern-grid-container .ag-date-field-input:focus,
+html[data-luno-theme="orange"] .modern-grid-container .ag-floating-filter-body input:focus,
+html[data-luno-theme="blush"] .modern-grid-container .ag-floating-filter-input input:focus,
+html[data-luno-theme="blush"] .modern-grid-container .ag-text-field-input:focus,
+html[data-luno-theme="blush"] .modern-grid-container .ag-number-field-input:focus,
+html[data-luno-theme="blush"] .modern-grid-container .ag-date-field-input:focus,
+html[data-luno-theme="blush"] .modern-grid-container .ag-floating-filter-body input:focus,
+html[data-luno-theme="red"] .modern-grid-container .ag-floating-filter-input input:focus,
+html[data-luno-theme="red"] .modern-grid-container .ag-text-field-input:focus,
+html[data-luno-theme="red"] .modern-grid-container .ag-number-field-input:focus,
+html[data-luno-theme="red"] .modern-grid-container .ag-date-field-input:focus,
+html[data-luno-theme="red"] .modern-grid-container .ag-floating-filter-body input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Grid Headers */
+.modern-grid-header {
+  background: var(--ag-header-background-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: var(--font-color) !important;
+  padding: 0 12px !important;
+}
+
+.modern-index-header {
+  background: var(--primary-10) !important;
+  border-right: 1px solid var(--border-color) !important;
+}
+
+.modern-order-type-header {
+  background: var(--primary-10) !important;
+  border-right: 1px solid var(--border-color) !important;
+}
+
+/* Grid Rows */
+.modern-grid-row {
+  transition: background-color 0.2s ease-in-out !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.modern-grid-row:hover {
+  background: var(--primary-10) !important;
+}
+
+/* Cell Styling */
+.ag-cell {
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  border-right: 1px solid var(--border-color) !important;
+  transition: background-color 0.2s ease-in-out !important;
+}
+
+.ag-cell:hover {
+  background: var(--primary-10) !important;
+}
+
+/* Pinned Columns */
+.ag-pinned-left-cols-container {
+  border-right: 1px solid var(--border-color) !important;
+  background: var(--primary-10) !important;
+}
+
+/* Sort Icons */
+.ag-sort-ascending-icon,
+.ag-sort-descending-icon {
+  color: var(--primary) !important;
+  font-weight: bold !important;
+}
+
+/* Filter Icons */
+.ag-filter-icon {
+  color: var(--primary) !important;
+}
+
+/* Loading Overlay */
+.ag-overlay-loading-wrapper {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(4px) !important;
+}
+
+/* No Rows Overlay */
+.ag-overlay-no-rows-wrapper {
+  background: linear-gradient(135deg, var(--card-color) 0%, var(--card-color) 100%) !important;
+  color: var(--font-color-100) !important;
+}
+
+/* Scrollbar Styling */
+.ag-body-viewport::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.ag-body-viewport::-webkit-scrollbar-track {
+  background: var(--card-color);
+  border-radius: 4px;
+}
+
+.ag-body-viewport::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.ag-body-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-20);
+}
+
+/* Row Selection */
+.ag-row-selected {
+  background: linear-gradient(135deg, var(--primary-10) 0%, var(--primary-5) 100%) !important;
+  border-left: 4px solid var(--primary) !important;
+}
+
+/* Focus States */
+.ag-cell-focus {
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 0 0 3px var(--primary-20) !important;
+}
+
+/* Animation for row updates */
+@keyframes rowUpdate {
+  0% { background-color: var(--primary-20); }
+  100% { background-color: transparent; }
+}
+
+.modern-grid-row.ag-row-updated {
+  animation: rowUpdate 1s ease-out;
+}
+
+/* Modern Progress Bars */
+.modern-progress-bar {
+  height: 6px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-60) 100%);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.modern-progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* Status Badges */
+.modern-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+}
+
+.modern-status-badge.normal {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border-color: #047857;
+}
+
+.modern-status-badge.hold {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border-color: #b45309;
+}
+
+.modern-status-badge.rush {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border-color: #b91c1c;
+}
+
+/* Modern Data Visualization */
+.modern-data-point {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--card-color), var(--card-color));
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.modern-data-point:hover {
+  background: linear-gradient(135deg, var(--primary-5), var(--primary-2));
+  border-color: var(--primary-30);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .modern-grid-container {
+    border-radius: 10px;
+  }
+  
+  .ag-cell {
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+  }
+  
+  .modern-grid-header {
+    font-size: 12px !important;
+    padding: 0 14px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .modern-grid-container {
+    border-radius: 8px;
+    margin: 0 -1rem;
+    border-left: none;
+    border-right: none;
+  }
+  
+  .ag-cell {
+    padding: 8px 12px !important;
+    font-size: 11px !important;
+  }
+  
+  .modern-grid-header {
+    font-size: 11px !important;
+    padding: 0 12px !important;
+  }
+  
+  /* Hide less important columns on mobile */
+  .ag-cell[col-id*="ship_to"],
+  .ag-cell[col-id*="carrier"],
+  .ag-cell[col-id*="po_number"] {
+    display: none !important;
+  }
+  
+  /* Stack order type info vertically on mobile */
+  .modern-order-type-mobile {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .modern-grid-container {
+    border-radius: 6px;
+  }
+  
+  .ag-cell {
+    padding: 6px 8px !important;
+    font-size: 10px !important;
+  }
+  
+  .modern-grid-header {
+    font-size: 10px !important;
+    padding: 0 8px !important;
+  }
+  
+  /* Further hide columns on very small screens */
+  .ag-cell[col-id*="receipt_date"],
+  .ag-cell[col-id*="order_date"] {
+    display: none !important;
+  }
+  
+  /* Make progress bars more compact */
+  .modern-progress-bar {
+    height: 4px !important;
+  }
+  
+  /* Adjust status badges for mobile */
+  .modern-status-badge {
+    padding: 2px 6px !important;
+    font-size: 9px !important;
+  }
+}
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  .modern-grid-row:hover {
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  .ag-cell:hover {
+    background: var(--primary-5) !important;
+  }
+  
+  /* Larger touch targets */
+  .ag-cell {
+    min-height: 48px !important;
+  }
+  
+  .modern-grid-header {
+    min-height: 48px !important;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .modern-grid-container {
+    border-width: 0.5px;
+  }
+  
+  .modern-status-badge {
+    border-width: 0.5px;
+  }
+}
+
+/* TARGET ONLY RADIO BUTTON WRAPPER DIVS - NOT all input wrappers */
+.modern-grid-container .ag-radio-button-input-wrapper,
+.ag-radio-button-input-wrapper,
+.ag-wrapper.ag-radio-button-input-wrapper,
+.ag-input-wrapper.ag-radio-button-input-wrapper {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 50% !important;
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  background-image: none !important;
+  position: relative !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin: 0 8px 0 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.modern-grid-container .ag-radio-button-input-wrapper:hover,
+.ag-radio-button-input-wrapper:hover,
+.ag-wrapper.ag-radio-button-input-wrapper:hover,
+.ag-input-wrapper.ag-radio-button-input-wrapper:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.modern-grid-container .ag-radio-button-input-wrapper.ag-checked,
+.ag-radio-button-input-wrapper.ag-checked,
+.ag-wrapper.ag-radio-button-input-wrapper.ag-checked,
+.ag-input-wrapper.ag-radio-button-input-wrapper.ag-checked {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+.modern-grid-container .ag-radio-button-input-wrapper.ag-checked::after,
+.ag-radio-button-input-wrapper.ag-checked::after,
+.ag-wrapper.ag-radio-button-input-wrapper.ag-checked::after,
+.ag-input-wrapper.ag-radio-button-input-wrapper.ag-checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Hide the actual input element since the wrapper div handles the visual */
+.modern-grid-container .ag-radio-button-input-wrapper input[type="radio"],
+.ag-radio-button-input-wrapper input[type="radio"] {
+  opacity: 0 !important;
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+}
+
+/* Adjust radio button label text alignment - move text down more */
+.modern-grid-container .ag-radio-button-label,
+.ag-radio-button-label,
+.ag-filter-popup .ag-radio-button-label,
+.ag-menu .ag-radio-button-label,
+.ag-popup .ag-radio-button-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  vertical-align: middle !important;
+  margin-top: 4px !important;
+  line-height: 1.2 !important;
+}
+
+/* PAGINATION ONLY - Buttons and Text */
+.ag-paging-panel button,
+.ag-paging-page-summary-panel button {
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  min-height: 32px !important;
+}
+
+.ag-paging-panel button:hover,
+.ag-paging-page-summary-panel button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+.ag-paging-panel button:focus,
+.ag-paging-page-summary-panel button:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Pagination text - "Page", "of x" */
+.ag-paging-panel span,
+.ag-paging-page-summary-panel span,
+.ag-paging-panel .ag-paging-description,
+.ag-paging-page-summary-panel .ag-paging-description {
+  color: var(--font-color) !important;
+  font-size: 13px !important;
+}
+
+/* Pagination input field */
+.ag-paging-panel input[type="number"],
+.ag-paging-panel input[type="text"],
+.ag-paging-page-summary-panel input[type="number"],
+.ag-paging-page-summary-panel input[type="text"] {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  text-align: center !important;
+  min-height: 32px !important;
+}
+
+.ag-paging-panel input[type="number"]:focus,
+.ag-paging-panel input[type="text"]:focus,
+.ag-paging-page-summary-panel input[type="number"]:focus,
+.ag-paging-page-summary-panel input[type="text"]:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-paging-panel input[type="number"]:hover,
+.ag-paging-panel input[type="text"]:hover,
+.ag-paging-page-summary-panel input[type="number"]:hover,
+.ag-paging-page-summary-panel input[type="text"]:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+/* THE WORKING SELECTOR - Aggressive but scoped to pagination only */
+.ag-paging-panel * button,
+.ag-paging-page-summary-panel * button {
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  min-height: 32px !important;
+}
+
+.ag-paging-panel * button:hover,
+.ag-paging-page-summary-panel * button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+.ag-paging-panel * button:focus,
+.ag-paging-page-summary-panel * button:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Pagination text with aggressive selector */
+.ag-paging-panel * span,
+.ag-paging-page-summary-panel * span {
+  color: var(--font-color) !important;
+  font-size: 13px !important;
+}
+
+/* Custom pagination component dark mode overrides */
+.modern-grid-container .custom-pagination-panel {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+.modern-grid-container .custom-pagination-panel .pagination-text {
+  color: var(--font-color) !important;
+}
+
+.modern-grid-container .custom-pagination-panel .pagination-button {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+.modern-grid-container .custom-pagination-panel .pagination-button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+  color: var(--font-color) !important;
+}
+
+.modern-grid-container .custom-pagination-panel .pagination-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+.modern-grid-container .custom-pagination-panel .pagination-input {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+.modern-grid-container .custom-pagination-panel .pagination-input:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.modern-grid-container .custom-pagination-panel .pagination-input:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+/* AG Grid Pagination Input Field Styling - More Aggressive Selectors */
+.modern-grid-container .ag-paging-panel input[type="number"],
+.modern-grid-container .ag-paging-panel input[type="text"],
+.ag-paging-panel input[type="number"],
+.ag-paging-panel input[type="text"],
+.ag-paging-page-summary-panel input[type="number"],
+.ag-paging-page-summary-panel input[type="text"],
+.ag-root-wrapper .ag-paging-panel input,
+.ag-root .ag-paging-panel input,
+input[class*="ag-paging"],
+.ag-paging-panel input,
+.ag-paging-page-summary-panel input,
+[class*="ag-paging"] input {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 32px !important;
+  text-align: center !important;
+  outline: none !important;
+  box-shadow: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+}
+
+.modern-grid-container .ag-paging-panel input[type="number"]:focus,
+.modern-grid-container .ag-paging-panel input[type="text"]:focus,
+.ag-paging-panel input[type="number"]:focus,
+.ag-paging-panel input[type="text"]:focus,
+.ag-paging-page-summary-panel input[type="number"]:focus,
+.ag-paging-page-summary-panel input[type="text"]:focus,
+.ag-root-wrapper .ag-paging-panel input:focus,
+.ag-root .ag-paging-panel input:focus,
+input[class*="ag-paging"]:focus,
+.ag-paging-panel input:focus,
+.ag-paging-page-summary-panel input:focus,
+[class*="ag-paging"] input:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.modern-grid-container .ag-paging-panel input[type="number"]:hover,
+.modern-grid-container .ag-paging-panel input[type="text"]:hover,
+.ag-paging-panel input[type="number"]:hover,
+.ag-paging-panel input[type="text"]:hover,
+.ag-paging-page-summary-panel input[type="number"]:hover,
+.ag-paging-page-summary-panel input[type="text"]:hover,
+.ag-root-wrapper .ag-paging-panel input:hover,
+.ag-root .ag-paging-panel input:hover,
+input[class*="ag-paging"]:hover,
+.ag-paging-panel input:hover,
+.ag-paging-page-summary-panel input:hover,
+[class*="ag-paging"] input:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.modern-grid-container .ag-paging-panel input[type="number"]::placeholder,
+.modern-grid-container .ag-paging-panel input[type="text"]::placeholder,
+.ag-paging-panel input[type="number"]::placeholder,
+.ag-paging-panel input[type="text"]::placeholder,
+.ag-paging-page-summary-panel input[type="number"]::placeholder,
+.ag-paging-page-summary-panel input[type="text"]::placeholder {
+  color: var(--font-color-100) !important;
+  opacity: 0.7 !important;
+}
+
+/* Dark mode support for pagination inputs */
+[data-theme="dark"] .modern-grid-container .ag-paging-panel input[type="number"],
+[data-theme="dark"] .modern-grid-container .ag-paging-panel input[type="text"],
+[data-theme="dark"] .ag-paging-panel input[type="number"],
+[data-theme="dark"] .ag-paging-panel input[type="text"],
+[data-theme="dark"] .ag-paging-page-summary-panel input[type="number"],
+[data-theme="dark"] .ag-paging-page-summary-panel input[type="text"] {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+/* NUCLEAR OVERRIDE FOR PAGINATION INPUT - Force theme colors over blue */
+* input[type="number"],
+* input[type="text"] {
+  accent-color: var(--primary) !important;
+}
+
+.modern-grid-container input[type="number"],
+.modern-grid-container input[type="text"],
+[class*="ag-paging"] input[type="number"],
+[class*="ag-paging"] input[type="text"],
+div[class*="ag-paging"] input,
+.ag-paging-panel input[type="number"],
+.ag-paging-panel input[type="text"] {
+  border: 1px solid var(--border-color) !important;
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  accent-color: var(--primary) !important;
+  border-radius: 6px !important;
+  outline: none !important;
+}
+
+.modern-grid-container input[type="number"]:focus,
+.modern-grid-container input[type="text"]:focus,
+[class*="ag-paging"] input[type="number"]:focus,
+[class*="ag-paging"] input[type="text"]:focus,
+div[class*="ag-paging"] input:focus,
+.ag-paging-panel input[type="number"]:focus,
+.ag-paging-panel input[type="text"]:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+  outline: none !important;
+}
+
+/* AG Grid Pagination Buttons Styling */
+.modern-grid-container .ag-paging-panel button,
+.ag-paging-panel button,
+.ag-paging-page-summary-panel button,
+.ag-root-wrapper .ag-paging-panel button,
+.ag-root .ag-paging-panel button,
+[class*="ag-paging"] button {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  min-height: 32px !important;
+}
+
+.modern-grid-container .ag-paging-panel button:hover,
+.ag-paging-panel button:hover,
+.ag-paging-page-summary-panel button:hover,
+.ag-root-wrapper .ag-paging-panel button:hover,
+.ag-root .ag-paging-panel button:hover,
+[class*="ag-paging"] button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+.modern-grid-container .ag-paging-panel button:focus,
+.ag-paging-panel button:focus,
+.ag-paging-page-summary-panel button:focus,
+.ag-root-wrapper .ag-paging-panel button:focus,
+.ag-root .ag-paging-panel button:focus,
+[class*="ag-paging"] button:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.modern-grid-container .ag-paging-panel button:disabled,
+.ag-paging-panel button:disabled,
+.ag-paging-page-summary-panel button:disabled,
+.ag-root-wrapper .ag-paging-panel button:disabled,
+.ag-root .ag-paging-panel button:disabled,
+[class*="ag-paging"] button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color-100) !important;
+}
+
+/* Dark mode support for pagination buttons */
+[data-theme="dark"] .modern-grid-container .ag-paging-panel button,
+[data-theme="dark"] .ag-paging-panel button,
+[data-theme="dark"] .ag-paging-page-summary-panel button,
+[data-theme="dark"] .ag-root-wrapper .ag-paging-panel button,
+[data-theme="dark"] .ag-root .ag-paging-panel button,
+[data-theme="dark"] [class*="ag-paging"] button {
+  background-color: var(--card-color) !important;
+  border-color: var(--border-color) !important;
+  color: var(--font-color) !important;
+}
+
+/* NUCLEAR OVERRIDE FOR ALL PAGINATION ELEMENTS */
+* .ag-paging-panel,
+* .ag-paging-page-summary-panel,
+* [class*="ag-paging"],
+.ag-root-wrapper .ag-paging-panel,
+.ag-root .ag-paging-panel {
+  background-color: transparent !important;
+  color: var(--font-color) !important;
+}
+
+/* Pagination text elements - "Page", "of", numbers */
+.ag-paging-panel span,
+.ag-paging-page-summary-panel span,
+.ag-paging-panel .ag-paging-description,
+.ag-paging-page-summary-panel .ag-paging-description,
+.ag-paging-panel .ag-paging-row-summary-panel,
+.ag-paging-page-summary-panel .ag-paging-row-summary-panel,
+[class*="ag-paging"] span,
+[class*="ag-paging"] .ag-paging-description,
+.ag-root-wrapper .ag-paging-panel span,
+.ag-root .ag-paging-panel span {
+  color: var(--font-color) !important;
+  font-size: 13px !important;
+}
+
+/* Nuclear button override - target only pagination buttons */
+.ag-paging-panel * button,
+.ag-paging-page-summary-panel * button,
+[class*="ag-paging"] * button,
+div[class*="ag-paging"] button,
+.ag-root-wrapper .ag-paging-panel button,
+.ag-root .ag-paging-panel button {
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+}
+
+/* Force all pagination buttons specifically */
+.ag-paging-panel button[class*="ag"],
+.ag-paging-page-summary-panel button[class*="ag"],
+button[class*="ag-paging"],
+.ag-root-wrapper .ag-paging-panel button[class*="ag"],
+.ag-root .ag-paging-panel button[class*="ag"] {
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+/* Force hover states */
+.ag-paging-panel button[class*="ag"]:hover,
+.ag-paging-page-summary-panel button[class*="ag"]:hover,
+button[class*="ag-paging"]:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Force focus states */
+.ag-paging-panel button[class*="ag"]:focus,
+.ag-paging-page-summary-panel button[class*="ag"]:focus,
+button[class*="ag-paging"]:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* FINAL PERSISTENT OVERRIDE - Maximum specificity to prevent dynamic overrides */
+html body .modern-grid-container .ag-paging-panel button,
+html body .ag-paging-panel button,
+html body .ag-paging-page-summary-panel button,
+html body [class*="ag-paging"] button,
+html body .ag-root-wrapper .ag-paging-panel button,
+html body .ag-root .ag-paging-panel button {
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  min-height: 32px !important;
+}
+
+html body .modern-grid-container .ag-paging-panel button:hover,
+html body .ag-paging-panel button:hover,
+html body .ag-paging-page-summary-panel button:hover,
+html body [class*="ag-paging"] button:hover,
+html body .ag-root-wrapper .ag-paging-panel button:hover,
+html body .ag-root .ag-paging-panel button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+html body .modern-grid-container .ag-paging-panel button:focus,
+html body .ag-paging-panel button:focus,
+html body .ag-paging-page-summary-panel button:focus,
+html body [class*="ag-paging"] button:focus,
+html body .ag-root-wrapper .ag-paging-panel button:focus,
+html body .ag-root .ag-paging-panel button:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Persistent text color override */
+html body .ag-paging-panel span,
+html body .ag-paging-page-summary-panel span,
+html body .ag-paging-panel .ag-paging-description,
+html body [class*="ag-paging"] span,
+html body .ag-root-wrapper .ag-paging-panel span,
+html body .ag-root .ag-paging-panel span {
+  color: var(--font-color) !important;
+  font-size: 13px !important;
+}
+
+/* AGGRESSIVE BUT SCOPED - Target ALL buttons within pagination areas */
+.ag-paging-panel * button,
+.ag-paging-page-summary-panel * button,
+[class*="ag-paging"] * button,
+.ag-root-wrapper .ag-paging-panel * button,
+.ag-root .ag-paging-panel * button,
+div[class*="paging"] button,
+div[class*="paging"] * button {
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  min-height: 32px !important;
+}
+
+.ag-paging-panel * button:hover,
+.ag-paging-page-summary-panel * button:hover,
+[class*="ag-paging"] * button:hover,
+.ag-root-wrapper .ag-paging-panel * button:hover,
+.ag-root .ag-paging-panel * button:hover,
+div[class*="paging"] button:hover,
+div[class*="paging"] * button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+.ag-paging-panel * button:focus,
+.ag-paging-page-summary-panel * button:focus,
+[class*="ag-paging"] * button:focus,
+.ag-root-wrapper .ag-paging-panel * button:focus,
+.ag-root .ag-paging-panel * button:focus,
+div[class*="paging"] button:focus,
+div[class*="paging"] * button:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* UNIVERSAL BUTTON OVERRIDE - Scoped to pagination and filters only, NOT cells */
+.modern-grid-container .ag-paging-panel * button,
+.modern-grid-container .ag-paging-page-summary-panel * button,
+.modern-grid-container .ag-filter-popup * button,
+.modern-grid-container .ag-menu * button,
+.modern-grid-container .ag-header * button,
+.ag-root-wrapper .ag-paging-panel * button,
+.ag-root-wrapper .ag-paging-page-summary-panel * button,
+.ag-root-wrapper .ag-filter-popup * button,
+.ag-root-wrapper .ag-menu * button,
+.ag-root-wrapper .ag-header * button,
+.ag-root .ag-paging-panel * button,
+.ag-root .ag-paging-page-summary-panel * button,
+.ag-root .ag-filter-popup * button,
+.ag-root .ag-menu * button,
+.ag-root .ag-header * button,
+[class*="ag-paging"] * button,
+[class*="ag-filter"] * button,
+[class*="ag-menu"] * button {
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  min-height: 32px !important;
+}
+
+.modern-grid-container .ag-paging-panel * button:hover,
+.modern-grid-container .ag-paging-page-summary-panel * button:hover,
+.modern-grid-container .ag-filter-popup * button:hover,
+.modern-grid-container .ag-menu * button:hover,
+.modern-grid-container .ag-header * button:hover,
+.ag-root-wrapper .ag-paging-panel * button:hover,
+.ag-root-wrapper .ag-paging-page-summary-panel * button:hover,
+.ag-root-wrapper .ag-filter-popup * button:hover,
+.ag-root-wrapper .ag-menu * button:hover,
+.ag-root-wrapper .ag-header * button:hover,
+.ag-root .ag-paging-panel * button:hover,
+.ag-root .ag-paging-page-summary-panel * button:hover,
+.ag-root .ag-filter-popup * button:hover,
+.ag-root .ag-menu * button:hover,
+.ag-root .ag-header * button:hover,
+[class*="ag-paging"] * button:hover,
+[class*="ag-filter"] * button:hover,
+[class*="ag-menu"] * button:hover {
+  background-color: var(--primary-10) !important;
+  border-color: var(--primary) !important;
+}
+
+.modern-grid-container .ag-paging-panel * button:focus,
+.modern-grid-container .ag-paging-page-summary-panel * button:focus,
+.modern-grid-container .ag-filter-popup * button:focus,
+.modern-grid-container .ag-menu * button:focus,
+.modern-grid-container .ag-header * button:focus,
+.ag-root-wrapper .ag-paging-panel * button:focus,
+.ag-root-wrapper .ag-paging-page-summary-panel * button:focus,
+.ag-root-wrapper .ag-filter-popup * button:focus,
+.ag-root-wrapper .ag-menu * button:focus,
+.ag-root-wrapper .ag-header * button:focus,
+.ag-root .ag-paging-panel * button:focus,
+.ag-root .ag-paging-page-summary-panel * button:focus,
+.ag-root .ag-filter-popup * button:focus,
+.ag-root .ag-menu * button:focus,
+.ag-root .ag-header * button:focus,
+[class*="ag-paging"] * button:focus,
+[class*="ag-filter"] * button:focus,
+[class*="ag-menu"] * button:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* Universal text override for AG Grid - pagination and filters only, NOT cells */
+.modern-grid-container .ag-paging-panel * span,
+.modern-grid-container .ag-paging-page-summary-panel * span,
+.modern-grid-container .ag-filter-popup * span,
+.modern-grid-container .ag-menu * span,
+.modern-grid-container .ag-header * span,
+.ag-root-wrapper .ag-paging-panel * span,
+.ag-root-wrapper .ag-paging-page-summary-panel * span,
+.ag-root-wrapper .ag-filter-popup * span,
+.ag-root-wrapper .ag-menu * span,
+.ag-root-wrapper .ag-header * span,
+.ag-root .ag-paging-panel * span,
+.ag-root .ag-paging-page-summary-panel * span,
+.ag-root .ag-filter-popup * span,
+.ag-root .ag-menu * span,
+.ag-root .ag-header * span,
+[class*="ag-paging"] * span,
+[class*="ag-filter"] * span,
+[class*="ag-menu"] * span {
+  color: var(--font-color) !important;
+}

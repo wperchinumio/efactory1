@@ -30,11 +30,24 @@ export default function LoadingSpinner({
 }: LoadingSpinnerProps) {
   return (
     <div className={`flex flex-col items-center justify-center ${className}`}>
-      <div
-        className={`animate-spin rounded-full border-2 border-gray-300 border-t-transparent ${sizeClasses[size]} ${colorClasses[color]}`}
-      />
+      <div className="relative">
+        <div
+          className={`animate-spin rounded-full border-2 border-gray-300 border-t-transparent ${sizeClasses[size]} ${colorClasses[color]}`}
+        />
+        {/* Modern pulsing ring */}
+        <div
+          className={`absolute inset-0 rounded-full border-2 border-transparent border-t-primary/30 animate-ping ${sizeClasses[size]}`}
+        />
+      </div>
       {message && (
-        <p className="mt-2 text-sm text-font-color-100">{message}</p>
+        <div className="mt-3 text-center">
+          <p className="text-sm font-semibold text-font-color-100">{message}</p>
+          <div className="flex items-center justify-center mt-2 space-x-1">
+            <div className="w-1 h-1 bg-primary rounded-full animate-bounce"></div>
+            <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+            <div className="w-1 h-1 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -70,6 +83,71 @@ export function SkeletonTable({ rows = 5, className = '' }: { rows?: number; cla
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Modern grid skeleton loader
+export function SkeletonGrid({ rows = 8, columns = 6, className = '' }: { rows?: number; columns?: number; className?: string }) {
+  return (
+    <div className={`bg-gradient-to-r from-card-color/95 to-card-color rounded-xl border border-border-color/60 overflow-hidden shadow-sm ${className}`}>
+      {/* Header skeleton */}
+      <div className="p-4 border-b border-border-color/60 bg-gradient-to-r from-primary/5 to-transparent">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-1 h-6 bg-primary/30 rounded-full animate-pulse"></div>
+            <div className="h-5 bg-gray-300 rounded w-32 animate-pulse"></div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className="h-8 bg-gray-300 rounded-lg w-24 animate-pulse"></div>
+            <div className="h-8 bg-gray-300 rounded-lg w-20 animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Filter skeleton */}
+      <div className="p-4 border-b border-border-color/60 bg-gradient-to-r from-card-color/95 to-card-color">
+        <div className="flex items-center space-x-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex flex-col space-y-2">
+              <div className="h-3 bg-gray-300 rounded w-16 animate-pulse"></div>
+              <div className="h-8 bg-gray-300 rounded-lg w-24 animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Grid rows skeleton */}
+      <div className="divide-y divide-border-color/60">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="p-4 hover:bg-primary/5 transition-colors duration-200">
+            <div className="flex items-center space-x-4">
+              {/* Index column */}
+              <div className="w-12 h-4 bg-gray-300 rounded animate-pulse"></div>
+              {/* Order type column */}
+              <div className="w-20 h-8 bg-gray-300 rounded-full animate-pulse"></div>
+              {/* Data columns */}
+              {Array.from({ length: columns }).map((_, j) => (
+                <div key={j} className="flex-1 h-4 bg-gray-300 rounded animate-pulse" style={{ animationDelay: `${j * 0.1}s` }}></div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {/* Pagination skeleton */}
+      <div className="p-4 border-t border-border-color/60 bg-gradient-to-r from-card-color/95 to-card-color">
+        <div className="flex items-center justify-between">
+          <div className="h-4 bg-gray-300 rounded w-32 animate-pulse"></div>
+          <div className="flex items-center space-x-2">
+            <div className="h-8 bg-gray-300 rounded-lg w-16 animate-pulse"></div>
+            <div className="h-8 bg-gray-300 rounded-lg w-16 animate-pulse"></div>
+            <div className="h-8 bg-gray-300 rounded-lg w-20 animate-pulse"></div>
+            <div className="h-8 bg-gray-300 rounded-lg w-16 animate-pulse"></div>
+            <div className="h-8 bg-gray-300 rounded-lg w-16 animate-pulse"></div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -20,8 +20,8 @@
   /* Typography and sizing */
   --ag-font-size: 13px;
   --ag-font-family: inherit;
-  --ag-row-height: 32px;
-  --ag-header-height: 36px;
+  --ag-row-height: 44px;
+  --ag-header-height: 44px;
   
   /* Focus and selection */
   --ag-range-selection-border-color: var(--primary-color);
@@ -32,12 +32,12 @@
 .ag-theme-alpine .ag-header-cell {
   font-weight: 600;
   font-size: 12px;
-  padding: 4px 8px;
+  padding: 6px 12px;
 }
 
 .ag-theme-alpine .ag-cell {
   font-size: 13px;
-  padding: 4px 8px;
+  padding: 8px 12px;
   line-height: 1.2;
 }
 
@@ -59,22 +59,54 @@
   border: 2px solid var(--primary-color) !important;
 }
 
-/* Input styling within AG Grid */
+/* Input styling within AG Grid Alpine theme - Themed with ring-1 focus */
 .ag-theme-alpine input[type="text"],
 .ag-theme-alpine input[type="number"] {
   background-color: var(--card-color) !important;
   border: 1px solid var(--border-color) !important;
   color: var(--font-color) !important;
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: 6px;
+  padding: 6px 8px;
   font-size: 13px;
+  height: 32px;
+  transition: all 0.2s ease-in-out;
 }
 
 .ag-theme-alpine input[type="text"]:focus,
 .ag-theme-alpine input[type="number"]:focus {
-  border-color: var(--primary-color) !important;
+  border-color: var(--primary) !important;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-theme-alpine input[type="text"]:hover,
+.ag-theme-alpine input[type="number"]:hover {
+  border-color: var(--primary-10) !important;
+}
+
+.ag-theme-alpine input[type="text"]::placeholder,
+.ag-theme-alpine input[type="number"]::placeholder {
+  color: var(--font-color-100) !important;
+  opacity: 0.7 !important;
+}
+
+/* Theme variant support for alpine theme inputs */
+html[data-luno-theme="indigo"] .ag-theme-alpine input[type="text"]:focus,
+html[data-luno-theme="indigo"] .ag-theme-alpine input[type="number"]:focus,
+html[data-luno-theme="blue"] .ag-theme-alpine input[type="text"]:focus,
+html[data-luno-theme="blue"] .ag-theme-alpine input[type="number"]:focus,
+html[data-luno-theme="cyan"] .ag-theme-alpine input[type="text"]:focus,
+html[data-luno-theme="cyan"] .ag-theme-alpine input[type="number"]:focus,
+html[data-luno-theme="green"] .ag-theme-alpine input[type="text"]:focus,
+html[data-luno-theme="green"] .ag-theme-alpine input[type="number"]:focus,
+html[data-luno-theme="orange"] .ag-theme-alpine input[type="text"]:focus,
+html[data-luno-theme="orange"] .ag-theme-alpine input[type="number"]:focus,
+html[data-luno-theme="blush"] .ag-theme-alpine input[type="text"]:focus,
+html[data-luno-theme="blush"] .ag-theme-alpine input[type="number"]:focus,
+html[data-luno-theme="red"] .ag-theme-alpine input[type="text"]:focus,
+html[data-luno-theme="red"] .ag-theme-alpine input[type="number"]:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
 }
 
 /* Dark mode support */
@@ -185,8 +217,8 @@
   /* Typography and sizing */
   --ag-font-size: 13px;
   --ag-font-family: inherit;
-  --ag-row-height: 40px;
-  --ag-header-height: 40px;
+  --ag-row-height: 44px;
+  --ag-header-height: 44px;
 }
 
 /* Force selected row text to be white - SIMPLE APPROACH */
@@ -206,7 +238,7 @@
 .ag-theme-legacy .ag-header-cell {
   font-weight: 600;
   font-size: 12px;
-  padding: 8px 12px;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   height: 100%;
@@ -222,7 +254,7 @@
 }
 
 .ag-theme-legacy .ag-row {
-  height: 40px;
+  height: 44px;
 }
 
 .ag-theme-legacy .ag-row:hover {
@@ -329,21 +361,390 @@
   cursor: default !important;
 }
 
-/* Input styling within AG Grid legacy theme */
+/* Input styling within AG Grid legacy theme - Themed with ring-1 focus */
 .ag-theme-legacy input[type="text"],
 .ag-theme-legacy input[type="number"] {
   background-color: var(--card-color) !important;
   border: 1px solid var(--border-color) !important;
   color: var(--font-color) !important;
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: 6px;
+  padding: 6px 8px;
   font-size: 13px;
-  height: 28px;
+  height: 32px;
+  transition: all 0.2s ease-in-out;
 }
 
 .ag-theme-legacy input[type="text"]:focus,
 .ag-theme-legacy input[type="number"]:focus {
-  border-color: var(--primary-color) !important;
+  border-color: var(--primary) !important;
   outline: none;
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-theme-legacy input[type="text"]:hover,
+.ag-theme-legacy input[type="number"]:hover {
+  border-color: var(--primary-10) !important;
+}
+
+.ag-theme-legacy input[type="text"]::placeholder,
+.ag-theme-legacy input[type="number"]::placeholder {
+  color: var(--font-color-100) !important;
+  opacity: 0.7 !important;
+}
+
+/* Theme variant support for legacy theme inputs */
+html[data-luno-theme="indigo"] .ag-theme-legacy input[type="text"]:focus,
+html[data-luno-theme="indigo"] .ag-theme-legacy input[type="number"]:focus,
+html[data-luno-theme="blue"] .ag-theme-legacy input[type="text"]:focus,
+html[data-luno-theme="blue"] .ag-theme-legacy input[type="number"]:focus,
+html[data-luno-theme="cyan"] .ag-theme-legacy input[type="text"]:focus,
+html[data-luno-theme="cyan"] .ag-theme-legacy input[type="number"]:focus,
+html[data-luno-theme="green"] .ag-theme-legacy input[type="text"]:focus,
+html[data-luno-theme="green"] .ag-theme-legacy input[type="number"]:focus,
+html[data-luno-theme="orange"] .ag-theme-legacy input[type="text"]:focus,
+html[data-luno-theme="orange"] .ag-theme-legacy input[type="number"]:focus,
+html[data-luno-theme="blush"] .ag-theme-legacy input[type="text"]:focus,
+html[data-luno-theme="blush"] .ag-theme-legacy input[type="number"]:focus,
+html[data-luno-theme="red"] .ag-theme-legacy input[type="text"]:focus,
+html[data-luno-theme="red"] .ag-theme-legacy input[type="number"]:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* RADIO BUTTON OVERRIDES FOR AG GRID THEMES */
+
+/* Alpine Theme Radio Buttons */
+.ag-theme-alpine input[type="radio"],
+.ag-theme-alpine .ag-radio-button input,
+.ag-theme-alpine .ag-radio-button-input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  width: 16px !important;
+  height: 16px !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 50% !important;
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  background-image: none !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: all 0.2s ease-in-out !important;
+  margin-right: 8px !important;
+  accent-color: var(--primary) !important;
+}
+
+.ag-theme-alpine input[type="radio"]:hover,
+.ag-theme-alpine .ag-radio-button input:hover,
+.ag-theme-alpine .ag-radio-button-input:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.ag-theme-alpine input[type="radio"]:focus,
+.ag-theme-alpine .ag-radio-button input:focus,
+.ag-theme-alpine .ag-radio-button-input:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-theme-alpine input[type="radio"]:checked,
+.ag-theme-alpine .ag-radio-button input:checked,
+.ag-theme-alpine .ag-radio-button-input:checked {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+  accent-color: var(--primary) !important;
+}
+
+.ag-theme-alpine input[type="radio"]:checked::after,
+.ag-theme-alpine .ag-radio-button input:checked::after,
+.ag-theme-alpine .ag-radio-button-input:checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+/* TARGET THE WRAPPER DIVS THAT CONTROL RADIO BUTTON APPEARANCE */
+
+/* Alpine Theme Radio Button Wrappers - ONLY radio buttons */
+.ag-theme-alpine .ag-radio-button-input-wrapper {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 50% !important;
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  background-image: none !important;
+  position: relative !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin: 0 8px 0 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.ag-theme-alpine .ag-radio-button-input-wrapper:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.ag-theme-alpine .ag-radio-button-input-wrapper.ag-checked {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+.ag-theme-alpine .ag-radio-button-input-wrapper.ag-checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Legacy Theme Radio Button Wrappers - ONLY radio buttons */
+.ag-theme-legacy .ag-radio-button-input-wrapper {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  max-width: 20px !important;
+  max-height: 20px !important;
+  border: 2px solid var(--border-color) !important;
+  border-radius: 50% !important;
+  background: var(--card-color) !important;
+  background-color: var(--card-color) !important;
+  background-image: none !important;
+  position: relative !important;
+  transition: all 0.2s ease-in-out !important;
+  cursor: pointer !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  margin: 0 8px 0 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.ag-theme-legacy .ag-radio-button-input-wrapper:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+.ag-theme-legacy .ag-radio-button-input-wrapper.ag-checked {
+  border-color: var(--primary) !important;
+  background: var(--primary) !important;
+  background-color: var(--primary) !important;
+  background-image: none !important;
+}
+
+.ag-theme-legacy .ag-radio-button-input-wrapper.ag-checked::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: white !important;
+  background-color: white !important;
+}
+
+/* Hide the actual input elements in both themes */
+.ag-theme-alpine .ag-radio-button-input-wrapper input[type="radio"],
+.ag-theme-legacy .ag-radio-button-input-wrapper input[type="radio"] {
+  opacity: 0 !important;
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  cursor: pointer !important;
+}
+
+/* Adjust radio button label text alignment - move text down more */
+.ag-theme-alpine .ag-radio-button-label,
+.ag-theme-legacy .ag-radio-button-label {
+  display: inline-flex !important;
+  align-items: center !important;
+  vertical-align: middle !important;
+  margin-top: 4px !important;
+  line-height: 1.2 !important;
+}
+
+/* AG Grid Pagination Input Field Styling - Alpine Theme */
+.ag-theme-alpine .ag-paging-panel input[type="number"],
+.ag-theme-alpine .ag-paging-panel input[type="text"],
+.ag-theme-alpine .ag-paging-page-summary-panel input[type="number"],
+.ag-theme-alpine .ag-paging-page-summary-panel input[type="text"] {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 32px !important;
+  text-align: center !important;
+}
+
+.ag-theme-alpine .ag-paging-panel input[type="number"]:focus,
+.ag-theme-alpine .ag-paging-panel input[type="text"]:focus,
+.ag-theme-alpine .ag-paging-page-summary-panel input[type="number"]:focus,
+.ag-theme-alpine .ag-paging-page-summary-panel input[type="text"]:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-theme-alpine .ag-paging-panel input[type="number"]:hover,
+.ag-theme-alpine .ag-paging-panel input[type="text"]:hover,
+.ag-theme-alpine .ag-paging-page-summary-panel input[type="number"]:hover,
+.ag-theme-alpine .ag-paging-page-summary-panel input[type="text"]:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+/* AG Grid Pagination Input Field Styling - Legacy Theme */
+.ag-theme-legacy .ag-paging-panel input[type="number"],
+.ag-theme-legacy .ag-paging-panel input[type="text"],
+.ag-theme-legacy .ag-paging-page-summary-panel input[type="number"],
+.ag-theme-legacy .ag-paging-page-summary-panel input[type="text"] {
+  border-radius: 6px !important;
+  border: 1px solid var(--border-color) !important;
+  background-color: var(--card-color) !important;
+  color: var(--font-color) !important;
+  padding: 6px 8px !important;
+  font-size: 13px !important;
+  transition: all 0.2s ease-in-out !important;
+  height: auto !important;
+  min-height: 32px !important;
+  text-align: center !important;
+}
+
+.ag-theme-legacy .ag-paging-panel input[type="number"]:focus,
+.ag-theme-legacy .ag-paging-panel input[type="text"]:focus,
+.ag-theme-legacy .ag-paging-page-summary-panel input[type="number"]:focus,
+.ag-theme-legacy .ag-paging-page-summary-panel input[type="text"]:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-theme-legacy .ag-paging-panel input[type="number"]:hover,
+.ag-theme-legacy .ag-paging-panel input[type="text"]:hover,
+.ag-theme-legacy .ag-paging-page-summary-panel input[type="number"]:hover,
+.ag-theme-legacy .ag-paging-page-summary-panel input[type="text"]:hover {
+  border-color: var(--primary) !important;
+  background-color: var(--primary-10) !important;
+}
+
+/* AG Grid Popup Filter Inputs - Alpine Theme */
+.ag-theme-alpine .ag-filter-popup input[type="text"],
+.ag-theme-alpine .ag-filter-popup input[type="number"],
+.ag-theme-alpine .ag-menu input[type="text"],
+.ag-theme-alpine .ag-menu input[type="number"],
+.ag-theme-alpine .ag-popup input[type="text"],
+.ag-theme-alpine .ag-popup input[type="number"],
+.ag-theme-alpine .ag-filter input[type="text"],
+.ag-theme-alpine .ag-filter input[type="number"] {
+  background-color: var(--card-color) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--font-color) !important;
+  border-radius: 6px;
+  padding: 6px 32px 6px 8px; /* Move icon to right, text to left */
+  font-size: 13px;
+  height: 32px;
+  transition: all 0.2s ease-in-out;
+}
+
+.ag-theme-alpine .ag-filter-popup input[type="text"]:focus,
+.ag-theme-alpine .ag-filter-popup input[type="number"]:focus,
+.ag-theme-alpine .ag-menu input[type="text"]:focus,
+.ag-theme-alpine .ag-menu input[type="number"]:focus,
+.ag-theme-alpine .ag-popup input[type="text"]:focus,
+.ag-theme-alpine .ag-popup input[type="number"]:focus,
+.ag-theme-alpine .ag-filter input[type="text"]:focus,
+.ag-theme-alpine .ag-filter input[type="number"]:focus {
+  border-color: var(--primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-theme-alpine .ag-filter-popup input[type="text"]:hover,
+.ag-theme-alpine .ag-filter-popup input[type="number"]:hover,
+.ag-theme-alpine .ag-menu input[type="text"]:hover,
+.ag-theme-alpine .ag-menu input[type="number"]:hover,
+.ag-theme-alpine .ag-popup input[type="text"]:hover,
+.ag-theme-alpine .ag-popup input[type="number"]:hover,
+.ag-theme-alpine .ag-filter input[type="text"]:hover,
+.ag-theme-alpine .ag-filter input[type="number"]:hover {
+  border-color: var(--primary-10) !important;
+}
+
+/* AG Grid Popup Filter Inputs - Legacy Theme */
+.ag-theme-legacy .ag-filter-popup input[type="text"],
+.ag-theme-legacy .ag-filter-popup input[type="number"],
+.ag-theme-legacy .ag-menu input[type="text"],
+.ag-theme-legacy .ag-menu input[type="number"],
+.ag-theme-legacy .ag-popup input[type="text"],
+.ag-theme-legacy .ag-popup input[type="number"],
+.ag-theme-legacy .ag-filter input[type="text"],
+.ag-theme-legacy .ag-filter input[type="number"] {
+  background-color: var(--card-color) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--font-color) !important;
+  border-radius: 6px;
+  padding: 6px 32px 6px 8px; /* Move icon to right, text to left */
+  font-size: 13px;
+  height: 32px;
+  transition: all 0.2s ease-in-out;
+}
+
+.ag-theme-legacy .ag-filter-popup input[type="text"]:focus,
+.ag-theme-legacy .ag-filter-popup input[type="number"]:focus,
+.ag-theme-legacy .ag-menu input[type="text"]:focus,
+.ag-theme-legacy .ag-menu input[type="number"]:focus,
+.ag-theme-legacy .ag-popup input[type="text"]:focus,
+.ag-theme-legacy .ag-popup input[type="number"]:focus,
+.ag-theme-legacy .ag-filter input[type="text"]:focus,
+.ag-theme-legacy .ag-filter input[type="number"]:focus {
+  border-color: var(--primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+.ag-theme-legacy .ag-filter-popup input[type="text"]:hover,
+.ag-theme-legacy .ag-filter-popup input[type="number"]:hover,
+.ag-theme-legacy .ag-menu input[type="text"]:hover,
+.ag-theme-legacy .ag-menu input[type="number"]:hover,
+.ag-theme-legacy .ag-popup input[type="text"]:hover,
+.ag-theme-legacy .ag-popup input[type="number"]:hover,
+.ag-theme-legacy .ag-filter input[type="text"]:hover,
+.ag-theme-legacy .ag-filter input[type="number"]:hover {
+  border-color: var(--primary-10) !important;
 }
