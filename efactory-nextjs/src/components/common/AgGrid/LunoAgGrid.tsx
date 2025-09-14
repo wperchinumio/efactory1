@@ -44,6 +44,7 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
     headerName: field.alias,
     sortable: field.sortable !== false, // Enable sorting by default unless explicitly disabled
     minWidth: field.min_width ?? 50,
+    cellDataType: field.data_type || 'text', // Use data_type from API, default to text
     cellClass: (params) => {
       const align = field.align || 'left';
       return align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
@@ -55,14 +56,49 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
     colDef.width = field.width;
   }
 
-  // Add header filter if field is filterable
+  // Add header filter if field is filterable - use AG Grid server-side filtering
   if (field.filterable) {
-    colDef.filter = true;
-    colDef.floatingFilter = true;
-    colDef.filterParams = {
-      buttons: ['reset', 'apply'],
-      closeOnApply: true,
-    };
+    // Choose filter type based on data_type
+    const dataType = field.data_type || 'string';
+    
+    if (dataType === 'number') {
+      colDef.filter = 'agNumberColumnFilter';
+      colDef.floatingFilter = true;
+      colDef.filterParams = {
+        buttons: ['reset', 'apply'],
+        closeOnApply: false,
+        suppressAndOrCondition: true,
+        debounceMs: 0,
+        filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
+        defaultOption: 'equals',
+        suppressFilterButton: true,
+      };
+    } else if (dataType === 'date' || dataType === 'datetime') {
+      colDef.filter = 'agDateColumnFilter';
+      colDef.floatingFilter = true;
+      colDef.filterParams = {
+        buttons: ['reset', 'apply'],
+        closeOnApply: false,
+        suppressAndOrCondition: true,
+        debounceMs: 0,
+        filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
+        defaultOption: 'equals',
+        suppressFilterButton: true,
+      };
+    } else {
+      // Default to text filter for string and other types
+      colDef.filter = 'agTextColumnFilter';
+      colDef.floatingFilter = true;
+      colDef.filterParams = {
+        buttons: ['reset', 'apply'],
+        closeOnApply: false,
+        suppressAndOrCondition: true,
+        debounceMs: 0,
+        filterOptions: ['contains', 'equals', 'startsWith', 'endsWith'],
+        defaultOption: 'equals',
+        suppressFilterButton: true,
+      };
+    }
   }
 
   // Special renderers mapping placeholder (extend later):
@@ -417,17 +453,19 @@ export function LunoAgGrid<T = any>({
       }
     });
     
-    // Get current filter state from AG Grid (for column-specific filters)
+    // Use AG Grid's built-in server-side filtering
     let currentFilter = baseFilter;
     if (gridApiRef.current) {
       const filterModel = gridApiRef.current.getFilterModel();
       if (Object.keys(filterModel).length > 0) {
-        // Convert AG Grid filter model to our GridFilter format
+        // Convert AG Grid filter model to our GridFilter format using AG Grid's native operators
         Object.entries(filterModel).forEach(([field, filterState]: [string, any]) => {
           if (filterState.filter) {
+            // Use AG Grid's native filter type as the operator
+            const oper = filterState.type || 'contains';
             filterConditions.push({
               field,
-              oper: filterState.type === 'contains' ? 'like' : '=',
+              oper,
               value: filterState.filter,
             });
           }

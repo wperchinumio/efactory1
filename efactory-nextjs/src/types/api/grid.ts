@@ -29,6 +29,7 @@ export interface GridFieldDef {
   render?: string; // e.g. 'fmtorderlink', 'fmtdate', ... (legacy renderer id)
   min_width?: number;
   width?: number;
+  data_type?: string; // e.g. 'string', 'number', 'date', 'boolean'
 }
 
 export interface GridSelectedView {
