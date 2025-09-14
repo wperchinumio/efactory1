@@ -37,6 +37,12 @@ export interface OrderLineDto {
   voided: boolean;
 }
 
+export interface SerialLotDto {
+  SerialNo: string; // Contains either serial number (when Type="S") or lot number (when Type="L")
+  Quantity: number;
+  Type: string; // "S" for serial number, "L" for lot
+}
+
 export interface ShipmentShippedItemDto {
   id: number;
   line_number: number;
@@ -44,7 +50,7 @@ export interface ShipmentShippedItemDto {
   item_number: string;
   description: string;
   quantity: number;
-  serials: null | unknown;
+  serials: SerialLotDto[] | null;
 }
 
 export interface ShipmentPackageDto {
