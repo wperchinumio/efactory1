@@ -191,18 +191,43 @@ export async function saveOverviewLayout(layout: OverviewLayout): Promise<Overvi
 // Grid Views + Rows (AG Grid) API
 // ==========================
 
+// In-flight dedupe: prevent duplicate concurrent /views calls (e.g., StrictMode double mount)
+const viewListInFlight = new Map<string, Promise<GridViewListData>>();
+
 // Fetch view definitions (columns, filters, defaults) for a resource
 export async function listGridViews(resource: string): Promise<GridViewListData> {
-  const body: ListGridViewsRequest = { action: 'list', views: [resource] };
-  const res = await postJson<ListGridViewsResponse>('/api/views', body);
-  return (res.data as any)[0];
+  const cacheKey = `list:${resource}`;
+  const inFlight = viewListInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
+
+  const promise = (async () => {
+    const body: ListGridViewsRequest = { action: 'list', views: [resource] };
+    const res = await postJson<ListGridViewsResponse>('/api/views', body);
+    const data = (res.data as any)[0] as GridViewListData;
+    viewListInFlight.delete(cacheKey);
+    return data;
+  })();
+
+  viewListInFlight.set(cacheKey, promise);
+  return promise;
 }
 
 // Select a saved view by id for a resource (server returns updated structure)
 export async function selectGridView(resource: string, id: number): Promise<GridViewListData> {
-  const body: SelectGridViewRequest = { action: 'select', view: resource, id } as any;
-  const res = await postJson<ListGridViewsResponse>('/api/views', body as any);
-  return (res.data as any)[0];
+  const cacheKey = `select:${resource}:${id}`;
+  const inFlight = viewListInFlight.get(cacheKey);
+  if (inFlight) return inFlight;
+
+  const promise = (async () => {
+    const body: SelectGridViewRequest = { action: 'select', view: resource, id } as any;
+    const res = await postJson<ListGridViewsResponse>('/api/views', body as any);
+    const data = (res.data as any)[0] as GridViewListData;
+    viewListInFlight.delete(cacheKey);
+    return data;
+  })();
+
+  viewListInFlight.set(cacheKey, promise);
+  return promise;
 }
 
 // Read rows from the rows endpoint provided by the view response

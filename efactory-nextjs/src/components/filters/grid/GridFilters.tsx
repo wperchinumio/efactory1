@@ -14,12 +14,14 @@ interface GridFiltersProps {
   filters: Record<string, FilterConfig>;
   onFiltersChange: (filters: FilterState) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export default function GridFilters({
   filters,
   onFiltersChange,
-  className = ''
+  className = '',
+  disabled = false
 }: GridFiltersProps) {
   const [filterState, setFilterState] = useState<FilterState>({});
 
@@ -283,11 +285,11 @@ export default function GridFilters({
   };
 
   return (
-    <div className={`bg-card-color border-b border-border-color ${className}`}>
+    <div className={`bg-card-color border-b border-border-color ${className}`} aria-disabled={disabled}>
       {/* Filter Panel - Always Visible */}
       <div className="px-6 py-1">
         <div className="flex items-center justify-between">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className={`flex flex-wrap items-center gap-2 ${disabled ? 'pointer-events-none opacity-60' : ''}`}>
             {Object.entries(filters).map(([key, config]) => (
               <div key={key} className="flex-shrink-0">
                 {/* Filter Label */}
@@ -304,7 +306,8 @@ export default function GridFilters({
             <button
               type="button"
               onClick={handleClearAllFilters}
-              className="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-font-color hover:text-primary transition-colors"
+              disabled={disabled}
+              className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium transition-colors ${disabled ? 'text-font-color-100 cursor-not-allowed' : 'text-font-color hover:text-primary'}`}
             >
               <ArrowPathIcon className="h-4 w-4" />
               <span>Clear All</span>

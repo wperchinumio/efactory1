@@ -95,8 +95,11 @@ export default function GridPage({
   const [error, setError] = useState<string | null>(null);
   const [filterState, setFilterState] = useState<FilterState>({});
   const [refreshKey, setRefreshKey] = useState(0);
+  const loadedResourceRef = React.useRef<string | null>(null);
 
   useEffect(() => {
+    // Always attempt load once per mount; allow rerun if resource changes
+    loadedResourceRef.current = resource;
     (async () => {
       try {
         setLoading(true);

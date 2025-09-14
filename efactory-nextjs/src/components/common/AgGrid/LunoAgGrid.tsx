@@ -10,6 +10,7 @@ import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, Gr
 import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer } from './renderers';
 import GridFilters from '@/components/filters/grid/GridFilters';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 
 export interface LunoAgGridProps<T = any> {
   resource: string; // e.g., 'fulfillment-open'
@@ -565,12 +566,14 @@ export function LunoAgGrid<T = any>({
     }
   }
 
+  const didInitialFetchRef = useRef<boolean>(false);
   useEffect(() => {
-    // Always fetch data - grid should be visible immediately
-    if (cachedView) {
+    // Single initial fetch per mount once rowsUrl is ready
+    if (!didInitialFetchRef.current && rowsUrl && (cachedView || selectedView)) {
+      didInitialFetchRef.current = true;
       fetchPage(1);
     }
-  }, [rowsUrl, selectedView, initialFilters, cachedView]);
+  }, [rowsUrl, cachedView, selectedView]);
 
   // Handle window resize to refresh grid on mobile/desktop transitions
   useEffect(() => {
@@ -781,6 +784,7 @@ export function LunoAgGrid<T = any>({
         <GridFilters
           filters={filters}
           onFiltersChange={handleFiltersChange}
+          disabled={loading || !rowsUrl}
         />
       )}
       
@@ -793,7 +797,8 @@ export function LunoAgGrid<T = any>({
           ...themeAwareStyles
         }}
       >
-        <div className="flex-1 overflow-hidden" style={{ minHeight: '400px' }}>
+        <div className="flex-1 overflow-hidden relative" style={{ minHeight: '400px' }}>
+          {/* Grid instance */}
           <AgGridReact
             theme="legacy"
             rowData={rows}
@@ -802,10 +807,11 @@ export function LunoAgGrid<T = any>({
             onRowClicked={(ev) => onRowClicked?.(ev.data)}
             defaultColDef={{ 
               resizable: true, 
-              sortable: true,
+              sortable: !(loading || !rowsUrl),
               unSortIcon: false, // Hide unsort icon since we only have asc/desc
               // As of AG Grid v33+, use defaultColDef.sortingOrder instead of top-level prop
-              sortingOrder: ['asc', 'desc']
+              sortingOrder: ['asc', 'desc'],
+              suppressHeaderMenuButton: (loading || !rowsUrl)
             }}
             onColumnResized={handleColumnResized}
             onColumnMoved={handleColumnMoved}
@@ -816,6 +822,7 @@ export function LunoAgGrid<T = any>({
             animateRows
             domLayout="normal"
             suppressPaginationPanel
+            suppressMovableColumns={loading || !rowsUrl}
             rowSelection={{
               mode: 'singleRow',
               checkboxes: false,
@@ -829,7 +836,23 @@ export function LunoAgGrid<T = any>({
             headerHeight={44}
             rowHeight={48}
             suppressRowTransform={true}
+            suppressNoRowsOverlay={loading || !rowsUrl}
           />
+          {/* Prevent header interactions while loading */}
+          {(loading || !rowsUrl) && (
+            <div
+              className="absolute left-0 right-0"
+              style={{ top: 0, height: 44, background: 'transparent' }}
+            />
+          )}
+          {(loading || !rowsUrl) && (
+            <div
+              className="absolute left-0 right-0 flex items-center justify-center"
+              style={{ top: 44, bottom: 0, background: 'rgba(0,0,0,0.03)' }}
+            >
+              <LoadingSpinner size="lg" message="Loading data…" />
+            </div>
+          )}
         </div>
         <CustomPaginationPanel />
       </div>

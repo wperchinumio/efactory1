@@ -58,6 +58,7 @@ export default function GridToolbar({
 }: GridToolbarProps) {
   const [savedFilters, setSavedFilters] = useState<{ id: number; name: string; selected?: boolean }[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
+  const [filtersLoaded, setFiltersLoaded] = useState(false);
   const selectedLabel = useMemo(() => {
     const meta = views.find(v => v.id === selectedViewId) || views.find(v => v.selected);
     return meta?.name || 'Views';
@@ -70,19 +71,20 @@ export default function GridToolbar({
 
   const selectedView = useMemo(() => views.find((v) => v.selected) || views.find((v) => v.id === selectedViewId) || views[0], [views, selectedViewId]);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        setLoadingFilters(true);
-        const list = await listSavedFilters(resource);
-        setSavedFilters(list as any);
-      } catch {
-        setSavedFilters([]);
-      } finally {
-        setLoadingFilters(false);
-      }
-    })();
-  }, [resource]);
+  // Lazy-load saved filters only when filters dropdown opens
+  async function ensureFiltersLoaded() {
+    if (filtersLoaded) return;
+    try {
+      setLoadingFilters(true);
+      const list = await listSavedFilters(resource);
+      setSavedFilters(list as any);
+      setFiltersLoaded(true);
+    } catch {
+      setSavedFilters([]);
+    } finally {
+      setLoadingFilters(false);
+    }
+  }
 
   async function handleSelectView(id: number) {
     const viewMeta = await selectGridView(resource, id);
@@ -277,7 +279,11 @@ export default function GridToolbar({
                     ? 'border-red-500 bg-red-50 text-red-700 hover:bg-red-100 focus:ring-red-500' 
                     : 'border-border-color bg-card-color text-font-color hover:bg-primary-10 focus:ring-primary'
                 }`}
-                onClick={() => setFiltersOpen(!filtersOpen)}
+                onClick={async () => {
+                  const next = !filtersOpen;
+                  setFiltersOpen(next);
+                  if (next) await ensureFiltersLoaded();
+                }}
               >
                 <div className="flex items-center">
                   <IconFilter size={12} className="mr-2" />
@@ -352,6 +358,9 @@ export default function GridToolbar({
                           </button>
                         ))}
                       </>
+                    )}
+                    {loadingFilters && (
+                      <div className="px-2 py-2 text-xs text-font-color-100">Loading filters…</div>
                     )}
                   </div>
                 </>
