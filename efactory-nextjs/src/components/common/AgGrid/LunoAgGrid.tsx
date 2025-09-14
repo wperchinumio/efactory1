@@ -262,6 +262,9 @@ export function LunoAgGrid<T = any>({
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(() => !Boolean(cachedView));
   const [loading, setLoading] = useState(false);
   const pageSize = selectedView.rows_per_page || 100;
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const filtersRef = useRef<HTMLDivElement | null>(null);
+  const [containerPxHeight, setContainerPxHeight] = useState<number | null>(null);
 
   // Keep cached view up to date if resource changes (rare)
   useEffect(() => {
@@ -398,6 +401,43 @@ export function LunoAgGrid<T = any>({
       observer.disconnect();
     };
   }, []);
+
+  // Dynamically compute available height for the grid container so pagination stays visible
+  useEffect(() => {
+    const recalc = () => {
+      if (!containerRef.current) return;
+      // On mobile, let CSS handle full-height layout
+      if (window.innerWidth < 768) {
+        setContainerPxHeight(null);
+        return;
+      }
+      // Top of the container relative to viewport (desktop/tablet)
+      const rect = containerRef.current.getBoundingClientRect();
+      const top = rect.top;
+      const viewport = window.innerHeight || document.documentElement.clientHeight;
+      // Neutral offset so pagination sits nearly flush without extra gap
+      const available = Math.max(360, Math.floor(viewport - top));
+      setContainerPxHeight(available);
+    };
+
+    recalc();
+    const onResize = () => recalc();
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', onResize);
+
+    // Observe filter panel height changes (wrapping from 1 to 2 rows)
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(() => recalc());
+      if (filtersRef.current) ro.observe(filtersRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('orientationchange', onResize);
+      if (ro && filtersRef.current) ro.disconnect();
+    };
+  }, [resource]);
 
   // Persist view fields (width/order) per user+resource
   useEffect(() => {
@@ -853,25 +893,29 @@ export function LunoAgGrid<T = any>({
     <div className="w-full">
       {/* Filter Panel */}
       {showFilters && Object.keys(filters).length > 0 && (
-        <GridFilters
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          disabled={loading || !rowsUrl}
-          initialState={filterPanelInitialState}
-          onResetAll={handleResetAll}
-        />
+        <div ref={filtersRef}>
+          <GridFilters
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+            disabled={loading || !rowsUrl}
+            initialState={filterPanelInitialState}
+            onResetAll={handleResetAll}
+          />
+        </div>
       )}
       
       {/* Grid Container */}
       <div 
+        ref={containerRef}
         className={`w-full ${themeClass} rounded-md border flex flex-col ${containerClass}`} 
         style={{ 
           borderColor: 'var(--ag-border-color)',
           backgroundColor: 'var(--ag-background-color)',
+          ...(containerPxHeight ? { height: `${containerPxHeight}px`, minHeight: `${Math.max(360, containerPxHeight)}px` } : {}),
           ...themeAwareStyles
         }}
       >
-        <div className="flex-1 overflow-hidden relative" style={{ minHeight: '400px' }}>
+        <div className="flex-1 overflow-hidden relative">
           {/* Grid instance */}
           <AgGridReact
             theme="legacy"

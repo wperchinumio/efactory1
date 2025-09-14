@@ -225,56 +225,54 @@ body[data-luno-theme="dynamic"] {
  * - Maximum height constraint on mobile (80vh) to prevent overflow
  */
 .grid-container {
-  /* Default height for mobile and small screens */
-  height: auto;
-  min-height: 300px;
+  /* Default layout */
   display: flex;
   flex-direction: column;
+  /* Guard: ensure pagination is reachable even when space is tight */
+  min-height: 520px;
 }
 
 /* For desktop screens with height > 400px */
 @media (min-height: 401px) and (min-width: 768px) {
   .grid-container {
-    /* Full viewport height minus header, padding, and pagination space */
-    height: calc(100vh - 230px);
-    min-height: 400px;
+    /* Fixed container height so middle section flexes with variable filter heights */
+    height: calc(100svh - 213px);
+    min-height: calc(100svh - 213px);
+    display: flex;
+    flex-direction: column;
   }
 }
 
 /* For very large screens, ensure minimum usable height */
 @media (min-height: 800px) and (min-width: 1024px) {
   .grid-container {
-    height: calc(100vh - 230px);
-    min-height: 500px;
+    height: calc(100svh - 213px);
+    min-height: calc(100svh - 213px);
   }
 }
 
 /* Utility classes for different page layouts */
 .grid-container-compact {
-  height: auto;
-  min-height: 250px;
   display: flex;
   flex-direction: column;
 }
 
 @media (min-height: 401px) and (min-width: 768px) {
   .grid-container-compact {
-    height: calc(100vh - 220px);
-    min-height: 300px;
+    height: calc(100svh - 220px);
+    min-height: calc(100svh - 220px);
   }
 }
 
 .grid-container-large {
-  height: auto;
-  min-height: 400px;
   display: flex;
   flex-direction: column;
 }
 
 @media (min-height: 401px) and (min-width: 768px) {
   .grid-container-large {
-    height: calc(100vh - 200px);
-    min-height: 500px;
+    height: calc(100svh - 200px);
+    min-height: calc(100svh - 200px);
   }
 }
 
@@ -283,8 +281,9 @@ body[data-luno-theme="dynamic"] {
   .grid-container,
   .grid-container-compact,
   .grid-container-large {
-    height: 100vh; /* Use full viewport height on mobile */
-    min-height: 300px;
+    /* Mobile: use full viewport height */
+    height: 100svh;
+    min-height: 100svh;
     display: flex;
     flex-direction: column;
   }
@@ -294,9 +293,15 @@ body[data-luno-theme="dynamic"] {
   .grid-container-compact .flex-1,
   .grid-container-large .flex-1 {
     flex: 1;
-    min-height: 200px;
-    height: calc(100vh - 180px); /* Full height minus pagination space */
+    min-height: 0; /* allow the scrollable grid body to shrink/grow reliably */
   }
+}
+
+/* Always allow the middle section to shrink regardless of breakpoint */
+.grid-container .flex-1,
+.grid-container-compact .flex-1,
+.grid-container-large .flex-1 {
+  min-height: 0;
 }
 
 /* AG Grid Theme-Aware Styling */

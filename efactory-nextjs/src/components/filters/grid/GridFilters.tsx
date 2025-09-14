@@ -325,7 +325,7 @@ export default function GridFilters({
             type="button"
             onClick={handleResetAll}
             disabled={disabled}
-            className={`self-center flex items-center space-x-1 px-3 py-2 text-sm font-medium transition-colors ${disabled ? 'text-font-color-100 cursor-not-allowed' : 'text-font-color hover:text-primary'}`}
+            className={`self-center flex items-center space-x-1 pl-2 pr-1 py-1.5 text-[13px] font-medium transition-colors ${disabled ? 'text-font-color-100 cursor-not-allowed' : 'text-font-color hover:text-primary'}`}
           >
             <ArrowPathIcon className="h-4 w-4" />
             <span>Reset All</span>
