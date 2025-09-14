@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRouter } from 'next/router';
 
 export function DateRenderer({ value }: { value: any }) {
   if (!value) return <span />;
@@ -23,9 +24,32 @@ export function NumberRenderer({ value, decimals = 0, strong = false, dimZero = 
   return <span className={cls.trim()}>{formatted}</span>;
 }
 
-export function PrimaryLinkRenderer({ value }: { value: any }) {
+export function PrimaryLinkRenderer({ value, data, field }: { value: any; data?: any; field?: string }) {
+  const router = useRouter();
   if (!value) return <span />;
-  return <a className="text-primary" href="#">{String(value)}</a>;
+  const f = (field || '').toLowerCase();
+  let orderNum: string | undefined;
+  let accountNum: string | undefined;
+  if (f === 'order_number') {
+    orderNum = data?.order_number;
+    accountNum = data?.account_number;
+  } else if (f === 'original_order_number') {
+    orderNum = data?.original_order_number;
+    accountNum = data?.original_account_number;
+  } else if (f === 'replacement_order_number') {
+    orderNum = data?.replacement_order_number;
+    accountNum = data?.shipping_account_number;
+  } else {
+    orderNum = String(value);
+    accountNum = data?.account_number;
+  }
+  const base = typeof window !== 'undefined' ? window.location.pathname : router.pathname;
+  const url = `${base}?orderNum=${encodeURIComponent(orderNum || String(value))}` + (accountNum ? `&accountNum=${encodeURIComponent(accountNum)}` : '');
+  const onClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push(url);
+  };
+  return <a className="text-primary hover:underline font-semibold" href={url} onClick={onClick}>{String(value)}</a>;
 }
 
 // Map order type to a color class similar to legacy

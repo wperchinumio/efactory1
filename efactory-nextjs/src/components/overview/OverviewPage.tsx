@@ -6,10 +6,13 @@ import { useChartAnimation } from '@/hooks/useChartAnimation';
 import { useChartTheme } from '@/hooks/useChartTheme';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/shadcn/card';
 import dynamic from 'next/dynamic';
-import { fetch30DaysActivity, fetchFulfillments, fetchInventory, fetchLatest50Orders, fetchRma30Days, fetchDefaultOverviewLayout, saveOverviewLayout } from '@/services/api';
+import { fetch30DaysActivity, fetchFulfillments, fetchInventory, fetchLatest50Orders, fetchRma30Days, fetchDefaultOverviewLayout, saveOverviewLayout, readOrderDetail } from '@/services/api';
 import type { ActivityPointDto, FulfillmentRowDto, InventoryFilters, InventoryItemDto, LatestOrderDto, RmaActivityPointDto } from '@/types/api/overview';
 import type { OverviewArea, OverviewLayout, OverviewTileName } from '@/types/api/views';
 import { useRouter } from 'next/router';
+import OrderOverview from './OrderOverview';
+import MultipleOrdersGrid from './MultipleOrdersGrid';
+import type { OrderDetailResult } from '@/types/api/orders';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
 
@@ -145,6 +148,7 @@ export default function OverviewPage() {
   const [invFilters, setInvFilters] = useState<InventoryFilters>({ hasKey: true, isShort: false, needReorder: false });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hideZeroQty, setHideZeroQty] = useState(true);
+  const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
 
   // Chart theme and animation hooks
   const { echartsThemeName } = useChartTheme();
@@ -170,6 +174,26 @@ export default function OverviewPage() {
       }
     })();
   }, []);
+
+  // Watch for order detail query (?orderNum=...&accountNum=...)
+  useEffect(() => {
+    if (!router?.asPath) return;
+    const q = new URLSearchParams(router.asPath.split('?')[1] || '');
+    const orderNum = q.get('orderNum');
+    const accountNum = q.get('accountNum');
+    if (!orderNum) {
+      setOrderOverlay(null);
+      return;
+    }
+    (async () => {
+      try {
+        const result = await readOrderDetail(orderNum, accountNum || undefined);
+        setOrderOverlay(result);
+      } catch (e) {
+        setOrderOverlay({ kind: 'not_found' } as any);
+      }
+    })();
+  }, [router.asPath]);
 
   const visibleTiles = useMemo(() => {
     const area = layout?.areas.find(a => a.name === 'tiles');
@@ -1061,7 +1085,13 @@ export default function OverviewPage() {
                 <tr key={idx} className="hover:bg-primary-5 dark:hover:bg-primary-900/10 transition-colors duration-200">
                   <td className="px-4 py-3 text-font-color-100">{(ordersPage - 1) * ITEMS_PER_PAGE + idx + 1}</td>
                   <td className="px-4 py-3 font-bold text-font-color">
-                    <button className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline">
+                    <button 
+                      className="text-primary hover:text-primary dark:text-primary-300 dark:hover:text-primary-200 font-bold transition-colors duration-200 hover:underline"
+                      onClick={() => {
+                        const base = router.pathname;
+                        router.push(`${base}?orderNum=${encodeURIComponent(o.order_number)}`);
+                      }}
+                    >
                       {o.order_number}
                     </button>
                   </td>
@@ -1098,6 +1128,26 @@ export default function OverviewPage() {
   }
 
   if (!layout) return null;
+
+  // If an order is requested in the URL and a single match was loaded, replace the content area
+  if (orderOverlay && (orderOverlay as any).kind === 'single') {
+    return (
+      <div className="p-4 w-full">
+        <OrderOverview
+          data={(orderOverlay as any).order}
+          onClose={() => {
+            const q = new URLSearchParams(router.asPath.split('?')[1] || '');
+            if (q.has('orderNum')) q.delete('orderNum');
+            if (q.has('accountNum')) q.delete('accountNum');
+            const base = router.pathname;
+            const search = q.toString();
+            router.push(search ? `${base}?${search}` : base, undefined, { shallow: true });
+          }}
+          variant="inline"
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 w-full">
@@ -1263,6 +1313,55 @@ export default function OverviewPage() {
             </Card>
           )}
         </div>
+        {orderOverlay && orderOverlay.kind === 'single' && (
+          <div className="mt-4">
+            <OrderOverview
+              data={orderOverlay.order}
+              onClose={() => {
+                const q = new URLSearchParams(router.asPath.split('?')[1] || '');
+                if (q.has('orderNum')) q.delete('orderNum');
+                if (q.has('accountNum')) q.delete('accountNum');
+                const base = router.pathname;
+                const search = q.toString();
+                router.push(search ? `${base}?${search}` : base, undefined, { shallow: true });
+              }}
+              variant="inline"
+            />
+          </div>
+        )}
+        {orderOverlay && (orderOverlay as any).kind === 'multiple' && (
+          <div className="mt-4">
+            <MultipleOrdersGrid
+              orders={(orderOverlay as any).orders}
+              onClose={() => {
+                const q = new URLSearchParams(router.asPath.split('?')[1] || '');
+                if (q.has('orderNum')) q.delete('orderNum');
+                if (q.has('accountNum')) q.delete('accountNum');
+                const base = router.pathname;
+                const search = q.toString();
+                router.push(search ? `${base}?${search}` : base, undefined, { shallow: true });
+              }}
+            />
+          </div>
+        )}
+        {orderOverlay && (orderOverlay as any).kind === 'not_found' && (
+          <div className="mt-4 px-4 py-10 text-center text-font-color-100 border border-border-color rounded-xl bg-card-color relative">
+            <button
+              className="btn btn-danger absolute left-4 top-4"
+              onClick={() => {
+                const q = new URLSearchParams(router.asPath.split('?')[1] || '');
+                if (q.has('orderNum')) q.delete('orderNum');
+                if (q.has('accountNum')) q.delete('accountNum');
+                const base = router.pathname;
+                const search = q.toString();
+                router.push(search ? `${base}?${search}` : base, undefined, { shallow: true });
+              }}
+            >
+              Close
+            </button>
+            Order not found.
+          </div>
+        )}
       </div>
   );
 }

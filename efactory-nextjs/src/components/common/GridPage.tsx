@@ -2,11 +2,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import GridToolbar from '@/components/common/GridToolbar';
 import { LunoAgGrid } from '@/components/common/AgGrid/LunoAgGrid';
-import { listGridViews, readGridRows } from '@/services/api';
+import { listGridViews, readGridRows, readOrderDetail } from '@/services/api';
 import { getCachedViewApiResponseIfExist, cacheViewApiResponse } from '@/lib/grid/viewCache';
 import { getFiltersForPage } from '@/lib/filters/filterConfigs';
 import type { GridFilter, GridRowResponse, GridSelectedView, GridViewItemMeta } from '@/types/api/grid';
 import type { FilterState } from '@/types/api/filters';
+import OrderOverview from '@/components/overview/OrderOverview';
+import MultipleOrdersGrid from '@/components/overview/MultipleOrdersGrid';
+import type { OrderDetailResult } from '@/types/api/orders';
 
 export interface GridPageProps {
   resource: string; // e.g., 'fulfillment-open'
@@ -98,6 +101,7 @@ export default function GridPage({
   const [refreshKey, setRefreshKey] = useState(0);
   const loadedResourceRef = React.useRef<string | null>(null);
   const gridControlsRef = React.useRef<{ refresh: () => void; resetAll: () => void } | null>(null);
+  const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
 
   useEffect(() => {
     // Always attempt load once per mount; allow rerun if resource changes
@@ -136,6 +140,26 @@ export default function GridPage({
       }
     })();
   }, [resource]);
+
+  // Watch for order detail query (?orderNum=...&accountNum=...) and open overlay
+  useEffect(() => {
+    if (!router?.asPath) return;
+    const q = new URLSearchParams((router.asPath.split('?')[1] || ''));
+    const orderNum = q.get('orderNum');
+    const accountNum = q.get('accountNum');
+    if (!orderNum) {
+      setOrderOverlay(null);
+      return;
+    }
+    (async () => {
+      try {
+        const result = await readOrderDetail(orderNum, accountNum || undefined);
+        setOrderOverlay(result);
+      } catch (e) {
+        setOrderOverlay({ kind: 'not_found' } as any);
+      }
+    })();
+  }, [router.asPath]);
 
   const onFetchRows = useCallback(
     async (page: number, pageSize: number, filter: GridFilter, sort: any, filter_id?: any): Promise<GridRowResponse<any>> => {
@@ -224,6 +248,69 @@ export default function GridPage({
     );
   }
 
+  // If an order overview is requested and single result loaded, replace grid with inline overview
+  if (orderOverlay && (orderOverlay as any).kind === 'single') {
+    return (
+      <div className="p-4 w-full">
+        <OrderOverview
+          data={(orderOverlay as any).order}
+          onClose={() => {
+            const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
+            if (q.has('orderNum')) q.delete('orderNum');
+            if (q.has('accountNum')) q.delete('accountNum');
+            const base = (router as any).pathname || '';
+            const search = q.toString();
+            router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+          }}
+          variant="inline"
+        />
+      </div>
+    );
+  }
+
+  if (orderOverlay && (orderOverlay as any).kind === 'multiple') {
+    return (
+      <div className="p-4 w-full">
+        <div className="mt-2">
+          <MultipleOrdersGrid
+            orders={(orderOverlay as any).orders}
+            onClose={() => {
+              const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
+              if (q.has('orderNum')) q.delete('orderNum');
+              if (q.has('accountNum')) q.delete('accountNum');
+              const base = (router as any).pathname || '';
+              const search = q.toString();
+              router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (orderOverlay && (orderOverlay as any).kind === 'not_found') {
+    return (
+      <div className="p-4 w-full">
+        <div className="px-4 py-10 text-center text-font-color-100 border border-border-color rounded-xl bg-card-color relative">
+          <button
+            className="btn btn-danger absolute left-4 top-4"
+            onClick={() => {
+              const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
+              if (q.has('orderNum')) q.delete('orderNum');
+              if (q.has('accountNum')) q.delete('accountNum');
+              const base = (router as any).pathname || '';
+              const search = q.toString();
+              router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+            }}
+          >
+            Close
+          </button>
+          Order not found.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <GridToolbar
@@ -241,7 +328,8 @@ export default function GridPage({
         currentSort={currentSort as any}
         filterState={filterState}
       />
-      <LunoAgGrid
+      {!orderOverlay || orderOverlay.kind !== 'single' ? (
+        <LunoAgGrid
         key={refreshKey}
         resource={resource}
         rowsUrl={viewsUrl}
@@ -256,6 +344,33 @@ export default function GridPage({
         onFilterStateChange={(state) => setFilterState(state)}
         onProvideRefresh={(api) => { gridControlsRef.current = api; }}
       />
+      ) : null}
+      {orderOverlay && orderOverlay.kind === 'single' && (
+        <div className="mt-4">
+          <OrderOverview
+            data={orderOverlay.order}
+            onClose={() => {
+              const q = new URLSearchParams(router.asPath.split('?')[1] || '');
+              if (q.has('orderNum')) q.delete('orderNum');
+              if (q.has('accountNum')) q.delete('accountNum');
+              const base = (router as any).pathname || '';
+              const search = q.toString();
+              router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+            }}
+            variant="inline"
+          />
+        </div>
+      )}
+      {orderOverlay && orderOverlay.kind === 'multiple' && (
+        <div className="mt-4">
+          <MultipleOrdersGrid orders={orderOverlay.orders} />
+        </div>
+      )}
+      {orderOverlay && orderOverlay.kind === 'not_found' && (
+        <div className="mt-4 px-4 py-10 text-center text-font-color-100 border border-border-color rounded-xl bg-card-color">
+          Order not found.
+        </div>
+      )}
     </div>
   );
 }

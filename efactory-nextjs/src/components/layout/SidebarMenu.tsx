@@ -593,6 +593,16 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
               type="text"
               placeholder={searchPlaceholder}
               className='form-control pl-9 pr-3 py-2 text-[14px] w-full bg-card-color border border-border-color rounded-lg text-font-color placeholder:text-font-color-100 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors'
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = (e.currentTarget.value || '').trim();
+                  if (!val) return;
+                  const base = router.pathname;
+                  // Behavior mirrors legacy: for order search, push ?orderNum=; item/rma use ?itemNum=/ ?rmaNum=
+                  const param = searchType === 'item' ? 'itemNum' : (searchType === 'rma' ? 'rmaNum' : 'orderNum');
+                  router.push(`${base}?${param}=${encodeURIComponent(val)}`);
+                }
+              }}
             />
           </div>
         </div>

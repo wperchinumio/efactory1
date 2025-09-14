@@ -128,7 +128,7 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
       );
       colDef.type = 'numericColumn';
     } else if (id === 'fmtorderlink') {
-      colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} />;
+      colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
     } else if (id === 'fmtorderstage') {
       colDef.cellRenderer = (p: any) => <OrderStageRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtorderstatus') {
