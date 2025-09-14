@@ -459,7 +459,7 @@ export function LunoAgGrid<T = any>({
           return (
             <div className="relative w-full h-full">
               <OrderTypePill orderType={orderType} />
-              <span className="absolute top-0 right-0 text-[9px] font-medium text-font-color-100">
+              <span className="absolute top-0 right-0 text-[11px] font-medium text-font-color-100">
                 {location || ''}
               </span>
               {statusLabel ? (
