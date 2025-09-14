@@ -15,15 +15,28 @@ interface GridFiltersProps {
   onFiltersChange: (filters: FilterState) => void;
   className?: string;
   disabled?: boolean;
+  // Optional initial filter state, e.g. from server-provided view.filter
+  initialState?: FilterState;
+  // Reset-all action provided by parent (should also clear AG Grid header filters)
+  onResetAll?: () => void;
 }
 
 export default function GridFilters({
   filters,
   onFiltersChange,
   className = '',
-  disabled = false
+  disabled = false,
+  initialState,
+  onResetAll
 }: GridFiltersProps) {
-  const [filterState, setFilterState] = useState<FilterState>({});
+  const [filterState, setFilterState] = useState<FilterState>(initialState || {});
+
+  // Keep internal state in sync when parent provides/changes initial state
+  React.useEffect(() => {
+    if (initialState) {
+      setFilterState(initialState);
+    }
+  }, [initialState && JSON.stringify(initialState)]);
 
 
   const handleFilterChange = (field: string, value: string[] | FilterValue | DateRangeValue | boolean | string | null) => {
@@ -109,9 +122,15 @@ export default function GridFilters({
     onFiltersChange(newFilterState);
   };
 
-  const handleClearAllFilters = () => {
-    setFilterState({});
-    onFiltersChange({});
+  const handleResetAll = () => {
+    if (initialState) {
+      setFilterState(initialState);
+      onFiltersChange(initialState);
+    } else {
+      setFilterState({});
+      onFiltersChange({});
+    }
+    onResetAll?.();
   };
 
   const getActiveFilterCount = () => {
@@ -287,7 +306,7 @@ export default function GridFilters({
   return (
     <div className={`bg-card-color border-l border-r border-b border-border-color ${className}`} aria-disabled={disabled}>
       {/* Filter Panel - Always Visible */}
-      <div className="px-6 pt-1 pb-3">
+      <div className="px-6 py-2">
         <div className="flex items-center justify-between">
           <div className={`flex flex-wrap items-center gap-2 ${disabled ? 'pointer-events-none opacity-60' : ''}`}>
             {Object.entries(filters).map(([key, config]) => (
@@ -301,18 +320,16 @@ export default function GridFilters({
             ))}
           </div>
 
-          {/* Clear All Filters - On the same row, right side */}
-          {getActiveFilterCount() > 0 && (
-            <button
-              type="button"
-              onClick={handleClearAllFilters}
-              disabled={disabled}
-              className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium transition-colors ${disabled ? 'text-font-color-100 cursor-not-allowed' : 'text-font-color hover:text-primary'}`}
-            >
-              <ArrowPathIcon className="h-4 w-4" />
-              <span>Clear All</span>
-            </button>
-          )}
+          {/* Reset All - Always visible */}
+          <button
+            type="button"
+            onClick={handleResetAll}
+            disabled={disabled}
+            className={`self-center flex items-center space-x-1 px-3 py-2 text-sm font-medium transition-colors ${disabled ? 'text-font-color-100 cursor-not-allowed' : 'text-font-color hover:text-primary'}`}
+          >
+            <ArrowPathIcon className="h-4 w-4" />
+            <span>Reset All</span>
+          </button>
         </div>
       </div>
     </div>

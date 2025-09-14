@@ -311,6 +311,23 @@ export function LunoAgGrid<T = any>({
     fetchPage(1, newFilterState);
   };
 
+  // Reset All: restore server view.filter, clear AG Grid header filters, and refetch
+  const handleResetAll = () => {
+    const api = gridApiRef.current;
+    if (api) {
+      try {
+        api.setFilterModel({});
+      } catch {}
+    }
+    const viewToUse = cachedView || selectedView;
+    const base = initialFilters || viewToUse?.filter;
+    const initialState = mapGridFilterToFilterState(base);
+    setFilterState(initialState);
+    onFilterStateChange?.(initialState);
+    setPage(1);
+    fetchPage(1, initialState);
+  };
+
   // Handle sort changes - trigger remote sorting
   const handleSortChanged = (event: any) => {
     // Get the sort model from the grid API
@@ -483,6 +500,46 @@ export function LunoAgGrid<T = any>({
     return [...preCols, ...defs];
   }, [cachedView, selectedView.fields, showIndexColumn, showOrderTypeColumn, resource]);
 
+  // Convert GridFilter (from server view.filter) to FilterState for the filter panel UI
+  function mapGridFilterToFilterState(filter?: GridFilter): FilterState {
+    const state: FilterState = {};
+    if (!filter || !Array.isArray((filter as any).and)) return state;
+    const byField: Record<string, GridFilterCondition[]> = {};
+    (filter.and || []).forEach((cond) => {
+      if (!cond || !cond.field) return;
+      const key: string = cond.field as string;
+      if (!byField[key]) byField[key] = [];
+      byField[key]!.push(cond);
+    });
+    Object.entries(byField).forEach(([field, conditions]) => {
+      if (conditions.length <= 1) {
+        const c = conditions[0];
+        if (c) {
+          state[field] = { field: c.field, oper: c.oper, value: c.value };
+        }
+      } else {
+        // Prefer a pair of ">=" and "<=" for date ranges
+        const first = conditions[0]!;
+        const second = (conditions[1] || conditions[0])!;
+        const start = conditions.find((c) => c.oper === '>=') || first;
+        const end = conditions.find((c) => c.oper === '<=') || second;
+        if (start && end) {
+          state[field] = [
+            { field: start.field, oper: start.oper, value: start.value },
+            { field: end.field, oper: end.oper, value: end.value },
+          ];
+        }
+      }
+    });
+    return state;
+  }
+
+  const filterPanelInitialState: FilterState = useMemo(() => {
+    const viewToUse = cachedView || selectedView;
+    const base = initialFilters || viewToUse?.filter;
+    return mapGridFilterToFilterState(base);
+  }, [cachedView, selectedView, initialFilters]);
+
   async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[]) {
     // If rowsUrl isn't ready yet, keep the loading overlay visible and wait
     if (!rowsUrl) {
@@ -494,6 +551,10 @@ export function LunoAgGrid<T = any>({
     
     // Convert filter state to GridFilter format
     const filterConditions: GridFilterCondition[] = [];
+    // Start with server-provided base filter from the selected view
+    if ((baseFilter as any)?.and && Array.isArray((baseFilter as any).and)) {
+      filterConditions.push(...((baseFilter as any).and as GridFilterCondition[]));
+    }
     
     // Add filter state conditions
     Object.values(currentFilterState).forEach(filterValue => {
@@ -796,6 +857,8 @@ export function LunoAgGrid<T = any>({
           filters={filters}
           onFiltersChange={handleFiltersChange}
           disabled={loading || !rowsUrl}
+          initialState={filterPanelInitialState}
+          onResetAll={handleResetAll}
         />
       )}
       
