@@ -77,7 +77,7 @@ import type {
   InventoryStatusForCartBody,
   ListDraftsBody,
   ListDraftsResponse,
-  OrderDetailDto,
+  OrderDetailDto as OPOrderDetailDto,
   OrderHeaderDto,
   OrderPointsSettingsDto,
   OrderReadResponse,
@@ -129,6 +129,17 @@ import type {
   SaveRmaEntryRequest,
   SaveRmaEntryResponse,
 } from '@/types/api/returntrak';
+import type {
+  OrderDetailDto as OrdersOrderDetailDto,
+  ReadOrderDetailRequest,
+  ReadOrderDetailResponse,
+  OrderDetailResult,
+  PutOnHoldBody as OrdersPutOnHoldBody,
+  CancelOrderBody as OrdersCancelOrderBody,
+  TransferOrderBody as OrdersTransferOrderBody,
+  CloneOrderBody as OrdersCloneOrderBody,
+  ResendShipConfirmationBody,
+} from '@/types/api/orders';
 
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
@@ -364,7 +375,7 @@ export async function createOrderPoints(payload: CreateOrderPointsBody): Promise
   return res.data;
 }
 
-export async function saveEntry(order_header: OrderHeaderDto, order_detail: OrderDetailDto[]): Promise<SaveEntryResponse> {
+export async function saveEntry(order_header: OrderHeaderDto, order_detail: OPOrderDetailDto[]): Promise<SaveEntryResponse> {
   const body: CreateOrderPointsBody = {
     action: 'create',
     to_draft: false,
@@ -374,7 +385,7 @@ export async function saveEntry(order_header: OrderHeaderDto, order_detail: Orde
   return res.data;
 }
 
-export async function saveDraft(order_header: OrderHeaderDto, order_detail: OrderDetailDto[]): Promise<CreateOrderPointsResponse> {
+export async function saveDraft(order_header: OrderHeaderDto, order_detail: OPOrderDetailDto[]): Promise<CreateOrderPointsResponse> {
   const body: CreateOrderPointsBody = {
     action: 'create',
     to_draft: true,
@@ -609,5 +620,67 @@ export async function listRmaDrafts(): Promise<ListRmaDraftsResponse['data']> {
 export async function deleteRmaDrafts(rma_ids: number[]): Promise<void> {
   const body: DeleteRmaDraftsRequest = { action: 'delete_draft', rma_ids } as any;
   await postJson<Record<string, never>>('/api/returntrak', body);
+}
+
+// ==========================
+// Order Detail (Fulfillment) API
+// ==========================
+
+export async function readOrderDetail(order_number: string, account_number?: string | null, policy_code?: string | number | null): Promise<OrderDetailResult> {
+  const filters: any[] = [];
+  if (order_number) filters.push({ order_num: order_number } as any);
+  if (account_number && String(account_number).trim().length > 0) filters.push({ account_num: account_number } as any);
+
+  const body: ReadOrderDetailRequest = {
+    action: 'read',
+    resource: 'order',
+    page_num: 1,
+    page_size: 2, // detect multiple by requesting 2
+    sort: [{ order_date: 'desc' } as any],
+    filter: { and: filters, or: [] },
+    fields: ['*'],
+    policy_code: policy_code ?? undefined,
+  } as any;
+
+  const res = await postJson<ReadOrderDetailResponse>('/api/fulfillment', body as any);
+  const rows = (res?.data?.rows || res?.data?.data?.rows || (res as any)?.rows || []) as OrdersOrderDetailDto[];
+  if (rows.length === 1) return { kind: 'single', order: rows[0] as OrdersOrderDetailDto };
+  if (rows.length === 0) return { kind: 'not_found' };
+  return { kind: 'multiple', orders: rows as OrdersOrderDetailDto[] };
+}
+
+// ==========================
+// Order Detail toolbar actions (legacy parity)
+// ==========================
+
+export async function orderPutOnHold(order_id: number | string, location: string, reason: string): Promise<void> {
+  const body: OrdersPutOnHoldBody = { action: 'on_hold', order_id, location, reason } as any;
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function orderPutOffHold(order_id: number | string, location: string): Promise<void> {
+  const body: OrdersPutOnHoldBody = { action: 'off_hold', order_id, location } as any;
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function orderCancel(order_id: number | string, location: string): Promise<void> {
+  const body: OrdersCancelOrderBody = { action: 'cancel_order', order_id, location } as any;
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function orderTransfer(order_id: number | string, source_warehouse: string, destination_warehouse: string): Promise<void> {
+  const body: OrdersTransferOrderBody = { action: 'transfer-order', order_id, source_warehouse, destination_warehouse } as any;
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function orderCloneToDraft(order_number: string, account_number: string): Promise<{ total_drafts?: number; draft_order?: any }> {
+  const body: OrdersCloneOrderBody = { action: 'clone_order', order_number, account_number } as any;
+  const res = await postJson<{ data?: { total_drafts?: number; draft_order?: any } }>('/api/orderpoints', body as any);
+  return (res as any).data || {};
+}
+
+export async function resendShipConfirmation(order_number: string, account_number: string, ship_to_email: string, bill_to_email: string): Promise<void> {
+  const body: ResendShipConfirmationBody = { action: 'resend_ship_confirmation', order_number, account_number, ship_to_email, bill_to_email } as any;
+  await postJson<Record<string, never>>('/api/orderpoints', body as any);
 }
 
