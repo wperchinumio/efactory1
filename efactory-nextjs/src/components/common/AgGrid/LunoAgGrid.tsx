@@ -290,6 +290,7 @@ export function LunoAgGrid<T = any>({
         const viewApiResponse = {
           data: [{
             type: resource,
+            url: rowsUrl,
             views: [{
               id: selectedView.id ?? 0,
               name: 'Default',

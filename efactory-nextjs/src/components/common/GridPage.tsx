@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import GridToolbar from '@/components/common/GridToolbar';
 import { LunoAgGrid } from '@/components/common/AgGrid/LunoAgGrid';
 import { listGridViews, readGridRows } from '@/services/api';
+import { getCachedViewApiResponseIfExist, cacheViewApiResponse } from '@/lib/grid/viewCache';
 import { getFiltersForPage } from '@/lib/filters/filterConfigs';
 import type { GridFilter, GridRowResponse, GridSelectedView, GridViewItemMeta } from '@/types/api/grid';
 import type { FilterState } from '@/types/api/filters';
@@ -100,6 +101,20 @@ export default function GridPage({
   useEffect(() => {
     // Always attempt load once per mount; allow rerun if resource changes
     loadedResourceRef.current = resource;
+
+    // 1) Try cache immediately to enable parallel rows fetch like legacy
+    try {
+      const cached = getCachedViewApiResponseIfExist(resource);
+      const cachedData = cached?.data?.[0];
+      if (cachedData && typeof cachedData.url === 'string' && Array.isArray(cachedData.views)) {
+        setViewsUrl(cachedData.url);
+        setViews(cachedData.views);
+        const selected = cachedData.views.find((v: any) => v.selected) || cachedData.views[0];
+        setSelectedView(selected?.view || null);
+      }
+    } catch {}
+
+    // 2) Always fetch latest views; if different, update state and cache
     (async () => {
       try {
         setLoading(true);
@@ -109,8 +124,12 @@ export default function GridPage({
         setViews(viewData.views);
         const selected = viewData.views.find(v => v.selected) || viewData.views[0];
         setSelectedView(selected?.view || null);
+
+        // Persist full response in cache for next mount (needs url + views structure)
+        cacheViewApiResponse(resource, { data: [viewData] });
       } catch (err) {
-        setError('Failed to load data. Please try again.');
+        // Leave any cache-provided state in place; surface error if nothing loaded
+        if (!viewsUrl) setError('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
       }
