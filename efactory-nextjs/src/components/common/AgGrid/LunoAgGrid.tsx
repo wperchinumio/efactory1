@@ -323,7 +323,27 @@ export function LunoAgGrid<T = any>({
     const api = gridApiRef.current;
     if (api) {
       try {
-        api.setFilterModel({});
+        // Clear all AG Grid header filters (floating filters) and quick filter
+        try { (api as any).setQuickFilter && (api as any).setQuickFilter(''); } catch {}
+        try { api.setFilterModel(null as any); } catch {}
+        try {
+          const cols = (api.getColumns && api.getColumns()) || [];
+          const colIds = cols.map((c: any) => (c && c.getColId ? c.getColId() : c?.colId)).filter(Boolean);
+          colIds.forEach((id: string) => {
+            try {
+              const inst = (api as any).getFilterInstance ? (api as any).getFilterInstance(id) : null;
+              if (inst && typeof inst.setModel === 'function') {
+                inst.setModel(null);
+                if (typeof inst.applyModel === 'function') inst.applyModel();
+                if (typeof inst.onBtApply === 'function') inst.onBtApply();
+              }
+            } catch {}
+            // As a stronger measure, destroy the filter so floating UI resets
+            try { (api as any).destroyFilter && (api as any).destroyFilter(id); } catch {}
+          });
+        } catch {}
+        try { (api as any).onFilterChanged && (api as any).onFilterChanged(); } catch {}
+        try { (api as any).refreshHeader && (api as any).refreshHeader(); } catch {}
       } catch {}
     }
     const viewToUse = cachedView || selectedView;
