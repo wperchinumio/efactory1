@@ -475,6 +475,24 @@ input[placeholder*="filter"].ag-text-field-input {
   padding-left: 8px !important; /* Keep normal padding */
 }
 
+/* Ensure number filter popup inputs have the same left spacing as text inputs */
+.ag-filter-popup .ag-number-field-input-wrapper input,
+.ag-menu .ag-number-field-input-wrapper input,
+.ag-popup .ag-number-field-input-wrapper input,
+.ag-filter-body .ag-number-field-input-wrapper input {
+  text-indent: 20px !important;
+  padding-left: 8px !important;
+}
+
+/* Also normalize generic popup number inputs to avoid icon overlap */
+.ag-filter-popup input[type="number"],
+.ag-menu input[type="number"],
+.ag-popup input[type="number"],
+.ag-filter-body input[type="number"] {
+  text-indent: 20px !important;
+  padding-left: 8px !important;
+}
+
 /* Global AG Grid input targeting - catch any remaining inputs */
 .ag-root input[type="text"]:not([type="checkbox"]):not([type="radio"]),
 .ag-root input[type="number"]:not([type="checkbox"]):not([type="radio"]),
