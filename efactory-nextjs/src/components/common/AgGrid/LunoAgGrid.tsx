@@ -6,7 +6,7 @@ import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import { getAuthToken } from '@/lib/auth/storage';
 import { getCachedView, setCachedView } from '@/lib/grid/viewCache';
-import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView } from '@/types/api/grid';
+import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView, GridSortSpec } from '@/types/api/grid';
 import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer } from './renderers';
 import GridFilters from '@/components/filters/grid/GridFilters';
@@ -243,6 +243,7 @@ export function LunoAgGrid<T = any>({
   const [page, setPage] = useState(1);
   const [themeClass, setThemeClass] = useState(() => getThemeClass());
   const [filterState, setFilterState] = useState<FilterState>({});
+  const [currentSort, setCurrentSort] = useState<GridSortSpec[]>(selectedView.sort || []);
   const pageSize = selectedView.rows_per_page || 100;
 
 
@@ -280,26 +281,20 @@ export function LunoAgGrid<T = any>({
     
     
     if (sortModel && sortModel.length > 0) {
-      // Update the selectedView sort with the new sort
-      // Legacy API expects format: [{ "field_name": "direction" }]
-      const updatedView = {
-        ...selectedView,
-        sort: [{
-          field: sortModel[0].colId,
-          dir: sortModel[0].sort
-        }]
-      };
-      // Debug: console.log('Updated view sort:', updatedView.sort);
+      // Update the current sort state
+      const newSort = [{
+        field: sortModel[0].colId,
+        dir: sortModel[0].sort
+      }];
+      setCurrentSort(newSort);
+      // Debug: console.log('Updated sort:', newSort);
       // Fetch page 1 with new sort
-      fetchPage(1, undefined, updatedView);
+      fetchPage(1, undefined, undefined, newSort);
     } else {
       // No sorting - clear sort and fetch page 1
-      const updatedView = {
-        ...selectedView,
-        sort: []
-      };
+      setCurrentSort([]);
       // Debug: console.log('Cleared sort');
-      fetchPage(1, undefined, updatedView);
+      fetchPage(1, undefined, undefined, []);
     }
   };
 
@@ -411,7 +406,7 @@ export function LunoAgGrid<T = any>({
     return [...preCols, ...defs];
   }, [selectedView.fields, showIndexColumn, showOrderTypeColumn]);
 
-  async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView) {
+  async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[]) {
     const viewToUse = customView || selectedView;
     const baseFilter: GridFilter = initialFilters || viewToUse.filter;
     const currentFilterState = customFilterState || filterState;
@@ -478,8 +473,10 @@ export function LunoAgGrid<T = any>({
       currentFilter = { and: filterConditions };
     }
     
-    const sort = applyServerSort && viewToUse.sort?.length
-      ? [{ [viewToUse.sort[0]?.field || '']: viewToUse.sort[0]?.dir || 'asc' }]    
+    // Use custom sort if provided, otherwise use current sort state, otherwise use view sort
+    const sortToUse = customSort || currentSort || viewToUse.sort || [];
+    const sort = applyServerSort && sortToUse.length
+      ? [{ [sortToUse[0]?.field || '']: sortToUse[0]?.dir || 'asc' }]    
       : [];
     
     // Debug: console.log('Fetching page with sort:', sort);
@@ -527,7 +524,7 @@ export function LunoAgGrid<T = any>({
     const currentPage = api.paginationGetCurrentPage() + 1;
     if (currentPage !== page) {
       setPage(currentPage);
-      fetchPage(currentPage);
+      fetchPage(currentPage, undefined, undefined, currentSort);
     }
   }
 
@@ -613,7 +610,7 @@ export function LunoAgGrid<T = any>({
         const newPage = parseInt(pageInput);
         if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
           // Use fetchPage for remote pagination instead of AG Grid's built-in pagination
-          fetchPage(newPage);
+          fetchPage(newPage, undefined, undefined, currentSort);
         } else {
           // Reset to current page if invalid
           setPageInput(page.toString());
@@ -641,14 +638,14 @@ export function LunoAgGrid<T = any>({
         {total > 0 && (
           <div className="flex items-center space-x-1">
             <button
-              onClick={() => fetchPage(1)}
+              onClick={() => fetchPage(1, undefined, undefined, currentSort)}
               disabled={page === 1}
               className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
             >
               First
             </button>
             <button
-              onClick={() => fetchPage(page - 1)}
+              onClick={() => fetchPage(page - 1, undefined, undefined, currentSort)}
               disabled={page === 1}
               className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
             >
@@ -669,14 +666,14 @@ export function LunoAgGrid<T = any>({
               <span className="text-xs text-gray-600 dark:text-gray-400">of {totalPages}</span>
             </div>
             <button
-              onClick={() => fetchPage(page + 1)}
+              onClick={() => fetchPage(page + 1, undefined, undefined, currentSort)}
               disabled={page >= totalPages}
               className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
             >
               Next
             </button>
             <button
-              onClick={() => fetchPage(totalPages)}
+              onClick={() => fetchPage(totalPages, undefined, undefined, currentSort)}
               disabled={page >= totalPages}
               className="px-3 py-1.5 text-xs font-medium rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700 transition-colors"
             >
