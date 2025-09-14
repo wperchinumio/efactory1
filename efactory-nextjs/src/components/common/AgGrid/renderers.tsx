@@ -32,14 +32,14 @@ export function PrimaryLinkRenderer({ value }: { value: any }) {
 export function getOrderTypePillClass(orderType?: string): string {
   switch ((orderType || '').toUpperCase()) {
     case 'EDE':
-      return 'bg-purple-600 text-white';
+      return 'bg-purple-400 text-white';
     case 'EDI':
-      return 'bg-red-500 text-white';
+      return 'bg-red-400 text-white';
     case 'REST':
     case 'SOAP':
     case 'RTRE':
     case 'RTSO':
-      return 'bg-neutral-800 text-white';
+      return 'bg-neutral-600 text-white';
     case 'AMZN':
     case 'BIGP':
     case 'CHAD':
@@ -49,12 +49,12 @@ export function getOrderTypePillClass(orderType?: string): string {
     case 'SHST':
     case 'STLS':
     case 'WOOP':
-      return 'bg-blue-600 text-white';
+      return 'bg-blue-400 text-white';
     case 'OPEF':
     case 'RTEF':
-      return 'bg-emerald-600 text-white';
+      return 'bg-emerald-500 text-white';
     default:
-      return 'bg-gray-500 text-white';
+      return 'bg-gray-400 text-white';
   }
 }
 

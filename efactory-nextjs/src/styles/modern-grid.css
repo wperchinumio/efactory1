@@ -31,7 +31,7 @@
   border: 1px solid var(--border-color) !important;
   background-color: var(--card-color) !important;
   color: var(--font-color) !important;
-  padding: 6px 8px !important;
+  padding: 6px 4px !important;
   font-size: 13px !important;
   transition: all 0.2s ease-in-out !important;
   height: auto !important;
@@ -86,6 +86,36 @@
 
 .modern-grid-container .ag-floating-filter-input .ag-floating-filter-button {
   border-radius: 0 !important;
+}
+
+/* AG Grid Filter Button Icon Positioning */
+.modern-grid-container .ag-floating-filter-button,
+.modern-grid-container .ag-header-cell .ag-floating-filter-button {
+  width: 28px !important;
+  min-width: 28px !important;
+  margin-left: 4px !important;
+  margin-right: 0 !important;
+  padding: 0 6px !important;
+}
+
+.modern-grid-container .ag-floating-filter-button .ag-icon,
+.modern-grid-container .ag-header-cell .ag-floating-filter-button .ag-icon {
+  margin-left: -8px !important;
+}
+
+/* Compact layout for floating filter: input and button sit closer */
+.modern-grid-container .ag-header-cell .ag-floating-filter-body,
+.modern-grid-container .ag-floating-filter-body {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+}
+
+/* Let the input take remaining space next to the button */
+.modern-grid-container .ag-floating-filter-input,
+.modern-grid-container .ag-header-cell .ag-floating-filter-input {
+  flex: 1 1 auto !important;
 }
 
 /* Dark mode support for AG Grid inputs - Target ALL actual input elements */
@@ -419,8 +449,8 @@ html[data-luno-theme="red"] .ag-text-field-input-wrapper input:focus {
 .ag-menu input[placeholder],
 .ag-popup input[placeholder],
 .ag-filter input[placeholder] {
-  text-indent: 20px !important; /* Move text to the right to avoid icon overlap - slightly less */
-  padding-left: 8px !important; /* Keep normal padding */
+  text-indent: 8px !important; /* Reduced text indent */
+  padding-left: 4px !important; /* Reduced left padding */
 }
 
 /* Remove this - we want to show our custom icon instead */
@@ -454,8 +484,8 @@ input[placeholder*="filter"].ag-text-field-input {
   border: 1px solid var(--border-color) !important;
   background-color: var(--card-color) !important;
   color: var(--font-color) !important;
-  padding: 6px 8px !important; /* Normal padding */
-  text-indent: 20px !important; /* Move text to avoid icon overlap */
+  padding: 6px 4px !important; /* Reduced padding */
+  text-indent: 8px !important; /* Reduced text indent */
   font-size: 13px !important;
   transition: all 0.2s ease-in-out !important;
   height: auto !important;

@@ -847,7 +847,8 @@ export function LunoAgGrid<T = any>({
             headerHeight={44}
             rowHeight={44}
             suppressRowTransform={true}
-            suppressNoRowsOverlay={loading || !rowsUrl}
+            // Always suppress AG Grid's default no-rows overlay so header filters remain usable
+            suppressNoRowsOverlay={true}
           />
           {/* Prevent header interactions while loading */}
           {(loading || !rowsUrl) && (
@@ -862,6 +863,15 @@ export function LunoAgGrid<T = any>({
               style={{ top: 44, bottom: 0, background: 'rgba(0,0,0,0.03)' }}
             >
               <LoadingSpinner size="lg" message="Loading data…" />
+            </div>
+          )}
+          {/* No results overlay (non-blocking header filters) */}
+          {!loading && rowsUrl && rows.length === 0 && (
+            <div
+              className="absolute left-0 right-0 flex items-center justify-center"
+              style={{ top: 44, bottom: 0, background: 'transparent', pointerEvents: 'none' }}
+            >
+              <div className="text-sm text-font-color-100">No results match the current filters.</div>
             </div>
           )}
         </div>
