@@ -996,6 +996,7 @@ export function LunoAgGrid<T = any>({
               checkboxes: false,
               enableClickSelection: true
             }}
+            suppressMultiRangeSelection={true}
             multiSortKey="ctrl"
             getRowStyle={(params) => ({
               backgroundColor: (params.node?.rowIndex ?? 0) % 2 === 0 ? 'var(--ag-even-row-background-color)' : 'var(--ag-odd-row-background-color)',
