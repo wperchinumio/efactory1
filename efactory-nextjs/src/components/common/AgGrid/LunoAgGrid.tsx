@@ -268,6 +268,7 @@ export function LunoAgGrid<T = any>({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const filtersRef = useRef<HTMLDivElement | null>(null);
   const [containerPxHeight, setContainerPxHeight] = useState<number | null>(null);
+  const isBatchingResetRef = useRef<boolean>(false);
 
   // Keep cached view up to date if resource changes (rare)
   useEffect(() => {
@@ -314,6 +315,7 @@ export function LunoAgGrid<T = any>({
   const handleFiltersChange = (newFilterState: FilterState) => {
     setFilterState(newFilterState);
     onFilterStateChange?.(newFilterState);
+    if (isBatchingResetRef.current) return; // skip fetching while Reset All is batching
     setPage(1); // Reset to first page when filters change
     fetchPage(1, newFilterState);
   };
@@ -323,6 +325,7 @@ export function LunoAgGrid<T = any>({
     const api = gridApiRef.current;
     if (api) {
       try {
+        isBatchingResetRef.current = true;
         // Clear all AG Grid header filters (floating filters) and quick filter
         try { (api as any).setQuickFilter && (api as any).setQuickFilter(''); } catch {}
         try { api.setFilterModel(null as any); } catch {}
@@ -352,7 +355,11 @@ export function LunoAgGrid<T = any>({
     setFilterState(initialState);
     onFilterStateChange?.(initialState);
     setPage(1);
-    fetchPage(1, initialState);
+    // Perform exactly one fetch after batch clearing is done (delay a tick to let UI settle)
+    setTimeout(() => {
+      fetchPage(1, initialState);
+      isBatchingResetRef.current = false;
+    }, 0);
   };
 
   // Handle sort changes - trigger remote sorting
@@ -766,6 +773,7 @@ export function LunoAgGrid<T = any>({
 
   function onFilterChanged() {
     // Reset to page 1 when filters change
+    if (isBatchingResetRef.current) return; // suppress intermediate fetches during Reset All
     setPage(1);
     fetchPage(1);
   }
