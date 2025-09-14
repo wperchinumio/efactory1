@@ -44,7 +44,9 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
     headerName: field.alias,
     sortable: field.sortable !== false, // Enable sorting by default unless explicitly disabled
     minWidth: field.min_width ?? 50,
-    cellDataType: field.data_type || 'text', // Use data_type from API, default to text
+    cellDataType: field.data_type === 'number' ? 'number' : 
+                  field.data_type === 'date' || field.data_type === 'datetime' ? 'date' : 
+                  'text', // Map data types to AG Grid supported types
     cellClass: (params) => {
       const align = field.align || 'left';
       return align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
@@ -68,7 +70,6 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
         buttons: ['reset', 'apply'],
         closeOnApply: false,
         suppressAndOrCondition: true,
-        debounceMs: 0,
         filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
         defaultOption: 'equals',
         suppressFilterButton: true,
@@ -80,7 +81,6 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
         buttons: ['reset', 'apply'],
         closeOnApply: false,
         suppressAndOrCondition: true,
-        debounceMs: 0,
         filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
         defaultOption: 'equals',
         suppressFilterButton: true,
@@ -93,7 +93,6 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
         buttons: ['reset', 'apply'],
         closeOnApply: false,
         suppressAndOrCondition: true,
-        debounceMs: 0,
         filterOptions: ['contains', 'equals', 'startsWith', 'endsWith'],
         defaultOption: 'equals',
         suppressFilterButton: true,
