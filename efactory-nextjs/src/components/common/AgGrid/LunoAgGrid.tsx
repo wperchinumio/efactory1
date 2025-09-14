@@ -457,21 +457,20 @@ export function LunoAgGrid<T = any>({
           const status: number = Number(p.data?.order_status ?? 1);
           const statusLabel = status === 0 ? 'ON HOLD' : status === 2 ? 'RUSH' : '';
           return (
-            <div className="flex flex-col gap-1 leading-tight p-1">
-              <div className="flex items-center justify-between gap-2">
-                <OrderTypePill orderType={orderType} />
-                <span className="text-xs font-medium text-font-color-100 bg-card-color/50 px-2 py-0.5 rounded-full">
-                  {location || ''}
-                </span>
-              </div>
+            <div className="relative w-full h-full">
+              <OrderTypePill orderType={orderType} />
+              <span className="absolute top-0 right-0 text-[9px] font-medium text-font-color-100">
+                {location || ''}
+              </span>
               {statusLabel ? (
-                <span className={`mt-1 inline-block px-2 py-1 rounded-full text-[10px] font-bold tracking-wide ${
-                  statusLabel === 'ON HOLD' 
-                    ? 'bg-amber-100 text-amber-800 border border-amber-200' 
-                    : 'bg-red-100 text-red-800 border border-red-200'
-                }`}>
-                  {statusLabel}
-                </span>
+                <div className="-mt-0.5">
+                  <span className="inline-block text-[9px] font-bold"
+                  style={{
+                    color: statusLabel === 'ON HOLD' ? '#c11515' : '#8775a7'
+                  }}>
+                    {statusLabel}
+                  </span>
+                </div>
               ) : null}
             </div>
           );

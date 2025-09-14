@@ -106,8 +106,17 @@ export function OrderStageRenderer({ value, data }: { value: number; data?: any 
 export function OrderStatusRenderer({ value }: { value: any }) {
   const status = Number(value);
   const label = status === 0 ? 'On Hold' : status === 1 ? 'Normal' : status === 2 ? 'Rush' : 'Unknown';
-  const cls = status === 0 ? 'text-red-500 font-semibold' : status === 2 ? 'text-purple-600 font-semibold' : '';
-  return <span className={cls}>{label}</span>;
+  
+  // Use exact legacy colors to ensure operators can distinguish status correctly
+  if (status === 0) {
+    // ON HOLD uses #c11515 (font-red-soft from legacy)
+    return <span className="font-semibold" style={{ color: '#c11515' }}>{label}</span>;
+  } else if (status === 2) {
+    // RUSH uses #8775a7 (font-purple-plum from legacy)
+    return <span className="font-semibold" style={{ color: '#8775a7' }}>{label}</span>;
+  }
+  
+  return <span>{label}</span>;
 }
 
 export function ShipToRenderer({ data }: { data: any }) {
