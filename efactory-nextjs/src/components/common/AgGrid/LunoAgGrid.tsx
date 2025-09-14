@@ -5,7 +5,7 @@ import type { ColDef, GridApi, GridReadyEvent, ColumnResizedEvent, ColumnMovedEv
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
 import { getAuthToken } from '@/lib/auth/storage';
-import { getCachedView, setCachedView } from '@/lib/grid/viewCache';
+import { getCachedViewApiResponseIfExist, cacheViewApiResponse, removeExpiredViewsFromStorage } from '@/lib/grid/viewCache';
 import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView, GridSortSpec } from '@/types/api/grid';
 import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer } from './renderers';
@@ -38,7 +38,7 @@ try {
   ModuleRegistry.registerModules([AllCommunityModule]);
 } catch {}
 
-function mapFieldToColDef(field: GridFieldDef): ColDef {
+function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, number>): ColDef {
   const colDef: ColDef = {
     field: field.field,
     headerName: field.alias,
@@ -53,9 +53,10 @@ function mapFieldToColDef(field: GridFieldDef): ColDef {
     },
   };
 
-  // Only add width if it's defined
-  if (field.width) {
-    colDef.width = field.width;
+  // Use cached width if available, otherwise use field width
+  const width = cachedWidths?.[field.field] || field.width;
+  if (width) {
+    colDef.width = width;
   }
 
   // Add header filter if field is filterable - use AG Grid server-side filtering
@@ -242,8 +243,63 @@ export function LunoAgGrid<T = any>({
   const [page, setPage] = useState(1);
   const [themeClass, setThemeClass] = useState(() => getThemeClass());
   const [filterState, setFilterState] = useState<FilterState>({});
-  const [currentSort, setCurrentSort] = useState<GridSortSpec[]>(selectedView.sort || []);
+  const [cachedView, setCachedViewState] = useState<GridSelectedView | null>(() => {
+    // Synchronously read cached view BEFORE first render to avoid flicker
+    try {
+      removeExpiredViewsFromStorage();
+      const cached = getCachedViewApiResponseIfExist(resource);
+      if (cached?.data?.[0]?.views?.[0]?.view) {
+        const view = cached.data[0].views[0].view as GridSelectedView;
+        return view;
+      }
+    } catch {}
+    return null;
+  });
+  const [currentSort, setCurrentSort] = useState<GridSortSpec[]>(
+    (selectedView?.sort && selectedView.sort.length ? selectedView.sort : (cachedView?.sort || [])) || []
+  );
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(() => !Boolean(cachedView));
+  const [loading, setLoading] = useState(false);
   const pageSize = selectedView.rows_per_page || 100;
+
+  // Keep cached view up to date if resource changes (rare)
+  useEffect(() => {
+    try {
+      removeExpiredViewsFromStorage();
+      const cached = getCachedViewApiResponseIfExist(resource);
+      if (cached?.data?.[0]?.views?.[0]?.view) {
+        const view = cached.data[0].views[0].view as GridSelectedView;
+        setCachedViewState(view);
+        setIsInitialLoad(false);
+      }
+    } catch (e) {}
+  }, [resource]);
+
+  // Update cached view when selectedView changes (after API call)
+  useEffect(() => {
+    if (selectedView && Array.isArray(selectedView.fields)) {
+      const fieldCount = selectedView.fields.length || 0;
+      if (fieldCount > 0) {
+        setCachedViewState(selectedView);
+        setIsInitialLoad(false);
+        // Cache only if it contains fields
+        const viewApiResponse = {
+          data: [{
+            type: resource,
+            views: [{
+              id: selectedView.id ?? 0,
+              name: 'Default',
+              selected: true,
+              view: selectedView
+            }]
+          }]
+        };
+        cacheViewApiResponse(resource, viewApiResponse);
+      } else {
+        
+      }
+    }
+  }, [selectedView, resource]);
 
 
   // Handle filter changes
@@ -354,6 +410,18 @@ export function LunoAgGrid<T = any>({
   }, [resource, selectedView]);
 
   const colDefs: ColDef[] = useMemo(() => {
+    // Use cached view immediately if available, otherwise use selectedView
+    const viewToUse = cachedView || selectedView;
+    const cachedWidths: Record<string, number> = {};
+    
+    if (viewToUse?.fields) {
+      viewToUse.fields.forEach((field: any) => {
+        if (field.width) {
+          cachedWidths[field.field] = field.width;
+        }
+      });
+    }
+
     const preCols: ColDef[] = [];
     if (showIndexColumn) {
       preCols.push({
@@ -401,12 +469,16 @@ export function LunoAgGrid<T = any>({
     }
     // Flags / Invoice columns can be added later when needed.
 
-    const defs = (selectedView.fields || []).map(mapFieldToColDef);
+    const defs = (viewToUse.fields || []).map(field => mapFieldToColDef(field, cachedWidths));
     return [...preCols, ...defs];
-  }, [selectedView.fields, showIndexColumn, showOrderTypeColumn]);
+  }, [cachedView, selectedView.fields, showIndexColumn, showOrderTypeColumn, resource]);
 
   async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[]) {
-    const viewToUse = customView || selectedView;
+    // If rowsUrl isn't ready yet, keep the loading overlay visible and wait
+    if (!rowsUrl) {
+      return;
+    }
+    const viewToUse = customView || cachedView || selectedView;
     const baseFilter: GridFilter = initialFilters || viewToUse.filter;
     const currentFilterState = customFilterState || filterState;
     
@@ -480,19 +552,25 @@ export function LunoAgGrid<T = any>({
     
     // Debug: console.log('Fetching page with sort:', sort);
     
+    setLoading(true);
     try {
       const response = await onFetchRows(nextPage, pageSize, currentFilter, sort, undefined);
       setRows(response.rows || []);
       setTotal(response.total || 0);
       setPage(nextPage); // Update page state after successful API call
     } catch (error) {
-      console.error('LunoAgGrid: API error', error);
+      
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchPage(1);
-  }, [rowsUrl, selectedView, initialFilters]);
+    // Always fetch data - grid should be visible immediately
+    if (cachedView) {
+      fetchPage(1);
+    }
+  }, [rowsUrl, selectedView, initialFilters, cachedView]);
 
   // Handle window resize to refresh grid on mobile/desktop transitions
   useEffect(() => {
@@ -514,7 +592,11 @@ export function LunoAgGrid<T = any>({
 
   function onGridReady(e: GridReadyEvent) {
     gridApiRef.current = e.api;
-    e.api.sizeColumnsToFit();
+    // Avoid overriding cached widths on first paint
+    const hasCachedWidths = Boolean(cachedView && (cachedView.fields || []).some(f => !!f.width));
+    if (!hasCachedWidths) {
+      e.api.sizeColumnsToFit();
+    }
   }
 
   function onPaginationChanged() {
@@ -562,7 +644,7 @@ export function LunoAgGrid<T = any>({
           } as GridFieldDef;
         });
 
-      const payload = getCachedView(resource) || {
+      const payload = getCachedViewApiResponseIfExist(resource) || {
         data: [
           { type: resource, views: [{ id: selectedView.id ?? 0, name: 'Default', selected: true, view: { ...selectedView } }] },
         ],
@@ -573,7 +655,7 @@ export function LunoAgGrid<T = any>({
         }
         return v;
       });
-      setCachedView(resource, payload);
+      cacheViewApiResponse(resource, payload);
     } catch {}
   }
 
@@ -690,6 +772,8 @@ export function LunoAgGrid<T = any>({
     ? 'grid-container-large' 
     : 'grid-container';
 
+  
+  
   return (
     <div className="w-full">
       {/* Filter Panel */}
@@ -709,7 +793,7 @@ export function LunoAgGrid<T = any>({
           ...themeAwareStyles
         }}
       >
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden" style={{ minHeight: '400px' }}>
           <AgGridReact
             theme="legacy"
             rowData={rows}
@@ -744,6 +828,7 @@ export function LunoAgGrid<T = any>({
             })}
             headerHeight={44}
             rowHeight={48}
+            suppressRowTransform={true}
           />
         </div>
         <CustomPaginationPanel />

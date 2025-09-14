@@ -107,7 +107,6 @@ export default function GridPage({
         const selected = viewData.views.find(v => v.selected) || viewData.views[0];
         setSelectedView(selected?.view || null);
       } catch (err) {
-        console.error('Failed to load grid view:', err);
         setError('Failed to load data. Please try again.');
       } finally {
         setLoading(false);
@@ -155,33 +154,17 @@ export default function GridPage({
     setRefreshKey(prev => prev + 1);
   }, []);
 
-  if (loading) {
-    return (
-      <div>
-        <GridToolbar
-          resource={resource}
-          rowsUrl={viewsUrl}
-          views={views}
-          selectedViewId={views.find(v => v.selected)?.id || (views[0]?.id as number)}
-          title={pageTitle}
-          onRefresh={handleRefresh}
-          onViewChange={(view, meta) => {
-            setSelectedView(view);
-            setViews(meta);
-          }}
-          currentFilter={{ and: [] }}
-          currentSort={[]}
-          filterState={{}}
-        />
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted">Loading...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Create fallback view for immediate grid rendering
+  const fallbackView: GridSelectedView = {
+    id: 0,
+    fields: [], // Will be populated when real view arrives
+    filter: { and: [] },
+    sort: [],
+    rows_per_page: 100
+  };
+
+  // Always render the grid immediately, even during loading
+  const currentView = selectedView || fallbackView;
 
   if (error) {
     return (
@@ -212,34 +195,6 @@ export default function GridPage({
     );
   }
 
-  if (!selectedView) {
-    return (
-      <div>
-        <GridToolbar
-          resource={resource}
-          rowsUrl={viewsUrl}
-          views={views}
-          selectedViewId={views.find(v => v.selected)?.id || (views[0]?.id as number)}
-          title={pageTitle}
-          onRefresh={handleRefresh}
-          onViewChange={(view, meta) => {
-            setSelectedView(view);
-            setViews(meta);
-          }}
-          currentFilter={{ and: [] }}
-          currentSort={[]}
-          filterState={{}}
-        />
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="text-muted text-6xl mb-4">📊</div>
-            <p className="text-muted">No view configuration found.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       <GridToolbar
@@ -253,7 +208,7 @@ export default function GridPage({
           setSelectedView(view);
           setViews(meta);
         }}
-        currentFilter={selectedView!.filter}
+        currentFilter={currentView.filter}
         currentSort={currentSort as any}
         filterState={filterState}
       />
@@ -261,7 +216,7 @@ export default function GridPage({
         key={refreshKey}
         resource={resource}
         rowsUrl={viewsUrl}
-        selectedView={selectedView as any}
+        selectedView={currentView as any}
         paginationWord={paginationWord}
         onFetchRows={onFetchRows}
         onRowClicked={onRowClicked as any}
