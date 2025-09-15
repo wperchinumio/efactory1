@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Navigation loading animations */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes progress-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.navigation-progress-shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+.navigation-progress-pulse {
+  animation: progress-pulse 1s ease-in-out infinite;
+}
+
 :root {
   --font-family: Mulish;
 

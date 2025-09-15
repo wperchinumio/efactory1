@@ -5,7 +5,10 @@ import Sidebar from '../partial/Sidebar'
 import Footer from '../partial/Footer'
 import { NavigationProvider } from '@/contexts/NavigationContext'
 import { LoadingProvider, useLoading } from '@/contexts/LoadingContext'
+import { NavigationLoadingProvider } from '@/contexts/NavigationLoadingContext'
 import SidebarMenu from '@/components/layout/SidebarMenu'
+import NavigationProgressBar from '@/components/ui/NavigationProgressBar'
+import NavigationOverlay from '@/components/ui/NavigationOverlay'
 import { getAuthToken } from '@/lib/auth/storage'
 import type { UserApp } from '@/types/api'
 
@@ -76,33 +79,41 @@ function LayoutContent({ children, userApps = [] }: LayoutProps) {
 
   return (
     <NavigationProvider userApps={userAppIds}>
-      <div className={`admin-wrapper overflow-hidden ${isChangingUser ? 'pointer-events-none' : ''}`}>
-        {/* Global loading overlay when changing user */}
-        {isChangingUser && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-[9999]">
-            <div className="bg-card-color rounded-lg p-6 flex flex-col items-center gap-4 shadow-lg border border-border-color">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-              <div className="text-font-color font-semibold">Switching to DCL Menu...</div>
-              <div className="text-font-color-100 text-sm">Please wait while we load your admin interface</div>
+      <NavigationLoadingProvider>
+        {/* Navigation progress bar - positioned at the very top */}
+        <NavigationProgressBar />
+        
+        {/* Navigation overlay for blur effect and interaction prevention */}
+        <NavigationOverlay />
+        
+        <div className={`admin-wrapper overflow-hidden ${isChangingUser ? 'pointer-events-none' : ''}`}>
+          {/* Global loading overlay when changing user */}
+          {isChangingUser && (
+            <div className="fixed inset-0 bg-gray-900 bg-opacity-40 backdrop-blur-sm flex items-center justify-center z-[9999]">
+              <div className="bg-card-color rounded-lg p-6 flex flex-col items-center gap-4 shadow-lg border border-border-color">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="text-font-color font-semibold">Switching to DCL Menu...</div>
+                <div className="text-font-color-100 text-sm">Please wait while we load your admin interface</div>
+              </div>
+            </div>
+          )}
+          
+          <div className='flex h-svh relative'>
+            <div className={`sidebar sm:w-[260px] sm:min-w-[260px] w-full px-2 pt-4 overflow-y-scroll flex flex-col custom-scrollbar xl:static fixed xl:h-screen md:h-[calc(100vh-74px)] h-[calc(100vh-64px)] md:top-[74px] top-[64px] z-[3] bg-body-color xl:shadow-none transition-all duration-300 ${mobileNav ? 'shadow-shadow-lg left-0' : '-left-full'}`}>
+              {isCustomerContext ? (
+                <SidebarMenu setMobileNav={setMobileNav} />
+              ) : (
+                <Sidebar setMobileNav={setMobileNav} note={note} toggleNote={toggleNote} chat={chat} toggleChat={toggleChat} />
+              )}
+            </div>
+            <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
+              <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} userApps={userAppIds} />
+              {children}
+              {!hideFooter && <Footer />}
             </div>
           </div>
-        )}
-        
-        <div className='flex h-svh relative'>
-          <div className={`sidebar sm:w-[260px] sm:min-w-[260px] w-full px-2 pt-4 overflow-y-scroll flex flex-col custom-scrollbar xl:static fixed xl:h-screen md:h-[calc(100vh-74px)] h-[calc(100vh-64px)] md:top-[74px] top-[64px] z-[3] bg-body-color xl:shadow-none transition-all duration-300 ${mobileNav ? 'shadow-shadow-lg left-0' : '-left-full'}`}>
-            {isCustomerContext ? (
-              <SidebarMenu setMobileNav={setMobileNav} />
-            ) : (
-              <Sidebar setMobileNav={setMobileNav} note={note} toggleNote={toggleNote} chat={chat} toggleChat={toggleChat} />
-            )}
-          </div>
-          <div className='main flex-1 flex flex-col overflow-auto custom-scrollbar bg-body-color'>
-            <Header toggleMobileNav={toggleMobileNav} mobileNav={mobileNav} toggleNote={toggleNote} toggleChat={toggleChat} userApps={userAppIds} />
-            {children}
-            {!hideFooter && <Footer />}
-          </div>
         </div>
-      </div>
+      </NavigationLoadingProvider>
     </NavigationProvider>
   )
 }
