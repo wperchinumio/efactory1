@@ -13,6 +13,10 @@
   --theme-blue: #1363DF;
   --theme-cyan: #219F94;
   --theme-green: #8CBA51;
+  --theme-green-dark: #6B9A3F;
+  --theme-green-light: #A8D16A;
+  --theme-green-soft: rgba(139, 202, 81, 0.15);
+  --theme-green-soft-light: rgba(168, 209, 106, 0.12);
   --theme-orange: #e8730d;
   --theme-blush: #dd5e89;
   --theme-red: #f73859;

@@ -11,6 +11,8 @@ import { getAuthState } from '@/lib/auth/guards'
 import {
   generateOrderNumber,
   saveDraft,
+  updateDraft,
+  updateOrder,
   saveEntry,
   fetchInventoryForCart,
   readOrderPointsSettings,
@@ -20,6 +22,7 @@ import {
 import { consumeOrderDraft } from '@/services/orderEntryCache'
 import { inventoryCache } from '@/services/inventoryCache'
 import { addressBookCache } from '@/services/addressBookCache'
+import formatOrderId from '@/utils/formatOrderId'
 import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto, ReadAddressesResponse } from '@/types/api/orderpoints'
 
 
@@ -423,28 +426,52 @@ export default function OrderPointsPage() {
     if (typeof window !== 'undefined') window.location.href = '/auth/sign-in'
   }
   const router = useRouter()
-  // Consume draft payload from Drafts page if available
+  // Consume draft/order payload from various sources
   useEffect(() => {
-    const draft = consumeOrderDraft()
-    if (draft) {
+    const orderData = consumeOrderDraft()
+    if (orderData) {
       try {
-        const header = draft.order_header || {}
-        const detail = Array.isArray(draft.order_detail) ? draft.order_detail : []
+        const header = orderData.order_header || {}
+        const detail = Array.isArray(orderData.order_detail) ? orderData.order_detail : []
+        
         // Split flattened legacy header into our local states
         const {
-          shipping_address: draftShip = {},
-          billing_address: draftBill = {},
+          shipping_address: orderShip = {},
+          billing_address: orderBill = {},
+          order_id,
           ...restHeader
         } = header as any
 
-        setOrderHeader(prev => ({ ...prev, ...restHeader }))
-        setShippingAddress({ ...(draftShip as any) })
-        setBillingAddress({ ...(draftBill as any) })
+
+        // Ensure order_id is preserved in orderHeader state
+        setOrderHeader(prev => ({ ...prev, ...restHeader, order_id }))
+        setShippingAddress({ ...(orderShip as any) })
+        setBillingAddress({ ...(orderBill as any) })
         setOrderDetail(detail as any)
         setHasUnsavedChanges(false)
+        setJustUpdatedOrder(false) // Reset the "just updated" flag when loading new data
+        setIsInitialLoad(false) // Will be set to true for regular orders below
         setIsInitialized(true)
-      } catch {
-        // ignore
+        
+        // Determine if this is a draft or regular order based on the data structure
+        // Use the isDraft metadata from consumeOrderDraft, or fall back to order_id check
+        const isDraft = orderData.isDraft || (order_id && String(order_id).startsWith('D'))
+        
+        
+        if (isDraft) {
+          // This is a draft order - show "Update Draft"
+          setIsEditingDraft(true)
+          setDraftOrderId(order_id)
+          setEntryPageType('edit_draft')
+        } else {
+          // This is a regular order - edit the existing order
+          setIsEditingDraft(false)
+          setDraftOrderId(null)
+          setEntryPageType('edit_order') // This will show "Update Order" button
+          setIsInitialLoad(true) // Mark as initial load - button should be disabled
+        }
+      } catch (error) {
+        console.error('Error loading order data:', error)
       }
     }
   }, [])
@@ -514,6 +541,9 @@ export default function OrderPointsPage() {
   const [accountNumberLocation, setAccountNumberLocation] = useState('')
   const [accountDisplayLabel, setAccountDisplayLabel] = useState('')
   const [orderStatusDisplayLabel, setOrderStatusDisplayLabel] = useState('')
+  const [isEditingDraft, setIsEditingDraft] = useState(false)
+  const [draftOrderId, setDraftOrderId] = useState<number | null>(null)
+  const [entryPageType, setEntryPageType] = useState<'create_new' | 'edit_draft' | 'edit_order' | 'edit_template'>('create_new')
   const [shippingAddress, setShippingAddress] = useState<AddressDto>({ country: 'US' })
   const [billingAddress, setBillingAddress] = useState<AddressDto>({})
   // Shipping settings state
@@ -578,21 +608,23 @@ export default function OrderPointsPage() {
   // Loading states for better UX
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [justUpdatedOrder, setJustUpdatedOrder] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(false)
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + S: Save Draft
+      // Ctrl/Cmd + S: Save/Update Draft
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
-        if (!isSavingDraft && !isPlacingOrder) {
-          onSaveDraft();
+        if (!isSavingDraft && !isPlacingOrder && hasUnsavedChanges) {
+          handleDraftButtonClick();
         }
       }
       // Ctrl/Cmd + Enter: Place Order
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        if (!isPlacingOrder && !isSavingDraft) {
+        if (!isPlacingOrder && !isSavingDraft && (hasUnsavedChanges || isEditingDraft)) {
           onPlaceOrder();
         }
       }
@@ -611,7 +643,7 @@ export default function OrderPointsPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSavingDraft, isPlacingOrder, browseOpen, onSaveDraft, onPlaceOrder, onNewOrder]);
+  }, [isSavingDraft, isPlacingOrder, browseOpen, handleDraftButtonClick, onPlaceOrder, onNewOrder]);
   
   // Track if form has unsaved changes - simpler approach
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -656,7 +688,7 @@ export default function OrderPointsPage() {
   }
   
   const getAmountsFieldsWithValues = () => {
-    const orderAmount = orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0)
+    const orderAmount = orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0)
     const totalAmount = orderAmount + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling
     const netDue = totalAmount - amounts.amount_paid
     
@@ -690,6 +722,8 @@ export default function OrderPointsPage() {
   const markAsChanged = () => {
     if (isInitialized) {
       setHasUnsavedChanges(true)
+      setJustUpdatedOrder(false) // Reset the "just updated" flag when user makes changes
+      setIsInitialLoad(false) // Reset the "initial load" flag when user makes changes
     }
   }
   
@@ -747,8 +781,15 @@ export default function OrderPointsPage() {
     setSelectedRows([])
     setSelectedRowsCount(0)
     
+    // Reset draft-related states
+    setIsEditingDraft(false)
+    setDraftOrderId(null)
+    setEntryPageType('create_new')
+    
     // Reset unsaved changes state
     markAsClean()
+    setJustUpdatedOrder(false) // Reset the "just updated" flag when resetting form
+    setIsInitialLoad(false) // Reset the "initial load" flag when resetting form
     
     // Show success toaster
     toast({
@@ -1189,28 +1230,30 @@ export default function OrderPointsPage() {
     
     const res = await saveDraft(header, convertedOrderDetail)
     
-    // Debug logging to see what we're getting
-    console.log('SaveDraft response:', res)
     
-    // Check for order_number in the response (could be at root level or nested)
-    const orderNumber = res?.order_number || res?.draft_order?.order_header?.order_number
+    // Check for order_id in the response (legacy behavior)
+    const orderId = res?.draft_order?.order_header?.order_id
     
-    if (orderNumber) {
+    if (orderId) {
       // Show success toaster for draft save
       toast({
         title: "Draft Saved Successfully!",
-        description: `Draft #${orderNumber} has been saved.`,
+        description: `Draft #${formatOrderId(orderId, false)} has been saved.`,
         variant: "default",
       })
       
-      // Update order header with new order number
-      setOrderHeader({ ...orderHeader, order_number: orderNumber })
+      // Set draft state after successful save
+      if (entryPageType === 'create_new') {
+        setEntryPageType('edit_draft')
+        setIsEditingDraft(true)
+        setDraftOrderId(orderId)
+      }
       
       // Reset unsaved changes state
       markAsClean()
     } else {
-      // Show error toaster if no order number returned
-      console.error('No order number in response:', res)
+      // Show error toaster if no order_id returned
+      console.error('No order_id in response:', res)
       toast({
         title: "Draft Save Failed",
         description: `Failed to save draft. Response: ${JSON.stringify(res)}`,
@@ -1227,6 +1270,155 @@ export default function OrderPointsPage() {
       })
     } finally {
       setIsSavingDraft(false)
+    }
+  }
+
+  async function onUpdateDraft() {
+    if (isSavingDraft || !draftOrderId) return // Prevent multiple calls and ensure we have a draft ID
+    
+    setIsSavingDraft(true)
+    try {
+    const header = buildOrderHeaderForSubmit(true)
+    
+    // Convert dates in order detail items from native format to ISO format
+    const convertDateToISO = (dateStr: string): string => {
+      if (!dateStr) return ''
+      try {
+        // If it's already in ISO format, return as is
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+          return dateStr
+        }
+        // If it's in native format, convert to ISO
+        const date = new Date(dateStr)
+        if (!isNaN(date.getTime())) {
+          return date.toISOString().split('T')[0] || dateStr
+        }
+        return dateStr
+      } catch {
+        return dateStr
+      }
+    }
+    
+    const convertedOrderDetail = orderDetail.map(item => ({
+      ...item,
+      do_not_ship_before: convertDateToISO(item.do_not_ship_before ?? ''),
+      ship_by: convertDateToISO(item.ship_by ?? '')
+    }))
+    
+    const res = await updateDraft(draftOrderId, header, convertedOrderDetail)
+    
+    
+    // Show success toaster for draft update
+    toast({
+      title: "Draft Updated Successfully!",
+      description: `Draft #${formatOrderId(draftOrderId, false)} has been updated.`,
+      variant: "default",
+    })
+    
+    // Reset unsaved changes state
+    markAsClean()
+    
+    } catch (error: any) {
+      // Show error toaster with error message
+      const errorMessage = error?.error_message || error?.message || "An error occurred while updating the draft."
+      toast({
+        title: "Draft Update Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }
+
+  // Update order function
+  async function onUpdateOrder() {
+    if (isSavingDraft || !orderHeader.order_id) {
+      return // Prevent multiple calls and ensure we have an order ID
+    }
+    
+    setIsSavingDraft(true)
+    try {
+      const header = buildOrderHeaderForSubmit(false)
+      
+      // Convert dates in order detail items from native format to ISO format
+      const convertDateToISO = (dateStr: string): string => {
+        if (!dateStr) return ''
+        try {
+          // If it's already in ISO format, return as is
+          if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return dateStr
+          }
+          // If it's in native format, convert to ISO
+          const date = new Date(dateStr)
+          if (!isNaN(date.getTime())) {
+            return date.toISOString().split('T')[0] || dateStr
+          }
+          return dateStr
+        } catch {
+          return dateStr
+        }
+      }
+      
+      const convertedOrderDetail = orderDetail.map(item => ({
+        ...item,
+        do_not_ship_before: convertDateToISO(item.do_not_ship_before ?? ''),
+        ship_by: convertDateToISO(item.ship_by ?? '')
+      }))
+
+      const res = await updateOrder(orderHeader.order_id, header, convertedOrderDetail)
+      
+      // Use the response data directly (includes fresh detail_id values for new items)
+      if (res.data) {
+        
+        // Update the cart with fresh data (including new detail_id values)
+        const header = res.data.order_header || {}
+        const detail = Array.isArray(res.data.order_detail) ? res.data.order_detail : []
+        
+        // Split flattened legacy header into our local states
+        const {
+          shipping_address: orderShip = {},
+          billing_address: orderBill = {},
+          order_id: freshOrderId,
+          ...restHeader
+        } = header as any
+
+        // Ensure order_id is preserved in orderHeader state
+        setOrderHeader(prev => ({ ...prev, ...restHeader, order_id: freshOrderId }))
+        setShippingAddress({ ...(orderShip as any) })
+        setBillingAddress({ ...(orderBill as any) })
+        setOrderDetail(detail as any)
+        setHasUnsavedChanges(false)
+        setJustUpdatedOrder(true) // Mark that we just successfully updated the order
+        setIsInitialLoad(false) // Reset initial load flag
+        
+      }
+      
+      toast({
+        title: "Order Updated Successfully!",
+        description: `Order #${orderHeader.order_number || orderHeader.order_id} has been updated.`,
+        variant: "default",
+      })
+    } catch (error) {
+      console.error('Error updating order:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update order. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSavingDraft(false)
+    }
+  }
+
+  // Unified button click handler that calls the appropriate function based on entryPageType
+  function handleDraftButtonClick() {
+    if (entryPageType === 'create_new') {
+      onSaveDraft()
+    } else if (entryPageType === 'edit_draft') {
+      onUpdateDraft()
+    } else if (entryPageType === 'edit_order') {
+      onUpdateOrder()
     }
   }
 
@@ -1262,7 +1454,7 @@ export default function OrderPointsPage() {
       ship_by: convertDateToISO(item.ship_by ?? '')
     }))
     
-    const res = await saveEntry(header, convertedOrderDetail)
+    const res = await saveEntry(header, convertedOrderDetail, isEditingDraft ? draftOrderId || undefined : undefined, isEditingDraft)
       
       if (res?.order_number) {
         // Show success toaster with order number
@@ -1274,6 +1466,13 @@ export default function OrderPointsPage() {
         
         // Reset unsaved changes state
         markAsClean()
+        
+        // If placing from a draft, reset draft state (draft will be deleted by server)
+        if (isEditingDraft) {
+          setIsEditingDraft(false)
+          setDraftOrderId(null)
+          setEntryPageType('create_new')
+        }
         
         // Navigate to order details
         router.push(`/orders/${res.order_number}`)
@@ -1306,7 +1505,7 @@ export default function OrderPointsPage() {
       account_number = parts[0] || ''
       location = parts[1] || ''
     }
-    const totals = orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0)
+    const totals = orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0)
     const subtotal = totals
     const total_due = subtotal + (amounts.shipping_handling||0) + (amounts.sales_tax||0) + (amounts.international_handling||0)
     const net_due_currency = total_due - (amounts.amount_paid||0)
@@ -1665,28 +1864,60 @@ export default function OrderPointsPage() {
   function onRemoveSelected() {
     if (selectedRows.length === 0) return
 
-    // Remove selected rows; include their kit components
     const selectedItems = selectedRows.map(index => orderDetail[index]).filter(Boolean)
     const selectedKeys = new Set(selectedItems.map(r => `${r?.item_number || ''}#${r?.line_number || ''}`))
     const selectedParentLines = new Set(selectedItems.filter(r => !r?.is_kit_component).map(r => r?.line_number || 0))
     
-    const remaining = orderDetail.filter((r, index) => {
-      // Don't remove if not selected
-      if (!selectedRows.includes(index)) return true
+    // Handle both voiding existing items and removing new items in the same operation
+    const updatedOrderDetail = orderDetail.map((item, index) => {
+      if (!selectedRows.includes(index)) return item
       
-      // Don't remove voided items (they should stay but be crossed out)
-      if (r.voided) return true
-      
-      const key = `${r.item_number}#${r.line_number}`
-      if (selectedKeys.has(key)) return false
-      if (r.is_kit_component) {
-        const parent = Math.floor(r.line_number/1000)
-        if (selectedParentLines.has(parent)) return false
+      // For items that exist in database (detail_id > 0): mark as void
+      if (item.detail_id > 0) {
+        // Don't void already voided items
+        if (item.voided) return item
+        
+        const key = `${item.item_number}#${item.line_number}`
+        const shouldVoid = selectedKeys.has(key) || (item.is_kit_component && selectedParentLines.has(Math.floor(item.line_number/1000)))
+        
+        if (shouldVoid) {
+          return { ...item, voided: true, void: 1 }
+        }
       }
-      return true
+      
+      // For new items (detail_id = 0): mark for removal by returning null
+      // (we'll filter them out below)
+      if (item.detail_id === 0) {
+        const key = `${item.item_number}#${item.line_number}`
+        const shouldRemove = selectedKeys.has(key) || (item.is_kit_component && selectedParentLines.has(Math.floor(item.line_number/1000)))
+        
+        if (shouldRemove) {
+          return null // Mark for removal
+        }
+      }
+      
+      return item
     })
     
-    setOrderDetail(renumberDraftLines(remaining))
+    // Second pass: automatically void all kit components when their parent is voided
+    const finalOrderDetail = updatedOrderDetail.map((item, index) => {
+      if (!item) return item // Skip null items (removed new items)
+      
+      // If this is a kit component and its parent was voided, void this component too
+      if (item.is_kit_component && item.detail_id > 0) {
+        const parentLineNumber = Math.floor(item.line_number / 1000)
+        const parentWasVoided = selectedParentLines.has(parentLineNumber)
+        
+        if (parentWasVoided && !item.voided) {
+          return { ...item, voided: true, void: 1 }
+        }
+      }
+      
+      return item
+    }).filter(item => item !== null) // Remove null items (new items marked for removal)
+    
+    setOrderDetail(renumberDraftLines(finalOrderDetail))
+    
     setSelectedRows([])
     setSelectedRowsCount(0)
     markAsChanged()
@@ -2003,6 +2234,41 @@ export default function OrderPointsPage() {
     }
   }, [showAddressBook, addressBookPage, addressBookFilter])
 
+  function updateBundleQuantity(bundleIndex: number, newBundleQuantity: number) {
+    const bundleItem = orderDetail[bundleIndex];
+    if (!bundleItem || !bundleItem.kit_id || bundleItem.kit_id <= 0) return;
+    
+    const oldBundleQuantity = bundleItem.quantity || 1; // Avoid division by zero
+    const ratio = newBundleQuantity / oldBundleQuantity;
+    
+    // Update the bundle quantity in editLineData
+    setEditLineData(d => ({ ...d, quantity: newBundleQuantity }));
+    
+    // Calculate the line number range for this bundle's components
+    const bundleLineNumber = bundleItem.line_number;
+    const componentStartLine = bundleLineNumber * 1000 + 1; // e.g., 1001 for bundle line 1
+    const componentEndLine = (bundleLineNumber + 1) * 1000 - 1; // e.g., 1999 for bundle line 1
+    
+    // Update all components of this bundle proportionally
+    setOrderDetail(prev => prev.map((item, index) => {
+      // Skip if not a component of this bundle (check line number range)
+      if (!item.is_kit_component || item.line_number < componentStartLine || item.line_number > componentEndLine) {
+        return item;
+      }
+      
+      // Calculate new quantity for this component
+      const oldComponentQuantity = item.quantity || 0;
+      const newComponentQuantity = Math.round(oldComponentQuantity * ratio);
+      
+      return {
+        ...item,
+        quantity: newComponentQuantity
+      };
+    }));
+    
+    markAsChanged();
+  }
+
   function updateInventoryField(item_number: string, field: 'quantity' | 'price', value: string) {
     // For quantity field, only allow digits (no decimals, no negative signs)
     if (field === 'quantity') {
@@ -2113,20 +2379,28 @@ export default function OrderPointsPage() {
               New Order
             </Button>
             <Button 
-              onClick={onSaveDraft} 
-              disabled={isSavingDraft || isPlacingOrder}
+              onClick={() => {
+                handleDraftButtonClick()
+              }} 
+              disabled={isSavingDraft || isPlacingOrder || !hasUnsavedChanges || (entryPageType === 'edit_order' && isInitialLoad && !hasUnsavedChanges)}
               variant="outline" 
               className="border-blue-500 text-blue-600 hover:bg-blue-50 hover:border-blue-600 hover:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-blue-500 disabled:hover:text-blue-600 px-4 py-2 touch-manipulation"
             >
-              {isSavingDraft ? "Saving..." : "Save Draft"}
+              {isSavingDraft ? "Saving..." : 
+               entryPageType === 'create_new' ? "Save Draft" : 
+               entryPageType === 'edit_draft' ? "Update Draft" : 
+               entryPageType === 'edit_order' ? "Update Order" : 
+               "Save Draft"}
             </Button>
-            <Button 
-              onClick={onPlaceOrder} 
-              disabled={isPlacingOrder || isSavingDraft}
-              className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-            >
-              {isPlacingOrder ? "Placing Order..." : "Place Order"}
-            </Button>
+            {entryPageType !== 'edit_order' && (
+              <Button 
+                onClick={onPlaceOrder} 
+                disabled={isPlacingOrder || isSavingDraft || (!hasUnsavedChanges && !isEditingDraft)}
+                className="bg-green-600 text-white hover:bg-green-700 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+              >
+                {isPlacingOrder ? "Placing Order..." : "Place Order"}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -2141,9 +2415,16 @@ export default function OrderPointsPage() {
             {/* Order Header - 50% width (6 columns) */}
               <Card className="shadow-sm border-border-color xl:col-span-6">
                 <CardHeader className="bg-primary-10 border-b border-border-color py-2 px-3 min-h-[40px]">
-                <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-1.5">
-                  <IconFileText className="w-3.5 h-3.5" />
-                  ORDER HEADER
+                <CardTitle className="text-sm font-semibold text-font-color flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <IconFileText className="w-3.5 h-3.5" />
+                    ORDER HEADER
+                  </div>
+                  {isEditingDraft && (
+                    <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded">
+                      DRAFT #: {draftOrderId ? formatOrderId(draftOrderId, false) : 'DRAFT'}
+                    </span>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-3">
@@ -2155,8 +2436,12 @@ export default function OrderPointsPage() {
                           Account # - Warehouse
                           <RequiredDot show={isRequiredFieldEmpty(accountNumberLocation)} />
                         </Label>
-                        <Select value={accountNumberLocation} onValueChange={handleAccountLocationChange}>
-                        <SelectTrigger className={`h-9 text-sm mt-1 ${(isPlacingOrder || isSavingDraft) ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        <Select 
+                          value={accountNumberLocation} 
+                          onValueChange={handleAccountLocationChange}
+                          disabled={entryPageType === 'edit_order'}
+                        >
+                        <SelectTrigger className={`h-9 text-sm mt-1 ${(isPlacingOrder || isSavingDraft || entryPageType === 'edit_order') ? 'opacity-50 cursor-not-allowed' : ''}`}>
                             <span className={`truncate ${accountDisplayLabel ? 'font-medium' : ''}`}>
                               {accountDisplayLabel || ""}
                             </span>
@@ -2187,24 +2472,25 @@ export default function OrderPointsPage() {
                                   setOrderHeader(prev => ({ ...prev, order_number: e.target.value }))
                                   markAsChanged()
                                 }}
-                                readOnly={!orderHeader.order_number}
+                                readOnly={!orderHeader.order_number || entryPageType === 'edit_order'}
+                                disabled={entryPageType === 'edit_order'}
                                 className={`font-mono h-9 text-sm rounded-r-none border-r-0 ${
                                   !orderHeader.order_number 
                                     ? 'bg-primary-10' 
                                     : 'bg-card-color'
-                                } ${orderHeader.order_number ? 'font-medium' : ''}`}
+                                } ${orderHeader.order_number ? 'font-medium' : ''} ${entryPageType === 'edit_order' ? 'opacity-50 cursor-not-allowed' : ''}`}
                               />
                             </div>
                             <button
                               type="button"
                               onClick={onGenerateOrderNumber}
-                              disabled={!!orderHeader.order_number}
+                              disabled={!!orderHeader.order_number || entryPageType === 'edit_order'}
                               className={`px-3 py-2 rounded-r-lg rounded-l-none border border-l-0 border-border-color h-9 text-sm font-medium transition-colors ${
-                                orderHeader.order_number 
+                                orderHeader.order_number || entryPageType === 'edit_order'
                                   ? 'bg-body-color text-font-color-100 cursor-not-allowed opacity-50' 
                                   : 'bg-primary text-white hover:bg-primary-20 cursor-pointer'
                               }`}
-                              title={orderHeader.order_number ? "Order number already assigned" : "Assign Next Order #"}
+                              title={entryPageType === 'edit_order' ? "Cannot change order number when editing existing order" : (orderHeader.order_number ? "Order number already assigned" : "Assign Next Order #")}
                             >
                               &gt;&gt;
                             </button>
@@ -2212,9 +2498,10 @@ export default function OrderPointsPage() {
                         ) : (
                           // Manual mode: standard input field
                           <Input 
-                            className={`h-9 text-sm mt-1 ${orderHeader.order_number ? 'font-medium' : ''}`} 
+                            className={`h-9 text-sm mt-1 ${orderHeader.order_number ? 'font-medium' : ''} ${entryPageType === 'edit_order' ? 'opacity-50 cursor-not-allowed' : ''}`} 
                             value={orderHeader.order_number || ''} 
                             onChange={e=>{setOrderHeader(p=>({ ...p, order_number: e.target.value })); markAsChanged()}} 
+                            disabled={entryPageType === 'edit_order'}
                           />
                         )}
                       </div>
@@ -2557,7 +2844,11 @@ export default function OrderPointsPage() {
                       onClick={onRemoveSelected}
                       disabled={selectedRowsCount === 0 || isPlacingOrder || isSavingDraft}
                     >
-                      Remove selected {selectedRowsCount > 0 && `(${selectedRowsCount})`}
+                      {(() => {
+                        const selectedItems = selectedRows.map(index => orderDetail[index]).filter(Boolean)
+                        const hasItemsInDatabase = selectedItems.some(item => item.detail_id > 0)
+                        return hasItemsInDatabase ? 'Void selected' : 'Remove selected'
+                      })()} {selectedRowsCount > 0 && `(${selectedRowsCount})`}
                     </Button>
                   </div>
               </div>
@@ -2607,14 +2898,19 @@ export default function OrderPointsPage() {
                         const isSelectable = !item.is_kit_component && !item.voided
                         const isSelected = selectedRows.includes(index)
                         const isBundleComponent = item.is_kit_component
+                        const isBundle = item.kit_id && item.kit_id > 0
                         const isVoided = item.voided
                         
                         return (
                           <tr 
                             key={`${item.item_number}-${item.line_number}`}
-                            className={`border-b border-border-color hover:bg-body-color ${
-                              isBundleComponent ? 'bg-gray-50 text-gray-500' : ''
-                            } ${isVoided ? 'line-through opacity-60' : ''}`}
+                            className={`border-b border-border-color ${
+                              isBundle ? 'bg-theme-green-soft hover:bg-theme-green-soft' : ''
+                            } ${
+                              isBundleComponent ? 'bg-theme-green-soft-light hover:bg-theme-green-soft-light' : ''
+                            } ${
+                              !isBundle && !isBundleComponent && !isVoided ? 'hover:bg-body-color' : ''
+                            }`}
                           >
                             <td className="p-2">
                               {isSelectable && (
@@ -2639,6 +2935,11 @@ export default function OrderPointsPage() {
                                 <span>{item.line_number}</span>
                                 {(item.comments || item.custom_field1 || item.custom_field2 || item.custom_field5) && (
                                   <IconMessageCircle className="w-3 h-3 text-gray-400" />
+                                )}
+                                {isVoided && (
+                                  <span className="text-xs font-bold text-[var(--danger)] bg-[var(--danger-50)] px-1 py-0.5 rounded">
+                                    VOIDED
+                                  </span>
                                 )}
                               </div>
                             </td>
@@ -2709,11 +3010,11 @@ export default function OrderPointsPage() {
                     </div>
                     <div className="flex justify-between gap-4 text-font-color leading-5">
                       <span>Total Qty:</span>
-                      <span className="font-mono font-semibold">{orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0), 0)}</span>
+                      <span className="font-mono font-semibold">{orderDetail.filter(l => !l.voided).reduce((t,l)=> t + (Number(l.quantity)||0), 0)}</span>
                     </div>
                     <div className="flex justify-between gap-4 text-font-color leading-5">
                       <span>Total Ext Price:</span>
-                      <span className="font-mono font-semibold">{orderDetail.reduce((t,l)=> t + (Number(l.quantity)||0)*(Number(l.price)||0), 0).toFixed(2)}</span>
+                      <span className="font-mono font-semibold">{orderDetail.filter(l => !l.voided).reduce((t,l)=> t + (Number(l.quantity)||0)*(Number(l.price)||0), 0).toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -2849,7 +3150,7 @@ export default function OrderPointsPage() {
                   <>
                     <div className="flex justify-between items-center py-0.5">
                       <span className="font-medium text-font-color-100 whitespace-nowrap">Order Amount:</span>
-                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}`}>{orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
+                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}`}>{orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center py-0.5">
                       <span className="font-medium text-font-color-100 whitespace-nowrap">S & H:</span>
@@ -2865,7 +3166,7 @@ export default function OrderPointsPage() {
                     </div>
                     <div className="flex justify-between items-center py-0.5 border-t border-border-color pt-1 font-bold">
                       <span className="text-font-color whitespace-nowrap">Total Amount:</span>
-                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
+                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}`}>{(orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center py-0.5">
                       <span className="font-medium text-font-color-100 whitespace-nowrap">Amount Paid:</span>
@@ -2873,7 +3174,7 @@ export default function OrderPointsPage() {
                     </div>
                     <div className="flex justify-between items-center py-0.5 border-t-2 border-border-color pt-1 font-bold">
                       <span className="text-font-color whitespace-nowrap">Net Due:</span>
-                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}`}>{(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
+                      <span className="font-mono text-font-color text-right truncate max-w-[120px]" title={`${(orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}`}>{(orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + amounts.shipping_handling + amounts.sales_tax + amounts.international_handling - amounts.amount_paid).toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between items-center py-0.5">
                       <span className="font-medium text-font-color-100 whitespace-nowrap">Balance Due (US):</span>
@@ -3335,7 +3636,17 @@ export default function OrderPointsPage() {
                   onChange={e => {
                     // Only allow digits for quantity
                     const digitsOnly = e.target.value.replace(/[^0-9]/g, '');
-                    setEditLineData(d => ({ ...d, quantity: parseInt(digitsOnly) || 0 }));
+                    const newQuantity = parseInt(digitsOnly) || 0;
+                    
+                    // Check if this is a bundle line (kit_id > 0)
+                    const currentItem = orderDetail[editLineIndex || 0];
+                    if (currentItem && currentItem.kit_id && currentItem.kit_id > 0) {
+                      // This is a bundle - update all its components proportionally
+                      updateBundleQuantity(editLineIndex || 0, newQuantity);
+                    } else {
+                      // Regular item - just update the quantity
+                      setEditLineData(d => ({ ...d, quantity: newQuantity }));
+                    }
                   }} 
                 />
               </div>
@@ -3658,7 +3969,7 @@ export default function OrderPointsPage() {
                   <Input
                     className="h-8 text-sm bg-gray-50"
                     type="text"
-                    value={orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}
+                    value={orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0).toFixed(2)}
                     disabled
                   />
                 </div>
@@ -3697,7 +4008,7 @@ export default function OrderPointsPage() {
                   <Input
                     className="h-8 text-sm bg-gray-50"
                     type="text"
-                    value={(orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + tempAmounts.shipping_handling + tempAmounts.sales_tax + tempAmounts.international_handling).toFixed(2)}
+                    value={(orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + tempAmounts.shipping_handling + tempAmounts.sales_tax + tempAmounts.international_handling).toFixed(2)}
                     disabled
                   />
                 </div>
@@ -3716,7 +4027,7 @@ export default function OrderPointsPage() {
                   <Input
                     className="h-8 text-sm bg-gray-50"
                     type="text"
-                    value={((orderDetail.reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + tempAmounts.shipping_handling + tempAmounts.sales_tax + tempAmounts.international_handling) - tempAmounts.amount_paid).toFixed(2)}
+                    value={((orderDetail.filter(l => !l.voided).reduce((s,l)=> s + (l.quantity||0)*(l.price||0), 0) + tempAmounts.shipping_handling + tempAmounts.sales_tax + tempAmounts.international_handling) - tempAmounts.amount_paid).toFixed(2)}
                     disabled
                   />
                 </div>

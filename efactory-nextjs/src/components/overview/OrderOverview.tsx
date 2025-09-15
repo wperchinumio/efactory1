@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/router'
 import { 
   IconChevronLeft, 
   IconChevronRight, 
@@ -117,6 +118,39 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
     }
   }
 
+  const handleCloneOrder = async () => {
+    try {
+      const result = await orderCloneToDraft(data.order_number, data.account_number)
+      
+      // Store the draft data using the proper format that orderpoints expects
+      if (result.draft_order) {
+        // Use the same format as the legacy system - wrap in response structure
+        const responseData = {
+          data: {
+            draft_order: result.draft_order,
+            total_drafts: result.total_drafts
+          }
+        }
+        
+        
+        // Store using the proper cache function
+        const { storeOrderDraft } = await import('@/services/orderEntryCache')
+        storeOrderDraft(responseData as any)
+        
+        
+        // Navigate to order points page using Next.js router (no page refresh)
+        // We'll pass the navigation function as a prop from the parent component
+        if (typeof window !== 'undefined') {
+          // For now, we'll use a custom event to communicate with the parent component
+          window.dispatchEvent(new CustomEvent('navigateToOrderPoints'))
+        }
+      }
+    } catch (error) {
+      console.error('Error cloning order:', error)
+      // You might want to show a toast notification here
+    }
+  }
+
 
   const handlePutOnHold = async () => {
     try {
@@ -166,7 +200,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
       // First try to create RMA from the order
       await readRmaFromOrder(data.account_number, data.order_number)
       // Navigate to RMA page - you would implement this navigation
-      console.log('Navigate to RMA creation for order:', data.order_number)
       // window.location.href = '/returntrak/entry'
     } catch (error) {
       console.error('Error creating RMA:', error)
@@ -174,30 +207,49 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
     }
   }
 
-  const handleEditInOrderpoints = () => {
-    // Navigate to order points edit page - you would implement this navigation
-    console.log('Navigate to edit in orderpoints:', data.order_id)
-    // window.location.href = `/orderpoints/edit?orderId=${data.order_id}`
-  }
-
-  const handleCloneOrder = async () => {
+  const handleEditInOrderpoints = async () => {
     try {
-      await orderCloneToDraft(data.order_number, data.account_number)
-      // Navigate to order points - you would implement this navigation
-      console.log('Order cloned, navigate to orderpoints')
-      // window.location.href = '/orderpoints'
+      // Check if order can be edited (same conditions as legacy)
+      const canEdit = data.order_stage === 10 || (data.order_stage < 10 && data.order_status === 0)
+      if (!canEdit) {
+        return
+      }
+      
+      // Call the readOrderFrom API (same as legacy)
+      const { readOrderFrom } = await import('@/services/api')
+      const result = await readOrderFrom(data.order_id, data.location, false)
+      
+      // Store the order data using the same format as legacy system
+      if (result) {
+        const responseData = {
+          data: result
+        }
+        
+        
+        // Store using the proper cache function
+        const { storeOrderDraft } = await import('@/services/orderEntryCache')
+        storeOrderDraft(responseData as any)
+        
+        
+        // Navigate to order points page using custom event (no page refresh)
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('navigateToOrderPoints'))
+        }
+      }
     } catch (error) {
-      console.error('Error cloning order:', error)
+      console.error('Error reading order for edit:', error)
       // You might want to show a toast notification here
     }
   }
+
+
+
 
   const handleResendShipConfirmation = async () => {
     try {
       await resendShipConfirmation(data.order_number, data.account_number, shipToEmail, billToEmail)
       setShowResendModal(false)
       // Show success message - you might want to show a toast notification here
-      console.log('Ship confirmation resent successfully')
     } catch (error) {
       console.error('Error resending ship confirmation:', error)
       // You might want to show a toast notification here
@@ -408,7 +460,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             {!hasOriginalData && <div className="border-t border-border-color my-1"></div>}
                             <button
                               onClick={() => {
-                                console.log('Show EDI Documents')
                                 setShowActionsMenu(false)
                               }}
                               className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 flex items-center gap-2 rounded-sm"
@@ -609,8 +660,10 @@ const PlaceholderDash = ({ children, className = "" }: { children: React.ReactNo
 }
 
 export default function OrderOverview({ data, onClose, variant = 'overlay', onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems, onRefresh }: Props) {
+  const router = useRouter()
   const billing = data.billing_address || ({} as any)
   const shipping = data.shipping_address || ({} as any)
+
   
   // Dialog states for expandable text areas
   const [shippingInstructionsDialog, setShippingInstructionsDialog] = useState(false)
@@ -618,6 +671,20 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
   
   // Table row limiting states
   const [showAllOrderLines, setShowAllOrderLines] = useState(false)
+
+  // Listen for navigation events from OrderTopBar
+  useEffect(() => {
+    const handleNavigateToOrderPoints = () => {
+      router.push('/orderpoints')
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('navigateToOrderPoints', handleNavigateToOrderPoints)
+      return () => {
+        window.removeEventListener('navigateToOrderPoints', handleNavigateToOrderPoints)
+      }
+    }
+  }, [router])
   
   // Panel expand/collapse states
   const [amountsExpanded, setAmountsExpanded] = useState(false)
@@ -1359,11 +1426,28 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
-            {displayedLines?.map((item, index) => (
-              <tr key={item.id || index} className="hover:bg-primary-5/20 transition-colors border-b border-border-color/30">
+            {displayedLines?.map((item, index) => {
+              const isVoided = item.voided
+              const isBundleComponent = item.is_kit_component
+              const isBundle = item.kit_id && item.kit_id > 0
+              return (
+                <tr key={item.id || index} className={`transition-colors border-b border-border-color/30 ${
+                  isBundle ? 'bg-theme-green-soft hover:bg-theme-green-soft' : ''
+                } ${
+                  isBundleComponent ? 'bg-theme-green-soft-light hover:bg-theme-green-soft-light' : ''
+                } ${
+                  !isBundle && !isBundleComponent && !isVoided ? 'hover:bg-primary-5/20' : ''
+                }`}>
                 <td className="px-2 py-1.5">
                   <div className="flex flex-col">
-                    <div className="text-sm font-bold text-font-color">{item.line_number}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-bold text-font-color">{item.line_number}</div>
+                      {isVoided && (
+                        <span className="text-xs font-bold text-[var(--danger)] bg-[var(--danger-50)] px-1.5 py-0.5 rounded">
+                          VOIDED
+                        </span>
+                      )}
+                    </div>
                     {item.custom_field3 && (
                       <div className="text-xs text-font-color-100 leading-tight">{item.custom_field3}</div>
                     )}
@@ -1435,7 +1519,8 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
                   </div>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>

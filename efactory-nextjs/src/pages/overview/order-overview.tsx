@@ -47,12 +47,10 @@ export default function OrderOverviewPage() {
 
   const handlePrevious = () => {
     // Implementation would depend on how you track order navigation
-    console.log('Navigate to previous order')
   }
 
   const handleNext = () => {
     // Implementation would depend on how you track order navigation
-    console.log('Navigate to next order')
   }
 
   const handleRefresh = () => {

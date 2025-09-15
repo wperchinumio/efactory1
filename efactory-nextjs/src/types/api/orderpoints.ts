@@ -77,14 +77,17 @@ export interface OrderDetailDto {
   custom_field4?: string;
   custom_field5?: string;
   comments?: string;
+  void?: number; // 1 for voided lines, 0 or undefined for active lines
   voided?: boolean;
   is_kit_component?: boolean;
+  kit_id?: number; // > 0 for bundle lines
   quantity_org?: number; // used in edit order flow
 }
 
 export interface CreateOrderPointsBody {
   action: 'create';
   to_draft: boolean;
+  from_draft?: boolean; // indicates if placing order from existing draft
   version?: number; // legacy sends 2 for draft
   data: {
     order_header: OrderHeaderDto;
@@ -252,6 +255,16 @@ export interface CreateOrderPointsResponse {
   order_number?: string;
   total_drafts?: number;
   draft_order?: OrderReadResponse;
+}
+
+export interface UpdateOrderResponse {
+  data: {
+    order_header: OrderHeaderDto;
+    order_detail: OrderDetailDto[];
+  };
+  error_message: string;
+  error_dialog: boolean;
+  internal_version: string;
 }
 
 export interface SaveEntryResponse {

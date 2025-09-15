@@ -375,11 +375,15 @@ export async function createOrderPoints(payload: CreateOrderPointsBody): Promise
   return res.data;
 }
 
-export async function saveEntry(order_header: OrderHeaderDto, order_detail: OPOrderDetailDto[]): Promise<SaveEntryResponse> {
+export async function saveEntry(order_header: OrderHeaderDto, order_detail: OPOrderDetailDto[], order_id?: number, from_draft?: boolean): Promise<SaveEntryResponse> {
   const body: CreateOrderPointsBody = {
     action: 'create',
     to_draft: false,
-    data: { order_header, order_detail },
+    from_draft: from_draft || false,
+    data: { 
+      order_header: order_id ? { ...order_header, order_id } : order_header, 
+      order_detail 
+    },
   };
   const res = await postJson<SaveEntryResponse>('/api/orderpoints', body as any);
   return res.data;
@@ -394,10 +398,38 @@ export async function saveDraft(order_header: OrderHeaderDto, order_detail: OPOr
   };
   const res = await postJson<CreateOrderPointsResponse>('/api/orderpoints', body as any);
   
-  // Debug logging to see the full response
-  console.log('SaveDraft API response:', res);
   
   return res.data;
+}
+
+export async function updateDraft(order_id: number, order_header: OrderHeaderDto, order_detail: OPOrderDetailDto[]): Promise<CreateOrderPointsResponse> {
+  const body: UpdateOrderPointsBody = {
+    action: 'update',
+    from_draft: true,
+    data: { 
+      order_header: { ...order_header, order_id },
+      order_detail 
+    },
+  };
+  const res = await postJson<CreateOrderPointsResponse>('/api/orderpoints', body as any);
+  
+  
+  return res.data;
+}
+
+export async function updateOrder(order_id: number, order_header: OrderHeaderDto, order_detail: OPOrderDetailDto[]): Promise<UpdateOrderResponse> {
+  const body: UpdateOrderPointsBody = {
+    action: 'update',
+    from_draft: false,
+    data: { 
+      order_header: { ...order_header, order_id },
+      order_detail 
+    },
+  };
+  const res = await postJson<UpdateOrderResponse>('/api/orderpoints', body as any);
+  
+  
+  return res;
 }
 
 export async function readOrderPoints(params: ReadOrderPointsBody): Promise<OrderReadResponse | DraftOrderReadResponse> {
@@ -605,8 +637,6 @@ export async function saveRma(
   const body: SaveRmaEntryRequest = { action: 'save', data: { rma_header, to_receive, to_ship } } as any;
   const res = await postJson<SaveRmaEntryResponse>('/api/returntrak', body);
   
-  // Debug logging to see the full response
-  console.log('SaveRma API response:', res);
   
   return res.data as any;
 }
@@ -682,5 +712,11 @@ export async function orderCloneToDraft(order_number: string, account_number: st
 export async function resendShipConfirmation(order_number: string, account_number: string, ship_to_email: string, bill_to_email: string): Promise<void> {
   const body: ResendShipConfirmationBody = { action: 'resend_ship_confirmation', order_number, account_number, ship_to_email, bill_to_email } as any;
   await postJson<Record<string, never>>('/api/orderpoints', body as any);
+}
+
+export async function readOrderFrom(order_id: number | string, location: string, from_draft: boolean = false): Promise<any> {
+  const body = { action: 'read', order_id, location, from_draft } as any;
+  const res = await postJson<{ data?: any }>('/api/orderpoints', body as any);
+  return res.data;
 }
 
