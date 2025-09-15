@@ -543,11 +543,11 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                 setUserProfileData(profileData);
             }
         }
-    }, [userApps]) // Re-run when userApps changes (impersonation state)
+    }, [userApps]); // Re-run when userApps changes (impersonation state)
 
     return (
         <>
-            <div className="md:py-4 md:px-4 sm:p-3 py-3 border-b-4 border-card-color bg-body-color sticky top-0 z-[2] xl:shadow-none shadow-lg">
+            <div className="md:py-3 md:px-4 sm:p-2 py-2 border-b-4 border-card-color bg-body-color sticky top-0 z-[2] xl:shadow-none shadow-lg">
                 <div className='container-fluid flex items-center'>
                 <div className='flex items-center gap-1 sm:pe-4 pe-2 flex-1 min-w-0'>
                         <button onClick={toggleMiniSidebar} className='xl:flex hidden items-center justify-center w-[36px] h-[36px] min-w-[36px] text-primary bg-primary-10 rounded-full' aria-label={miniSidebar ? 'Expand sidebar' : 'Collapse sidebar'}>
@@ -569,23 +569,25 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                         )}
                     </div>
 
-                    <div className='flex items-center ms-auto'>
-
-                        <button onClick={toggleFullScreen} className='xl:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
-                            <IconArrowsMaximize className='stroke-[1.5]' />
-                        </button>
-                        {/* Removed note and chat buttons per request */}
-                        <button
-                            onClick={toggleDarkMode}
-                            className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'
-                        >
-                            <IconMoonStars className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
-                        </button>
-                        <div className='relative flex user-profile-dropdown'>
-                            <button onClick={toggleUserProfile} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
-                                <IconUser className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
+                    <div className='flex flex-col items-end ms-auto'>
+                        {/* Buttons Row */}
+                        <div className='flex items-center'>
+                            <button onClick={toggleFullScreen} className='xl:block hidden md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
+                                <IconArrowsMaximize className='stroke-[1.5]' />
                             </button>
-                            <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[320px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
+                            {/* Removed note and chat buttons per request */}
+                            <button
+                                onClick={toggleDarkMode}
+                                className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'
+                            >
+                                <IconMoonStars className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
+                            </button>
+                            
+                            <div className='relative flex user-profile-dropdown'>
+                                <button onClick={toggleUserProfile} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
+                                    <IconUser className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
+                                </button>
+                                <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[320px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
                                 <div className='p-4 border-b border-border-color'>
                                     <div className='font-semibold'>
                                         {userInfo.username}
@@ -651,6 +653,9 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                 </button>
                             </div>
                         </div>
+                        </div>
+                        
+                        
                         <button className={`md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300 xl:hidden hamburger-menu ${mobileNav ? 'opened' : ''}`} onClick={toggleMobileNav}>
                             <svg width="20" height="20" viewBox="0 0 100 100">
                                 <path className="line line1" d="M 20,29.000046 H 80.000231 C 80.000231,29.000046 94.498839,28.817352 94.532987,66.711331 94.543142,77.980673 90.966081,81.670246 85.259173,81.668997 79.552261,81.667751 75.000211,74.999942 75.000211,74.999942 L 25.000021,25.000058" />

@@ -298,7 +298,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                   variant="outline"
                   size="small"
                   icon={<IconX className="w-5 h-5" />}
-                  className="h-8 w-8 p-0 text-[var(--danger)] hover:text-[var(--danger)] hover:bg-[var(--danger-50)] border-2 border-[var(--danger)] hover:border-[var(--danger)]"
+                  className="h-8 w-8 p-0 text-red-600 hover:text-red-600 hover:bg-red-50 border-2 border-red-600 hover:border-red-600"
                 />
                 <div className="h-4 w-px bg-border-color ml-3"></div>
               </div>
@@ -1492,7 +1492,7 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
                     <div className="flex items-center gap-2">
                       <div className="text-sm font-bold text-font-color">{item.line_number}</div>
                       {isVoided && (
-                        <span className="text-xs font-bold text-[var(--danger)] bg-[var(--danger-50)] px-1.5 py-0.5 rounded">
+                        <span className="text-[9px] font-bold text-[var(--danger)] bg-[var(--danger-50)] px-1.5 py-0.5 rounded">
                           VOIDED
                         </span>
                       )}

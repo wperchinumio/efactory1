@@ -7,6 +7,7 @@ import { getVisibleSidebarMenus, sidebarConfigs, topMenuConfig } from '@/config/
 import { MenuItem, DropdownMenuItem, TopMenuConfig } from '@/types/api/auth';
 import { getAuthToken } from '@/lib/auth/storage';
 import { getThemePreferences } from '@/lib/themeStorage';
+import type { UserProfileData } from '@/types/api';
 import {
   IconChevronRight,
   IconChevronsDown,
@@ -205,9 +206,46 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   const toggleNote = () => setNote(!note);
 
   const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [userInfo, setUserInfo] = useState({ username: '', email: '' })
+  const [userProfileData, setUserProfileData] = useState<UserProfileData | null>(null)
 
   // Replace toggleChat with toggleCalculator
   const toggleCalculator = () => setCalculatorOpen(!calculatorOpen);
+
+  // Load user data from auth token
+  useEffect(() => {
+    const auth = getAuthToken();
+    if (auth && auth.user_data) {
+      const username = auth.user_data.name || 
+        String(auth.user_data.user_id || '') || 
+        auth.user_data.username || 
+        auth.user_data.login || 
+        auth.user_data.account || 
+        'User';
+      
+      setUserInfo({
+        username: String(username || ''),
+        email: String(auth.user_data.email || '')
+      });
+
+      // Build user profile data
+      const calc_account_regions = auth.user_data.calc_account_regions || {};
+      const accountRegions = Object.values(calc_account_regions);
+      const accounts_visibility = Array.isArray(accountRegions) ? accountRegions.join(', ') : '';
+
+      const profileData: UserProfileData = {
+        username: String(auth.user_data.name || auth.user_data.username || auth.user_data.login || ''),
+        company_name: String(auth.user_data.company_name || ''),
+        company_code: String(auth.user_data.company_code || ''),
+        policy_code: String(auth.user_data.policy_code || ''),
+        policy_account: String(auth.user_data.account || ''),
+        policy_region: String(auth.user_data.region || ''),
+        accounts_visibility: accounts_visibility,
+        email: String(auth.user_data.email || '')
+      };
+      setUserProfileData(profileData);
+    }
+  }, []);
 
   // Track mini sidebar state by observing CSS class changes
   useEffect(() => {
@@ -742,28 +780,33 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
       </ul>
       
       {/* Sticky bottom section */}
-      <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-0 px-3 py-2 border-t border-dashed border-border-color mt-auto sticky bottom-0 bg-body-color z-10 transition-all duration-300 ease-in-out'>
-  <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
-    <span title='My Schedule'>
-      <IconCalendar className='stroke-[1.5] w-[20px] h-[20px]' />
-    </span>
-  </button>
-  <button onClick={toggleNote} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${note ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
-    <span title='My Note'>
-      <IconNote className='stroke-[1.5] w-[20px] h-[20px]' />
-    </span>
-  </button>
-  <button onClick={toggleCalculator} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${calculatorOpen ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
-    <span title='Calculator'>
-      <IconCalculator className='stroke-[1.5] w-[20px] h-[20px]' />
-    </span>
-  </button>
-  <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary hover:scale-105' onClick={() => {
-    import('@/lib/auth/storage').then(({ clearAuthToken }) => clearAuthToken());
-  }}>
-    <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
-  </Link>
-</div>
+      <div className='sidebar-bottom-link flex items-center justify-between gap-1 mx-0 px-3 py-2 border-t border-dashed border-border-color mt-auto sticky bottom-0 bg-body-color z-10 transition-all duration-300 ease-in-out'>
+        {/* User Info Display - Left side */}
+        <div className='flex flex-col items-start text-xs text-font-color-100 flex-1 min-w-0 pr-4'>
+          <div className='font-medium text-font-color truncate w-full' title={userInfo.username}>
+            {userInfo.username}
+          </div>
+          {userProfileData?.company_code && (
+            <div className='text-font-color-100 truncate w-full' title={userProfileData.company_code}>
+              {userProfileData.company_code}
+            </div>
+          )}
+        </div>
+        
+        {/* Remaining buttons - Right side */}
+        <div className='flex gap-5 flex-shrink-0'>
+          <button onClick={toggleCalculator} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${calculatorOpen ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+            <span title='Calculator'>
+              <IconCalculator className='stroke-[1.5] w-[20px] h-[20px]' />
+            </span>
+          </button>
+          <Link href="/auth/sign-in" title='Log Out' className='transition-all duration-300 hover:text-secondary hover:scale-105' onClick={() => {
+            import('@/lib/auth/storage').then(({ clearAuthToken }) => clearAuthToken());
+          }}>
+            <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
+          </Link>
+        </div>
+      </div>
       {calculatorOpen && (
         <div className='fixed inset-0 z-50 flex items-center justify-center'>
           <Calculator onClose={() => setCalculatorOpen(false)} />

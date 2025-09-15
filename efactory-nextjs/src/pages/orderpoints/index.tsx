@@ -2937,7 +2937,7 @@ export default function OrderPointsPage() {
                                   <IconMessageCircle className="w-3 h-3 text-gray-400" />
                                 )}
                                 {isVoided && (
-                                  <span className="text-xs font-bold text-[var(--danger)] bg-[var(--danger-50)] px-1 py-0.5 rounded">
+                                  <span className="text-[9px] font-bold text-[var(--danger)] bg-[var(--danger-50)] px-1 py-0.5 rounded">
                                     VOIDED
                                   </span>
                                 )}
