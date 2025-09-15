@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { 
   IconChevronLeft, 
   IconChevronRight, 
-  IconPrinter, 
   IconRefresh, 
   IconSettings, 
   IconFileText, 
@@ -112,9 +111,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
     window.location.reload()
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
 
   const handlePutOnHold = async () => {
     try {
@@ -212,83 +208,82 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
 
   return (
     <>
-      <div className="bg-primary-10 border-b border-border-color">
-        <div className="px-6 py-4">
+      <div className="bg-background border-b border-border-color">
+        <div className="px-6 py-2">
+          {/* Single Row Header - Everything in one line */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={onClose}
-                variant="outline"
-                size="small"
-                icon={<IconX />}
-                className="text-red-600 border-red-200 hover:bg-red-50"
-              >
-                Close
-              </Button>
-
+            {/* Left Side - Navigation + Order Info */}
+            <div className="flex items-center gap-4 flex-1">
               {(hasPrevious || hasNext) && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <Button
                     onClick={() => hasPrevious && onPrevious?.()}
                     variant="outline"
                     size="small"
                     icon={<IconChevronLeft />}
                     disabled={!hasPrevious}
-                  >
-                    Previous
-                  </Button>
+                    className="h-6 w-6 p-0"
+                  />
                   <Button
                     onClick={() => hasNext && onNext?.()}
                     variant="outline"
                     size="small"
                     icon={<IconChevronRight />}
-                    iconPosition="right"
                     disabled={!hasNext}
-                  >
-                    Next
-                  </Button>
+                    className="h-6 w-6 p-0"
+                  />
+                </div>
+              )}
+              
+              {currentIndex && totalItems && (
+                <div className="text-xs text-font-color-100 font-medium">
+                  {currentIndex} of {totalItems}
                 </div>
               )}
 
-              <div className="h-6 w-px bg-border-color"></div>
+              <div className="h-4 w-px bg-border-color"></div>
 
-              <div>
-                <h1 className="text-xl font-bold text-font-color-100">Order #{data.order_number}</h1>
-                <div className="flex items-center gap-3 text-sm text-font-color-100/70">
-                  <span>Account: {data.account_number}</span>
-                  <span>•</span>
-                  <span>{data.order_type}</span>
-                  {data.customer_number && (
-                    <>
-                      <span>•</span>
-                      <span>Customer: {data.customer_number}</span>
-                    </>
-                  )}
-                  {data.po_number && (
-                    <>
-                      <span>•</span>
-                      <span>PO: {data.po_number}</span>
-                    </>
-                  )}
-                  {currentIndex && totalItems && (
-                    <>
-                      <span>•</span>
-                      <span>{currentIndex} of {totalItems}</span>
-                    </>
-                  )}
+              <div className="flex items-center gap-3">
+                <h1 className="text-lg font-bold text-font-color">Order #{data.order_number}</h1>
+                <Badge 
+                  variant="secondary" 
+                  className={`px-2 py-0.5 text-xs font-medium ${
+                    currentStage?.color === 'bg-green-500' ? 'bg-green-100 text-green-800' :
+                    currentStage?.color === 'bg-yellow-500' ? 'bg-yellow-100 text-yellow-800' :
+                    currentStage?.color === 'bg-red-500' ? 'bg-red-100 text-red-800' :
+                    'bg-primary-10 text-font-color'
+                  }`}
+                >
+                  {data.stage_description}
+                </Badge>
+              </div>
+
+              <div className="flex items-center gap-4 text-sm">
+                <div>
+                  <span className="text-font-color-100">Account:</span>
+                  <span className="ml-1 font-medium text-font-color">{data.account_number}</span>
                 </div>
+                <div>
+                  <span className="text-font-color-100">Type:</span>
+                  <span className="ml-1 font-medium text-font-color">{data.order_type}</span>
+                </div>
+                {data.customer_number && (
+                  <div>
+                    <span className="text-font-color-100">Customer:</span>
+                    <span className="ml-1 font-medium text-font-color">{data.customer_number}</span>
+                  </div>
+                )}
+                {data.po_number && (
+                  <div>
+                    <span className="text-font-color-100">PO:</span>
+                    <span className="ml-1 font-medium text-font-color">{data.po_number}</span>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <div className="text-xs text-font-color-100/70">Order Stage</div>
-                <div className="flex items-center gap-2">
-                  <div className="text-sm font-semibold text-font-color-100">{data.stage_description}</div>
-                  <div className={`w-3 h-3 rounded-full ${currentStage?.color || 'bg-gray-400'}`}></div>
-                </div>
-              </div>
-
+            {/* Right Side - Actions + Close */}
+            <div className="flex items-center">
               <div className="flex items-center gap-1">
                 <div className="relative">
                   <Button
@@ -296,12 +291,13 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                     size="small"
                     icon={<IconSettings />}
                     onClick={() => setShowActionsMenu(!showActionsMenu)}
+                    className="px-3 py-1.5 text-sm"
                   >
                     Actions
                   </Button>
                   
                   {showActionsMenu && (
-                    <div className="absolute right-0 top-full mt-1 w-56 bg-background border border-border-color rounded-lg shadow-lg z-50">
+                    <div className="absolute right-0 top-full mt-1 w-64 bg-background border border-border-color rounded-lg shadow-lg z-50">
                       <div className="py-1">
                         <button
                           onClick={() => {
@@ -313,9 +309,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!isOnHold && !canPutOnHold}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                          <IconBan className="w-4 h-4" />
+                          <IconBan className="w-4 h-4 text-font-color-100" />
                           Put {isOnHold ? 'Off' : 'On'} Hold
                         </button>
                         
@@ -325,9 +321,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canCancel}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                          <IconTrash className="w-4 h-4" />
+                          <IconTrash className="w-4 h-4 text-font-color-100" />
                           Request Cancellation
                         </button>
                         
@@ -337,9 +333,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canCreateRMA}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                          <IconExchange className="w-4 h-4" />
+                          <IconExchange className="w-4 h-4 text-font-color-100" />
                           Create RMA
                         </button>
                         
@@ -349,9 +345,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canCancel}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                          <IconShoppingCart className="w-4 h-4" />
+                          <IconShoppingCart className="w-4 h-4 text-font-color-100" />
                           Edit in Orderpoints
                         </button>
                         
@@ -360,9 +356,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             handleCloneOrder()
                             setShowActionsMenu(false)
                           }}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
                         >
-                          <IconCopy className="w-4 h-4" />
+                          <IconCopy className="w-4 h-4 text-font-color-100" />
                           Copy as Draft
                         </button>
                         
@@ -372,9 +368,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canResend}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                          <IconEnvelope className="w-4 h-4" />
+                          <IconEnvelope className="w-4 h-4 text-font-color-100" />
                           Re-send Ship Confirmation
                         </button>
                         
@@ -384,9 +380,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canTransfer}
-                          className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
-                          <IconArrowsRightLeft className="w-4 h-4" />
+                          <IconArrowsRightLeft className="w-4 h-4 text-font-color-100" />
                           Warehouse Transfer
                         </button>
                         
@@ -398,9 +394,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                                 setShowOriginal(!showOriginal)
                                 setShowActionsMenu(false)
                               }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
+                              className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
                             >
-                              <IconFileCode className="w-4 h-4" />
+                              <IconFileCode className="w-4 h-4 text-font-color-100" />
                               {showOriginal ? 'Show DCL Order' : 'Show Original Order'}
                             </button>
                           </>
@@ -414,9 +410,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                                 console.log('Show EDI Documents')
                                 setShowActionsMenu(false)
                               }}
-                              className="w-full px-4 py-2 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
+                              className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
                             >
-                              <IconFileCode className="w-4 h-4" />
+                              <IconFileCode className="w-4 h-4 text-font-color-100" />
                               Show EDI Documents
                             </button>
                           </>
@@ -429,16 +425,22 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                 <Button
                   variant="outline"
                   size="small"
-                  icon={<IconPrinter />}
-                  iconOnly
-                  onClick={handlePrint}
-                />
-                <Button
-                  variant="outline"
-                  size="small"
                   icon={<IconRefresh />}
                   iconOnly
                   onClick={handleRefresh}
+                  className="h-6 w-6 p-0"
+                />
+              </div>
+
+              {/* Separator and Close Button */}
+              <div className="flex items-center ml-4">
+                <div className="h-4 w-px bg-border-color mr-3"></div>
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  size="small"
+                  icon={<IconX className="w-5 h-5" />}
+                  className="h-7 w-7 p-0 text-font-color-100 hover:text-font-color hover:bg-primary-5"
                 />
               </div>
             </div>
@@ -691,72 +693,72 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
         />
         
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-6">
+          <div className="p-3 space-y-2">
             {/* Main Layout: 2 MAIN COLUMNS */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
               
               {/* LEFT COLUMN - 3 columns wide - Contains 2 rows */}
-              <div className="lg:col-span-3 space-y-6">
+              <div className="lg:col-span-3 space-y-2">
                 
                 {/* Left Column - Row 1: Shipping Address + Shipping Method (2 panels side by side) */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
                   {/* Shipping Address */}
                   <Card>
-                    <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                    <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                       <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                         <IconMapPin className="w-4 h-4" />
                         SHIPPING ADDRESS
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="space-y-2 text-sm">
-                        <div className="grid grid-cols-2 gap-4">
+                    <CardContent className="p-2">
+                      <div className="space-y-1 text-sm">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Company:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Company:</div>
                             <div className="font-semibold text-font-color">{shipping.company}</div>
                           </div>
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Attention:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Attention:</div>
                             <div className="font-medium text-font-color">{shipping.attention || '-'}</div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Address 1:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Address 1:</div>
                             <div className="font-medium text-font-color">{shipping.address1}</div>
                           </div>
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Address 2:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Address 2:</div>
                             <div className="font-medium text-font-color">{shipping.address2 || '-'}</div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">City:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">City:</div>
                             <div className="font-medium text-font-color">{shipping.city}</div>
                           </div>
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Postal Code:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Postal Code:</div>
                             <div className="font-medium text-font-color">{shipping.postal_code}</div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">State:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">State:</div>
                             <div className="font-medium text-font-color">{shipping.state_province}</div>
                           </div>
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Country:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Country:</div>
                             <div className="font-medium text-font-color">{shipping.country}</div>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Phone:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Phone:</div>
                             <div className="font-medium text-font-color">{shipping.phone || '-'}</div>
                           </div>
                           <div>
-                            <div className="font-medium text-font-color-100 mb-1">Email:</div>
+                            <div className="font-medium text-font-color-100 mb-0.5">Email:</div>
                             <div className="font-medium text-font-color">{shipping.email || '-'}</div>
                           </div>
                         </div>
@@ -766,15 +768,15 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
 
                   {/* Shipping Method */}
                   <Card>
-                    <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                    <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                       <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                         <IconTruck className="w-4 h-4" />
                         SHIPPING METHOD
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="space-y-3 text-sm">
-                        <div className="grid grid-cols-2 gap-4">
+                    <CardContent className="p-2">
+                      <div className="space-y-1 text-sm">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Shipping WH:</span>
                           </div>
@@ -782,7 +784,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.location || '-'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Receipt Date:</span>
                           </div>
@@ -790,7 +792,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.received_date ? new Date(data.received_date).toLocaleString() : '-'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">International Code:</span>
                           </div>
@@ -798,7 +800,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.international_code || '0'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Carrier:</span>
                           </div>
@@ -806,7 +808,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.shipping_carrier || '-'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Freight Account:</span>
                           </div>
@@ -814,7 +816,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.freight_account || '-'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Account #:</span>
                           </div>
@@ -822,7 +824,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.account_number}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Order Status:</span>
                           </div>
@@ -832,7 +834,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             </Badge>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Payment Type:</span>
                           </div>
@@ -840,7 +842,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.payment_type || '-'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Service:</span>
                           </div>
@@ -848,7 +850,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.shipping_service || '-'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">Consignee #:</span>
                           </div>
@@ -856,7 +858,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color">{data.consignee_number || '-'}</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <span className="font-medium text-font-color-100">FOB Location:</span>
                           </div>
@@ -873,7 +875,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Billing Address */}
                   <Card>
-                    <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                    <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                           <IconBuilding className="w-4 h-4" />
@@ -910,8 +912,8 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                         )}
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4">
-                      <div className="space-y-2 text-sm">
+                    <CardContent className="p-2">
+                      <div className="space-y-1 text-sm">
                         {billingExpanded ? (
                           // Show all fields when expanded
                           <>
@@ -997,13 +999,13 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
 
                   {/* Shipping Instructions */}
                   <Card>
-                    <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                    <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                       <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                         <IconMessageShare className="w-4 h-4" />
                         SHIPPING INSTRUCTIONS
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4">
+                    <CardContent className="p-2">
                       <div className="text-sm">
                         <div className="relative">
                           <div 
@@ -1035,13 +1037,13 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
 
                   {/* Packing List Comments */}
                   <Card>
-                    <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                    <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                       <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                         <IconPackage className="w-4 h-4" />
                         PACKING LIST COMMENTS
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4">
+                    <CardContent className="p-2">
                       <div className="text-sm">
                         <div className="relative">
                           <div 
@@ -1074,10 +1076,10 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
               </div>
 
               {/* RIGHT COLUMN - 1 column wide - Stacked panels: General, Amounts, Custom Fields */}
-              <div className="lg:col-span-1 space-y-6">
+              <div className="lg:col-span-1 space-y-2">
                 {/* General Panel */}
                 <Card>
-                  <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                  <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                         <IconFileText className="w-4 h-4" />
@@ -1107,7 +1109,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4">
+                  <CardContent className="p-2">
                     <div className="space-y-2 text-sm">
                       {/* Always show key fields */}
                       <div className="flex justify-between">
@@ -1136,7 +1138,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
 
                 {/* Amounts Panel */}
                 <Card>
-                  <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                  <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                         <IconCreditCard className="w-4 h-4" />
@@ -1166,7 +1168,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4">
+                  <CardContent className="p-2">
                     <div className="space-y-2 text-sm">
                       {getAmountsFieldsWithValues().map(field => (
                         <div key={field.key} className={`flex justify-between ${field.isBold ? 'border-t border-border-color pt-2 font-bold' : ''}`}>
@@ -1184,7 +1186,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
 
                 {/* Custom Fields Panel */}
                 <Card>
-                  <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+                  <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
                         <IconSettings className="w-4 h-4" />
@@ -1214,7 +1216,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4">
+                  <CardContent className="p-2">
                     <div className="space-y-2 text-sm">
                       {getCustomFieldsWithValues().length > 0 ? (
                         getCustomFieldsWithValues().map(field => (
@@ -1301,7 +1303,7 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+      <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
             <IconPackage className="w-5 h-5 text-primary" />
@@ -1334,26 +1336,26 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
         <table className="w-full">
           <thead className="bg-body-color border-b border-border-color">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Line #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Item Details</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Qty</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Shipped</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Backlog</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Price</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Subtotal</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship By</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Line #</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Item Details</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Qty</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Shipped</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Backlog</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Price</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Subtotal</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship By</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
             {displayedLines?.map((item, index) => (
               <tr key={item.id || index} className="hover:bg-primary-5/30 transition-colors">
-                <td className="px-4 py-3">
+                <td className="px-2 py-2">
                   <div className="text-sm font-semibold text-font-color">{item.line_number}</div>
                   {item.custom_field3 && (
                     <div className="text-xs text-font-color-100 mt-1">{item.custom_field3}</div>
                   )}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-2">
                   <div className="text-sm font-semibold text-font-color">{item.item_number}</div>
                   <div className="text-sm text-primary mt-1">{item.description}</div>
                   <div className="flex flex-wrap gap-1 mt-2">
@@ -1379,32 +1381,32 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-2 py-2 text-center">
                   <div className="text-sm font-semibold text-font-color">
                     {Intl.NumberFormat().format(item.quantity || 0)}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-2 py-2 text-center">
                   <div className="text-sm font-semibold text-green-600">
                     {Intl.NumberFormat().format(item.shipped || 0)}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-2 py-2 text-center">
                   <div className="text-sm text-orange-600">
                     {Intl.NumberFormat().format((item.quantity || 0) - (item.shipped || 0))}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-2 py-2 text-right">
                   <div className="text-sm font-semibold text-font-color">
                     {Intl.NumberFormat().format(item.price || 0)}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-2 py-2 text-right">
                   <div className="text-sm font-semibold text-font-color">
                     {Intl.NumberFormat().format((item.price || 0) * (item.quantity || 0))}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-center">
+                <td className="px-2 py-2 text-center">
                   <div className="text-sm text-font-color">
                     {item.ship_by ? new Date(item.ship_by).toLocaleDateString() : '-'}
                   </div>
@@ -1415,7 +1417,7 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
         </table>
       </div>
 
-      <div className="px-4 py-3 border-t border-border-color bg-primary-5">
+      <div className="px-2 py-2 border-t border-border-color bg-primary-5">
         <div className="flex justify-end">
           <div className="text-sm font-bold text-font-color-100">
             Total: <span className="text-primary">{Intl.NumberFormat().format(orderLines?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0) || 0)}</span>
@@ -1431,7 +1433,7 @@ function ShipmentTable({ shipments }: { shipments: any[] }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+      <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
           <IconTruck className="w-5 h-5 text-primary" />
           SHIPMENTS
@@ -1442,41 +1444,41 @@ function ShipmentTable({ shipments }: { shipments: any[] }) {
         <table className="w-full">
           <thead className="bg-body-color border-b border-border-color">
             <tr>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Packages</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Weight</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Carrier</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Service</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Tracking</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Documents</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Packages</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Weight</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Carrier</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Service</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Tracking</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Documents</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
             {shipments.map((shipment, index) => (
               <tr key={shipment.id || index} className="hover:bg-primary-5/30 transition-colors">
-                <td className="px-4 py-3 text-center text-sm font-semibold text-font-color">
+                <td className="px-2 py-2 text-center text-sm font-semibold text-font-color">
                   {shipment.line_index || index + 1}
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {shipment.ship_date ? new Date(shipment.ship_date).toLocaleDateString() : '-'}
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {shipment.package_count || shipment.packages || '-'}
                 </td>
-                <td className="px-4 py-3 text-right text-sm text-font-color">
+                <td className="px-2 py-2 text-right text-sm text-font-color">
                   {Intl.NumberFormat().format(shipment.total_weight || shipment.weight || 0)} lbs
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {shipment.shipping_carrier || shipment.carrier || '-'}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {shipment.shipping_service || shipment.service || '-'}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {shipment.rs_tr || shipment.tracking_number || '-'}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-2">
                   <div className="flex gap-2">
                     {shipment.pl_link && (
                       <Button
@@ -1524,7 +1526,7 @@ function PackageTable({ packages }: { packages: any[] }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+      <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
           <IconPackage className="w-5 h-5 text-primary" />
           PACKAGES
@@ -1535,40 +1537,40 @@ function PackageTable({ packages }: { packages: any[] }) {
         <table className="w-full">
           <thead className="bg-body-color border-b border-border-color">
             <tr>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Delivery Date</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Status</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Package #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Tracking</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Weight</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Dimensions</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Delivery Date</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Status</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Package #</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Tracking</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Weight</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Dimensions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
             {packages.map((pkg, index) => (
               <tr key={pkg.id || index} className="hover:bg-primary-5/30 transition-colors">
-                <td className="px-4 py-3 text-center text-sm font-semibold text-font-color">
+                <td className="px-2 py-2 text-center text-sm font-semibold text-font-color">
                   {pkg.line_index || index + 1}
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {pkg.ship_date ? new Date(pkg.ship_date).toLocaleDateString() : '-'}
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {pkg.delivery_date ? new Date(pkg.delivery_date).toLocaleDateString() : '-'}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-2">
                   <Badge variant="info" outline>
                     {pkg.delivery_info || 'In Transit'}
                   </Badge>
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   <div>{pkg.package_number}</div>
                   {pkg.pallet_number && (
                     <div className="text-xs text-primary mt-1">{pkg.pallet_number}</div>
                   )}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {pkg.tracking_link || pkg.tracking_number_link ? (
                     <a href={pkg.tracking_link || pkg.tracking_number_link} target="_blank" rel="noreferrer" className="text-primary hover:underline">
                       {pkg.tracking_number}
@@ -1577,10 +1579,10 @@ function PackageTable({ packages }: { packages: any[] }) {
                     pkg.tracking_number || '-'
                   )}
                 </td>
-                <td className="px-4 py-3 text-right text-sm text-font-color">
+                <td className="px-2 py-2 text-right text-sm text-font-color">
                   {Intl.NumberFormat().format(pkg.package_weight || pkg.weight || 0)} lbs
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {pkg.package_dimension || pkg.dimension || '-'}
                 </td>
               </tr>
@@ -1597,7 +1599,7 @@ function PackageDetailTable({ packageDetails }: { packageDetails: any[] }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+      <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
           <IconPackage className="w-5 h-5 text-primary" />
           PACKAGE DETAILS
@@ -1608,37 +1610,37 @@ function PackageDetailTable({ packageDetails }: { packageDetails: any[] }) {
         <table className="w-full">
           <thead className="bg-body-color border-b border-border-color">
             <tr>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Package #</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Line #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Item #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Description</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Qty</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Package #</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Line #</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Item #</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Description</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Qty</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
             {packageDetails.map((detail, index) => (
               <tr key={detail.id || index} className="hover:bg-primary-5/30 transition-colors">
-                <td className="px-4 py-3 text-center text-sm font-semibold text-font-color">
+                <td className="px-2 py-2 text-center text-sm font-semibold text-font-color">
                   {detail.line_index || index + 1}
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {detail.ship_date ? new Date(detail.ship_date).toLocaleDateString() : '-'}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {detail.package_number}
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {detail.line_number}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {detail.item_number}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {detail.description}
                 </td>
-                <td className="px-4 py-3 text-right text-sm font-semibold text-font-color">
+                <td className="px-2 py-2 text-right text-sm font-semibold text-font-color">
                   {Intl.NumberFormat().format(detail.quantity || 0)}
                 </td>
               </tr>
@@ -1655,7 +1657,7 @@ function SerialLotTable({ serialLots }: { serialLots: any[] }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+      <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
           <IconPackage className="w-5 h-5 text-primary" />
           SERIAL/LOT NUMBERS
@@ -1666,37 +1668,37 @@ function SerialLotTable({ serialLots }: { serialLots: any[] }) {
         <table className="w-full">
           <thead className="bg-body-color border-b border-border-color">
             <tr>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
-              <th className="px-4 py-3 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Package #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Item #</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Description</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Serial/Lot #</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Qty</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
+              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Package #</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Item #</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Description</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Serial/Lot #</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Qty</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
             {serialLots.map((serial, index) => (
               <tr key={serial.id || index} className="hover:bg-primary-5/30 transition-colors">
-                <td className="px-4 py-3 text-center text-sm font-semibold text-font-color">
+                <td className="px-2 py-2 text-center text-sm font-semibold text-font-color">
                   {serial.line_index || index + 1}
                 </td>
-                <td className="px-4 py-3 text-center text-sm text-font-color">
+                <td className="px-2 py-2 text-center text-sm text-font-color">
                   {serial.ship_date ? new Date(serial.ship_date).toLocaleDateString() : '-'}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {serial.package_number || serial.carton_id || '-'}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {serial.item_number || '-'}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {serial.description || '-'}
                 </td>
-                <td className="px-4 py-3 text-sm text-font-color">
+                <td className="px-2 py-2 text-sm text-font-color">
                   {serial.serial_lot_number || serial.serial_number || serial.serial_no || serial.extrafield_1 || '-'}
                 </td>
-                <td className="px-4 py-3 text-right text-sm font-semibold text-font-color">
+                <td className="px-2 py-2 text-right text-sm font-semibold text-font-color">
                   {Intl.NumberFormat().format(serial.quantity || 1)}
                 </td>
               </tr>

@@ -1232,7 +1232,7 @@ export default function OverviewPage() {
             {/* 30 Days Activity */}
             {layout.areas.find(a => a.name === '30days')?.visible && (
               <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 py-1.5 bg-primary-10 rounded-t-lg">
                   <CardTitle className="text-base font-medium text-font-color">30 Days Activity</CardTitle>
                   <Button 
                     size="sm" 
@@ -1252,7 +1252,7 @@ export default function OverviewPage() {
             {/* 30 Days RMA Activity */}
             {layout.areas.find(a => a.name === '30days_rmas')?.visible && (
               <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 py-1.5 bg-primary-10 rounded-t-lg">
                   <CardTitle className="text-base font-medium text-font-color">30 Days RMA Activity</CardTitle>
                   <Button 
                     size="sm" 
@@ -1276,7 +1276,7 @@ export default function OverviewPage() {
           {/* Inventory */}
           {layout.areas.find(a => a.name === 'inventory')?.visible && (
             <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 py-1.5 bg-primary-10 rounded-t-lg">
                 <CardTitle className="text-base font-medium text-font-color">Inventory Overview</CardTitle>
                 <Button 
                   size="sm" 
@@ -1296,7 +1296,7 @@ export default function OverviewPage() {
           {/* Latest 50 Orders */}
           {layout.areas.find(a => a.name === '50orders')?.visible && (
             <Card className="border-border-color shadow-lg hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 py-2 bg-primary-10 rounded-t-lg">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 py-1.5 bg-primary-10 rounded-t-lg">
                 <CardTitle className="text-base font-medium text-font-color">Latest Orders</CardTitle>
                 <Button 
                   size="sm" 

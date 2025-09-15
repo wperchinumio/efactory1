@@ -102,7 +102,7 @@ export default function ShipmentsSection({ data }: Props) {
     <div className="space-y-6">
       {/* Shipments Table */}
       <Card>
-        <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+        <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
           <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
             <IconTruck className="w-4 h-4" />
             SHIPMENTS
@@ -173,7 +173,7 @@ export default function ShipmentsSection({ data }: Props) {
 
       {/* Packages Table */}
       <Card>
-        <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+        <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
           <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
             <IconPackage className="w-4 h-4" />
             PACKAGES
@@ -231,7 +231,7 @@ export default function ShipmentsSection({ data }: Props) {
 
       {/* Package Details Table */}
       <Card>
-        <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+        <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
           <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
             <IconList className="w-4 h-4" />
             PACKAGE DETAILS
@@ -277,7 +277,7 @@ export default function ShipmentsSection({ data }: Props) {
 
       {/* Serial/Lot Numbers Table */}
       <Card>
-        <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+        <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
           <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
             <IconBarcode className="w-4 h-4" />
             SERIAL/LOT NUMBERS
@@ -616,7 +616,7 @@ export default function ShipmentsSection({ data }: Props) {
     <div className="space-y-6">
       {/* View Toggle */}
       <Card>
-        <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
+        <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
               <IconTruck className="w-4 h-4" />
@@ -644,7 +644,7 @@ export default function ShipmentsSection({ data }: Props) {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-2">
           {viewMode === 'table' ? renderTableView() : renderHierarchyView()}
         </CardContent>
       </Card>
