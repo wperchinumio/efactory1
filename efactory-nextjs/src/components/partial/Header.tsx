@@ -589,11 +589,16 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                 </button>
                                 <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[320px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
                                 <div className='p-4 border-b border-border-color'>
-                                    <div className='font-semibold'>
+                                    <div className='font-semibold text-font-color'>
                                         {userInfo.username}
                                     </div>
+                                    {userProfileData?.company_code && (
+                                        <div className='text-font-color-100 text-xs mt-1'>
+                                            {userProfileData.company_code}
+                                        </div>
+                                    )}
                                     {userInfo.email && (
-                                        <div className='text-font-color-100 text-xs break-words'>
+                                        <div className='text-font-color-100 text-xs break-words mt-1'>
                                             {userInfo.email}
                                         </div>
                                     )}
