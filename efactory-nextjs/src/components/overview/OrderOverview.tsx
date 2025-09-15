@@ -24,7 +24,10 @@ import {
   IconFileCode,
   IconX,
   IconCheck,
-  IconAlertCircle
+  IconAlertCircle,
+  IconEdit,
+  IconChevronDown,
+  IconChevronUp
 } from '@tabler/icons-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
@@ -596,11 +599,82 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
 export default function OrderOverview({ data, onClose, variant = 'overlay', onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems }: Props) {
   const billing = data.billing_address || ({} as any)
   const shipping = data.shipping_address || ({} as any)
+  
+  // Dialog states for expandable text areas
+  const [shippingInstructionsDialog, setShippingInstructionsDialog] = useState(false)
+  const [commentsDialog, setCommentsDialog] = useState(false)
+  
+  // Table row limiting states
+  const [showAllOrderLines, setShowAllOrderLines] = useState(false)
+  
+  // Panel expand/collapse states
+  const [amountsExpanded, setAmountsExpanded] = useState(false)
+  const [generalExpanded, setGeneralExpanded] = useState(false)
+  const [customFieldsExpanded, setCustomFieldsExpanded] = useState(false)
+  const [billingExpanded, setBillingExpanded] = useState(false)
   const shipmentsOverview = data.shipments_overview || ({} as any)
   const shipments = (shipmentsOverview.shipments as any[]) || []
   const packages = (shipmentsOverview.packages as any[]) || []
   const packageDetails = (shipmentsOverview.package_details as any[]) || []
   const serialLots = (shipmentsOverview.serials as any[]) || []
+  
+  // Helper functions for filtering fields with values
+  const getAmountsFieldsWithValues = () => {
+    const fields = [
+      { key: 'order_subtotal', label: 'Order Amount', value: data.order_subtotal || 0, alwaysShow: true },
+      { key: 'shipping_handling', label: 'S & H', value: data.shipping_handling || 0 },
+      { key: 'sales_tax', label: 'Sales Taxes', value: data.sales_tax || 0 },
+      { key: 'international_handling', label: 'Discount/Add. Chgs.', value: data.international_handling || 0 },
+      { key: 'total_due', label: 'Total Amount', value: data.total_due || 0, alwaysShow: true, isBold: true },
+      { key: 'amount_paid', label: 'Amount Paid', value: data.amount_paid || 0 },
+      { key: 'net_due_currency', label: 'Net Due', value: data.net_due_currency || 0, alwaysShow: true, isBold: true },
+      { key: 'balance_due_us', label: 'Balance Due (US)', value: data.balance_due_us || 0 },
+      { key: 'international_declared_value', label: 'Int. Decl. Value', value: data.international_declared_value || 0 },
+      { key: 'insurance', label: 'Insurance', value: data.insurance || 0 }
+    ]
+    return amountsExpanded ? fields : fields.filter(field => field.alwaysShow || field.value > 0)
+  }
+  
+  const getGeneralFieldsWithValues = () => {
+    const fields = [
+      { key: 'po_number', label: 'PO Number', value: data.po_number },
+      { key: 'ordered_date', label: 'Ordered Date', value: data.ordered_date ? new Date(data.ordered_date).toLocaleDateString() : '' },
+      { key: 'received_date', label: 'Received Date', value: data.received_date ? new Date(data.received_date).toLocaleDateString() : '' },
+      { key: 'payment_type', label: 'Payment Type', value: data.payment_type },
+      { key: 'terms', label: 'Terms', value: data.terms },
+      { key: 'fob', label: 'FOB', value: data.fob },
+      { key: 'shipping_carrier', label: 'Shipping Carrier', value: data.shipping_carrier },
+      { key: 'shipping_service', label: 'Shipping Service', value: data.shipping_service }
+    ]
+    return generalExpanded ? fields : fields.filter(field => field.value && field.value.toString().trim() !== '')
+  }
+  
+  const getCustomFieldsWithValues = () => {
+    const fields = [
+      { key: 'custom_field1', label: 'Custom Field 1', value: data.custom_field1 },
+      { key: 'custom_field2', label: 'Custom Field 2', value: data.custom_field2 },
+      { key: 'custom_field3', label: 'Custom Field 3', value: data.custom_field3 },
+      { key: 'custom_field4', label: 'Custom Field 4', value: data.custom_field4 },
+      { key: 'custom_field5', label: 'Custom Field 5', value: data.custom_field5 }
+    ]
+    return customFieldsExpanded ? fields : fields.filter(field => field.value && field.value.toString().trim() !== '')
+  }
+  
+  const getBillingFieldsWithValues = () => {
+    const fields = [
+      { key: 'company', label: 'Company', value: billing.company },
+      { key: 'attention', label: 'Attention', value: billing.attention },
+      { key: 'address1', label: 'Address 1', value: billing.address1 },
+      { key: 'address2', label: 'Address 2', value: billing.address2 },
+      { key: 'city', label: 'City', value: billing.city },
+      { key: 'state_province', label: 'State/Province', value: billing.state_province },
+      { key: 'postal_code', label: 'Postal Code', value: billing.postal_code },
+      { key: 'country', label: 'Country', value: billing.country },
+      { key: 'phone', label: 'Phone', value: billing.phone },
+      { key: 'email', label: 'Email', value: billing.email }
+    ]
+    return billingExpanded ? fields : fields.filter(field => field.value && field.value.trim() !== '')
+  }
 
   return (
     <div className={variant === 'overlay' ? 'fixed inset-0 bg-black/40 z-50 flex p-4' : 'w-full'}>
@@ -643,47 +717,47 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">Attention:</div>
-                            <div className="text-font-color">{shipping.attention || '-'}</div>
+                            <div className="font-medium text-font-color">{shipping.attention || '-'}</div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">Address 1:</div>
-                            <div className="text-font-color">{shipping.address1}</div>
+                            <div className="font-medium text-font-color">{shipping.address1}</div>
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">Address 2:</div>
-                            <div className="text-font-color">{shipping.address2 || '-'}</div>
+                            <div className="font-medium text-font-color">{shipping.address2 || '-'}</div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">City:</div>
-                            <div className="text-font-color">{shipping.city}</div>
+                            <div className="font-medium text-font-color">{shipping.city}</div>
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">Postal Code:</div>
-                            <div className="text-font-color">{shipping.postal_code}</div>
+                            <div className="font-medium text-font-color">{shipping.postal_code}</div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">State:</div>
-                            <div className="text-font-color">{shipping.state_province}</div>
+                            <div className="font-medium text-font-color">{shipping.state_province}</div>
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">Country:</div>
-                            <div className="text-font-color">{shipping.country}</div>
+                            <div className="font-medium text-font-color">{shipping.country}</div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">Phone:</div>
-                            <div className="text-font-color">{shipping.phone || '-'}</div>
+                            <div className="font-medium text-font-color">{shipping.phone || '-'}</div>
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-1">Email:</div>
-                            <div className="text-font-color">{shipping.email || '-'}</div>
+                            <div className="font-medium text-font-color">{shipping.email || '-'}</div>
                           </div>
                         </div>
                       </div>
@@ -705,7 +779,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Shipping WH:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.location || '-'}</span>
+                            <span className="font-medium text-font-color">{data.location || '-'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -713,7 +787,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Receipt Date:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.received_date ? new Date(data.received_date).toLocaleString() : '-'}</span>
+                            <span className="font-medium text-font-color">{data.received_date ? new Date(data.received_date).toLocaleString() : '-'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -721,7 +795,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">International Code:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.international_code || '0'}</span>
+                            <span className="font-medium text-font-color">{data.international_code || '0'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -729,7 +803,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Carrier:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.shipping_carrier || '-'}</span>
+                            <span className="font-medium text-font-color">{data.shipping_carrier || '-'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -737,7 +811,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Freight Account:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.freight_account || '-'}</span>
+                            <span className="font-medium text-font-color">{data.freight_account || '-'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -745,7 +819,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Account #:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.account_number}</span>
+                            <span className="font-medium text-font-color">{data.account_number}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -763,7 +837,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Payment Type:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.payment_type || '-'}</span>
+                            <span className="font-medium text-font-color">{data.payment_type || '-'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -771,7 +845,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Service:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.shipping_service || '-'}</span>
+                            <span className="font-medium text-font-color">{data.shipping_service || '-'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -779,7 +853,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Consignee #:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.consignee_number || '-'}</span>
+                            <span className="font-medium text-font-color">{data.consignee_number || '-'}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
@@ -787,7 +861,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">FOB Location:</span>
                           </div>
                           <div>
-                            <span className="text-font-color">{data.fob || '-'}</span>
+                            <span className="font-medium text-font-color">{data.fob || '-'}</span>
                           </div>
                         </div>
                       </div>
@@ -800,63 +874,123 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                   {/* Billing Address */}
                   <Card>
                     <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
-                      <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
-                        <IconBuilding className="w-4 h-4" />
-                        BILLING ADDRESS
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
+                          <IconBuilding className="w-4 h-4" />
+                          BILLING ADDRESS
+                        </CardTitle>
+                        {!billingExpanded && (() => {
+                          const allBillingFields = [
+                            billing.company, billing.attention, billing.address1, billing.address2,
+                            billing.city, billing.state_province, billing.postal_code, billing.country,
+                            billing.phone, billing.email
+                          ];
+                          return allBillingFields.some(field => field && field.trim() !== '');
+                        })() && (
+                          <Button
+                            variant="ghost"
+                            size="small"
+                            onClick={() => setBillingExpanded(true)}
+                            className="flex items-center gap-1"
+                          >
+                            <IconChevronDown className="w-4 h-4" />
+                            Show All
+                          </Button>
+                        )}
+                        {billingExpanded && (
+                          <Button
+                            variant="ghost"
+                            size="small"
+                            onClick={() => setBillingExpanded(false)}
+                            className="flex items-center gap-1"
+                          >
+                            <IconChevronUp className="w-4 h-4" />
+                            Show Less
+                          </Button>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4">
                       <div className="space-y-2 text-sm">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Company:</div>
-                            <div className="font-semibold text-font-color">{billing.company || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Attention:</div>
-                            <div className="text-font-color">{billing.attention || '-'}</div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Address 1:</div>
-                            <div className="text-font-color">{billing.address1 || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Address 2:</div>
-                            <div className="text-font-color">{billing.address2 || '-'}</div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">City:</div>
-                            <div className="text-font-color">{billing.city || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Postal Code:</div>
-                            <div className="text-font-color">{billing.postal_code || '-'}</div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">State:</div>
-                            <div className="text-font-color">{billing.state_province || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Country:</div>
-                            <div className="text-font-color">{billing.country || '-'}</div>
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Phone:</div>
-                            <div className="text-font-color">{billing.phone || '-'}</div>
-                          </div>
-                          <div>
-                            <div className="font-medium text-font-color-100 mb-1">Email:</div>
-                            <div className="text-font-color">{billing.email || '-'}</div>
-                          </div>
-                        </div>
+                        {billingExpanded ? (
+                          // Show all fields when expanded
+                          <>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Company:</span>
+                              <span className={`font-medium ${billing.company ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.company || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Attention:</span>
+                              <span className={`font-medium ${billing.attention ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.attention || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Address 1:</span>
+                              <span className={`font-medium ${billing.address1 ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.address1 || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Address 2:</span>
+                              <span className={`font-medium ${billing.address2 ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.address2 || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">City:</span>
+                              <span className={`font-medium ${billing.city ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.city || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">State/Province:</span>
+                              <span className={`font-medium ${billing.state_province ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.state_province || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Postal Code:</span>
+                              <span className={`font-medium ${billing.postal_code ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.postal_code || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Country:</span>
+                              <span className={`font-medium ${billing.country ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.country || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Phone:</span>
+                              <span className={`font-medium ${billing.phone ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.phone || '-'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-font-color-100">Email:</span>
+                              <span className={`font-medium ${billing.email ? 'text-font-color' : 'text-font-color-100'}`}>
+                                {billing.email || '-'}
+                              </span>
+                            </div>
+                          </>
+                        ) : (
+                          // Show only fields with values when collapsed
+                          getBillingFieldsWithValues().length > 0 ? (
+                            getBillingFieldsWithValues().map(field => (
+                              <div key={field.key} className="flex justify-between items-center">
+                                <span className="font-medium text-font-color-100">{field.label}:</span>
+                                <span className="font-medium text-font-color">{field.value}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-center text-font-color-100 italic py-4">
+                              No billing address information
+                            </div>
+                          )
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -871,9 +1005,28 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                     </CardHeader>
                     <CardContent className="p-4">
                       <div className="text-sm">
-                        <div className="text-font-color leading-relaxed min-h-[120px] bg-body-color p-3 rounded">
-                          {data.shipping_instructions || (
-                            <span className="text-font-color-100 italic">No shipping instructions</span>
+                        <div className="relative">
+                          <div 
+                            className="text-font-color leading-relaxed min-h-[120px] bg-body-color p-3 pr-12 rounded cursor-pointer hover:bg-primary-10 transition-colors"
+                            onClick={() => setShippingInstructionsDialog(true)}
+                          >
+                            {data.shipping_instructions ? (
+                              <div className="line-clamp-6">
+                                {data.shipping_instructions}
+                              </div>
+                            ) : (
+                              <span className="text-font-color-100 italic">No shipping instructions</span>
+                            )}
+                          </div>
+                          {data.shipping_instructions && (
+                            <button
+                              type="button"
+                              onClick={() => setShippingInstructionsDialog(true)}
+                              className="absolute top-1 right-1 p-1.5 text-font-color-100 hover:text-font-color transition-colors rounded"
+                              title="Expand to view full content"
+                            >
+                              <IconEdit className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
                       </div>
@@ -890,9 +1043,28 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                     </CardHeader>
                     <CardContent className="p-4">
                       <div className="text-sm">
-                        <div className="text-font-color leading-relaxed min-h-[120px] bg-body-color p-3 rounded">
-                          {data.packing_list_comments || (
-                            <span className="text-font-color-100 italic">No packing list comments</span>
+                        <div className="relative">
+                          <div 
+                            className="text-font-color leading-relaxed min-h-[120px] bg-body-color p-3 pr-12 rounded cursor-pointer hover:bg-primary-10 transition-colors"
+                            onClick={() => setCommentsDialog(true)}
+                          >
+                            {data.packing_list_comments ? (
+                              <div className="line-clamp-6">
+                                {data.packing_list_comments}
+                              </div>
+                            ) : (
+                              <span className="text-font-color-100 italic">No packing list comments</span>
+                            )}
+                          </div>
+                          {data.packing_list_comments && (
+                            <button
+                              type="button"
+                              onClick={() => setCommentsDialog(true)}
+                              className="absolute top-1 right-1 p-1.5 text-font-color-100 hover:text-font-color transition-colors rounded"
+                              title="Expand to view full content"
+                            >
+                              <IconEdit className="w-4 h-4" />
+                            </button>
                           )}
                         </div>
                       </div>
@@ -906,37 +1078,58 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                 {/* General Panel */}
                 <Card>
                   <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
-                    <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
-                      <IconFileText className="w-4 h-4" />
-                      GENERAL
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
+                        <IconFileText className="w-4 h-4" />
+                        GENERAL
+                      </CardTitle>
+                      {!generalExpanded && getGeneralFieldsWithValues().length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setGeneralExpanded(true)}
+                          className="flex items-center gap-1"
+                        >
+                          <IconChevronDown className="w-4 h-4" />
+                          Show All
+                        </Button>
+                      )}
+                      {generalExpanded && (
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setGeneralExpanded(false)}
+                          className="flex items-center gap-1"
+                        >
+                          <IconChevronUp className="w-4 h-4" />
+                          Show Less
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4">
                     <div className="space-y-2 text-sm">
+                      {/* Always show key fields */}
                       <div className="flex justify-between">
                         <span className="font-medium text-font-color-100">Channel:</span>
                         <Badge variant="default">{data.order_type}</Badge>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-font-color-100">Order Stage:</span>
-                        <Badge variant="success">Fully Shipped</Badge>
+                        <Badge variant="success">{data.stage_description || 'Unknown'}</Badge>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-font-color-100">Customer #:</span>
-                        <span className="text-font-color">{data.customer_number || '-'}</span>
+                        <span className="font-medium text-font-color">{data.customer_number || '-'}</span>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">PO #:</span>
-                        <span className="text-font-color">{data.po_number || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Order Date:</span>
-                        <span className="text-font-color">{new Date(data.ordered_date).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Packing List:</span>
-                        <span className="text-font-color">{data.packing_list_type || '-'}</span>
-                      </div>
+                      
+                      {/* Show additional fields based on expand state */}
+                      {getGeneralFieldsWithValues().map(field => (
+                        <div key={field.key} className="flex justify-between">
+                          <span className="font-medium text-font-color-100">{field.label}:</span>
+                          <span className="font-medium text-font-color">{field.value || '-'}</span>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -944,53 +1137,47 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                 {/* Amounts Panel */}
                 <Card>
                   <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
-                    <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
-                      <IconCreditCard className="w-4 h-4" />
-                      AMOUNTS
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
+                        <IconCreditCard className="w-4 h-4" />
+                        AMOUNTS
+                      </CardTitle>
+                      {!amountsExpanded && (
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setAmountsExpanded(true)}
+                          className="flex items-center gap-1"
+                        >
+                          <IconChevronDown className="w-4 h-4" />
+                          Show All
+                        </Button>
+                      )}
+                      {amountsExpanded && (
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setAmountsExpanded(false)}
+                          className="flex items-center gap-1"
+                        >
+                          <IconChevronUp className="w-4 h-4" />
+                          Show Less
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4">
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Order Amount:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.order_subtotal || 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">S & H:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.shipping_handling || 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Sales Taxes:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.sales_tax || 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Discount/Add. Chgs.:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.international_handling || 0)}</span>
-                      </div>
-                      <div className="flex justify-between border-t border-border-color pt-2 font-bold">
-                        <span className="text-font-color">Total Amount:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.total_due || 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Amount Paid:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.amount_paid || 0)}</span>
-                      </div>
-                      <div className="flex justify-between border-t-2 border-border-color pt-2 font-bold text-primary">
-                        <span>Net Due:</span>
-                        <span className="font-mono">${Intl.NumberFormat().format(data.net_due_currency || 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Balance Due (US):</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.balance_due_us || 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Int. Decl. Value:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.international_declared_value || 0)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Insurance:</span>
-                        <span className="font-mono text-font-color">${Intl.NumberFormat().format(data.insurance || 0)}</span>
-                      </div>
+                      {getAmountsFieldsWithValues().map(field => (
+                        <div key={field.key} className={`flex justify-between ${field.isBold ? 'border-t border-border-color pt-2 font-bold' : ''}`}>
+                          <span className={`${field.isBold ? 'text-font-color' : 'font-medium text-font-color-100'}`}>
+                            {field.label}:
+                          </span>
+                          <span className={`font-mono font-medium ${field.isBold ? 'text-font-color' : 'text-font-color'}`}>
+                            {field.value.toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </CardContent>
                 </Card>
@@ -998,33 +1185,49 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                 {/* Custom Fields Panel */}
                 <Card>
                   <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
-                    <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
-                      <IconSettings className="w-4 h-4" />
-                      CUSTOM FIELDS
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm font-semibold text-font-color flex items-center gap-2">
+                        <IconSettings className="w-4 h-4" />
+                        CUSTOM FIELDS
+                      </CardTitle>
+                      {!customFieldsExpanded && getCustomFieldsWithValues().length > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setCustomFieldsExpanded(true)}
+                          className="flex items-center gap-1"
+                        >
+                          <IconChevronDown className="w-4 h-4" />
+                          Show All
+                        </Button>
+                      )}
+                      {customFieldsExpanded && (
+                        <Button
+                          variant="ghost"
+                          size="small"
+                          onClick={() => setCustomFieldsExpanded(false)}
+                          className="flex items-center gap-1"
+                        >
+                          <IconChevronUp className="w-4 h-4" />
+                          Show Less
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4">
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Custom Field 1:</span>
-                        <span className="text-font-color">{data.custom_field1 || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Custom Field 2:</span>
-                        <span className="text-font-color">{data.custom_field2 || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Custom Field 3:</span>
-                        <span className="text-font-color">{data.custom_field3 || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Custom Field 4:</span>
-                        <span className="text-font-color">{data.custom_field4 || '-'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="font-medium text-font-color-100">Custom Field 5:</span>
-                        <span className="text-font-color">{data.custom_field5 || '-'}</span>
-                      </div>
+                      {getCustomFieldsWithValues().length > 0 ? (
+                        getCustomFieldsWithValues().map(field => (
+                          <div key={field.key} className="flex justify-between">
+                            <span className="font-medium text-font-color-100">{field.label}:</span>
+                            <span className="font-medium text-font-color">{field.value}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-font-color-100 italic py-4">
+                          No custom fields with values
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -1033,26 +1236,98 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
 
 
             {/* Order Lines */}
-            <OrderLinesTable orderLines={data.order_lines} />
+            <OrderLinesTable 
+              orderLines={data.order_lines} 
+              showAll={showAllOrderLines}
+              onToggleShowAll={() => setShowAllOrderLines(!showAllOrderLines)}
+            />
 
             {/* Shipments and Packages - with Table/Hierarchy View Toggle */}
             <ShipmentsSection data={data} />
           </div>
         </div>
       </div>
+
+      {/* Shipping Instructions Dialog */}
+      <Dialog open={shippingInstructionsDialog} onOpenChange={setShippingInstructionsDialog}>
+        <DialogContent style={{ width: '800px', maxWidth: '90vw' }}>
+          <DialogHeader>
+            <DialogTitle>Shipping Instructions</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm p-3 bg-body-color rounded border border-border-color min-h-[300px] max-h-[400px] overflow-auto">
+            <div className="text-font-color leading-relaxed whitespace-pre-wrap">
+              {data.shipping_instructions || 'No shipping instructions'}
+            </div>
+          </div>
+          <DialogFooter className="pt-3">
+            <Button onClick={() => setShippingInstructionsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Comments Dialog */}
+      <Dialog open={commentsDialog} onOpenChange={setCommentsDialog}>
+        <DialogContent style={{ width: '800px', maxWidth: '90vw' }}>
+          <DialogHeader>
+            <DialogTitle>Packing List Comments</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm p-3 bg-body-color rounded border border-border-color min-h-[300px] max-h-[400px] overflow-auto">
+            <div className="text-font-color leading-relaxed whitespace-pre-wrap">
+              {data.packing_list_comments || 'No packing list comments'}
+            </div>
+          </div>
+          <DialogFooter className="pt-3">
+            <Button onClick={() => setCommentsDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
 // Table components (same as before but with improved styling)
-function OrderLinesTable({ orderLines }: { orderLines: any[] }) {
+function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: { 
+  orderLines: any[], 
+  showAll: boolean, 
+  onToggleShowAll: () => void 
+}) {
+  const ROWS_TO_SHOW = 5
+  const displayedLines = showAll ? orderLines : orderLines?.slice(0, ROWS_TO_SHOW) || []
+  const hasMore = orderLines?.length > ROWS_TO_SHOW
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="bg-primary-10 border-b border-border-color py-3 px-4">
-        <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
-          <IconPackage className="w-5 h-5 text-primary" />
-          ORDER LINES
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
+            <IconPackage className="w-5 h-5 text-primary" />
+            ORDER LINES ({orderLines?.length || 0})
+          </CardTitle>
+          {hasMore && (
+            <Button
+              variant="ghost"
+              size="small"
+              onClick={onToggleShowAll}
+              className="flex items-center gap-1"
+            >
+              {showAll ? (
+                <>
+                  <IconChevronUp className="w-4 h-4" />
+                  Show Less
+                </>
+              ) : (
+                <>
+                  <IconChevronDown className="w-4 h-4" />
+                  Show All ({orderLines.length})
+                </>
+              )}
+            </Button>
+          )}
+        </div>
       </CardHeader>
       
       <div className="overflow-x-auto">
@@ -1070,7 +1345,7 @@ function OrderLinesTable({ orderLines }: { orderLines: any[] }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
-            {orderLines?.map((item, index) => (
+            {displayedLines?.map((item, index) => (
               <tr key={item.id || index} className="hover:bg-primary-5/30 transition-colors">
                 <td className="px-4 py-3">
                   <div className="text-sm font-semibold text-font-color">{item.line_number}</div>
@@ -1121,12 +1396,12 @@ function OrderLinesTable({ orderLines }: { orderLines: any[] }) {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="text-sm font-semibold text-font-color">
-                    ${Intl.NumberFormat().format(item.price || 0)}
+                    {Intl.NumberFormat().format(item.price || 0)}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="text-sm font-semibold text-font-color">
-                    ${Intl.NumberFormat().format((item.price || 0) * (item.quantity || 0))}
+                    {Intl.NumberFormat().format((item.price || 0) * (item.quantity || 0))}
                   </div>
                 </td>
                 <td className="px-4 py-3 text-center">
@@ -1143,7 +1418,7 @@ function OrderLinesTable({ orderLines }: { orderLines: any[] }) {
       <div className="px-4 py-3 border-t border-border-color bg-primary-5">
         <div className="flex justify-end">
           <div className="text-sm font-bold text-font-color-100">
-            Total: <span className="text-primary">${Intl.NumberFormat().format(orderLines?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0) || 0)}</span>
+            Total: <span className="text-primary">{Intl.NumberFormat().format(orderLines?.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 0)), 0) || 0)}</span>
           </div>
         </div>
       </div>
