@@ -147,6 +147,11 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     colDef.cellRenderer = (p: any) => <OrderStageRenderer value={p.value} data={p.data} />;
   }
 
+  // Fallback: if the legacy view doesn't provide render but column is order_number, apply link renderer
+  if (!colDef.cellRenderer && field.field && field.field.toLowerCase() === 'order_number') {
+    colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+  }
+
   return colDef;
 }
 

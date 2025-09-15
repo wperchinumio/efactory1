@@ -11,7 +11,15 @@ import {
   IconExternalLink,
   IconBarcode
 } from '@tabler/icons-react'
-import type { OrderDetailDto } from '@/types/api/orders'
+import type { OrderDetailDto, ShipmentsOverviewSerialRowDto } from '@/types/api/orders'
+
+// Utility function to display placeholder dashes as barely visible
+const PlaceholderDash = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
+  if (children === '-') {
+    return <span className={`text-font-color-100 opacity-30 ${className}`}>-</span>
+  }
+  return <span className={className}>{children}</span>
+}
 
 // Table components will be created inline for now
 
@@ -66,7 +74,39 @@ export default function ShipmentsSection({ data }: Props) {
   const overviewShipments = data.shipments_overview?.shipments || []
   const overviewPackages = data.shipments_overview?.packages || []
   const overviewPackageDetails = data.shipments_overview?.package_details || []
-  const overviewSerials = data.shipments_overview?.serials || []
+  
+  // For serials, we need to cross-reference with the hierarchical shipments data to get Type information
+  // since shipments_overview doesn't include the Type field
+  const getSerialsWithType = () => {
+    const serialsWithType: any[] = []
+    
+    data.shipments?.forEach(shipment => {
+      shipment.packages?.forEach(pkg => {
+        pkg.shipped_items?.forEach(item => {
+          if (item.serials && Array.isArray(item.serials)) {
+            item.serials.forEach(serial => {
+              serialsWithType.push({
+                id: serialsWithType.length + 1, // Generate ID if not available
+                line_index: item.line_number,
+                ship_date: shipment.ship_date,
+                package_number: pkg.carton_id,
+                line_number: item.line_number,
+                item_number: item.item_number,
+                description: item.description,
+                Type: serial.Type, // This is the key field we need!
+                serial_no: serial.SerialNo,
+                quantity: serial.Quantity
+              })
+            })
+          }
+        })
+      })
+    })
+    
+    return serialsWithType
+  }
+  
+  const overviewSerials = getSerialsWithType()
 
   const toggleShipment = (shipmentId: number) => {
     const newExpanded = new Set(expandedShipments)
@@ -99,7 +139,7 @@ export default function ShipmentsSection({ data }: Props) {
   }
 
   const renderTableView = () => (
-    <div className="space-y-6">
+    <div className="space-y-2">
       {/* Shipments Table */}
       <Card>
         <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
@@ -113,51 +153,51 @@ export default function ShipmentsSection({ data }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-primary-10 border-b border-border-color">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Line #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Ship Date</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Packages</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Weight</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Carrier</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Service</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">REF 1</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">REF 2</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">REF 3</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">REF 4</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">RS TRACKING #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">DOCUMENTS</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Line #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Packages</th>
+                  <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Weight</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Carrier</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Service</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">REF 1</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">REF 2</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">REF 3</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">REF 4</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">RS TRACKING #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">DOCUMENTS</th>
                 </tr>
               </thead>
               <tbody>
                 {overviewShipments.map((shipment, index) => (
                   <tr key={shipment.id} className={index % 2 === 0 ? 'bg-card-color' : 'bg-body-color'}>
-                    <td className="px-4 py-3 text-center text-font-color">{shipment.line_index}</td>
-                    <td className="px-4 py-3 text-center text-font-color">{new Date(shipment.ship_date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-center text-font-color">{shipment.packages}</td>
-                    <td className="px-4 py-3 text-right text-font-color">{shipment.total_weight} lbs</td>
-                    <td className="px-4 py-3 text-font-color">{shipment.shipping_carrier}</td>
-                    <td className="px-4 py-3 text-font-color">{shipment.shipping_service}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{shipment.reference1 || '-'}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{shipment.reference2 || '-'}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{shipment.reference3 || '-'}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{shipment.reference4 || '-'}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{shipment.rs_tr || '-'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5 text-center text-sm font-bold text-font-color">{shipment.line_index}</td>
+                    <td className="px-2 py-1.5 text-center text-sm text-font-color">{new Date(shipment.ship_date).toLocaleDateString()}</td>
+                    <td className="px-2 py-1.5 text-center text-sm font-bold text-font-color">{shipment.packages}</td>
+                    <td className="px-2 py-1.5 text-right text-sm font-bold text-font-color">{shipment.total_weight} lbs</td>
+                    <td className="px-2 py-1.5 text-sm text-font-color">{shipment.shipping_carrier}</td>
+                    <td className="px-2 py-1.5 text-sm text-font-color">{shipment.shipping_service}</td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{shipment.reference1 || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{shipment.reference2 || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{shipment.reference3 || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{shipment.reference4 || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{shipment.rs_tr || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5">
                       <div className="flex flex-wrap gap-2">
                         {shipment.pl_link && (
-                          <a href={shipment.pl_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 text-xs">
-                            <IconExternalLink className="w-3 h-3 inline mr-1" />
+                          <a href={shipment.pl_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 text-xs inline-flex items-center gap-1">
+                            <IconExternalLink className="w-3 h-3" />
                             Packing List
                           </a>
                         )}
                         {shipment.ci_link && (
-                          <a href={shipment.ci_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 text-xs">
-                            <IconExternalLink className="w-3 h-3 inline mr-1" />
+                          <a href={shipment.ci_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 text-xs inline-flex items-center gap-1">
+                            <IconExternalLink className="w-3 h-3" />
                             Comm. Invoice
                           </a>
                         )}
                         {shipment.bol_link && (
-                          <a href={shipment.bol_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 text-xs">
-                            <IconExternalLink className="w-3 h-3 inline mr-1" />
+                          <a href={shipment.bol_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 text-xs inline-flex items-center gap-1">
+                            <IconExternalLink className="w-3 h-3" />
                             BOL
                           </a>
                         )}
@@ -184,43 +224,43 @@ export default function ShipmentsSection({ data }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-primary-10 border-b border-border-color">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Ship Date</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Package #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Tracking #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Weight</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Rated Weight</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Dimensions</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Charge</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">ASN</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Pallet #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Pallet ASN</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Delivery Date</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">ProWay Bill</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Package #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Tracking #</th>
+                  <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Weight</th>
+                  <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Rated Weight</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Dimensions</th>
+                  <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Charge</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">ASN</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Pallet #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Pallet ASN</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Delivery Date</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">ProWay Bill</th>
                 </tr>
               </thead>
               <tbody>
                 {overviewPackages.map((pkg, index) => (
                   <tr key={pkg.id} className={index % 2 === 0 ? 'bg-card-color' : 'bg-body-color'}>
-                    <td className="px-4 py-3 text-font-color">{new Date(pkg.ship_date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{pkg.package_number}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 py-1.5 text-sm text-font-color">{new Date(pkg.ship_date).toLocaleDateString()}</td>
+                    <td className="px-2 py-1.5 text-sm font-bold text-font-color font-mono">{pkg.package_number}</td>
+                    <td className="px-2 py-1.5">
                       {pkg.tracking_link ? (
-                        <a href={pkg.tracking_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 font-mono">
+                        <a href={pkg.tracking_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary-600 text-sm font-mono">
                           {pkg.tracking_number}
                         </a>
                       ) : (
-                        <span className="text-font-color font-mono">{pkg.tracking_number || '-'}</span>
+                        <span className="text-font-color text-sm font-mono"><PlaceholderDash>{pkg.tracking_number || '-'}</PlaceholderDash></span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-font-color">{pkg.package_weight} lbs</td>
-                    <td className="px-4 py-3 text-right text-font-color">{pkg.package_rated_weight} lbs</td>
-                    <td className="px-4 py-3 text-font-color">{pkg.package_dimension || '-'}</td>
-                    <td className="px-4 py-3 text-right text-font-color">${Intl.NumberFormat().format(pkg.package_charge || 0)}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{pkg.asn || '-'}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{pkg.pallet_number || '-'}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{pkg.pallet_asn || '-'}</td>
-                    <td className="px-4 py-3 text-font-color">{pkg.delivery_date ? new Date(pkg.delivery_date).toLocaleDateString() : '-'}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{pkg.proway_bill_number || '-'}</td>
+                    <td className="px-2 py-1.5 text-right text-sm font-bold text-font-color">{pkg.package_weight} lbs</td>
+                    <td className="px-2 py-1.5 text-right text-sm font-bold text-font-color">{pkg.package_rated_weight} lbs</td>
+                    <td className="px-2 py-1.5 text-center text-sm text-font-color"><PlaceholderDash>{pkg.package_dimension || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-right text-sm font-bold text-font-color">{Intl.NumberFormat().format(pkg.package_charge || 0)}</td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{pkg.asn || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{pkg.pallet_number || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{pkg.pallet_asn || '-'}</PlaceholderDash></td>
+                    <td className="px-2 py-1.5 text-center text-sm text-font-color">{pkg.delivery_date ? new Date(pkg.delivery_date).toLocaleDateString() : '-'}</td>
+                    <td className="px-2 py-1.5 text-xs text-font-color-100 font-mono"><PlaceholderDash>{pkg.proway_bill_number || '-'}</PlaceholderDash></td>
                   </tr>
                 ))}
               </tbody>
@@ -242,28 +282,28 @@ export default function ShipmentsSection({ data }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-primary-10 border-b border-border-color">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Ship Date</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Package #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Line #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Item #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Description</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Quantity</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Extra Field 1</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Serial/Lot Count</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Package #</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Line #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Item #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Description</th>
+                  <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Quantity</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Extra Field 1</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Serial/Lot Count</th>
                 </tr>
               </thead>
               <tbody>
                 {overviewPackageDetails.map((detail, index) => (
                   <tr key={detail.id} className={index % 2 === 0 ? 'bg-card-color' : 'bg-body-color'}>
-                    <td className="px-4 py-3 text-font-color">{new Date(detail.ship_date).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{detail.package_number}</td>
-                    <td className="px-4 py-3 text-center text-font-color">{detail.line_number}</td>
-                    <td className="px-4 py-3 text-font-color font-mono">{detail.item_number}</td>
-                    <td className="px-4 py-3 text-font-color">{detail.description}</td>
-                    <td className="px-4 py-3 text-right text-font-color">{detail.quantity}</td>
-                    <td className="px-4 py-3 text-font-color">-</td>
-                    <td className="px-4 py-3 text-center text-font-color">
-                      <span className="px-2 py-1 bg-primary-10 text-font-color rounded text-xs">
+                    <td className="px-2 py-1.5 text-sm text-font-color">{new Date(detail.ship_date).toLocaleDateString()}</td>
+                    <td className="px-2 py-1.5 text-sm font-bold text-font-color font-mono">{detail.package_number}</td>
+                    <td className="px-2 py-1.5 text-center text-sm font-bold text-font-color">{detail.line_number}</td>
+                    <td className="px-2 py-1.5 text-sm font-bold text-font-color font-mono">{detail.item_number}</td>
+                    <td className="px-2 py-1.5 text-sm text-font-color overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>{detail.description}</td>
+                    <td className="px-2 py-1.5 text-right text-sm font-bold text-font-color">{detail.quantity}</td>
+                    <td className="px-2 py-1.5 text-center text-xs text-font-color-100">-</td>
+                    <td className="px-2 py-1.5 text-center">
+                      <span className="px-1.5 py-0.5 bg-primary-10 text-font-color rounded text-xs font-medium">
                         See Serials Table
                       </span>
                     </td>
@@ -288,42 +328,42 @@ export default function ShipmentsSection({ data }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-primary-10 border-b border-border-color">
                 <tr>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Ship Date</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Package #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Line #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Item #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Description</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Type</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Serial/Lot #</th>
-                  <th className="px-4 py-3 text-left font-medium text-font-color-100">Quantity</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Package #</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Line #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Item #</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Description</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Type</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Serial/Lot #</th>
+                  <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Quantity</th>
                 </tr>
               </thead>
               <tbody>
                 {overviewSerials && Array.isArray(overviewSerials) ? (
-                  (overviewSerials as any[]).map((serial: any, index) => (
+                  overviewSerials.map((serial, index) => (
                     <tr key={serial.id || index} className={index % 2 === 0 ? 'bg-card-color' : 'bg-body-color'}>
-                      <td className="px-4 py-3 text-font-color">{new Date(serial.ship_date).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-font-color font-mono">{serial.package_number}</td>
-                      <td className="px-4 py-3 text-center text-font-color">{serial.line_number}</td>
-                      <td className="px-4 py-3 text-font-color font-mono">{serial.item_number}</td>
-                      <td className="px-4 py-3 text-font-color">{serial.description}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${
-                          serial.Type === 'L' ? 'bg-warning text-black' : 
+                      <td className="px-2 py-1.5 text-sm text-font-color">{new Date(serial.ship_date).toLocaleDateString()}</td>
+                      <td className="px-2 py-1.5 text-sm font-bold text-font-color font-mono">{serial.package_number}</td>
+                      <td className="px-2 py-1.5 text-center text-sm font-bold text-font-color">{serial.line_number}</td>
+                      <td className="px-2 py-1.5 text-sm font-bold text-font-color font-mono">{serial.item_number}</td>
+                      <td className="px-2 py-1.5 text-sm text-font-color overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>{serial.description}</td>
+                      <td className="px-2 py-1.5 text-center">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-bold ${
+                          serial.Type === 'L' || serial.Type === 'l' ? 'bg-warning text-black' : 
                           'bg-info text-white'
                         }`}>
-                          {serial.Type === 'L' ? 'LOT' : 'SERIAL'}
+                          {serial.Type === 'L' || serial.Type === 'l' ? 'LOT' : 'SN'}
                         </span>
                       </td>
-                      <td className="px-4 py-3 font-mono text-font-color">
+                      <td className="px-2 py-1.5 text-sm font-mono text-font-color">
                         {serial.serial_no}
                       </td>
-                      <td className="px-4 py-3 text-right text-font-color">{serial.quantity}</td>
+                      <td className="px-2 py-1.5 text-right text-sm font-bold text-font-color">{serial.quantity}</td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-font-color-100">
+                    <td colSpan={8} className="px-2 py-4 text-center text-font-color-100">
                       No serial/lot numbers available
                     </td>
                   </tr>
@@ -337,11 +377,11 @@ export default function ShipmentsSection({ data }: Props) {
   )
 
   const renderHierarchyView = () => (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {data.shipments?.map((shipment) => (
         <Card key={shipment.id} className="overflow-hidden">
           <CardHeader 
-            className="bg-primary-10 border-b border-border-color py-3 px-4 cursor-pointer hover:bg-primary-20 transition-colors"
+            className="bg-primary-10 border-b border-border-color py-2 px-3 cursor-pointer hover:bg-primary-20 transition-colors"
             onClick={() => toggleShipment(shipment.id)}
           >
             <CardTitle className="text-sm font-semibold text-font-color flex items-center justify-between">
@@ -366,64 +406,64 @@ export default function ShipmentsSection({ data }: Props) {
           {expandedShipments.has(shipment.id) && (
             <CardContent className="p-0">
               {/* Shipment Details */}
-              <div className="p-4 bg-primary-10">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="p-2 bg-primary-10">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                   <div>
                     <span className="font-medium text-font-color-100">Weight:</span>
-                    <span className="ml-2 text-font-color">{shipment.total_weight} lbs</span>
+                    <span className="ml-2 text-font-color font-medium">{shipment.total_weight} lbs</span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">Charge:</span>
-                    <span className="ml-2 text-font-color">${Intl.NumberFormat().format(shipment.total_charge || 0)}</span>
+                    <span className="ml-2 text-font-color font-medium">${Intl.NumberFormat().format(shipment.total_charge || 0)}</span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">Packages:</span>
-                    <span className="ml-2 text-font-color">{shipment.packages?.length || 0}</span>
+                    <span className="ml-2 text-font-color font-medium">{shipment.packages?.length || 0}</span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">Carrier ID:</span>
-                    <span className="ml-2 text-font-color">{shipment.carrier_id || '-'}</span>
+                    <span className="ml-2 text-font-color font-medium"><PlaceholderDash>{shipment.carrier_id || '-'}</PlaceholderDash></span>
                   </div>
                 </div>
                 
                 {/* Reference Fields */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-2">
                   <div>
                     <span className="font-medium text-font-color-100">REF 1:</span>
-                    <span className="ml-2 text-font-color font-mono">{shipment.reference1 || '-'}</span>
+                    <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{shipment.reference1 || '-'}</PlaceholderDash></span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">REF 2:</span>
-                    <span className="ml-2 text-font-color font-mono">{shipment.reference2 || '-'}</span>
+                    <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{shipment.reference2 || '-'}</PlaceholderDash></span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">REF 3:</span>
-                    <span className="ml-2 text-font-color font-mono">{shipment.reference3 || '-'}</span>
+                    <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{shipment.reference3 || '-'}</PlaceholderDash></span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">REF 4:</span>
-                    <span className="ml-2 text-font-color font-mono">{shipment.reference4 || '-'}</span>
+                    <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{shipment.reference4 || '-'}</PlaceholderDash></span>
                   </div>
                 </div>
                 
                 {/* RS Tracking */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-2">
                   <div>
                     <span className="font-medium text-font-color-100">RS Tracking #:</span>
-                    <span className="ml-2 text-font-color font-mono">{shipment.rs_tr || '-'}</span>
+                    <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{shipment.rs_tr || '-'}</PlaceholderDash></span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">Freight Account:</span>
-                    <span className="ml-2 text-font-color">{shipment.freight_account || '-'}</span>
+                    <span className="ml-2 text-font-color font-medium"><PlaceholderDash>{shipment.freight_account || '-'}</PlaceholderDash></span>
                   </div>
                   <div>
                     <span className="font-medium text-font-color-100">Carrier DCLN2:</span>
-                    <span className="ml-2 text-font-color">{shipment.carrier_dcln2 || '-'}</span>
+                    <span className="ml-2 text-font-color font-medium"><PlaceholderDash>{shipment.carrier_dcln2 || '-'}</PlaceholderDash></span>
                   </div>
                 </div>
 
                 {/* Document Links */}
-                <div className="mt-3 flex flex-wrap gap-4">
+                <div className="mt-2 flex flex-wrap gap-3">
                   {shipment.pl_link && (
                     <a 
                       href={shipment.pl_link} 
@@ -461,11 +501,11 @@ export default function ShipmentsSection({ data }: Props) {
               </div>
 
               {/* Packages */}
-              <div className="pl-6">
+              <div className="pl-4">
                 {shipment.packages?.map((pkg) => (
                   <div key={pkg.id} className="">
                     <div 
-                      className="p-4 cursor-pointer hover:bg-primary-10 transition-colors"
+                      className="p-2 cursor-pointer hover:bg-primary-10 transition-colors"
                       onClick={() => togglePackage(pkg.id)}
                     >
                       <div className="flex items-center justify-between">
@@ -480,11 +520,11 @@ export default function ShipmentsSection({ data }: Props) {
                             Package: {pkg.carton_id}
                           </span>
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-font-color-100">
-                          <span>Weight: {pkg.weight} lbs</span>
-                          <span>Rated: {pkg.rated_weight} lbs</span>
-                          <span>Dim: {pkg.dimension}</span>
-                          <span>Freight: ${Intl.NumberFormat().format(pkg.freight || 0)}</span>
+                        <div className="flex items-center gap-3 text-xs text-font-color-100">
+                          <span>Weight: <span className="font-medium text-font-color">{pkg.weight} lbs</span></span>
+                          <span>Rated: <span className="font-medium text-font-color">{pkg.rated_weight} lbs</span></span>
+                          <span>Dim: <span className="font-medium text-font-color">{pkg.dimension}</span></span>
+                          <span>Freight: <span className="font-medium text-font-color">${Intl.NumberFormat().format(pkg.freight || 0)}</span></span>
                           {pkg.tracking_number && (
                             <a 
                               href={pkg.tracking_number_link} 
@@ -501,39 +541,39 @@ export default function ShipmentsSection({ data }: Props) {
                     </div>
 
                     {expandedPackages.has(pkg.id) && (
-                      <div className="pl-6 bg-body-color">
+                      <div className="pl-4 bg-body-color">
                         {/* Package Details */}
-                        <div className="p-4">
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div className="p-2">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                             <div>
                               <span className="font-medium text-font-color-100">Carton Count:</span>
-                              <span className="ml-2 text-font-color">{pkg.carton_count_number}</span>
+                              <span className="ml-2 text-font-color font-medium">{pkg.carton_count_number}</span>
                             </div>
                             <div>
                               <span className="font-medium text-font-color-100">ASN:</span>
-                              <span className="ml-2 text-font-color font-mono">{pkg.asn || '-'}</span>
+                              <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{pkg.asn || '-'}</PlaceholderDash></span>
                             </div>
                             <div>
                               <span className="font-medium text-font-color-100">Pallet ID:</span>
-                              <span className="ml-2 text-font-color font-mono">{pkg.pallet_id || '-'}</span>
+                              <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{pkg.pallet_id || '-'}</PlaceholderDash></span>
                             </div>
                             <div>
                               <span className="font-medium text-font-color-100">Pallet ASN:</span>
-                              <span className="ml-2 text-font-color font-mono">{pkg.pallet_asn || '-'}</span>
+                              <span className="ml-2 text-font-color font-mono font-medium"><PlaceholderDash>{pkg.pallet_asn || '-'}</PlaceholderDash></span>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mt-3">
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs mt-2">
                             <div>
                               <span className="font-medium text-font-color-100">Delivery Date:</span>
-                              <span className="ml-2 text-font-color">{pkg.delivery_date ? new Date(pkg.delivery_date).toLocaleDateString() : '-'}</span>
+                              <span className="ml-2 text-font-color font-medium">{pkg.delivery_date ? new Date(pkg.delivery_date).toLocaleDateString() : '-'}</span>
                             </div>
                             <div>
                               <span className="font-medium text-font-color-100">Promised Date:</span>
-                              <span className="ml-2 text-font-color">{pkg.promised_date ? new Date(pkg.promised_date).toLocaleDateString() : '-'}</span>
+                              <span className="ml-2 text-font-color font-medium">{pkg.promised_date ? new Date(pkg.promised_date).toLocaleDateString() : '-'}</span>
                             </div>
                             <div className="col-span-2">
                               <span className="font-medium text-font-color-100">Delivery Info:</span>
-                              <span className="ml-2 text-font-color">{pkg.delivery_info || '-'}</span>
+                              <span className="ml-2 text-font-color font-medium"><PlaceholderDash>{pkg.delivery_info || '-'}</PlaceholderDash></span>
                             </div>
                           </div>
                         </div>
@@ -541,7 +581,7 @@ export default function ShipmentsSection({ data }: Props) {
                         {pkg.shipped_items?.map((item) => (
                           <div key={item.id} className="">
                             <div 
-                              className="p-3 cursor-pointer hover:bg-primary-10 transition-colors"
+                              className="p-2 cursor-pointer hover:bg-primary-10 transition-colors"
                               onClick={() => togglePackageDetail(item.id)}
                             >
                               <div className="flex items-center justify-between">
@@ -556,26 +596,23 @@ export default function ShipmentsSection({ data }: Props) {
                                     Line {item.line_number}: {item.item_number}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-4 text-xs text-font-color-100">
-                                  <span>{item.description}</span>
-                                  <span>Qty: {item.quantity}</span>
-                                  {(item.serials && Array.isArray(item.serials) && item.serials.length > 0) ? (
-                                    <span className="text-primary">{item.serials.length} Serial(s)</span>
-                                  ) : null}
+                                <div className="flex items-center gap-3 text-xs text-font-color-100">
+                                  <span><span className="font-medium text-font-color">{item.description}</span></span>
+                                  <span>Qty: <span className="font-medium text-font-color">{item.quantity}</span></span>
                                 </div>
                               </div>
                             </div>
 
                             {(expandedPackageDetails.has(item.id) && item.serials && Array.isArray(item.serials) && item.serials.length > 0) ? (
-                              <div className="pl-6 bg-primary-10">
-                                <div className="p-3">
-                                  <div className="flex items-center gap-2 mb-2">
+                              <div className="pl-4 bg-primary-10">
+                                <div className="p-2">
+                                  <div className="flex items-center gap-2 mb-1">
                                     <IconBarcode className="w-3 h-3 text-accent" />
                                     <span className="text-xs font-medium text-font-color-100">Serial/Lot Numbers:</span>
                                   </div>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1.5">
                                     {(item.serials as any[]).map((serial: any, idx) => (
-                                      <div key={idx} className="text-xs bg-card-color rounded px-2 py-1 border border-border-color">
+                                      <div key={idx} className="text-xs bg-card-color rounded px-1.5 py-0.5 border border-border-color">
                                         <div className="flex items-center justify-between">
                                           <div>
                                             <span className={`inline-block px-1 py-0.5 rounded text-[10px] font-medium mr-1 ${
@@ -613,7 +650,7 @@ export default function ShipmentsSection({ data }: Props) {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
       {/* View Toggle */}
       <Card>
         <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">

@@ -157,11 +157,24 @@ export interface ShipmentsOverviewPackageDetailRowDto {
   delivery_info: string;
 }
 
+export interface ShipmentsOverviewSerialRowDto {
+  id: number;
+  line_index: number;
+  ship_date: string;
+  package_number: string;
+  line_number: number;
+  item_number: string;
+  description: string;
+  Type: string; // "S" for serial number, "L" for lot
+  serial_no: string;
+  quantity: number;
+}
+
 export interface ShipmentsOverviewDto {
   shipments: ShipmentsOverviewShipmentRowDto[];
   packages: ShipmentsOverviewPackageRowDto[];
   package_details: ShipmentsOverviewPackageDetailRowDto[];
-  serials: null | unknown[];
+  serials: ShipmentsOverviewSerialRowDto[] | null;
 }
 
 export interface OrderDetailDto {

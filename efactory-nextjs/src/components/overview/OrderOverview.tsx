@@ -598,6 +598,14 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
   )
 }
 
+// Utility function to display placeholder dashes as barely visible
+const PlaceholderDash = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
+  if (children === '-') {
+    return <span className={`text-font-color-100 opacity-30 ${className}`}>-</span>
+  }
+  return <span className={className}>{children}</span>
+}
+
 export default function OrderOverview({ data, onClose, variant = 'overlay', onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems }: Props) {
   const billing = data.billing_address || ({} as any)
   const shipping = data.shipping_address || ({} as any)
@@ -680,7 +688,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
 
   return (
     <div className={variant === 'overlay' ? 'fixed inset-0 bg-black/40 z-50 flex p-4' : 'w-full'}>
-      <div className={variant === 'overlay' ? 'bg-background rounded-xl shadow-2xl w-full max-w-[1800px] mx-auto overflow-hidden flex flex-col max-h-[95vh]' : 'bg-background rounded-xl border border-border-color shadow w-full overflow-hidden flex flex-col'}>
+      <div className={variant === 'overlay' ? 'bg-background rounded-xl shadow-2xl w-full max-w-[1800px] mx-auto overflow-hidden flex flex-col max-h-[95vh]' : 'bg-background rounded-xl border border-border-color shadow w-full max-w-[1800px] mx-auto overflow-hidden flex flex-col'}>
         <OrderTopBar 
           data={data} 
           onClose={onClose}
@@ -719,7 +727,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-0.5">Attention:</div>
-                            <div className="font-medium text-font-color">{shipping.attention || '-'}</div>
+                            <div className="font-medium text-font-color"><PlaceholderDash>{shipping.attention || '-'}</PlaceholderDash></div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -729,7 +737,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-0.5">Address 2:</div>
-                            <div className="font-medium text-font-color">{shipping.address2 || '-'}</div>
+                            <div className="font-medium text-font-color"><PlaceholderDash>{shipping.address2 || '-'}</PlaceholderDash></div>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -755,11 +763,11 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <div className="font-medium text-font-color-100 mb-0.5">Phone:</div>
-                            <div className="font-medium text-font-color">{shipping.phone || '-'}</div>
+                            <div className="font-medium text-font-color"><PlaceholderDash>{shipping.phone || '-'}</PlaceholderDash></div>
                           </div>
                           <div>
                             <div className="font-medium text-font-color-100 mb-0.5">Email:</div>
-                            <div className="font-medium text-font-color">{shipping.email || '-'}</div>
+                            <div className="font-medium text-font-color"><PlaceholderDash>{shipping.email || '-'}</PlaceholderDash></div>
                           </div>
                         </div>
                       </div>
@@ -781,7 +789,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Shipping WH:</span>
                           </div>
                           <div>
-                            <span className="font-medium text-font-color">{data.location || '-'}</span>
+                            <span className="font-medium text-font-color"><PlaceholderDash>{data.location || '-'}</PlaceholderDash></span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -805,7 +813,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Carrier:</span>
                           </div>
                           <div>
-                            <span className="font-medium text-font-color">{data.shipping_carrier || '-'}</span>
+                            <span className="font-medium text-font-color"><PlaceholderDash>{data.shipping_carrier || '-'}</PlaceholderDash></span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -813,7 +821,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Freight Account:</span>
                           </div>
                           <div>
-                            <span className="font-medium text-font-color">{data.freight_account || '-'}</span>
+                            <span className="font-medium text-font-color"><PlaceholderDash>{data.freight_account || '-'}</PlaceholderDash></span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -839,7 +847,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Payment Type:</span>
                           </div>
                           <div>
-                            <span className="font-medium text-font-color">{data.payment_type || '-'}</span>
+                            <span className="font-medium text-font-color"><PlaceholderDash>{data.payment_type || '-'}</PlaceholderDash></span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -847,7 +855,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Service:</span>
                           </div>
                           <div>
-                            <span className="font-medium text-font-color">{data.shipping_service || '-'}</span>
+                            <span className="font-medium text-font-color"><PlaceholderDash>{data.shipping_service || '-'}</PlaceholderDash></span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -855,7 +863,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">Consignee #:</span>
                           </div>
                           <div>
-                            <span className="font-medium text-font-color">{data.consignee_number || '-'}</span>
+                            <span className="font-medium text-font-color"><PlaceholderDash>{data.consignee_number || '-'}</PlaceholderDash></span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
@@ -863,7 +871,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <span className="font-medium text-font-color-100">FOB Location:</span>
                           </div>
                           <div>
-                            <span className="font-medium text-font-color">{data.fob || '-'}</span>
+                            <span className="font-medium text-font-color"><PlaceholderDash>{data.fob || '-'}</PlaceholderDash></span>
                           </div>
                         </div>
                       </div>
@@ -920,61 +928,61 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Company:</span>
                               <span className={`font-medium ${billing.company ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.company || '-'}
+                                <PlaceholderDash>{billing.company || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Attention:</span>
                               <span className={`font-medium ${billing.attention ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.attention || '-'}
+                                <PlaceholderDash>{billing.attention || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Address 1:</span>
                               <span className={`font-medium ${billing.address1 ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.address1 || '-'}
+                                <PlaceholderDash>{billing.address1 || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Address 2:</span>
                               <span className={`font-medium ${billing.address2 ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.address2 || '-'}
+                                <PlaceholderDash>{billing.address2 || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">City:</span>
                               <span className={`font-medium ${billing.city ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.city || '-'}
+                                <PlaceholderDash>{billing.city || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">State/Province:</span>
                               <span className={`font-medium ${billing.state_province ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.state_province || '-'}
+                                <PlaceholderDash>{billing.state_province || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Postal Code:</span>
                               <span className={`font-medium ${billing.postal_code ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.postal_code || '-'}
+                                <PlaceholderDash>{billing.postal_code || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Country:</span>
                               <span className={`font-medium ${billing.country ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.country || '-'}
+                                <PlaceholderDash>{billing.country || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Phone:</span>
                               <span className={`font-medium ${billing.phone ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.phone || '-'}
+                                <PlaceholderDash>{billing.phone || '-'}</PlaceholderDash>
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="font-medium text-font-color-100">Email:</span>
                               <span className={`font-medium ${billing.email ? 'text-font-color' : 'text-font-color-100'}`}>
-                                {billing.email || '-'}
+                                <PlaceholderDash>{billing.email || '-'}</PlaceholderDash>
                               </span>
                             </div>
                           </>
@@ -1122,14 +1130,14 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-font-color-100">Customer #:</span>
-                        <span className="font-medium text-font-color">{data.customer_number || '-'}</span>
+                        <span className="font-medium text-font-color"><PlaceholderDash>{data.customer_number || '-'}</PlaceholderDash></span>
                       </div>
                       
                       {/* Show additional fields based on expand state */}
                       {getGeneralFieldsWithValues().map(field => (
                         <div key={field.key} className="flex justify-between">
                           <span className="font-medium text-font-color-100">{field.label}:</span>
-                          <span className="font-medium text-font-color">{field.value || '-'}</span>
+                          <span className="font-medium text-font-color"><PlaceholderDash>{field.value || '-'}</PlaceholderDash></span>
                         </div>
                       ))}
                     </div>
@@ -1305,7 +1313,7 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
     <Card className="overflow-hidden">
       <CardHeader className="bg-primary-10 border-b border-border-color py-1.5 px-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold flex items-center gap-2 text-font-color">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2 text-font-color">
             <IconPackage className="w-5 h-5 text-primary" />
             ORDER LINES ({orderLines?.length || 0})
           </CardTitle>
@@ -1336,79 +1344,91 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
         <table className="w-full">
           <thead className="bg-body-color border-b border-border-color">
             <tr>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Line #</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Item Details</th>
-              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Qty</th>
-              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Shipped</th>
-              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Backlog</th>
-              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Price</th>
-              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Subtotal</th>
-              <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship By</th>
+              <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Line #</th>
+              <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Item Details</th>
+              <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Qty</th>
+              <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Shipped</th>
+              <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Backlog</th>
+              <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Price</th>
+              <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Subtotal</th>
+              <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Don't Ship Before</th>
+              <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Ship By</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
             {displayedLines?.map((item, index) => (
-              <tr key={item.id || index} className="hover:bg-primary-5/30 transition-colors">
-                <td className="px-2 py-2">
-                  <div className="text-sm font-semibold text-font-color">{item.line_number}</div>
-                  {item.custom_field3 && (
-                    <div className="text-xs text-font-color-100 mt-1">{item.custom_field3}</div>
-                  )}
-                </td>
-                <td className="px-2 py-2">
-                  <div className="text-sm font-semibold text-font-color">{item.item_number}</div>
-                  <div className="text-sm text-primary mt-1">{item.description}</div>
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {item.custom_field1 && (
-                      <Badge variant="default" outline className="text-xs">
-                        CF1: {item.custom_field1}
-                      </Badge>
-                    )}
-                    {item.custom_field2 && (
-                      <Badge variant="default" outline className="text-xs">
-                        CF2: {item.custom_field2}
-                      </Badge>
-                    )}
-                    {item.custom_field5 && (
-                      <Badge variant="default" outline className="text-xs">
-                        CF5: {item.custom_field5}
-                      </Badge>
+              <tr key={item.id || index} className="hover:bg-primary-5/20 transition-colors border-b border-border-color/30">
+                <td className="px-2 py-1.5">
+                  <div className="flex flex-col">
+                    <div className="text-sm font-bold text-font-color">{item.line_number}</div>
+                    {item.custom_field3 && (
+                      <div className="text-xs text-font-color-100 leading-tight">{item.custom_field3}</div>
                     )}
                   </div>
-                  {item.comments && (
-                    <div className="text-xs text-font-color-100 mt-1 italic">
-                      {item.comments}
-                    </div>
-                  )}
                 </td>
-                <td className="px-2 py-2 text-center">
-                  <div className="text-sm font-semibold text-font-color">
+                <td className="px-2 py-1.5">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-bold text-font-color">{item.item_number}</div>
+                      <div className="flex gap-1">
+                        {item.custom_field1 && (
+                          <Badge variant="default" outline className="text-xs px-1.5 py-0.5 h-5">
+                            CF1: {item.custom_field1}
+                          </Badge>
+                        )}
+                        {item.custom_field2 && (
+                          <Badge variant="default" outline className="text-xs px-1.5 py-0.5 h-5">
+                            CF2: {item.custom_field2}
+                          </Badge>
+                        )}
+                        {item.custom_field5 && (
+                          <Badge variant="default" outline className="text-xs px-1.5 py-0.5 h-5">
+                            CF5: {item.custom_field5}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-xs text-primary leading-tight overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>{item.description}</div>
+                    {item.comments && (
+                      <div className="text-xs text-font-color-100 italic leading-tight overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical'}}>
+                        💬 {item.comments}
+                      </div>
+                    )}
+                  </div>
+                </td>
+                <td className="px-2 py-1.5 text-center">
+                  <div className="text-sm font-bold text-font-color">
                     {Intl.NumberFormat().format(item.quantity || 0)}
                   </div>
                 </td>
-                <td className="px-2 py-2 text-center">
-                  <div className="text-sm font-semibold text-green-600">
+                <td className="px-2 py-1.5 text-center">
+                  <div className="text-sm font-bold text-green-600">
                     {Intl.NumberFormat().format(item.shipped || 0)}
                   </div>
                 </td>
-                <td className="px-2 py-2 text-center">
-                  <div className="text-sm text-orange-600">
+                <td className="px-2 py-1.5 text-center">
+                  <div className="text-sm font-bold text-orange-600">
                     {Intl.NumberFormat().format((item.quantity || 0) - (item.shipped || 0))}
                   </div>
                 </td>
-                <td className="px-2 py-2 text-right">
-                  <div className="text-sm font-semibold text-font-color">
+                <td className="px-2 py-1.5 text-right">
+                  <div className="text-sm font-bold text-font-color">
                     {Intl.NumberFormat().format(item.price || 0)}
                   </div>
                 </td>
-                <td className="px-2 py-2 text-right">
-                  <div className="text-sm font-semibold text-font-color">
+                <td className="px-2 py-1.5 text-right">
+                  <div className="text-sm font-bold text-font-color">
                     {Intl.NumberFormat().format((item.price || 0) * (item.quantity || 0))}
                   </div>
                 </td>
-                <td className="px-2 py-2 text-center">
-                  <div className="text-sm text-font-color">
-                    {item.ship_by ? new Date(item.ship_by).toLocaleDateString() : '-'}
+                <td className="px-2 py-1.5 text-center">
+                  <div className="text-xs text-font-color-100">
+                    <PlaceholderDash>{item.do_not_ship_before ? new Date(item.do_not_ship_before).toLocaleDateString() : '-'}</PlaceholderDash>
+                  </div>
+                </td>
+                <td className="px-2 py-1.5 text-center">
+                  <div className="text-xs text-font-color-100">
+                    <PlaceholderDash>{item.ship_by ? new Date(item.ship_by).toLocaleDateString() : '-'}</PlaceholderDash>
                   </div>
                 </td>
               </tr>
