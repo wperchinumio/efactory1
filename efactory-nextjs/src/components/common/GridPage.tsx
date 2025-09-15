@@ -340,8 +340,10 @@ export default function GridPage({
           }}
           variant="inline"
           onRefresh={refreshOrderData}
-          onPrevious={orderNavigation.hasNavigation() ? handleNavigatePrevious : undefined}
-          onNext={orderNavigation.hasNavigation() ? handleNavigateNext : undefined}
+          {...(orderNavigation.hasNavigation() ? {
+            onPrevious: handleNavigatePrevious,
+            onNext: handleNavigateNext
+          } : {})}
           hasPrevious={orderNavigation.canNavigatePrevious()}
           hasNext={orderNavigation.canNavigateNext()}
           currentIndex={orderNavigation.getCurrentIndex()}
@@ -443,8 +445,10 @@ export default function GridPage({
             }}
             variant="inline"
             onRefresh={refreshOrderData}
-            onPrevious={orderNavigation.hasNavigation() ? handleNavigatePrevious : undefined}
-            onNext={orderNavigation.hasNavigation() ? handleNavigateNext : undefined}
+            {...(orderNavigation.hasNavigation() ? {
+              onPrevious: handleNavigatePrevious,
+              onNext: handleNavigateNext
+            } : {})}
             hasPrevious={orderNavigation.canNavigatePrevious()}
             hasNext={orderNavigation.canNavigateNext()}
             currentIndex={orderNavigation.getCurrentIndex()}

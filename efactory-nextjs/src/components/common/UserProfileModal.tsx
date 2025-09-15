@@ -99,8 +99,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     
     // Group by account number
     const grouped = accountList.reduce((acc, item) => {
-      if (!acc[item.account]) acc[item.account] = [];
-      acc[item.account].push(item.region);
+      if (item.account && item.region) {
+        if (!acc[item.account]) acc[item.account] = [];
+        acc[item.account]!.push(item.region);
+      }
       return acc;
     }, {} as Record<string, string[]>);
     
@@ -189,7 +191,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     <IconKey className="w-3 h-3 text-primary" />
                     <span className="text-xs font-medium text-font-color-100">Policy Code</span>
                   </div>
-                  <Badge variant="outline" className="font-mono text-xs px-1.5 py-0.5">
+                  <Badge outline className="font-mono text-xs px-1.5 py-0.5">
                     {userData.policy_code}
                   </Badge>
                 </div>
@@ -199,7 +201,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     <IconKey className="w-3 h-3 text-primary" />
                     <span className="text-xs font-medium text-font-color-100">Account #</span>
                   </div>
-                  <Badge variant="outline" className="font-mono text-xs px-1.5 py-0.5">
+                  <Badge outline className="font-mono text-xs px-1.5 py-0.5">
                     {userData.policy_account}
                   </Badge>
                 </div>
@@ -209,7 +211,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     <IconMapPin className="w-3 h-3 text-primary" />
                     <span className="text-xs font-medium text-font-color-100">Region</span>
                   </div>
-                  <Badge variant="outline" className="font-mono text-xs px-1.5 py-0.5">
+                  <Badge outline className="font-mono text-xs px-1.5 py-0.5">
                     {userData.policy_region}
                   </Badge>
                 </div>
