@@ -111,13 +111,13 @@ export const topMenuConfig: TopMenuConfig[] = [
     appIds: [47, 48, 49, 50, 76, 74, 53, 51],
     sidebarConfig: 'orderpoints'
   },
-  {
-    keyword: 'edi',
-    title: 'EDI Central',
-    iconComponent: IconCloud,
-    appIds: [52, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
-    sidebarConfig: 'edi'
-  },
+  // {
+  //   keyword: 'edi',
+  //   title: 'EDI Central',
+  //   iconComponent: IconCloud,
+  //   appIds: [52, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
+  //   sidebarConfig: 'edi'
+  // },
   {
     keyword: 'analytics',
     title: 'Analytics',
