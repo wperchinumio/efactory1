@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import FilterDropdown from './FilterDropdown';
 import GridSingleSelectFilter from './GridSingleSelectFilter';
@@ -30,13 +30,16 @@ export default function GridFilters({
   onResetAll
 }: GridFiltersProps) {
   const [filterState, setFilterState] = useState<FilterState>(initialState || {});
+  const prevInitialStateRef = useRef<FilterState | undefined>(initialState);
 
   // Keep internal state in sync when parent provides/changes initial state
+  // Use deep comparison to avoid infinite loops
   React.useEffect(() => {
-    if (initialState) {
+    if (initialState && JSON.stringify(initialState) !== JSON.stringify(prevInitialStateRef.current)) {
       setFilterState(initialState);
+      prevInitialStateRef.current = initialState;
     }
-  }, [initialState && JSON.stringify(initialState)]);
+  }, [initialState]);
 
 
   const handleFilterChange = (field: string, value: string[] | FilterValue | DateRangeValue | boolean | string | null) => {

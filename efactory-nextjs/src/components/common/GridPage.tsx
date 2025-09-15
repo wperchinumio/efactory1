@@ -10,6 +10,7 @@ import type { FilterState } from '@/types/api/filters';
 import OrderOverview from '@/components/overview/OrderOverview';
 import MultipleOrdersGrid from '@/components/overview/MultipleOrdersGrid';
 import type { OrderDetailResult } from '@/types/api/orders';
+import { useOrderNavigation, type OrderNavigationItem } from '@/contexts/OrderNavigationContext';
 
 export interface GridPageProps {
   resource: string; // e.g., 'fulfillment-open'
@@ -102,6 +103,8 @@ export default function GridPage({
   const loadedResourceRef = React.useRef<string | null>(null);
   const gridControlsRef = React.useRef<{ refresh: () => void; resetAll: () => void } | null>(null);
   const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
+  const [currentRows, setCurrentRows] = useState<any[]>([]);
+  const orderNavigation = useOrderNavigation();
 
   useEffect(() => {
     // Always attempt load once per mount; allow rerun if resource changes
@@ -168,7 +171,7 @@ export default function GridPage({
     async (page: number, pageSize: number, filter: GridFilter, sort: any, filter_id?: any): Promise<GridRowResponse<any>> => {
       if (!viewsUrl || !selectedView) return { resource, total: 0, rows: [] };
       try {
-        return await readGridRows<any>(viewsUrl, {
+        const result = await readGridRows<any>(viewsUrl, {
           action: 'read',
           fields: ['*'],
           filter,
@@ -178,6 +181,9 @@ export default function GridPage({
           sort,
           filter_id: filter_id ?? '',
         });
+        // Store current rows for navigation
+        setCurrentRows(result.rows || []);
+        return result;
       } catch (err) {
         console.error('Failed to fetch rows:', err);
         return { resource, total: 0, rows: [] };
@@ -209,6 +215,72 @@ export default function GridPage({
     // Fallback: remount grid (may reset header filters)
     setRefreshKey(prev => prev + 1);
   }, []);
+
+  // Handle row clicks to set up navigation and navigate to order
+  const handleRowClick = useCallback((row: any) => {
+    if (onRowClicked) {
+      onRowClicked(row);
+      return;
+    }
+
+    // Check if this row has order information for navigation
+    const orderNumber = row.order_number || row.orderNumber || row.order_num;
+    const accountNumber = row.account_number || row.accountNumber || row.account_num;
+    
+    if (orderNumber && currentRows.length > 0) {
+      // Convert current rows to navigation items
+      const navigationItems: OrderNavigationItem[] = currentRows
+        .filter(r => r.order_number || r.orderNumber || r.order_num) // Only include rows with order numbers
+        .map(r => ({
+          order_number: r.order_number || r.orderNumber || r.order_num,
+          account_number: r.account_number || r.accountNumber || r.account_num,
+          ...r // Include all row data
+        }));
+
+      // Set up navigation context only if we have valid navigation items
+      if (navigationItems.length > 0) {
+        orderNavigation.setOrderList(navigationItems, orderNumber, pageKey);
+      }
+
+      // Navigate to order detail
+      const q = new URLSearchParams();
+      q.set('orderNum', orderNumber);
+      if (accountNumber) {
+        q.set('accountNum', accountNumber);
+      }
+      const base = router.pathname;
+      router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
+    }
+  }, [onRowClicked, currentRows, orderNavigation, pageKey, router]);
+
+  // Simple navigation handlers
+  const handleNavigatePrevious = useCallback(() => {
+    const previousOrder = orderNavigation.getPreviousOrder();
+    if (previousOrder) {
+      orderNavigation.navigateToPrevious();
+      const q = new URLSearchParams();
+      q.set('orderNum', previousOrder.order_number);
+      if (previousOrder.account_number) {
+        q.set('accountNum', previousOrder.account_number);
+      }
+      const base = router.pathname;
+      router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
+    }
+  }, [orderNavigation, router]);
+
+  const handleNavigateNext = useCallback(() => {
+    const nextOrder = orderNavigation.getNextOrder();
+    if (nextOrder) {
+      orderNavigation.navigateToNext();
+      const q = new URLSearchParams();
+      q.set('orderNum', nextOrder.order_number);
+      if (nextOrder.account_number) {
+        q.set('accountNum', nextOrder.account_number);
+      }
+      const base = router.pathname;
+      router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
+    }
+  }, [orderNavigation, router]);
 
   // Create fallback view for immediate grid rendering
   const fallbackView: GridSelectedView = {
@@ -258,6 +330,7 @@ export default function GridPage({
         <OrderOverview
           data={(orderOverlay as any).order}
           onClose={() => {
+            orderNavigation.clearNavigation();
             const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
             if (q.has('orderNum')) q.delete('orderNum');
             if (q.has('accountNum')) q.delete('accountNum');
@@ -267,6 +340,12 @@ export default function GridPage({
           }}
           variant="inline"
           onRefresh={refreshOrderData}
+          onPrevious={orderNavigation.hasNavigation() ? handleNavigatePrevious : undefined}
+          onNext={orderNavigation.hasNavigation() ? handleNavigateNext : undefined}
+          hasPrevious={orderNavigation.canNavigatePrevious()}
+          hasNext={orderNavigation.canNavigateNext()}
+          currentIndex={orderNavigation.getCurrentIndex()}
+          totalItems={orderNavigation.getTotalCount()}
         />
       </div>
     );
@@ -340,7 +419,7 @@ export default function GridPage({
         selectedView={currentView as any}
         paginationWord={paginationWord}
         onFetchRows={onFetchRows}
-        onRowClicked={onRowClicked as any}
+        onRowClicked={handleRowClick}
         showIndexColumn={showIndexColumn}
         showOrderTypeColumn={showOrderTypeColumn}
         filters={filters}
@@ -354,6 +433,7 @@ export default function GridPage({
           <OrderOverview
             data={orderOverlay.order}
             onClose={() => {
+              orderNavigation.clearNavigation();
               const q = new URLSearchParams(router.asPath.split('?')[1] || '');
               if (q.has('orderNum')) q.delete('orderNum');
               if (q.has('accountNum')) q.delete('accountNum');
@@ -363,6 +443,12 @@ export default function GridPage({
             }}
             variant="inline"
             onRefresh={refreshOrderData}
+            onPrevious={orderNavigation.hasNavigation() ? handleNavigatePrevious : undefined}
+            onNext={orderNavigation.hasNavigation() ? handleNavigateNext : undefined}
+            hasPrevious={orderNavigation.canNavigatePrevious()}
+            hasNext={orderNavigation.canNavigateNext()}
+            currentIndex={orderNavigation.getCurrentIndex()}
+            totalItems={orderNavigation.getTotalCount()}
           />
         </div>
       )}

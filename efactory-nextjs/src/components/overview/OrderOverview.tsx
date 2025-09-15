@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { 
   IconChevronLeft, 
@@ -47,6 +47,7 @@ import {
   resendShipConfirmation,
   readRmaFromOrder
 } from '@/services/api'
+import { useOrderNavigation } from '@/contexts/OrderNavigationContext'
 
 // Import components
 import ShipmentsSection from './ShipmentsSection'
@@ -74,6 +75,7 @@ type OrderTopBarProps = {
   currentIndex?: number | undefined
   totalItems?: number | undefined
   onRefresh?: (() => void) | undefined
+  isNavigating?: boolean | undefined
 }
 
 const ORDER_STAGES = [
@@ -87,7 +89,7 @@ const ORDER_STAGES = [
   { stage: 80, label: 'Completed', color: 'bg-gray-500' }
 ]
 
-function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems, onRefresh }: OrderTopBarProps) {
+function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems, onRefresh, isNavigating }: OrderTopBarProps) {
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [showPutOnHoldModal, setShowPutOnHoldModal] = useState(false)
   const [showPutOffHoldModal, setShowPutOffHoldModal] = useState(false)
@@ -262,35 +264,8 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
         <div className="px-6 py-2">
           {/* Single Row Header - Everything in one line */}
           <div className="flex items-center justify-between">
-            {/* Left Side - Navigation + Order Info */}
+            {/* Left Side - Close Button + Order Info */}
             <div className="flex items-center gap-4 flex-1">
-              {(hasPrevious || hasNext) && (
-                <div className="flex items-center gap-1">
-                  <Button
-                    onClick={() => hasPrevious && onPrevious?.()}
-                    variant="outline"
-                    size="small"
-                    icon={<IconChevronLeft />}
-                    disabled={!hasPrevious}
-                    className="h-6 w-6 p-0"
-                  />
-                  <Button
-                    onClick={() => hasNext && onNext?.()}
-                    variant="outline"
-                    size="small"
-                    icon={<IconChevronRight />}
-                    disabled={!hasNext}
-                    className="h-6 w-6 p-0"
-                  />
-                </div>
-              )}
-              
-              {currentIndex && totalItems && (
-                <div className="text-xs text-font-color-100 font-medium">
-                  {currentIndex} of {totalItems}
-                </div>
-              )}
-
               {/* Close Button - moved to left side */}
               <div className="flex items-center">
                 <Button
@@ -342,8 +317,43 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
               </div>
             </div>
 
-            {/* Right Side - Actions + Close */}
+            {/* Right Side - Navigation + Actions */}
             <div className="flex items-center">
+              {/* Navigation arrows and counter */}
+              {(hasPrevious || hasNext) && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        onClick={onPrevious}
+                        variant="outline"
+                        size="small"
+                        icon={<IconChevronLeft />}
+                        disabled={!hasPrevious || isNavigating}
+                        className="h-7 w-8 p-0"
+                      />
+                      <Button
+                        onClick={onNext}
+                        variant="outline"
+                        size="small"
+                        icon={<IconChevronRight />}
+                        disabled={!hasNext || isNavigating}
+                        className="h-7 w-8 p-0"
+                      />
+                    </div>
+                    
+                    {currentIndex && totalItems && (
+                      <div className="text-xs text-font-color-100 font-medium">
+                        {currentIndex} of {totalItems}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Vertical separator */}
+                  <div className="h-4 w-px bg-border-color mx-3"></div>
+                </>
+              )}
+              
               <div className="flex items-center gap-1">
                 <div className="relative">
                   <Button
@@ -713,8 +723,41 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
   const router = useRouter()
   const billing = data.billing_address || ({} as any)
   const shipping = data.shipping_address || ({} as any)
-
   
+  // Loading state for navigation - tied to actual API calls
+  const [isNavigating, setIsNavigating] = useState(false)
+  
+  // Track when navigation starts and stops based on data changes
+  const currentOrderNumber = data.order_number
+  const prevOrderNumberRef = useRef(currentOrderNumber)
+  
+  useEffect(() => {
+    // If order number changed, we're done navigating
+    if (prevOrderNumberRef.current !== currentOrderNumber) {
+      setIsNavigating(false)
+      prevOrderNumberRef.current = currentOrderNumber
+    }
+  }, [currentOrderNumber])
+  
+  // Enhanced navigation handlers - start loading immediately
+  const handlePrevious = () => {
+    if (onPrevious && hasPrevious) {
+      setIsNavigating(true) // Start blur immediately
+      onPrevious() // This triggers API call
+      // Fallback: clear loading after max 3 seconds if API doesn't respond
+      setTimeout(() => setIsNavigating(false), 3000)
+    }
+  }
+  
+  const handleNext = () => {
+    if (onNext && hasNext) {
+      setIsNavigating(true) // Start blur immediately  
+      onNext() // This triggers API call
+      // Fallback: clear loading after max 3 seconds if API doesn't respond
+      setTimeout(() => setIsNavigating(false), 3000)
+    }
+  }
+
   // Dialog states for expandable text areas
   const [shippingInstructionsDialog, setShippingInstructionsDialog] = useState(false)
   const [commentsDialog, setCommentsDialog] = useState(false)
@@ -811,16 +854,28 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
         <OrderTopBar 
           data={data} 
           onClose={onClose}
-          onPrevious={onPrevious}
-          onNext={onNext}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
           hasPrevious={hasPrevious}
           hasNext={hasNext}
           currentIndex={currentIndex}
           totalItems={totalItems}
           onRefresh={onRefresh}
+          isNavigating={isNavigating}
         />
         
-        <div className="flex-1 overflow-y-auto">
+        <div className={`flex-1 overflow-y-auto transition-all duration-200 relative ${isNavigating ? 'blur-sm opacity-60 pointer-events-none' : ''}`}>
+          {/* Loading overlay during navigation */}
+          {isNavigating && (
+            <div className="absolute inset-0 bg-background/20 z-10 flex items-center justify-center">
+              <div className="bg-background border border-border-color rounded-lg p-4 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-sm text-font-color-100">Loading order...</span>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="p-3 space-y-2">
             {/* Main Layout: 2 MAIN COLUMNS */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">
