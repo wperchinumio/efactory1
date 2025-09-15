@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { CalendarIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { DateRangeFilterConfig } from '@/types/api/filters';
+import { setActiveMenu, clearActiveMenu, closeActiveMenu } from './openMenuRegistry';
 
 interface FilterDateRangeProps {
   config: DateRangeFilterConfig;
@@ -18,6 +19,39 @@ export default function FilterDateRange({
   const [isOpen, setIsOpen] = useState(false);
   const [tempStart, setTempStart] = useState(value?.start || '');
   const [tempEnd, setTempEnd] = useState(value?.end || '');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close on outside click (use 'mousedown' to match other filters)
+  // Note: Outside click handling is now managed by openMenuRegistry
+
+  const handleClose = useCallback(() => setIsOpen(false), []);
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      // Close any other open menu first
+      closeActiveMenu();
+      setIsOpen(true);
+      setActiveMenu(handleClose, containerRef.current || undefined);
+    } else {
+      setIsOpen(false);
+      clearActiveMenu(handleClose);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleToggle();
+  };
+
+  // Keep registry in sync when closed externally
+  useEffect(() => {
+    if (!isOpen) {
+      clearActiveMenu(handleClose);
+    } else {
+      setActiveMenu(handleClose);
+    }
+  }, [isOpen, handleClose]);
 
   const handleApply = () => {
     if (tempStart && tempEnd) {
@@ -55,10 +89,11 @@ export default function FilterDateRange({
     : 'Any';
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative ${className}`} ref={containerRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        data-filter-button
+        onMouseDownCapture={handleMouseDown}
         className={`
           w-full flex items-center justify-between px-2 py-1.5 text-xs font-normal
           bg-card-color border border-border-color
@@ -91,15 +126,10 @@ export default function FilterDateRange({
 
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-10" 
-            onClick={() => setIsOpen(false)}
-          />
-          
           {/* Date Range Picker */}
-          <div className="absolute z-20 mt-1 w-80 bg-card-color border border-border-color rounded-md shadow-lg p-4">
-            <div className="space-y-4">
+          <div className="absolute z-20 mt-1 w-80 pointer-events-none">
+            <div className="bg-card-color border border-border-color rounded-md shadow-lg p-4 pointer-events-auto">
+              <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-font-color mb-1">
                   Start Date
@@ -127,7 +157,7 @@ export default function FilterDateRange({
               <div className="flex justify-end space-x-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => { setIsOpen(false); clearActiveMenu(handleClose); }}
                   className="px-3 py-1.5 text-xs font-medium text-font-color bg-primary-10 hover:bg-primary-20 rounded-md transition-colors"
                 >
                   Cancel
@@ -139,6 +169,7 @@ export default function FilterDateRange({
                 >
                   Apply
                 </button>
+              </div>
               </div>
             </div>
           </div>

@@ -311,7 +311,10 @@ export default function GridFilters({
         <div className="flex items-center justify-between">
           <div className={`flex flex-wrap items-center gap-2 ${disabled ? 'pointer-events-none opacity-60' : ''}`}>
             {Object.entries(filters).map(([key, config]) => (
-              <div key={key} className="flex-shrink-0 flex flex-col items-start">
+              <div 
+                key={key} 
+                className="flex-shrink-0 flex flex-col items-start"
+              >
                 {/* Filter Label */}
                 <div className="text-[10px] font-medium text-font-color-100 mb-1 pl-1">
                   {config.title}

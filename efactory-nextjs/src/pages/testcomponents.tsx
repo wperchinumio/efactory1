@@ -31,7 +31,7 @@ const TestComponents = () => {
   const [multiSelectValue, setMultiSelectValue] = useState<string[]>([]);
   const [parityCompare, setParityCompare] = useState(false);
   const [showShadcn, setShowShadcn] = useState(true);
-  const [activeTab, setActiveTab] = useState<'ours' | 'shadcn'>('ours');
+  const [activeTab, setActiveTab] = useState<'ours' | 'shadcn' | 'filters'>('ours');
   const [scComboOpen, setScComboOpen] = useState(false);
   const [scComboValue, setScComboValue] = useState<string>('');
   const scOptions = [
@@ -43,6 +43,7 @@ const TestComponents = () => {
   const currentYear = new Date().getFullYear();
   const [scCalMonth, setScCalMonth] = useState<Date>(new Date());
   const scMonths = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
 
   // Sample data
   const comboOptions = [
@@ -772,6 +773,7 @@ const TestComponents = () => {
           />
         </ComponentSection>
         </div>
+
       </div>
     </div>
   );

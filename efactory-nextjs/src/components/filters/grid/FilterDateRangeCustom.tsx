@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { IconChevronDown, IconCheck, IconCalendar, IconX } from '@tabler/icons-react';
 import DatePicker from '@/components/ui/DatePicker';
 import type { DateRangeFilterConfig } from '@/types/api/filters';
+import { setActiveMenu, clearActiveMenu } from './openMenuRegistry';
 
 interface FilterDateRangeCustomProps {
   config: DateRangeFilterConfig;
@@ -44,19 +45,17 @@ const FilterDateRangeCustom = ({
     ? [{ value: '', label: 'Clear' }, ...baseDateOptions]
     : baseDateOptions;
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        if (!showCustomPanel) {
-          setIsOpen(false);
-        }
-      }
-    };
+  // Note: Outside click handling is now managed by openMenuRegistry
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showCustomPanel]);
+  // Create stable closer function
+  const menuCloser = useCallback(() => setIsOpen(false), []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      clearActiveMenu(menuCloser);
+    };
+  }, [menuCloser]);
 
   const handleSelect = (optionValue: string) => {
     if (optionValue === 'CUSTOM') {
@@ -76,6 +75,9 @@ const FilterDateRangeCustom = ({
       onChange({ start: optionValue, end: optionValue });
       setIsOpen(false);
     }
+    
+    // Clear from registry when closing
+    clearActiveMenu(menuCloser);
   };
 
   const convertPredefinedToDateRange = (optionValue: string): { start: string; end: string } | null => {
@@ -170,7 +172,22 @@ const FilterDateRangeCustom = ({
   };
 
   const handleToggle = () => {
-    setIsOpen(!isOpen);
+    const newIsOpen = !isOpen;
+    setIsOpen(newIsOpen);
+    
+    if (newIsOpen) {
+      // Register this menu as active with stable closer
+      setActiveMenu(menuCloser, containerRef.current);
+    } else {
+      // Clear this menu from registry
+      clearActiveMenu(menuCloser);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleToggle();
   };
 
   const getDisplayText = () => {
@@ -243,7 +260,8 @@ const FilterDateRangeCustom = ({
             maxWidth: value ? 'none' : '180px',
             paddingRight: value ? '2rem' : undefined
           }}
-          onClick={handleToggle}
+          onMouseDownCapture={handleMouseDown}
+          data-filter-button
         >
           <div className="flex items-center space-x-2 flex-1">
             {config.iconClassName && (
@@ -260,18 +278,11 @@ const FilterDateRangeCustom = ({
 
         {/* Dropdown Content */}
         {isOpen && (
-          <>
-            {/* Backdrop */}
-            <div 
-              className="fixed inset-0 z-10" 
-              onClick={() => setIsOpen(false)}
-            />
-            
-            {/* Dropdown Content */}
-            <div 
-              className="absolute z-20 mt-2 w-full bg-card-color border border-border-color rounded-xl shadow-xl overflow-hidden min-w-[200px]"
-              style={{ width: Math.max(containerRef.current?.getBoundingClientRect().width || 0, 200) }}
-            >
+          <div 
+            className="absolute z-20 mt-2 w-full bg-card-color border border-border-color rounded-xl shadow-xl overflow-hidden min-w-[200px]"
+            style={{ width: Math.max(containerRef.current?.getBoundingClientRect().width || 0, 200) }}
+            data-filter-dropdown
+          >
             {/* Options List */}
             <div className="max-h-[300px] overflow-y-auto px-2 pb-2">
               {dateOptions.map((option) => (
@@ -297,8 +308,7 @@ const FilterDateRangeCustom = ({
                 </button>
               ))}
             </div>
-            </div>
-          </>
+          </div>
         )}
       </div>
 

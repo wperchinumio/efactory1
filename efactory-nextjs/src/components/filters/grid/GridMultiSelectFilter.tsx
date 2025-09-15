@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronDownIcon, XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
 import type { DropdownFilterConfig, FilterOption } from '@/types/api/filters';
 import { getAuthToken } from '@/lib/auth/storage';
+import { setActiveMenu, clearActiveMenu, closeActiveMenu } from './openMenuRegistry';
 import { useGlobalFilterData } from '@/hooks/useGlobalFilterData';
 
 interface GridMultiSelectFilterProps {
@@ -121,17 +122,7 @@ export default function GridMultiSelectFilter({
   // Use all options since search is removed
   const filteredOptions = options;
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Note: Outside click handling is now managed by openMenuRegistry
 
 
   const handleToggleOption = (optionValue: string) => {
@@ -152,13 +143,38 @@ export default function GridMultiSelectFilter({
     setTempSelectedValues([]);
   };
 
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+  }, []);
+
   const handleToggle = () => {
     if (!isOpen) {
+      // Close any other open menu first
+      closeActiveMenu();
       // Reset temporary values to match current applied values when opening
       setTempSelectedValues(selectedValues);
+      setIsOpen(true);
+      setActiveMenu(handleClose, containerRef.current || undefined);
+    } else {
+      setIsOpen(false);
+      clearActiveMenu(handleClose);
     }
-    setIsOpen(!isOpen);
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleToggle();
+  };
+
+  // Keep registry in sync when closed externally
+  useEffect(() => {
+    if (!isOpen) {
+      clearActiveMenu(handleClose);
+    } else {
+      setActiveMenu(handleClose);
+    }
+  }, [isOpen, handleClose]);
 
   const getDisplayText = () => {
     if (selectedValues.length === 0) return 'All';
@@ -176,7 +192,8 @@ export default function GridMultiSelectFilter({
       {/* Filter Button */}
       <button
         type="button"
-        onClick={handleToggle}
+        data-filter-button
+        onMouseDownCapture={handleMouseDown}
         className={`
           w-full px-3 py-2 text-left text-xs font-medium
           bg-card-color border border-border-color
@@ -206,12 +223,6 @@ export default function GridMultiSelectFilter({
       {/* Dropdown Panel */}
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-10" 
-            onClick={() => setIsOpen(false)}
-          />
-          
           {/* Dropdown Content */}
           <div 
             className="absolute z-20 mt-2 w-full bg-card-color border border-border-color rounded-xl shadow-xl overflow-hidden min-w-[200px]"
@@ -219,8 +230,9 @@ export default function GridMultiSelectFilter({
               width: Math.max(
                 containerRef.current?.getBoundingClientRect().width || 0, 
                 config.field === 'order_type' || config.field === 'channel' ? 280 : 200
-              ) 
+              )
             }}
+            data-filter-dropdown
           >
 
 

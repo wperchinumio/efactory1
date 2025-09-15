@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { setActiveMenu, clearActiveMenu, closeActiveMenu } from './openMenuRegistry';
 import { CalendarIcon, XMarkIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import type { DateRangeFilterConfig } from '@/types/api/filters';
 
@@ -97,6 +98,34 @@ export default function FilterDateRangeAdvanced({
   const [customEnd, setCustomEnd] = useState('');
   const [showCustomRange, setShowCustomRange] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const handleClose = useCallback(() => setIsOpen(false), []);
+
+  const handleToggle = () => {
+    if (!isOpen) {
+      // Close any other open menu first
+      closeActiveMenu();
+      setIsOpen(true);
+      setActiveMenu(handleClose, containerRef.current || undefined);
+    } else {
+      setIsOpen(false);
+      clearActiveMenu(handleClose);
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleToggle();
+  };
+
+  // Keep registry in sync when closed externally
+  useEffect(() => {
+    if (!isOpen) {
+      clearActiveMenu(handleClose);
+    } else {
+      setActiveMenu(handleClose);
+    }
+  }, [isOpen, handleClose]);
 
   // Initialize selected range from value
   useEffect(() => {
@@ -126,19 +155,8 @@ export default function FilterDateRangeAdvanced({
     }
   }, [value]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  // Close dropdown when clicking outside (use 'mousedown' to match other filters)
+  // Note: Outside click handling is now managed by openMenuRegistry
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '';
@@ -183,6 +201,7 @@ export default function FilterDateRangeAdvanced({
     setShowCustomRange(false);
     onChange(null);
     setIsOpen(false);
+    clearActiveMenu(handleClose);
   };
 
   const handleCustomRangeToggle = () => {
@@ -203,7 +222,8 @@ export default function FilterDateRangeAdvanced({
     <div className={`relative ${className}`} ref={containerRef}>
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        data-filter-button
+        onMouseDownCapture={handleMouseDown}
         className={`
           w-full flex items-center justify-between px-3 py-2 text-sm font-normal
           bg-card-color border border-border-color
@@ -239,7 +259,8 @@ export default function FilterDateRangeAdvanced({
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 w-96 bg-card-color border border-border-color rounded-md shadow-lg">
+        <div className="absolute z-50 mt-1 w-96 pointer-events-none">
+          <div className="bg-card-color border border-border-color rounded-md shadow-lg pointer-events-auto">
           <div className="flex">
             {/* Left Panel - Predefined Ranges */}
             <div className="w-1/2 p-4 border-r border-gray-200 dark:border-gray-600">
@@ -324,7 +345,7 @@ export default function FilterDateRangeAdvanced({
           <div className="flex justify-end space-x-2 p-4 border-t border-gray-200 dark:border-gray-600">
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={() => { setIsOpen(false); clearActiveMenu(handleClose); }}
               className="px-4 py-2 text-sm font-medium text-font-color bg-primary-10 hover:bg-primary-20 rounded-md transition-colors"
             >
               Cancel
@@ -336,6 +357,7 @@ export default function FilterDateRangeAdvanced({
             >
               Apply
             </button>
+          </div>
           </div>
         </div>
       )}
