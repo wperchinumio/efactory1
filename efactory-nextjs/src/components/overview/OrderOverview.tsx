@@ -353,7 +353,8 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                     onClick={() => setShowActionsMenu(!showActionsMenu)}
                     className="px-3 py-1.5 text-sm"
                   >
-                    Actions
+                    <span>Actions</span>
+                    <IconChevronDown className={`ml-2 w-3 h-3 transition-transform ${showActionsMenu ? 'rotate-180' : ''}`} />
                   </Button>
                   
                   {showActionsMenu && (

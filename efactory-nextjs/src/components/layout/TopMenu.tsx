@@ -268,7 +268,7 @@ const TopMenu: React.FC = () => {
       }
       
       if (firstSubRoute) {
-        router.push(firstSubRoute);
+        router.push(firstSubRoute === '/orderpoints' ? '/orderpoints?reset=1' : firstSubRoute);
       }
     }
   };
@@ -315,7 +315,7 @@ const TopMenu: React.FC = () => {
       }
       
       if (firstSubRoute) {
-        router.push(firstSubRoute);
+        router.push(firstSubRoute === '/orderpoints' ? '/orderpoints?reset=1' : firstSubRoute);
       }
     }
   };
@@ -343,7 +343,7 @@ const TopMenu: React.FC = () => {
           <div key={menu.keyword} className="relative">
             {firstRoute ? (
               <Link
-                href={firstRoute}
+                href={firstRoute === '/orderpoints' ? '/orderpoints?reset=1' : firstRoute}
                 onClick={() => {
                   setActiveTopMenu(menu.keyword);
                   setShowOverflowMenu(false);
@@ -446,7 +446,7 @@ const TopMenu: React.FC = () => {
                 <li key={menu.keyword}>
                   {firstRoute ? (
                     <Link
-                      href={firstRoute}
+                      href={firstRoute === '/orderpoints' ? '/orderpoints?reset=1' : firstRoute}
                       onClick={() => {
                         setActiveTopMenu(menu.keyword);
                         setShowOverflowMenu(false);

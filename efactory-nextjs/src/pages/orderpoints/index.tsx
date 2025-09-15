@@ -759,7 +759,7 @@ export default function OrderPointsPage() {
   }, [hasUnsavedChanges])
   
   // Reset form function - defined before useEffect that uses it
-  const resetForm = useCallback(() => {
+  const resetForm = useCallback((options?: { silent?: boolean }) => {
     setOrderHeader({ order_status: 1, ordered_date: new Date().toLocaleDateString() })
     setOrderDetail([])
     setShippingAddress({ country: 'US' })
@@ -791,13 +791,28 @@ export default function OrderPointsPage() {
     setJustUpdatedOrder(false) // Reset the "just updated" flag when resetting form
     setIsInitialLoad(false) // Reset the "initial load" flag when resetting form
     
-    // Show success toaster
-    toast({
-      title: "New Order Started",
-      description: "Form has been reset for a new order.",
-      variant: "default",
-    })
+    // Show success toaster unless silenced
+    if (!options?.silent) {
+      toast({
+        title: "New Order Started",
+        description: "Form has been reset for a new order.",
+        variant: "default",
+      })
+    }
   }, [])
+  
+  // Handle top-menu triggered reset when not dirty
+  useEffect(() => {
+    const resetParam = (router.query?.reset as string | undefined) || undefined
+    if (!resetParam) return
+    // Only reset when there are no unsaved changes
+    if (!hasUnsavedChanges) {
+      resetForm({ silent: true })
+      // Remove the query param to avoid repeated resets
+      const { reset, ...rest } = router.query as Record<string, any>
+      router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
+    }
+  }, [router.query?.reset, hasUnsavedChanges, resetForm])
   
   // Handle Next.js router navigation to warn about unsaved changes
   useEffect(() => {
