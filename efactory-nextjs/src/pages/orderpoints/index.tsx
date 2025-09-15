@@ -2862,7 +2862,7 @@ export default function OrderPointsPage() {
                     <p className="text-xs text-gray-400 mt-1">Add items using the search box above or browse items</p>
                   </div>
                 ) : (
-                  <table className="w-full text-sm">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-border-color bg-body-color">
                         <th className="text-left p-2 w-8">
@@ -2944,11 +2944,9 @@ export default function OrderPointsPage() {
                               </div>
                             </td>
                             <td className="p-2 text-font-color">
-                              {isBundleComponent && <span className="text-gray-400 mr-2">└─</span>}
                               <span className="font-medium">{item.item_number}</span>
                             </td>
                             <td className="p-2 text-primary">
-                              {isBundleComponent && <span className="text-gray-400 mr-2">└─</span>}
                               {item.description}
                             </td>
                             <td className="p-2 text-center text-font-color">{item.quantity}</td>

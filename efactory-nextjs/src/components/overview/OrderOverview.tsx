@@ -291,7 +291,17 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                 </div>
               )}
 
-              <div className="h-4 w-px bg-border-color"></div>
+              {/* Close Button - moved to left side */}
+              <div className="flex items-center">
+                <Button
+                  onClick={onClose}
+                  variant="outline"
+                  size="small"
+                  icon={<IconX className="w-5 h-5" />}
+                  className="h-8 w-8 p-0 text-[var(--danger)] hover:text-[var(--danger)] hover:bg-[var(--danger-50)] border-2 border-[var(--danger)] hover:border-[var(--danger)]"
+                />
+                <div className="h-4 w-px bg-border-color ml-3"></div>
+              </div>
 
               <div className="flex items-center gap-3">
                 <h1 className="text-lg font-bold text-font-color">Order #{data.order_number}</h1>
@@ -485,17 +495,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                 />
               </div>
 
-              {/* Separator and Close Button */}
-              <div className="flex items-center ml-4">
-                <div className="h-4 w-px bg-border-color mr-3"></div>
-                <Button
-                  onClick={onClose}
-                  variant="outline"
-                  size="small"
-                  icon={<IconX className="w-5 h-5" />}
-                  className="h-7 w-7 p-0 text-font-color-100 hover:text-font-color hover:bg-primary-5"
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -551,20 +550,41 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
 
       <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Request Cancellation</DialogTitle>
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl font-semibold text-font-color">Request Cancellation</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center gap-2 text-red-600">
-              <IconAlertCircle className="w-5 h-5" />
-              <p>Are you sure you want to cancel this order?</p>
+          <div className="space-y-6">
+            <div className="bg-[var(--danger-50)] border border-[var(--danger)] rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-[var(--danger)] rounded-full flex items-center justify-center">
+                    <IconAlertCircle className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-[var(--danger)] mb-1">Warning</h3>
+                  <p className="text-sm text-font-color leading-relaxed">
+                    Are you sure you want to cancel this order? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-body-color rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-font-color-100">Order #:</span>
+                <span className="text-sm font-semibold text-font-color">{data.order_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-font-color-100">Account:</span>
+                <span className="text-sm font-semibold text-font-color">{data.account_number}</span>
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCancelModal(false)}>
+          <DialogFooter className="pt-6 flex gap-3">
+            <Button variant="outline" onClick={() => setShowCancelModal(false)} className="flex-1">
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleCancelOrder}>
+            <Button variant="danger" onClick={handleCancelOrder} className="flex-1">
               Request Cancellation
             </Button>
           </DialogFooter>
@@ -572,19 +592,27 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
       </Dialog>
 
       <Dialog open={showTransferModal} onOpenChange={setShowTransferModal}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Warehouse Transfer</DialogTitle>
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl font-semibold text-font-color">Warehouse Transfer</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <p><strong>Transfer Order #:</strong> {data.order_number}</p>
-              <p><strong>From Warehouse:</strong> {data.location}</p>
+          <div className="space-y-6">
+            <div className="bg-body-color rounded-lg p-4 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-font-color-100">Transfer Order #:</span>
+                <span className="text-sm font-semibold text-font-color">{data.order_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-font-color-100">From Warehouse:</span>
+                <span className="text-sm font-semibold text-font-color">{data.location}</span>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="destinationWarehouse">To Warehouse:</Label>
+            <div className="space-y-2">
+              <Label htmlFor="destinationWarehouse" className="text-sm font-medium text-font-color">
+                To Warehouse:
+              </Label>
               <Select value={destinationWarehouse} onValueChange={setDestinationWarehouse}>
-                <SelectTrigger>
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="Select destination warehouse" />
                 </SelectTrigger>
                 <SelectContent>
@@ -597,14 +625,15 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTransferModal(false)}>
+          <DialogFooter className="pt-6 flex gap-3">
+            <Button variant="outline" onClick={() => setShowTransferModal(false)} className="flex-1">
               Cancel
             </Button>
             <Button 
               variant="primary" 
               onClick={handleTransferOrder}
               disabled={!destinationWarehouse}
+              className="flex-1"
             >
               Transfer
             </Button>
@@ -614,34 +643,54 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
 
       <Dialog open={showResendModal} onOpenChange={setShowResendModal}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Re-send Ship Confirmation</DialogTitle>
+          <DialogHeader className="pb-4">
+            <DialogTitle className="text-xl font-semibold text-font-color">Re-send Ship Confirmation</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="shipToEmail">Ship to e-mail:</Label>
-              <Input
-                id="shipToEmail"
-                type="email"
-                value={shipToEmail}
-                onChange={(e) => setShipToEmail(e.target.value)}
-              />
+          <div className="space-y-6">
+            <div className="bg-body-color rounded-lg p-4">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-medium text-font-color-100">Order #:</span>
+                <span className="text-sm font-semibold text-font-color">{data.order_number}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-font-color-100">Account:</span>
+                <span className="text-sm font-semibold text-font-color">{data.account_number}</span>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="billToEmail">Bill to e-mail:</Label>
-              <Input
-                id="billToEmail"
-                type="email"
-                value={billToEmail}
-                onChange={(e) => setBillToEmail(e.target.value)}
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="shipToEmail" className="text-sm font-medium text-font-color">
+                  Ship to e-mail:
+                </Label>
+                <Input
+                  id="shipToEmail"
+                  type="email"
+                  value={shipToEmail}
+                  onChange={(e) => setShipToEmail(e.target.value)}
+                  className="h-10"
+                  placeholder="Enter ship-to email address"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="billToEmail" className="text-sm font-medium text-font-color">
+                  Bill to e-mail:
+                </Label>
+                <Input
+                  id="billToEmail"
+                  type="email"
+                  value={billToEmail}
+                  onChange={(e) => setBillToEmail(e.target.value)}
+                  className="h-10"
+                  placeholder="Enter bill-to email address"
+                />
+              </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowResendModal(false)}>
+          <DialogFooter className="pt-6 flex gap-3">
+            <Button variant="outline" onClick={() => setShowResendModal(false)} className="flex-1">
               Cancel
             </Button>
-            <Button variant="primary" onClick={handleResendShipConfirmation}>
+            <Button variant="primary" onClick={handleResendShipConfirmation} className="flex-1">
               Send
             </Button>
           </DialogFooter>
@@ -1336,7 +1385,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
           </DialogHeader>
           <div className="text-sm p-3 bg-body-color rounded border border-border-color min-h-[300px] max-h-[400px] overflow-auto">
             <div className="text-font-color leading-relaxed whitespace-pre-wrap">
-              {data.shipping_instructions || 'No shipping instructions'}
+              {data.shipping_instructions || ''}
             </div>
           </div>
           <DialogFooter className="pt-3">
@@ -1411,7 +1460,7 @@ function OrderLinesTable({ orderLines, showAll, onToggleShowAll }: {
       </CardHeader>
       
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full text-xs">
           <thead className="bg-body-color border-b border-border-color">
             <tr>
               <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Line #</th>
