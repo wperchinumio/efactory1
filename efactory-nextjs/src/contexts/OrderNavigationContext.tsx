@@ -44,7 +44,7 @@ export const OrderNavigationProvider: React.FC<{ children: ReactNode }> = ({ chi
     setNavigationState({
       orders,
       currentIndex,
-      sourceContext
+      ...(sourceContext && { sourceContext })
     });
   };
 
@@ -52,21 +52,21 @@ export const OrderNavigationProvider: React.FC<{ children: ReactNode }> = ({ chi
     if (!navigationState || navigationState.currentIndex < 0 || navigationState.currentIndex >= navigationState.orders.length) {
       return null;
     }
-    return navigationState.orders[navigationState.currentIndex];
+    return navigationState.orders[navigationState.currentIndex] || null;
   };
 
   const getPreviousOrder = (): OrderNavigationItem | null => {
     if (!navigationState || navigationState.currentIndex <= 0) {
       return null;
     }
-    return navigationState.orders[navigationState.currentIndex - 1];
+    return navigationState.orders[navigationState.currentIndex - 1] || null;
   };
 
   const getNextOrder = (): OrderNavigationItem | null => {
     if (!navigationState || navigationState.currentIndex >= navigationState.orders.length - 1) {
       return null;
     }
-    return navigationState.orders[navigationState.currentIndex + 1];
+    return navigationState.orders[navigationState.currentIndex + 1] || null;
   };
 
   const navigateToPrevious = (): OrderNavigationItem | null => {

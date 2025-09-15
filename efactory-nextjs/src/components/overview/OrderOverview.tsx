@@ -325,19 +325,19 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1">
                       <Button
-                        onClick={onPrevious}
+                        onClick={onPrevious || (() => {})}
                         variant="outline"
                         size="small"
                         icon={<IconChevronLeft />}
-                        disabled={!hasPrevious || isNavigating}
+                        disabled={!hasPrevious || !!isNavigating}
                         className="h-7 w-8 p-0"
                       />
                       <Button
-                        onClick={onNext}
+                        onClick={onNext || (() => {})}
                         variant="outline"
                         size="small"
                         icon={<IconChevronRight />}
-                        disabled={!hasNext || isNavigating}
+                        disabled={!hasNext || !!isNavigating}
                         className="h-7 w-8 p-0"
                       />
                     </div>
