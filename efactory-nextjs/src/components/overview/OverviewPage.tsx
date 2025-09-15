@@ -175,8 +175,8 @@ export default function OverviewPage() {
     })();
   }, []);
 
-  // Watch for order detail query (?orderNum=...&accountNum=...)
-  useEffect(() => {
+  // Function to refresh order data
+  const refreshOrderData = useCallback(async () => {
     if (!router?.asPath) return;
     const q = new URLSearchParams(router.asPath.split('?')[1] || '');
     const orderNum = q.get('orderNum');
@@ -185,15 +185,18 @@ export default function OverviewPage() {
       setOrderOverlay(null);
       return;
     }
-    (async () => {
-      try {
-        const result = await readOrderDetail(orderNum, accountNum || undefined);
-        setOrderOverlay(result);
-      } catch (e) {
-        setOrderOverlay({ kind: 'not_found' } as any);
-      }
-    })();
+    try {
+      const result = await readOrderDetail(orderNum, accountNum || undefined);
+      setOrderOverlay(result);
+    } catch (e) {
+      setOrderOverlay({ kind: 'not_found' } as any);
+    }
   }, [router.asPath]);
+
+  // Watch for order detail query (?orderNum=...&accountNum=...)
+  useEffect(() => {
+    refreshOrderData();
+  }, [refreshOrderData]);
 
   const visibleTiles = useMemo(() => {
     const area = layout?.areas.find(a => a.name === 'tiles');
@@ -1144,6 +1147,7 @@ export default function OverviewPage() {
             router.push(search ? `${base}?${search}` : base, undefined, { shallow: true });
           }}
           variant="inline"
+          onRefresh={refreshOrderData}
         />
       </div>
     );
@@ -1179,7 +1183,7 @@ export default function OverviewPage() {
                   <IconChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-card-color border-border-color">
+              <DropdownMenuContent align="end" className="w-48 bg-card-color border-border-color shadow-xl">
                 <DropdownMenuItem onClick={refreshAll} disabled={isRefreshing} className="text-font-color hover:bg-primary-10">
                   <IconRefresh className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
                   Refresh All Data
@@ -1326,6 +1330,7 @@ export default function OverviewPage() {
                 router.push(search ? `${base}?${search}` : base, undefined, { shallow: true });
               }}
               variant="inline"
+              onRefresh={refreshOrderData}
             />
           </div>
         )}

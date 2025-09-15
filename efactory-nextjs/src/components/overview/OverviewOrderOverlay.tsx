@@ -3,7 +3,7 @@ import type { OrderDetailResult } from '@/types/api/orders'
 import OrderOverview from './OrderOverview'
 import MultipleOrdersGrid from './MultipleOrdersGrid'
 
-export default function OverviewOrderOverlay({ result, onClose }: { result: OrderDetailResult; onClose: () => void }) {
+export default function OverviewOrderOverlay({ result, onClose, onRefresh }: { result: OrderDetailResult; onClose: () => void; onRefresh?: () => void }) {
   if (result.kind === 'not_found') {
     return (
       <div className="fixed inset-0 bg-black/40 z-50 flex p-4 md:p-8">
@@ -22,7 +22,7 @@ export default function OverviewOrderOverlay({ result, onClose }: { result: Orde
       </div>
     )
   }
-  return <OrderOverview data={result.order} onClose={onClose} variant="overlay" />
+  return <OrderOverview data={result.order} onClose={onClose} variant="overlay" onRefresh={onRefresh} />
 }
 
 

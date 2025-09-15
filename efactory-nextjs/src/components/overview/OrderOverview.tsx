@@ -60,6 +60,7 @@ type Props = {
   hasNext?: boolean
   currentIndex?: number
   totalItems?: number
+  onRefresh?: () => void
 }
 
 type OrderTopBarProps = {
@@ -71,6 +72,7 @@ type OrderTopBarProps = {
   hasNext?: boolean | undefined
   currentIndex?: number | undefined
   totalItems?: number | undefined
+  onRefresh?: (() => void) | undefined
 }
 
 const ORDER_STAGES = [
@@ -84,7 +86,7 @@ const ORDER_STAGES = [
   { stage: 80, label: 'Completed', color: 'bg-gray-500' }
 ]
 
-function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems }: OrderTopBarProps) {
+function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems, onRefresh }: OrderTopBarProps) {
   const [showActionsMenu, setShowActionsMenu] = useState(false)
   const [showPutOnHoldModal, setShowPutOnHoldModal] = useState(false)
   const [showPutOffHoldModal, setShowPutOffHoldModal] = useState(false)
@@ -108,7 +110,11 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
   const hasOriginalData = data.custom_data !== null
 
   const handleRefresh = () => {
-    window.location.reload()
+    if (onRefresh) {
+      onRefresh()
+    } else {
+      window.location.reload()
+    }
   }
 
 
@@ -117,8 +123,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
       await orderPutOnHold(data.order_id, data.location, holdReason)
       setShowPutOnHoldModal(false)
       setHoldReason('')
-      // Refresh the page to show updated status
-      window.location.reload()
     } catch (error) {
       console.error('Error putting order on hold:', error)
       // You might want to show a toast notification here
@@ -129,8 +133,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
     try {
       await orderPutOffHold(data.order_id, data.location)
       setShowPutOffHoldModal(false)
-      // Refresh the page to show updated status
-      window.location.reload()
     } catch (error) {
       console.error('Error putting order off hold:', error)
       // You might want to show a toast notification here
@@ -141,8 +143,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
     try {
       await orderCancel(data.order_id, data.location)
       setShowCancelModal(false)
-      // Refresh the page to show updated status
-      window.location.reload()
     } catch (error) {
       console.error('Error cancelling order:', error)
       // You might want to show a toast notification here
@@ -155,8 +155,6 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
       await orderTransfer(data.order_id, sourceWarehouse, destinationWarehouse)
       setShowTransferModal(false)
       setDestinationWarehouse('')
-      // Refresh the page to show updated status
-      window.location.reload()
     } catch (error) {
       console.error('Error transferring order:', error)
       // You might want to show a toast notification here
@@ -297,8 +295,11 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                   </Button>
                   
                   {showActionsMenu && (
-                    <div className="absolute right-0 top-full mt-1 w-64 bg-background border border-border-color rounded-lg shadow-lg z-50">
-                      <div className="py-1">
+                    <>
+                      {/* Backdrop overlay to prevent content showing through */}
+                      <div className="fixed inset-0 z-40" onClick={() => setShowActionsMenu(false)} />
+                      <div className="absolute right-0 top-full mt-1 w-64 bg-card-color border border-border-color rounded-lg shadow-xl z-50">
+                        <div className="py-1">
                         <button
                           onClick={() => {
                             if (isOnHold) {
@@ -309,7 +310,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!isOnHold && !canPutOnHold}
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-sm"
                         >
                           <IconBan className="w-4 h-4 text-font-color-100" />
                           Put {isOnHold ? 'Off' : 'On'} Hold
@@ -321,7 +322,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canCancel}
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-sm"
                         >
                           <IconTrash className="w-4 h-4 text-font-color-100" />
                           Request Cancellation
@@ -333,7 +334,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canCreateRMA}
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-sm"
                         >
                           <IconExchange className="w-4 h-4 text-font-color-100" />
                           Create RMA
@@ -345,7 +346,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canCancel}
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-sm"
                         >
                           <IconShoppingCart className="w-4 h-4 text-font-color-100" />
                           Edit in Orderpoints
@@ -356,7 +357,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             handleCloneOrder()
                             setShowActionsMenu(false)
                           }}
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 flex items-center gap-2 rounded-sm"
                         >
                           <IconCopy className="w-4 h-4 text-font-color-100" />
                           Copy as Draft
@@ -368,7 +369,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canResend}
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-sm"
                         >
                           <IconEnvelope className="w-4 h-4 text-font-color-100" />
                           Re-send Ship Confirmation
@@ -380,7 +381,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                             setShowActionsMenu(false)
                           }}
                           disabled={!canTransfer}
-                          className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 rounded-sm"
                         >
                           <IconArrowsRightLeft className="w-4 h-4 text-font-color-100" />
                           Warehouse Transfer
@@ -394,7 +395,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                                 setShowOriginal(!showOriginal)
                                 setShowActionsMenu(false)
                               }}
-                              className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
+                              className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 flex items-center gap-2 rounded-sm"
                             >
                               <IconFileCode className="w-4 h-4 text-font-color-100" />
                               {showOriginal ? 'Show DCL Order' : 'Show Original Order'}
@@ -410,7 +411,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                                 console.log('Show EDI Documents')
                                 setShowActionsMenu(false)
                               }}
-                              className="w-full px-3 py-1.5 text-left text-sm hover:bg-primary-5 flex items-center gap-2"
+                              className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 flex items-center gap-2 rounded-sm"
                             >
                               <IconFileCode className="w-4 h-4 text-font-color-100" />
                               Show EDI Documents
@@ -419,6 +420,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                         )}
                       </div>
                     </div>
+                    </>
                   )}
                 </div>
 
@@ -606,7 +608,7 @@ const PlaceholderDash = ({ children, className = "" }: { children: React.ReactNo
   return <span className={className}>{children}</span>
 }
 
-export default function OrderOverview({ data, onClose, variant = 'overlay', onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems }: Props) {
+export default function OrderOverview({ data, onClose, variant = 'overlay', onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems, onRefresh }: Props) {
   const billing = data.billing_address || ({} as any)
   const shipping = data.shipping_address || ({} as any)
   
@@ -698,6 +700,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
           hasNext={hasNext}
           currentIndex={currentIndex}
           totalItems={totalItems}
+          onRefresh={onRefresh}
         />
         
         <div className="flex-1 overflow-y-auto">

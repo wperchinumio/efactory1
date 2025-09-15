@@ -55,6 +55,12 @@ export default function OrderOverviewPage() {
     console.log('Navigate to next order')
   }
 
+  const handleRefresh = () => {
+    if (orderNum && accountNum) {
+      fetchOrderDetail(orderNum as string, accountNum as string)
+    }
+  }
+
   if (loading) {
     return (
       <Layout>
@@ -125,6 +131,7 @@ export default function OrderOverviewPage() {
         currentIndex={1}    // Would be determined by your navigation logic
         totalItems={1}      // Would be determined by your navigation logic
         variant="inline"
+        onRefresh={handleRefresh}
       />
     </Layout>
   )

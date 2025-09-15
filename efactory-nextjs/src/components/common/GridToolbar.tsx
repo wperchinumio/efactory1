@@ -190,12 +190,12 @@ export default function GridToolbar({
                       onClick={() => setViewsOpen(false)}
                     />
                     <div 
-                      className="absolute right-0 top-full mt-1 min-w-[200px] bg-card-color border border-border-color text-font-color shadow-lg rounded-md z-20"
+                      className="absolute right-0 top-full mt-1 min-w-[200px] bg-card-color border border-border-color text-font-color shadow-xl rounded-md z-20"
                       style={{ 
                         backgroundColor: 'var(--card-color)', 
                         borderColor: 'var(--border-color)',
                         color: 'var(--font-color)',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
                       }}
                     >
                       <div className="text-sm font-medium text-font-color px-2 py-1.5 border-b border-border-color">Views</div>

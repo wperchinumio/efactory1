@@ -142,7 +142,8 @@ export default function GridPage({
   }, [resource]);
 
   // Watch for order detail query (?orderNum=...&accountNum=...) and open overlay
-  useEffect(() => {
+  // Function to refresh order data
+  const refreshOrderData = useCallback(async () => {
     if (!router?.asPath) return;
     const q = new URLSearchParams((router.asPath.split('?')[1] || ''));
     const orderNum = q.get('orderNum');
@@ -151,15 +152,17 @@ export default function GridPage({
       setOrderOverlay(null);
       return;
     }
-    (async () => {
-      try {
-        const result = await readOrderDetail(orderNum, accountNum || undefined);
-        setOrderOverlay(result);
-      } catch (e) {
-        setOrderOverlay({ kind: 'not_found' } as any);
-      }
-    })();
+    try {
+      const result = await readOrderDetail(orderNum, accountNum || undefined);
+      setOrderOverlay(result);
+    } catch (e) {
+      setOrderOverlay({ kind: 'not_found' } as any);
+    }
   }, [router.asPath]);
+
+  useEffect(() => {
+    refreshOrderData();
+  }, [refreshOrderData]);
 
   const onFetchRows = useCallback(
     async (page: number, pageSize: number, filter: GridFilter, sort: any, filter_id?: any): Promise<GridRowResponse<any>> => {
@@ -263,6 +266,7 @@ export default function GridPage({
             router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
           }}
           variant="inline"
+          onRefresh={refreshOrderData}
         />
       </div>
     );
@@ -358,6 +362,7 @@ export default function GridPage({
               router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
             }}
             variant="inline"
+            onRefresh={refreshOrderData}
           />
         </div>
       )}
