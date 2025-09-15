@@ -1560,11 +1560,17 @@ function PackageTable({ packages }: { packages: any[] }) {
               <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">#</th>
               <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Ship Date</th>
               <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Delivery Date</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Status</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Delivery Status</th>
               <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Package #</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Tracking</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Tracking #</th>
               <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Weight</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Rated Weight</th>
               <th className="px-2 py-2 text-center text-xs font-semibold text-font-color-100 uppercase tracking-wider">Dimensions</th>
+              <th className="px-2 py-2 text-right text-xs font-semibold text-font-color-100 uppercase tracking-wider">Charge</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">ASN</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Pallet #</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Pallet ASN</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-font-color-100 uppercase tracking-wider">Proway Bill</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-color">
@@ -1596,14 +1602,32 @@ function PackageTable({ packages }: { packages: any[] }) {
                       {pkg.tracking_number}
                     </a>
                   ) : (
-                    pkg.tracking_number || '-'
+                    <PlaceholderDash>{pkg.tracking_number || '-'}</PlaceholderDash>
                   )}
                 </td>
                 <td className="px-2 py-2 text-right text-sm text-font-color">
-                  {Intl.NumberFormat().format(pkg.package_weight || pkg.weight || 0)} lbs
+                  <PlaceholderDash>{pkg.package_weight || pkg.weight ? `${Intl.NumberFormat().format(pkg.package_weight || pkg.weight || 0)} lbs` : '-'}</PlaceholderDash>
+                </td>
+                <td className="px-2 py-2 text-right text-sm text-font-color">
+                  <PlaceholderDash>{pkg.package_rated_weight ? `${Intl.NumberFormat().format(pkg.package_rated_weight)} lbs` : '-'}</PlaceholderDash>
                 </td>
                 <td className="px-2 py-2 text-center text-sm text-font-color">
-                  {pkg.package_dimension || pkg.dimension || '-'}
+                  <PlaceholderDash>{pkg.package_dimension || pkg.dimension || '-'}</PlaceholderDash>
+                </td>
+                <td className="px-2 py-2 text-right text-sm text-font-color">
+                  <PlaceholderDash>{pkg.package_charge ? `${Intl.NumberFormat().format(pkg.package_charge)}` : '-'}</PlaceholderDash>
+                </td>
+                <td className="px-2 py-2 text-sm text-font-color">
+                  <PlaceholderDash>{pkg.asn || '-'}</PlaceholderDash>
+                </td>
+                <td className="px-2 py-2 text-sm text-font-color">
+                  <PlaceholderDash>{pkg.pallet_number || '-'}</PlaceholderDash>
+                </td>
+                <td className="px-2 py-2 text-sm text-font-color">
+                  <PlaceholderDash>{pkg.pallet_asn || '-'}</PlaceholderDash>
+                </td>
+                <td className="px-2 py-2 text-sm text-font-color">
+                  <PlaceholderDash>{pkg.proway_bill_number || '-'}</PlaceholderDash>
                 </td>
               </tr>
             ))}

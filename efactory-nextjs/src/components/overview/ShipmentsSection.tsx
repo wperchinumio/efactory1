@@ -13,7 +13,6 @@ import {
 } from '@tabler/icons-react'
 import type { OrderDetailDto, ShipmentsOverviewSerialRowDto } from '@/types/api/orders'
 
-// Utility function to display placeholder dashes as barely visible
 const PlaceholderDash = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => {
   if (children === '-') {
     return <span className={`text-font-color-100 opacity-30 ${className}`}>-</span>
@@ -225,6 +224,8 @@ export default function ShipmentsSection({ data }: Props) {
               <thead className="bg-primary-10 border-b border-border-color">
                 <tr>
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Ship Date</th>
+                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Delivery Date</th>
+                  <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Delivery Status</th>
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Package #</th>
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Tracking #</th>
                   <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Weight</th>
@@ -234,7 +235,6 @@ export default function ShipmentsSection({ data }: Props) {
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">ASN</th>
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Pallet #</th>
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Pallet ASN</th>
-                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Delivery Date</th>
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">ProWay Bill</th>
                 </tr>
               </thead>
@@ -242,6 +242,14 @@ export default function ShipmentsSection({ data }: Props) {
                 {overviewPackages.map((pkg, index) => (
                   <tr key={pkg.id} className={index % 2 === 0 ? 'bg-card-color' : 'bg-body-color'}>
                     <td className="px-2 py-1.5 text-sm text-font-color">{new Date(pkg.ship_date).toLocaleDateString()}</td>
+                    <td className="px-2 py-1.5 text-center text-sm text-font-color">
+                      <PlaceholderDash>{pkg.delivery_date ? new Date(pkg.delivery_date).toLocaleDateString() : '-'}</PlaceholderDash>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <Badge variant="info" outline className="text-xs">
+                        {pkg.delivery_info || 'In Transit'}
+                      </Badge>
+                    </td>
                     <td className="px-2 py-1.5 text-sm font-bold text-font-color font-mono">{pkg.package_number}</td>
                     <td className="px-2 py-1.5">
                       {pkg.tracking_link ? (
@@ -288,8 +296,6 @@ export default function ShipmentsSection({ data }: Props) {
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Item #</th>
                   <th className="px-2 py-1.5 text-left text-xs font-bold text-font-color-100 uppercase tracking-wider">Description</th>
                   <th className="px-2 py-1.5 text-right text-xs font-bold text-font-color-100 uppercase tracking-wider">Quantity</th>
-                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Extra Field 1</th>
-                  <th className="px-2 py-1.5 text-center text-xs font-bold text-font-color-100 uppercase tracking-wider">Serial/Lot Count</th>
                 </tr>
               </thead>
               <tbody>
@@ -301,12 +307,6 @@ export default function ShipmentsSection({ data }: Props) {
                     <td className="px-2 py-1.5 text-sm font-bold text-font-color font-mono">{detail.item_number}</td>
                     <td className="px-2 py-1.5 text-sm text-font-color overflow-hidden" style={{display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'}}>{detail.description}</td>
                     <td className="px-2 py-1.5 text-right text-sm font-bold text-font-color">{detail.quantity}</td>
-                    <td className="px-2 py-1.5 text-center text-xs text-font-color-100">-</td>
-                    <td className="px-2 py-1.5 text-center">
-                      <span className="px-1.5 py-0.5 bg-primary-10 text-font-color rounded text-xs font-medium">
-                        See Serials Table
-                      </span>
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -525,6 +525,9 @@ export default function ShipmentsSection({ data }: Props) {
                           <span>Rated: <span className="font-medium text-font-color">{pkg.rated_weight} lbs</span></span>
                           <span>Dim: <span className="font-medium text-font-color">{pkg.dimension}</span></span>
                           <span>Freight: <span className="font-medium text-font-color">${Intl.NumberFormat().format(pkg.freight || 0)}</span></span>
+                          <Badge variant="info" outline className="text-xs">
+                            {pkg.delivery_info || 'In Transit'}
+                          </Badge>
                           {pkg.tracking_number && (
                             <a 
                               href={pkg.tracking_number_link} 
