@@ -131,6 +131,38 @@ html[data-luno-theme="red"] .ag-theme-alpine input[type="number"]:focus {
   --ag-selected-row-foreground-color: white;
 }
 
+/* Force AG Grid column resize handles to have lower z-index */
+.ag-theme-alpine .ag-header-cell-resize,
+.ag-theme-alpine .ag-header-column-resize-handle,
+.ag-theme-alpine .ag-column-resize-handle,
+.ag-theme-legacy .ag-header-cell-resize,
+.ag-theme-legacy .ag-header-column-resize-handle,
+.ag-theme-legacy .ag-column-resize-handle,
+.ag-theme-quartz .ag-header-cell-resize,
+.ag-theme-quartz .ag-header-column-resize-handle,
+.ag-theme-quartz .ag-column-resize-handle,
+.ag-theme-quartz-dark .ag-header-cell-resize,
+.ag-theme-quartz-dark .ag-header-column-resize-handle,
+.ag-theme-quartz-dark .ag-column-resize-handle {
+  z-index: 1 !important;
+}
+
+/* Force all AG Grid elements to stay below profile menu */
+.ag-theme-alpine *,
+.ag-theme-legacy *,
+.ag-theme-quartz *,
+.ag-theme-quartz-dark * {
+  z-index: auto !important;
+}
+
+/* Specifically target resize handles that might have inline z-index */
+.ag-theme-alpine [style*="z-index"],
+.ag-theme-legacy [style*="z-index"],
+.ag-theme-quartz [style*="z-index"],
+.ag-theme-quartz-dark [style*="z-index"] {
+  z-index: 1 !important;
+}
+
 /* Light mode specific adjustments */
 [data-theme="light"] .ag-theme-legacy .ag-row.ag-row-selected {
   background-color: var(--primary-color) !important;

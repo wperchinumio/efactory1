@@ -587,44 +587,49 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                 <button onClick={toggleUserProfile} className='md:py-2 md:px-3 p-2 hover:bg-primary-10 transition-all duration-300'>
                                     <IconUser className='stroke-[1.5] xl:w-[24px] xl:h-[24px] w-[20px] h-[20px]' />
                                 </button>
-                                <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[320px] w-[calc(100%-30px)] shadow-shadow-lg md:absolute fixed md:right-0 right-15 md:top-full top-[55px] origin-top-right z-[1] transition-all duration-300 ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
-                                <div className='p-4 border-b border-border-color'>
-                                    <div className='font-semibold text-font-color'>
+                                {/* Backdrop overlay to block AG Grid elements */}
+                                <div 
+                                    className={`fixed inset-0 bg-transparent z-[100000] transition-opacity duration-300 ${userProfileOpen ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                                    onClick={closeUserProfile}
+                                ></div>
+                                <div className={`bg-card-color text-font-color rounded-xl overflow-hidden md:w-[240px] w-[calc(100%-20px)] max-w-[260px] shadow-shadow-lg md:absolute fixed md:right-0 right-10 md:top-full top-[55px] origin-top-right z-[100001] transition-all duration-300 border border-border-color ${userProfileOpen ? 'opacity-100 visible scale-100' : 'opacity-0 invisible scale-0'}`}>
+                                <div className='px-3 py-3 border-b border-border-color'>
+                                    <div className='font-semibold text-font-color text-sm'>
                                         {userInfo.username}
                                     </div>
                                     {userProfileData?.company_code && (
-                                        <div className='text-font-color-100 text-xs mt-1'>
+                                        <div className='text-font-color-100 text-xs mt-0.5'>
                                             {userProfileData.company_code}
                                         </div>
                                     )}
                                     {userInfo.email && (
-                                        <div className='text-font-color-100 text-xs break-words mt-1'>
+                                        <div className='text-font-color-100 text-xs break-words mt-0.5'>
                                             {userInfo.email}
                                         </div>
                                     )}
                                 </div>
-                                <div className='p-1 m-1 custom-scrollbar overflow-auto max-h-[calc(80svh-163px)]'>
+                                <div className='py-1 px-1 custom-scrollbar overflow-auto max-h-[calc(80svh-140px)]'>
                                     {/* Show My Profile, Team Members, and Leave Feedback only for regular users or admin impersonating */}
                                     {(!isAdmin || (isAdmin && userApps.length > 0)) ? (
                                         <>
-                                            <button onClick={() => { closeUserProfile(); toggleUserProfileModal(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
-                                                <IconUser className='w-[16px] h-[16px]' />
+                                            <button onClick={() => { closeUserProfile(); toggleUserProfileModal(); }} className='py-1.5 px-3 flex items-center gap-2.5 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left text-sm'>
+                                                <IconUser className='w-[14px] h-[14px]' />
                                                 My Profile
                                             </button>
-                                            <Link href="/team-members" onClick={closeUserProfile} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary'>
-                                                <IconUsersGroup className='w-[16px] h-[16px]' />
+                                            <Link href="/team-members" onClick={closeUserProfile} className='py-1.5 px-3 flex items-center gap-2.5 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary text-sm'>
+                                                <IconUsersGroup className='w-[14px] h-[14px]' />
                                                 Team Members
                                             </Link>
-                                            <button onClick={() => { closeUserProfile(); toggleFeedback(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
-                                                <IconThumbUpFilled className='w-[16px] h-[16px]' />
+                                            <button onClick={() => { closeUserProfile(); toggleFeedback(); }} className='py-1.5 px-3 flex items-center gap-2.5 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left text-sm'>
+                                                <IconThumbUpFilled className='w-[14px] h-[14px]' />
                                                 Leave a feedback
                                             </button>
                                         </>
                                     ) : null}
                                     
                                     {/* Settings is always available */}
-                                    <button onClick={() => { closeUserProfile(); toggleThemeSetting(); }} className='py-2 px-4 flex items-center gap-3 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left'>
-                                        <IconBrush className='w-[16px] h-[16px]' />
+                                    <button onClick={() => { closeUserProfile(); toggleThemeSetting(); }} className='py-1.5 px-3 flex items-center gap-2.5 rounded-lg hover:bg-primary-10 transition-all duration-200 hover:text-primary w-full text-left text-sm'>
+                                        <IconBrush className='w-[14px] h-[14px]' />
                                         Theme Settings
                                     </button>
                                     
@@ -633,7 +638,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                         <button 
                                             onClick={() => { closeUserProfile(); handleChangeUser(); }} 
                                             disabled={isChangingUser}
-                                            className={`py-2 px-4 flex items-center gap-3 rounded-lg transition-all duration-200 font-semibold w-full text-left ${
+                                            className={`py-1.5 px-3 flex items-center gap-2.5 rounded-lg transition-all duration-200 font-medium w-full text-left text-sm ${
                                                 isChangingUser 
                                                     ? 'opacity-50 cursor-not-allowed' 
                                                     : 'hover:bg-primary-10 hover:text-primary'
@@ -641,19 +646,19 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                         >
                                             {isChangingUser ? (
                                                 <>
-                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                                    <div className="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-primary"></div>
                                                     Loading...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <IconArrowBigLeftFilled className='w-[16px] h-[16px]' />
+                                                    <IconArrowBigLeftFilled className='w-[14px] h-[14px]' />
                                                     Back to DCL Menu
                                                 </>
                                             )}
                                         </button>
                                     ) : null}
                                 </div>
-                                <button onClick={() => { closeUserProfile(); handleLogout(); }} className='bg-secondary uppercase text-[14px]/[20px] text-white py-1.5 px-2.5 text-center w-full inline-block'>
+                                <button onClick={() => { closeUserProfile(); handleLogout(); }} className='bg-secondary hover:bg-secondary/90 uppercase text-[13px]/[18px] font-medium text-white py-2.5 px-3 text-center w-full inline-block transition-all duration-200 rounded-b-xl'>
                                     Sign Out
                                 </button>
                             </div>
