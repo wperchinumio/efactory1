@@ -115,12 +115,12 @@ export function OrderStageRenderer({ value, data }: { value: number; data?: any 
 
   const percent = Math.min(stage >= 60 ? 62 : stage, 62) / 62 * 100;
   return (
-    <div className="flex flex-col gap-1" style={{ width: '100%' }}>
+    <div className="flex flex-col gap-0" style={{ width: '100%' }}>
       <div className="flex items-center justify-between" style={{ width: '100%' }}>
         <span className="text-[12px] text-[var(--font-color)]">{isNaN(stage) ? '' : stage}</span>
         <span className="text-[11px] text-[var(--font-color-100)]">{label}</span>
       </div>
-      <div style={{ width: '100%', height: 8, background: '#d0d0d0', borderRadius: 2, position: 'relative' }}>
+      <div style={{ width: '100%', height: 6, background: '#d0d0d0', borderRadius: 2, position: 'relative' }}>
         <div style={{ position: 'absolute', inset: 0, width: `${percent}%`, background: barColor, borderRadius: 2 }} />
       </div>
     </div>

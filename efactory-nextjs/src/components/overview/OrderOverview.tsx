@@ -48,6 +48,7 @@ import {
   readRmaFromOrder
 } from '@/services/api'
 import { useOrderNavigation } from '@/contexts/OrderNavigationContext'
+import { OrderStageRenderer, OrderTypePill } from '@/components/common/AgGrid/renderers'
 
 // Import components
 import ShipmentsSection from './ShipmentsSection'
@@ -283,10 +284,9 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                 <Badge 
                   variant="secondary" 
                   className={`px-2 py-0.5 text-xs font-medium ${
-                    currentStage?.color === 'bg-green-500' ? 'bg-green-100 text-green-800' :
-                    currentStage?.color === 'bg-yellow-500' ? 'bg-yellow-100 text-yellow-800' :
-                    currentStage?.color === 'bg-red-500' ? 'bg-red-100 text-red-800' :
-                    'bg-primary-10 text-font-color'
+                    data.order_stage >= 60 ? 'bg-green-700 text-white' :
+                    data.order_stage === 2 ? 'bg-slate-800 text-white dark:bg-slate-700 dark:text-white' :
+                    'bg-orange-500 text-white'
                   }`}
                 >
                   {data.stage_description}
@@ -1297,11 +1297,13 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
                       {/* Always show key fields */}
                       <div className="flex justify-between">
                         <span className="font-medium text-font-color-100">Channel:</span>
-                        <Badge variant="default">{data.order_type}</Badge>
+                        <OrderTypePill orderType={data.order_type} />
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-font-color-100">Order Stage:</span>
-                        <Badge variant="success">{data.stage_description || 'Unknown'}</Badge>
+                        <div className="flex-1 max-w-[200px]">
+                          <OrderStageRenderer value={data.order_stage} data={data} />
+                        </div>
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-font-color-100">Customer #:</span>
