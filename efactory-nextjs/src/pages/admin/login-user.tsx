@@ -62,6 +62,20 @@ function LoginUserPageInner() {
 		}
 	}, []);
 
+	// Handle Enter key press
+	useEffect(() => {
+		const handleKeyPress = (e: KeyboardEvent) => {
+			if (e.key === 'Enter' && selectedUsername && !submitting) {
+				handleProceed();
+			}
+		};
+
+		document.addEventListener('keydown', handleKeyPress);
+		return () => {
+			document.removeEventListener('keydown', handleKeyPress);
+		};
+	}, [selectedUsername, submitting]);
+
 	const filtered = useMemo(() => {
 		const q = filter.trim().toLowerCase();
 		let list = accounts;
@@ -103,6 +117,21 @@ function LoginUserPageInner() {
 			}
 		});
 	}, [accounts, filter, sortField, sortDirection]);
+
+	// Auto-select single result or deselect multiple results
+	useEffect(() => {
+		if (filtered.length === 1) {
+			// Auto-select the single result
+			setSelectedUsername(filtered[0].username);
+		} else if (filtered.length > 1 && selectedUsername) {
+			// Check if currently selected user is still in filtered results
+			const isStillInResults = filtered.some(acc => acc.username === selectedUsername);
+			if (!isStillInResults) {
+				// Deselect if current selection is no longer in results
+				setSelectedUsername('');
+			}
+		}
+	}, [filtered, selectedUsername]);
 
 	async function handleProceed() {
 		if (!selectedUsername || submitting) return;
@@ -552,14 +581,11 @@ function AccountCard({ account, index, isSelected, onSelect, onProceed, submitti
 					{/* Action */}
 					<div className='shrink-0'>
 						<Button 
-						onClick={() => {
-							if (!isSelected) onSelect(account.username);
-							else onProceed();
-						}}
-							disabled={submitting}
+							onClick={onProceed}
+							disabled={!isSelected || submitting}
 							className='px-4 py-2 text-[12px]'
 						>
-							{isSelected ? (submitting ? 'Processing...' : 'Access') : 'Select'}
+							{submitting ? 'Processing...' : 'Access'}
 						</Button>
 					</div>
 				</div>
@@ -660,24 +686,13 @@ function AccountTableRow({ account, index, isSelected, onSelect, onProceed, subm
 				<div className='col-span-2'>
 					<div className='flex items-center gap-2'>
 						<Button
-						onClick={() => {
-							onSelect(account.username);
-						}}
-							disabled={submitting}
+							onClick={onProceed}
+							className='btn btn-sm btn-success'
+							disabled={!isSelected || submitting}
 						>
-							{isSelected ? 'Selected' : 'Select'}
+							<IconLogin className='w-[14px] h-[14px]' />
+							{submitting ? 'Processing...' : 'Login'}
 						</Button>
-						{isSelected && (
-							<Button
-							onClick={() => {
-								onProceed();
-							}}
-								className='btn btn-sm btn-success'
-								disabled={submitting}
-							>
-								<IconLogin className='w-[14px] h-[14px]' />
-							</Button>
-						)}
 					</div>
 				</div>
 			</div>
