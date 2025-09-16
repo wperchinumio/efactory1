@@ -6,6 +6,7 @@ import AuthErrorBoundary from "@/components/auth/AuthErrorBoundary";
 import { ToastContainer } from "@/components/ui/Toast";
 import { OrderNavigationProvider } from "@/contexts/OrderNavigationContext";
 import { ItemNavigationProvider } from "@/contexts/ItemNavigationContext";
+import { GridCacheProvider } from "@/contexts/GridCacheContext";
 import "../../styles/globals.css";
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -63,17 +64,19 @@ export default function App({ Component, pageProps }: AppProps) {
         <AuthGuard isAuthRoute={isAuthRoute}>
           <OrderNavigationProvider>
             <ItemNavigationProvider>
-            {
-              isAuthRoute ? (
-                <AuthLayout>
-                  <Component {...pageProps} />
-                </AuthLayout>
-              ) : (
-                <Layout userApps={userApps}>
-                  <Component {...pageProps} />
-                </Layout>
-              )
-            }
+              <GridCacheProvider>
+              {
+                isAuthRoute ? (
+                  <AuthLayout>
+                    <Component {...pageProps} />
+                  </AuthLayout>
+                ) : (
+                  <Layout userApps={userApps}>
+                    <Component {...pageProps} />
+                  </Layout>
+                )
+              }
+              </GridCacheProvider>
             </ItemNavigationProvider>
           </OrderNavigationProvider>
         </AuthGuard>

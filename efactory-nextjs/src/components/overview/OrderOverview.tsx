@@ -355,13 +355,7 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                 </>
               )}
               
-              {/* Inline loading indicator while navigating to next/previous */}
-              {isNavigating && (
-                <div className="flex items-center gap-2 mr-3 text-xs text-font-color-100">
-                  <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span>Loading...</span>
-                </div>
-              )}
+              {/* Loading indicator removed - no need to show loading during navigation */}
 
               <div className="flex items-center gap-1">
                 <div className="relative">
@@ -778,6 +772,34 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
       setTimeout(() => setIsNavigating(false), 3000)
     }
   }
+
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle arrow keys when not in input fields
+      if (event.target instanceof HTMLInputElement || 
+          event.target instanceof HTMLTextAreaElement || 
+          event.target instanceof HTMLSelectElement) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft' && hasPrevious) {
+        event.preventDefault();
+        handlePrevious();
+      } else if (event.key === 'ArrowRight' && hasNext) {
+        event.preventDefault();
+        handleNext();
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [hasPrevious, hasNext, handlePrevious, handleNext]);
 
   // Dialog states for expandable text areas
   const [shippingInstructionsDialog, setShippingInstructionsDialog] = useState(false)

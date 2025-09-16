@@ -33,6 +33,34 @@ export default function ItemOverview({ data, onClose, onPrevious, onNext, hasPre
     }
   }, [])
 
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Only handle arrow keys when not in input fields
+      if (event.target instanceof HTMLInputElement || 
+          event.target instanceof HTMLTextAreaElement || 
+          event.target instanceof HTMLSelectElement) {
+        return;
+      }
+
+      if (event.key === 'ArrowLeft' && hasPrevious && onPrevious) {
+        event.preventDefault();
+        onPrevious();
+      } else if (event.key === 'ArrowRight' && hasNext && onNext) {
+        event.preventDefault();
+        onNext();
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [hasPrevious, hasNext, onPrevious, onNext]);
+
   const charts = data.charts || [];
   const stock = data.stock || [];
   const detail = data.detail || {};

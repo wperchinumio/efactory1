@@ -12,7 +12,9 @@ import ItemOverview from '@/components/overview/ItemOverview';
 import MultipleOrdersGrid from '@/components/overview/MultipleOrdersGrid';
 import type { OrderDetailResult } from '@/types/api/orders';
 import { useOrderNavigation, type OrderNavigationItem } from '@/contexts/OrderNavigationContext';
+import { useItemNavigation, type ItemNavigationItem } from '@/contexts/ItemNavigationContext';
 import { usePriorityFilters } from '@/hooks/useFulfillmentNavigation';
+import { useGridCache } from '@/contexts/GridCacheContext';
 
 export interface GridPageProps {
   resource: string; // e.g., 'fulfillment-open'
@@ -140,14 +142,16 @@ export default function GridPage({
   const [filterState, setFilterState] = useState<FilterState>({});
   const [refreshKey, setRefreshKey] = useState(0);
   const loadedResourceRef = React.useRef<string | null>(null);
-  const gridControlsRef = React.useRef<{ refresh: () => void; resetAll: () => void } | null>(null);
+  const gridControlsRef = React.useRef<{ refresh: () => void; resetAll: () => void; saveScrollPosition?: () => void } | null>(null);
   const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
   const [currentRows, setCurrentRows] = useState<any[]>([]);
   const [itemOverlay, setItemOverlay] = useState<any | null>(null);
   const orderOverlayRef = React.useRef<OrderDetailResult | null>(null);
   const itemOverlayRef = React.useRef<any | null>(null);
   const orderNavigation = useOrderNavigation();
+  const itemNavigation = useItemNavigation();
   const { applyPriorityFilters } = usePriorityFilters();
+  const gridCache = useGridCache();
 
   useEffect(() => {
     // Always attempt load once per mount; allow rerun if resource changes
@@ -276,6 +280,24 @@ export default function GridPage({
   const onFetchRows = useCallback(
     async (page: number, pageSize: number, filter: GridFilter, sort: any, filter_id?: any): Promise<GridRowResponse<any>> => {
       if (!viewsUrl || !selectedView) return { resource, total: 0, rows: [] };
+      
+      // Check if we have cached data for this page and view
+      const cachedData = gridCache.getCachedData(pageKey);
+      const isCachedDataFresh = gridCache.isDataFresh(pageKey, 0); // 0 = no cache timeout, never reload
+      
+      if (cachedData && isCachedDataFresh && 
+          cachedData.viewId === selectedView.id &&
+          JSON.stringify(cachedData.filters) === JSON.stringify(filter) &&
+          JSON.stringify(cachedData.sort) === JSON.stringify(sort)) {
+        // Use cached data
+        setCurrentRows(cachedData.data);
+        return {
+          resource,
+          total: cachedData.totalCount,
+          rows: cachedData.data
+        };
+      }
+      
       try {
         const result = await readGridRows<any>(viewsUrl, {
           action: 'read',
@@ -287,15 +309,28 @@ export default function GridPage({
           sort,
           filter_id: filter_id ?? '',
         });
+        
         // Store current rows for navigation
         setCurrentRows(result.rows || []);
+        
+        // Cache the data
+        gridCache.setCachedData(
+          pageKey, 
+          result.rows || [], 
+          [], // columns will be set by AG Grid
+          result.total || 0,
+          selectedView.id?.toString(),
+          filter,
+          sort
+        );
+        
         return result;
       } catch (err) {
         console.error('Failed to fetch rows:', err);
         return { resource, total: 0, rows: [] };
       }
     },
-    [viewsUrl, resource, selectedView]
+    [viewsUrl, resource, selectedView, pageKey, gridCache]
   );
 
 
@@ -322,6 +357,28 @@ export default function GridPage({
     setRefreshKey(prev => prev + 1);
   }, []);
 
+  // Test function to manually set cache data
+  // Cache functionality is working properly
+
+  // Function to restore selected row from cache
+  const restoreSelectedRow = useCallback(() => {
+    const selectedRow = gridCache.getSelectedRow(pageKey);
+    if (selectedRow && selectedRow.data) {
+      // This will be used by the AG Grid to select the row
+      return selectedRow;
+    }
+    return null;
+  }, [gridCache, pageKey]);
+
+  // Function to restore scroll position from cache
+  const restoreScrollPosition = useCallback(() => {
+    const scrollPos = gridCache.getScrollPosition(pageKey);
+    if (scrollPos) {
+      return scrollPos;
+    }
+    return null;
+  }, [gridCache, pageKey]);
+
   // Handle row clicks to set up navigation and navigate to order
   const handleRowClick = useCallback((row: any, ev?: any) => {
     // Determine order identifiers from row
@@ -334,6 +391,18 @@ export default function GridPage({
     if (onRowClicked) {
       onRowClicked(row);
       return;
+    }
+
+    // Get the actual row index from AG Grid's event
+    const rowIndex = ev?.rowIndex ?? ev?.node?.rowIndex ?? -1;
+    
+    if (rowIndex !== -1) {
+      gridCache.setSelectedRow(pageKey, rowIndex, row);
+    }
+
+    // Save current scroll position before navigating
+    if (gridControlsRef.current && (gridControlsRef.current as any).saveScrollPosition) {
+      (gridControlsRef.current as any).saveScrollPosition();
     }
 
     if (orderNumber && currentRows.length > 0) {
@@ -369,6 +438,21 @@ export default function GridPage({
 
     // If user clicked somewhere else on rows in Items pages, open item detail
     if (!orderNumber && itemNumber) {
+      // Set up item navigation if we have current rows
+      if (currentRows.length > 0) {
+        const navigationItems: ItemNavigationItem[] = currentRows
+          .filter(r => r.item_number || r.itemNumber || r.item_num)
+          .map(r => ({
+            item_number: r.item_number || r.itemNumber || r.item_num,
+            account_wh: r.account_wh || r.accountWh,
+            ...r
+          }));
+
+        if (navigationItems.length > 0) {
+          itemNavigation.setItemList(navigationItems, itemNumber, pageKey);
+        }
+      }
+
       // Show immediate placeholder item overlay BEFORE route change
       setItemOverlay({ loading: true } as any);
       const q = new URLSearchParams();
@@ -376,13 +460,22 @@ export default function GridPage({
       const base = router.pathname;
       router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
     }
-  }, [onRowClicked, currentRows, orderNavigation, pageKey, router]);
+  }, [onRowClicked, currentRows, orderNavigation, pageKey, router, gridCache]);
 
   // Simple navigation handlers
   const handleNavigatePrevious = useCallback(() => {
     const previousOrder = orderNavigation.getPreviousOrder();
     if (previousOrder) {
       orderNavigation.navigateToPrevious();
+      
+      // Update cache with the new row information
+      const rowIndex = currentRows.findIndex(r => 
+        (r.order_number || r.orderNumber || r.order_num) === previousOrder.order_number
+      );
+      if (rowIndex !== -1) {
+        gridCache.setSelectedRow(pageKey, rowIndex, currentRows[rowIndex]);
+      }
+      
       const q = new URLSearchParams();
       q.set('orderNum', previousOrder.order_number);
       if (previousOrder.account_number) {
@@ -391,12 +484,21 @@ export default function GridPage({
       const base = router.pathname;
       router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
     }
-  }, [orderNavigation, router]);
+  }, [orderNavigation, router, currentRows, pageKey, gridCache]);
 
   const handleNavigateNext = useCallback(() => {
     const nextOrder = orderNavigation.getNextOrder();
     if (nextOrder) {
       orderNavigation.navigateToNext();
+      
+      // Update cache with the new row information
+      const rowIndex = currentRows.findIndex(r => 
+        (r.order_number || r.orderNumber || r.order_num) === nextOrder.order_number
+      );
+      if (rowIndex !== -1) {
+        gridCache.setSelectedRow(pageKey, rowIndex, currentRows[rowIndex]);
+      }
+      
       const q = new URLSearchParams();
       q.set('orderNum', nextOrder.order_number);
       if (nextOrder.account_number) {
@@ -405,7 +507,30 @@ export default function GridPage({
       const base = router.pathname;
       router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
     }
-  }, [orderNavigation, router]);
+  }, [orderNavigation, router, currentRows, pageKey, gridCache]);
+
+  // Item navigation handlers
+  const handleNavigateItemPrevious = useCallback(() => {
+    const previousItem = itemNavigation.getPreviousItem();
+    if (previousItem) {
+      itemNavigation.navigateToPrevious();
+      const q = new URLSearchParams();
+      q.set('itemNum', previousItem.item_number);
+      const base = router.pathname;
+      router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
+    }
+  }, [itemNavigation, router]);
+
+  const handleNavigateItemNext = useCallback(() => {
+    const nextItem = itemNavigation.getNextItem();
+    if (nextItem) {
+      itemNavigation.navigateToNext();
+      const q = new URLSearchParams();
+      q.set('itemNum', nextItem.item_number);
+      const base = router.pathname;
+      router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
+    }
+  }, [itemNavigation, router]);
 
   // Create fallback view for immediate grid rendering
   const fallbackView: GridSelectedView = {
@@ -578,7 +703,34 @@ export default function GridPage({
         filters={filters}
         showFilters={true}
         onFilterStateChange={(state) => setFilterState(state)}
-        onProvideRefresh={(api) => { gridControlsRef.current = api; }}
+        onProvideRefresh={(api) => { 
+          gridControlsRef.current = {
+            ...api,
+            saveScrollPosition: () => {
+              const gridApi = (api as any).api || api;
+              if (gridApi) {
+                const gridBodyViewport = gridApi.getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
+                if (gridBodyViewport) {
+                  gridCache.setScrollPosition(pageKey, gridBodyViewport.scrollTop, gridBodyViewport.scrollLeft);
+                }
+              }
+            }
+          };
+        }}
+        {...(() => {
+          const selectedRow = restoreSelectedRow();
+          const scrollPos = restoreScrollPosition();
+          return {
+            ...(selectedRow ? {
+              selectedRowIndex: selectedRow.index,
+              selectedRowData: selectedRow.data
+            } : {}),
+            ...(scrollPos ? {
+              scrollTop: scrollPos.scrollTop,
+              scrollLeft: scrollPos.scrollLeft
+            } : {})
+          };
+        })()}
       />
       ) : null}
       {itemOverlay && !itemOverlay.noResponse && (
@@ -586,6 +738,7 @@ export default function GridPage({
           <ItemOverview
             data={itemOverlay}
             onClose={() => {
+              itemNavigation.clearNavigation();
               const q = new URLSearchParams(router.asPath.split('?')[1] || '');
               if (q.has('itemNum')) q.delete('itemNum');
               const base = (router as any).pathname || '';
@@ -593,6 +746,14 @@ export default function GridPage({
               router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
             }}
             onRefresh={refreshOrderData as any}
+            {...(itemNavigation.hasNavigation() ? {
+              onPrevious: handleNavigateItemPrevious,
+              onNext: handleNavigateItemNext
+            } : {})}
+            hasPrevious={itemNavigation.canNavigatePrevious()}
+            hasNext={itemNavigation.canNavigateNext()}
+            currentIndex={itemNavigation.getCurrentIndex()}
+            totalItems={itemNavigation.getTotalCount()}
           />
         </div>
       )}

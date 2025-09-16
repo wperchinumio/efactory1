@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef, GridApi, GridReadyEvent, ColumnResizedEvent, ColumnMovedEvent } from 'ag-grid-community';
@@ -35,6 +35,12 @@ export interface LunoAgGridProps<T = any> {
   onFilterStateChange?: (state: FilterState) => void;
   // Provide refresh/reset controls to parent without remounting (preserve AG Grid filter model)
   onProvideRefresh?: (api: { refresh: () => void; resetAll: () => void }) => void;
+  // Row selection
+  selectedRowIndex?: number | undefined; // Index of row to select when grid loads
+  selectedRowData?: T | undefined; // Data of row to select when grid loads
+  // Scroll position
+  scrollTop?: number | undefined; // Vertical scroll position to restore
+  scrollLeft?: number | undefined; // Horizontal scroll position to restore
 }
 
 // Ensure community modules are registered once
@@ -316,6 +322,10 @@ export function LunoAgGrid<T = any>({
   showFilters = true,
   onFilterStateChange,
   onProvideRefresh,
+  selectedRowIndex,
+  selectedRowData,
+  scrollTop,
+  scrollLeft,
 }: LunoAgGridProps<T>) {
   const gridApiRef = useRef<GridApi | null>(null);
   const [rows, setRows] = useState<T[]>([]);
@@ -344,6 +354,7 @@ export function LunoAgGrid<T = any>({
   const [loading, setLoading] = useState(false);
   const pageSize = selectedView.rows_per_page || 100;
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const filtersRef = useRef<HTMLDivElement | null>(null);
   const [containerPxHeight, setContainerPxHeight] = useState<number | null>(null);
   const isBatchingResetRef = useRef<boolean>(false);
@@ -880,8 +891,197 @@ export function LunoAgGrid<T = any>({
     return () => window.removeEventListener('resize', handleResize);
   }, [rows.length]);
 
+  // Scroll position tracking
+  const handleScroll = useCallback(() => {
+    const api = gridApiRef.current;
+    if (!api) return;
+    
+    const gridBodyViewport = api.getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
+    if (gridBodyViewport) {
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      
+      // Debounce scroll position saving
+      scrollTimeoutRef.current = setTimeout(() => {
+        // This will be handled by the parent component
+        // We'll emit the scroll position through a callback
+        if (onProvideRefresh) {
+          // We can extend the refresh API to include scroll position saving
+          // For now, we'll store it in a way that can be accessed by the parent
+          (api as any).__lastScrollTop = gridBodyViewport.scrollTop;
+          (api as any).__lastScrollLeft = gridBodyViewport.scrollLeft;
+        }
+      }, 300);
+    }
+  }, [onProvideRefresh]);
+
+  // Pre-render scroll positioning to eliminate flash
+  useEffect(() => {
+    if (scrollTop !== undefined && scrollLeft !== undefined) {
+      // Set initial state to hidden to prevent flash
+      const gridContainer = document.querySelector('.ag-root-wrapper');
+      if (gridContainer) {
+        (gridContainer as HTMLElement).style.visibility = 'hidden';
+        (gridContainer as HTMLElement).style.opacity = '0';
+      }
+    }
+  }, [scrollTop, scrollLeft]);
+
+  // Use AG Grid's built-in row positioning with proper data loading timing
+  useEffect(() => {
+    if (selectedRowIndex !== undefined && selectedRowData && gridApiRef.current) {
+      const positionRow = () => {
+        const api = gridApiRef.current;
+        if (api) {
+          // Try different ways to find the row
+          let targetRowNode = null;
+          
+          // Method 1: By row index
+          targetRowNode = api.getRowNode(selectedRowIndex.toString());
+          
+          // Method 2: By data matching
+          if (!targetRowNode && selectedRowData) {
+            api.forEachNode((node: any) => {
+              if (node.data && JSON.stringify(node.data) === JSON.stringify(selectedRowData)) {
+                targetRowNode = node;
+              }
+            });
+          }
+          
+          // Method 3: By order_number or item_number if available
+          if (!targetRowNode && selectedRowData) {
+            const keyField = selectedRowData.order_number ? 'order_number' : 
+                           selectedRowData.item_number ? 'item_number' : null;
+            if (keyField) {
+              api.forEachNode((node: any) => {
+                if (node.data && node.data[keyField] === selectedRowData[keyField]) {
+                  targetRowNode = node;
+                }
+              });
+            }
+          }
+          
+          if (targetRowNode) {
+            // Use the actual row index from the found node
+            const actualRowIndex = targetRowNode.rowIndex;
+            
+            // First, ensure the row is visible (this handles scrolling automatically)
+            api.ensureIndexVisible(actualRowIndex, 'middle');
+            
+            // Then select the row
+            api.deselectAll();
+            targetRowNode.setSelected(true);
+            
+            // Show the grid after positioning
+            const gridContainer = document.querySelector('.ag-root-wrapper');
+            if (gridContainer) {
+              (gridContainer as HTMLElement).style.visibility = '';
+              (gridContainer as HTMLElement).style.opacity = '';
+            }
+            return true;
+          } else {
+            return false;
+          }
+        }
+        return false;
+      };
+
+      // Use AG Grid's firstDataRendered event to ensure data is loaded
+      const api = gridApiRef.current;
+      const handleFirstDataRendered = () => {
+        // Try positioning with multiple attempts
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const tryPositioning = () => {
+          attempts++;
+          
+          if (positionRow()) {
+            if (api && !api.isDestroyed && api.removeEventListener) {
+              api.removeEventListener('firstDataRendered', handleFirstDataRendered);
+            }
+          } else if (attempts < maxAttempts) {
+            setTimeout(tryPositioning, 100);
+          } else {
+            const gridContainer = document.querySelector('.ag-root-wrapper');
+            if (gridContainer) {
+              (gridContainer as HTMLElement).style.visibility = '';
+              (gridContainer as HTMLElement).style.opacity = '';
+            }
+            if (api && !api.isDestroyed && api.removeEventListener) {
+              api.removeEventListener('firstDataRendered', handleFirstDataRendered);
+            }
+          }
+        };
+
+        // Start positioning after a small delay to ensure DOM is ready
+        setTimeout(tryPositioning, 50);
+      };
+
+      // Listen for first data rendered event
+      api.addEventListener('firstDataRendered', handleFirstDataRendered);
+      
+      // Cleanup function
+      return () => {
+        if (api && !api.isDestroyed && api.removeEventListener) {
+          api.removeEventListener('firstDataRendered', handleFirstDataRendered);
+        }
+      };
+    } else if (scrollTop !== undefined && scrollLeft !== undefined && gridApiRef.current) {
+      // Fallback to manual scroll if no row index provided
+      const viewport = document.querySelector('.ag-body-viewport');
+      if (viewport) {
+        viewport.scrollTop = scrollTop;
+        viewport.scrollLeft = scrollLeft;
+      }
+      
+      const gridContainer = document.querySelector('.ag-root-wrapper');
+      if (gridContainer) {
+        (gridContainer as HTMLElement).style.visibility = '';
+        (gridContainer as HTMLElement).style.opacity = '';
+      }
+    }
+  }, [selectedRowIndex, selectedRowData, scrollTop, scrollLeft, gridApiRef.current]);
+
+  // Row selection is now handled in onGridReady for better timing
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      // Clean up scroll event listener
+      const api = gridApiRef.current;
+      if (api && !api.isDestroyed) {
+        const gridBodyViewport = api.getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
+        if (gridBodyViewport) {
+          gridBodyViewport.removeEventListener('scroll', handleScroll);
+        }
+      }
+    };
+  }, [handleScroll]);
+
   function onGridReady(e: GridReadyEvent) {
     gridApiRef.current = e.api;
+    
+    // Set up scroll tracking
+    const gridBodyViewport = e.api.getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
+    if (gridBodyViewport) {
+      gridBodyViewport.addEventListener('scroll', handleScroll);
+    }
+
+    // Show grid immediately if no positioning needed
+    if (selectedRowIndex === undefined && scrollTop === undefined) {
+      const gridContainer = document.querySelector('.ag-root-wrapper');
+      if (gridContainer) {
+        (gridContainer as HTMLElement).style.visibility = '';
+        (gridContainer as HTMLElement).style.opacity = '';
+      }
+    }
+    
     // Avoid overriding cached widths on first paint
     const hasCachedWidths = Boolean(cachedView && (cachedView.fields || []).some(f => !!f.width));
     if (!hasCachedWidths) {
