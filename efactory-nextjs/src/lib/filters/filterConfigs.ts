@@ -312,6 +312,83 @@ export const gridFilterConfigs: GridFilterConfig = {
     return_status: { field: 'return_status', title: 'RETURN STATUS', type: 'DROPDOWN_QF', options: [ { key: 'Open', value: 'open', oper: '=' }, { key: 'Received', value: 'received', oper: '=' } ] } as any,
     return_type: { field: 'return_type', title: 'RETURN TYPE', type: 'DROPDOWN_QF', options: [ { key: 'RMA', value: 'RMA', oper: '=' }, { key: 'Undeliverables', value: 'Undeliverables', oper: '=' } ] } as any,
   },
+  // =====================
+  // ReturnTrak RMAs
+  // =====================
+  'returntrak-rmas-open': {
+    rma_date: { field: 'rma_date', title: 'RMA DATE', type: 'DATE_RANGE_CUSTOM_QF', allowClear: true } as any,
+    account_number: accountNumberQF,
+    rma_type_code: { field: 'rma_type_code', title: 'RMA TYPE', type: 'DROPDOWN_QF', options: [
+      { key: 'T01', value: 'T01', oper: '=' },
+      { key: 'T02', value: 'T02', oper: '=' },
+      { key: 'T03', value: 'T03', oper: '=' },
+      { key: 'T11', value: 'T11', oper: '=' },
+      { key: 'T12', value: 'T12', oper: '=' },
+      { key: 'T13', value: 'T13', oper: '=' },
+      { key: 'T21', value: 'T21', oper: '=' },
+      { key: 'T22', value: 'T22', oper: '=' },
+      { key: 'T23', value: 'T23', oper: '=' },
+      { key: 'T24', value: 'T24', oper: '=' },
+      { key: 'T25', value: 'T25', oper: '=' },
+      { key: 'T26', value: 'T26', oper: '=' },
+      { key: 'T31', value: 'T31', oper: '=' },
+      { key: 'T32', value: 'T32', oper: '=' },
+      { key: 'T33', value: 'T33', oper: '=' },
+      { key: 'T81', value: 'T81', oper: '=' },
+      { key: 'T82', value: 'T82', oper: '=' },
+      { key: 'T99', value: 'T99', oper: '=' },
+    ] } as any,
+    location: { field: 'location', title: 'RMA WAREHOUSE', type: 'DROPDOWN_QF', options: [] } as any,
+    last_receive_date: { field: 'last_receive_date', title: 'LAST RECEIVE DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
+  },
+  'returntrak-rmas-all': {
+    rma_date: { field: 'rma_date', title: 'RMA DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
+    account_number: accountNumberQF,
+    rma_type_code: { field: 'rma_type_code', title: 'RMA TYPE', type: 'DROPDOWN_QF' } as any,
+    rma_status: { field: 'rma_status', title: 'RMA STATUS', type: 'DROPDOWN_QF', options: [
+      { key: 'Open', value: 1, oper: '=' },
+      { key: 'Closed', value: 2, oper: '=' },
+      { key: 'Expired', value: 3, oper: '=' },
+      { key: 'Canceled', value: 4, oper: '=' },
+    ] } as any,
+    location: { field: 'location', title: 'RMA WAREHOUSE', type: 'DROPDOWN_QF', options: [] } as any,
+    last_receive_date: { field: 'last_receive_date', title: 'LAST RECEIVE DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
+    closed_date: { field: 'closed_date', title: 'CLOSED DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
+    label_used_date: { field: 'label_used_date', title: 'LABEL USED DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
+  },
+  'returntrak-rmas-items': {
+    rma_date: { field: 'rma_date', title: 'RMA DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
+    account_number: accountNumberQF,
+    rma_type_code: { field: 'rma_type_code', title: 'RMA TYPE', type: 'DROPDOWN_QF' } as any,
+    rma_status: { field: 'rma_status', title: 'RMA STATUS', type: 'DROPDOWN_QF' } as any,
+    location: { field: 'location', title: 'RMA WAREHOUSE', type: 'DROPDOWN_QF', options: [] } as any,
+    items_view: { field: 'items_view', title: 'ITEMS VIEW', type: 'DROPDOWN_QF', options: [
+      { key: 'Authorized', value: 'authorized', oper: '=' },
+      { key: 'Replacement', value: 'replacement', oper: '=' },
+    ] } as any,
+    last_receive_date: { field: 'last_receive_date', title: 'LAST RECEIVE DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
+  },
+  // ReturnTrak: shipped orders (fulfillment-rma)
+  'returntrak-shipped-orders': {
+    shipped_date: { field: 'shipped_date', title: 'SHIPPED DATE', type: 'DATE_RANGE_CUSTOM_QF', allowClear: false } as any,
+    account_number: accountNumberQF,
+    location: locationQF,
+    international_code: intCodeQF,
+    serial_number: { field: 'serial_number', title: 'SERIAL #', type: 'INPUT_TEXT_QF' } as any,
+  },
+  // =====================
+  // Analytics: Planning
+  // =====================
+  'analytics-planning-replenishment': {
+    recommended_qty_only: { field: 'recommended_qty_only', title: 'RECOMMENDED QTY ONLY', type: 'BOOLEAN_QF' } as any,
+    basis_level: { field: 'basis_level', title: 'BASIS LEVEL', type: 'INPUT_TEXT_QF' } as any,
+    target_level: { field: 'target_level', title: 'TARGET LEVEL', type: 'INPUT_TEXT_QF' } as any,
+  },
+  'analytics-planning-slowmoving': {
+    exclude_zero_qty: { field: 'exclude_zero_qty', title: 'EXCLUDE ZERO QTY', type: 'BOOLEAN_QF' } as any,
+    shipment_weeks: { field: 'shipment_weeks', title: 'SHIPMENT WEEKS', type: 'INPUT_TEXT_QF' } as any,
+    qty_less_than: { field: 'qty_less_than', title: 'QTY LESS THAN', type: 'INPUT_TEXT_QF' } as any,
+  },
   'order-items-backlog': {
     inv_type_region: warehouseQF,
     account_number: accountNumberQF,

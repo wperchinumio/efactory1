@@ -80,6 +80,16 @@ function deriveTitleFromPath(pathname: string): string {
     // Inventory (root pages)
     '/inventory/assembly': { pageTitle: 'ASSEMBLY', pageSubtitle: '' },
     '/inventory/returns': { pageTitle: 'RETURNS', pageSubtitle: '' },
+    // ReturnTrak
+    '/returntrak/rmas/open': { pageTitle: 'RMAS', pageSubtitle: 'OPEN' },
+    '/returntrak/rmas/all': { pageTitle: 'RMAS', pageSubtitle: 'ALL' },
+    '/returntrak/rmas/items': { pageTitle: 'RMAS', pageSubtitle: 'ITEMS' },
+    '/returntrak/shipped-orders': { pageTitle: 'ORDERS', pageSubtitle: 'SHIPPED' },
+    // Analytics: Planning
+    '/analytics/planning/replenishment': { pageTitle: 'PLANNING', pageSubtitle: 'REPLENISHMENT' },
+    '/analytics/planning/slowmoving': { pageTitle: 'PLANNING', pageSubtitle: 'SLOW MOVING' },
+    // Transportation Packages
+    '/transportation/packages/shipping-detail': { pageTitle: 'ORDERS', pageSubtitle: 'SHIPPED' },
   };
 
   const title = pathToTitle[pathname];
