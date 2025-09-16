@@ -582,6 +582,7 @@ export default function GridPage({
         <ItemOverview
           data={(itemOverlay as any).loading ? ({} as any) : itemOverlay}
           onClose={() => {
+            itemNavigation.clearNavigation();
             const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
             if (q.has('itemNum')) q.delete('itemNum');
             const base = (router as any).pathname || '';
@@ -590,6 +591,14 @@ export default function GridPage({
           }}
           onRefresh={refreshOrderData as any}
           loading={(itemOverlay as any).loading}
+          {...(itemNavigation.hasNavigation() ? {
+            onPrevious: handleNavigateItemPrevious,
+            onNext: handleNavigateItemNext
+          } : {})}
+          hasPrevious={itemNavigation.canNavigatePrevious()}
+          hasNext={itemNavigation.canNavigateNext()}
+          currentIndex={itemNavigation.getCurrentIndex()}
+          totalItems={itemNavigation.getTotalCount()}
         />
       </div>
     );

@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo } from 'react';
-import { IconChevronLeft, IconChevronRight, IconRefresh, IconX } from '@tabler/icons-react';
+import { IconChevronLeft, IconChevronRight, IconRefresh, IconX, IconSettings, IconChevronDown, IconEdit } from '@tabler/icons-react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import EditItemDialog from '@/components/overview/EditItemDialog';
 import type { ItemChartPointDto, ItemDetailResponseData, ItemStockRowDto } from '@/types/api/inventory';
 
 const ReactECharts = dynamic(() => import('echarts-for-react'), { ssr: false });
@@ -79,167 +80,397 @@ export default function ItemOverview({ data, onClose, onPrevious, onNext, hasPre
     { field: 'adjusted', color: '#777777', border: '#555555', name: 'Qty Adjusted' },
   ]), [charts]);
 
+  const [showEdit, setShowEdit] = React.useState(false);
+  const [showActionsMenu, setShowActionsMenu] = React.useState(false);
+
   return (
-    <div className="px-2">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Button variant="danger" size="small" onClick={onClose}>
-            Close
-          </Button>
-          <div className="text-base font-semibold">
-            <span className="text-success">ITEM #:</span>
-            <span className="ml-2">{detail.item_number}</span>
-            {detail.desc1 && (
-              <span className="ml-3 text-sm text-font-color-100">{detail.desc1}</span>
-            )}
+    <div className="bg-background rounded-xl border border-border-color shadow w-full max-w-[1800px] mx-auto overflow-hidden flex flex-col">
+      {/* Header section - EXACT same layout as OrderOverview */}
+      <div className="bg-background border-b border-border-color">
+        <div className="px-6 py-2">
+          {/* Single Row Header - Everything in one line */}
+          <div className="flex items-center justify-between">
+            {/* Left Side - Close Button + Item Info */}
+            <div className="flex items-center gap-4 flex-1">
+              {/* Close Button - moved to left side */}
+              <div className="flex items-center">
+                <Button
+                  onClick={onClose}
+                  variant="danger"
+                  size="small"
+                  icon={<IconX className="w-5 h-5" />}
+                  className="h-8 w-8 p-0"
+                  iconOnly
+                />
+                <div className="h-4 w-px bg-border-color ml-3"></div>
+              </div>
+
+                        <div className="flex items-center gap-3">
+                          <h1 className="text-lg font-bold text-font-color">Item #{detail.item_number}</h1>
+                          {(detail as any).status && (
+                            <span className="px-2 py-0.5 text-xs font-medium bg-orange-500 text-white rounded">
+                              {(detail as any).status}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-4 text-sm">
+                          {(detail as any).account_number && (
+                            <div>
+                              <span className="text-font-color-100">Account:</span>
+                              <span className="ml-1 font-medium text-font-color">{(detail as any).account_number}</span>
+                            </div>
+                          )}
+                          {(detail as any).order_number && (
+                            <div>
+                              <span className="text-font-color-100">Order:</span>
+                              <span className="ml-1 font-medium text-font-color">{(detail as any).order_number}</span>
+                            </div>
+                          )}
+                          {detail.warehouse && (
+                            <div>
+                              <span className="text-font-color-100">Warehouse:</span>
+                              <span className="ml-1 font-medium text-font-color">{detail.warehouse}</span>
+                            </div>
+                          )}
+                        </div>
+            </div>
+
+            {/* Right Side - Navigation + Actions */}
+            <div className="flex items-center">
+              {/* Navigation arrows and counter */}
+              {(hasPrevious || hasNext) && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        onClick={onPrevious || (() => {})}
+                        variant="outline"
+                        size="small"
+                        icon={<IconChevronLeft />}
+                        disabled={!hasPrevious}
+                        className="h-7 w-8 p-0"
+                      />
+                      <Button
+                        onClick={onNext || (() => {})}
+                        variant="outline"
+                        size="small"
+                        icon={<IconChevronRight />}
+                        disabled={!hasNext}
+                        className="h-7 w-8 p-0"
+                      />
+                    </div>
+                    
+                    {currentIndex && totalItems && (
+                      <div className="text-xs text-font-color-100 font-medium">
+                        {currentIndex} of {totalItems}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Vertical separator */}
+                  <div className="h-4 w-px bg-border-color mx-3"></div>
+                </>
+              )}
+
+              <div className="flex items-center gap-1">
+                <div className="relative">
+                  <Button
+                    variant="primary"
+                    size="small"
+                    icon={<IconSettings />}
+                    onClick={() => setShowActionsMenu(!showActionsMenu)}
+                    className="px-3 py-1.5 text-sm"
+                  >
+                    <span>Actions</span>
+                    <IconChevronDown className={`ml-2 w-3 h-3 transition-transform ${showActionsMenu ? 'rotate-180' : ''}`} />
+                  </Button>
+                  {showActionsMenu && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowActionsMenu(false)} />
+                      <div className="absolute right-0 top-full mt-1 w-56 bg-card-color border border-border-color rounded-lg shadow-xl z-50">
+                        <div className="py-1">
+                          <button
+                            onClick={() => { setShowEdit(true); setShowActionsMenu(false); }}
+                            className="w-full px-3 py-1.5 text-left text-sm text-font-color hover:bg-primary-10 hover:text-primary transition-all duration-200 flex items-center gap-2 rounded-sm"
+                          >
+                            <IconEdit className="w-4 h-4 text-font-color-100" />
+                            Edit item
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Refresh button */}
+                {onRefresh && (
+                  <Button
+                    variant="outline"
+                    size="small"
+                    icon={<IconRefresh />}
+                    onClick={onRefresh}
+                    className="h-7 w-8 p-0"
+                    iconOnly
+                  />
+                )}
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {typeof currentIndex === 'number' && typeof totalItems === 'number' && (
-            <div className="hidden md:flex items-center text-sm text-muted-foreground mr-2">
-              <span>{currentIndex}</span>
-              <span className="mx-1">/</span>
-              <span>{totalItems}</span>
+      </div>
+
+      {/* Content area with proper padding */}
+      <div className="p-6">
+        {/* Two column layout: Left (wider) + Right (narrower) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Stock Distribution + Charts */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Stock distribution table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Stock distribution by WH</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-auto">
+                  <table className="table-auto w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b">
+                        <th className="px-2 py-2 text-center">WH</th>
+                        <th className="px-2 py-2 text-right">Q ON HAND</th>
+                        <th className="px-2 py-2 text-right">Q ON HOLD</th>
+                        <th className="px-2 py-2 text-right">Q COMMITTED</th>
+                        <th className="px-2 py-2 text-right">Q IN PROCESS</th>
+                        <th className="px-2 py-2 text-right">Q ON FF</th>
+                        <th className="px-2 py-2 text-right">Q NET AVAIL.</th>
+                        <th className="px-2 py-2 text-right">OPEN WO</th>
+                        <th className="px-2 py-2 text-right">OPEN PO</th>
+                        <th className="px-2 py-2 text-right">OPEN RMA</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(stock.length ? stock : new Array(loading ? 3 : 0).fill({} as ItemStockRowDto)).map((s, idx) => (
+                        <tr key={idx} className="border-b last:border-b-0">
+                          <td className="px-2 py-2 text-center font-semibold text-primary">{formatWh(s)}</td>
+                          <TdNum v={s.qty_onhand} loading={!!loading && !stock.length} />
+                          <TdNum v={s.qty_onhold} loading={!!loading && !stock.length} />
+                          <TdNum v={s.qty_comm} loading={!!loading && !stock.length} />
+                          <TdNum v={s.qty_proc} loading={!!loading && !stock.length} />
+                          <TdNum v={s.qty_ff} loading={!!loading && !stock.length} />
+                          <TdNum v={s.qty_net} strong loading={!!loading && !stock.length} />
+                          <TdNum v={s.open_wo} loading={!!loading && !stock.length} />
+                          <TdNum v={s.open_po} loading={!!loading && !stock.length} />
+                          <TdNum v={s.open_rma} loading={!!loading && !stock.length} />
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader><CardTitle>Qty Shipped/Returned</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="h-[260px]">
+                    <ReactECharts option={shippedChart} style={{ height: '100%', width: '100%', opacity: loading ? 0.5 : 1 }} />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle>Qty Received/Adjusted</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="h-[260px]">
+                    <ReactECharts option={receivedChart} style={{ height: '100%', width: '100%', opacity: loading ? 0.5 : 1 }} />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          )}
-          {onPrevious && (
-            <Button variant="ghost" size="small" disabled={!hasPrevious} onClick={onPrevious}>
-              <IconChevronLeft size={18} />
-            </Button>
-          )}
-          {onNext && (
-            <Button variant="ghost" size="small" disabled={!hasNext} onClick={onNext}>
-              <IconChevronRight size={18} />
-            </Button>
-          )}
-          {onRefresh && (
-            <Button variant="ghost" size="small" onClick={onRefresh}>
-              <IconRefresh size={18} />
-            </Button>
-          )}
-          <Button variant="ghost" size="small" onClick={onClose}>
-            <IconX size={18} />
-          </Button>
+          </div>
+
+          {/* Right Column - Dropdown + 5 Panels */}
+          <div className="space-y-4">
+            {/* Account/Warehouse Selector */}
+            <Card>
+              <CardHeader>
+                <CardTitle>ACCOUNT # - WH:</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm">
+                  <select className="w-full p-2 border border-border-color rounded">
+                    <option>21590 - YK</option>
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Shipping Panel */}
+            <Card>
+              <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
+              <CardContent className="text-sm space-y-2">
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">UPC</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Weight</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Dimension</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Serial/Lot No</label>
+                  <div className="flex items-center gap-2">
+                    <input type="text" className="flex-1 p-1 border border-border-color rounded text-xs" />
+                    <input type="checkbox" className="w-4 h-4" />
+                    <input type="text" placeholder="Format" className="flex-1 p-1 border border-border-color rounded text-xs" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Export Panel */}
+            <Card>
+              <CardHeader><CardTitle>Export</CardTitle></CardHeader>
+              <CardContent className="text-sm space-y-2">
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">ECCN</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Harmonized Code</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Harmonized Code (CA)</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Country Of Origin</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">GL Symbol</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Category</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* DG Data Panel */}
+            <Card>
+              <CardHeader><CardTitle>DG Data</CardTitle></CardHeader>
+              <CardContent className="text-sm space-y-2">
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Li Battery Category</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Li Battery Config.</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Li Battery Type</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Cell/Batt. Per Retail Pack.</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Retail Units Per Inner Carton</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Retail Units Per Master Carton</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Watt/Hour Per Cell/Battery (&lt;=)</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Net Wgt of Li Battery (g)</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Basic Panel */}
+            <Card>
+              <CardHeader><CardTitle>Basic</CardTitle></CardHeader>
+              <CardContent className="text-sm space-y-2">
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Warehouse</label>
+                  <div className="text-sm text-font-color">YK - ZYKC</div>
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Cat 1.</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Cat 2.</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Cat 3.</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Lot # Assign.</label>
+                  <input type="text" className="w-full p-1 border border-border-color rounded text-xs" />
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Shelf Life Days</label>
+                  <div className="text-sm text-font-color">0</div>
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Re-Order Point</label>
+                  <div className="text-sm text-font-color">0</div>
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Re-Order Quantity</label>
+                  <div className="text-sm text-font-color">0</div>
+                </div>
+                <div>
+                  <label className="block text-xs text-font-color-100 mb-1">Pack Multiple</label>
+                  <div className="text-sm text-font-color">1</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* EDI Panel */}
+            <Card>
+              <CardHeader><CardTitle>EDI</CardTitle></CardHeader>
+              <CardContent>
+                <div className="bg-yellow-100 border border-yellow-300 rounded p-3 text-center text-sm text-yellow-800">
+                  No TP Item Configured!
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
-
-      {/* Stock distribution table */}
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Warehouse Distribution</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-auto">
-            <table className="table-auto w-full text-sm">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="px-2 py-2 text-center">WH</th>
-                  <th className="px-2 py-2 text-right">Q ON HAND</th>
-                  <th className="px-2 py-2 text-right">Q ON HOLD</th>
-                  <th className="px-2 py-2 text-right">Q COMMITTED</th>
-                  <th className="px-2 py-2 text-right">Q IN PROCESS</th>
-                  <th className="px-2 py-2 text-right">Q ON FF</th>
-                  <th className="px-2 py-2 text-right">Q NET AVAIL.</th>
-                  <th className="px-2 py-2 text-right">OPEN WO</th>
-                  <th className="px-2 py-2 text-right">OPEN PO</th>
-                  <th className="px-2 py-2 text-right">OPEN RMA</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(stock.length ? stock : new Array(loading ? 3 : 0).fill({} as ItemStockRowDto)).map((s, idx) => (
-                  <tr key={idx} className="border-b last:border-b-0">
-                    <td className="px-2 py-2 text-center font-semibold text-primary">{formatWh(s)}</td>
-                    <TdNum v={s.qty_onhand} loading={!!loading && !stock.length} />
-                    <TdNum v={s.qty_onhold} loading={!!loading && !stock.length} />
-                    <TdNum v={s.qty_comm} loading={!!loading && !stock.length} />
-                    <TdNum v={s.qty_proc} loading={!!loading && !stock.length} />
-                    <TdNum v={s.qty_ff} loading={!!loading && !stock.length} />
-                    <TdNum v={s.qty_net} strong loading={!!loading && !stock.length} />
-                    <TdNum v={s.open_wo} loading={!!loading && !stock.length} />
-                    <TdNum v={s.open_po} loading={!!loading && !stock.length} />
-                    <TdNum v={s.open_rma} loading={!!loading && !stock.length} />
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <Card>
-          <CardHeader><CardTitle>Last 10 days/weeks</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-[260px]">
-              <ReactECharts option={shippedChart} style={{ height: '100%', width: '100%', opacity: loading ? 0.5 : 1 }} />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle>&nbsp;</CardTitle></CardHeader>
-          <CardContent>
-            <div className="h-[260px]">
-              <ReactECharts option={receivedChart} style={{ height: '100%', width: '100%', opacity: loading ? 0.5 : 1 }} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Right side data panels: mimic legacy layout as stacked cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader><CardTitle>Shipping</CardTitle></CardHeader>
-          <CardContent className="text-sm grid grid-cols-2 gap-y-2">
-            <LabeledValue label="UPC" value={(loading ? '' : (shipping.upc || ''))} placeholder={loading} />
-            <LabeledValue label="Weight" value={String(shipping.weight || '')} />
-            <LabeledValue label="Dimension" value={(loading ? '' : (shipping.dimension || ''))} placeholder={loading} />
-            <LabeledValue label="Serial/Lot No" value={(loading ? '' : (shipping.serial_no || ''))} placeholder={loading} />
-            <LabeledValue label="Serial Format" value={(loading ? '' : (shipping.serial_format || ''))} placeholder={loading} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>Export</CardTitle></CardHeader>
-          <CardContent className="text-sm grid grid-cols-2 gap-y-2">
-            <LabeledValue label="ECCN" value={(loading ? '' : (exp.eccn || ''))} placeholder={loading} />
-            <LabeledValue label="Harmonized Code" value={(loading ? '' : (exp.hcode || ''))} placeholder={loading} />
-            <LabeledValue label="Harmonized Code (CA)" value={(loading ? '' : (exp.hcode_ca || ''))} placeholder={loading} />
-            <LabeledValue label="Country Of Origin" value={(loading ? '' : (exp.coo || ''))} placeholder={loading} />
-            <LabeledValue label="GL Symbol" value={(loading ? '' : (exp.gl || ''))} placeholder={loading} />
-            <LabeledValue label="Category" value={(loading ? '' : (exp.cat || ''))} placeholder={loading} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>DG Data</CardTitle></CardHeader>
-          <CardContent className="text-sm grid grid-cols-2 gap-y-2">
-            <LabeledValue label="Li Battery Category" value={(loading ? '' : (dg.li_b_cat || ''))} placeholder={loading} />
-            <LabeledValue label="Li Battery Config." value={(loading ? '' : (dg.li_b_conf || ''))} placeholder={loading} />
-            <LabeledValue label="Li Battery Type" value={(loading ? '' : (dg.li_t_type || ''))} placeholder={loading} />
-            <LabeledValue label="Cell/Batt. Per Retail Pack." value={toStr(dg.cell_rp)} />
-            <LabeledValue label="Retail Units Per Inner Carton" value={toStr(dg.unit_innerc)} />
-            <LabeledValue label="Retail Units Per Master Carton" value={toStr(dg.unit_masterc)} />
-            <LabeledValue label="Watt/Hour Per Cell/Battery (<=)" value={toStr(dg.wh_cell)} />
-            <LabeledValue label="Net Wgt of Li Battery (g)" value={toStr(dg.net_wh)} />
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-3">
-          <CardHeader><CardTitle>Basic</CardTitle></CardHeader>
-          <CardContent className="text-sm grid grid-cols-2 md:grid-cols-4 gap-y-2">
-            <LabeledValue label="Warehouse" value={(loading ? '' : (detail.warehouse || ''))} placeholder={loading} />
-            <LabeledValue label="Cat 1." value={(loading ? '' : (detail.cat1 || ''))} placeholder={loading} />
-            <LabeledValue label="Cat 2." value={(loading ? '' : (detail.cat2 || ''))} placeholder={loading} />
-            <LabeledValue label="Cat 3." value={(loading ? '' : (detail.cat3 || ''))} placeholder={loading} />
-            <LabeledValue label="Lot # Assign." value={(loading ? '' : (detail.lot_assign || ''))} placeholder={loading} />
-            <LabeledValue label="Shelf Life Days" value={toStr(detail.lot_exp)} />
-            <LabeledValue label="Re-Order Point" value={toStr(detail.reorder)} />
-            <LabeledValue label="Re-Order Quantity" value={toStr(detail.reorder_qty)} />
-            <LabeledValue label="Pack Multiple" value={toStr(detail.pack)} />
-          </CardContent>
-        </Card>
-      </div>
+      <EditItemDialog
+        open={showEdit}
+        onOpenChange={setShowEdit}
+        item={data}
+        accountWh={String((detail as any).account_wh || (detail as any).account_whs || '') || ''}
+        onSaved={(updated) => {
+          // naive update: replace local fields so UI reflects saved state; caller can refresh if needed
+          (data as any).detail = updated.detail || (data as any).detail;
+          (data as any).shipping = updated.shipping || (data as any).shipping;
+          (data as any).export = updated.export || (data as any).export;
+          (data as any).dg = updated.dg || (data as any).dg;
+        }}
+      />
     </div>
   );
 }
