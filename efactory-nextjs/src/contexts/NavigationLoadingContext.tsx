@@ -39,6 +39,11 @@ export const NavigationLoadingProvider: React.FC<NavigationLoadingProviderProps>
         return;
       }
 
+      // If a page indicates unsaved-changes blocking is active, do NOT start the animation
+      if (typeof window !== 'undefined' && (window as any).__EF_HAS_UNSAVED_CHANGES) {
+        return;
+      }
+
       setIsNavigating(true);
       setProgress(0);
       progressValue = 0;

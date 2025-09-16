@@ -5,14 +5,16 @@ interface SelectContextType {
   onValueChange: (value: string) => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  disabled: boolean;
 }
 
 const SelectContext = createContext<SelectContextType | null>(null);
 
-export interface SelectProps {
+export interface SelectProps extends React.HTMLAttributes<HTMLDivElement> {
   value?: string;
   onValueChange?: (value: string) => void;
   children: React.ReactNode;
+  disabled?: boolean;
 }
 
 export interface SelectTriggerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -33,7 +35,7 @@ export interface SelectValueProps {
 }
 
 const Select = React.forwardRef<HTMLDivElement, SelectProps>(
-  ({ value = '', onValueChange, children, ...props }, ref) => {
+  ({ value = '', onValueChange, children, disabled = false, ...props }, ref) => {
     const [open, setOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -52,8 +54,13 @@ const Select = React.forwardRef<HTMLDivElement, SelectProps>(
     }, [open]);
 
     return (
-      <SelectContext.Provider value={{ value, onValueChange: onValueChange || (() => {}), open, setOpen }}>
-        <div ref={containerRef} className="relative" {...props}>
+      <SelectContext.Provider value={{ value, onValueChange: onValueChange || (() => {}), open, setOpen, disabled }}>
+        <div
+          ref={containerRef}
+          className={`relative ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          aria-disabled={disabled}
+          {...props}
+        >
           {children}
         </div>
       </SelectContext.Provider>
@@ -72,7 +79,11 @@ const SelectTrigger = React.forwardRef<HTMLButtonElement, SelectTriggerProps>(
         ref={ref}
         type="button"
         className={`flex h-10 w-full items-center justify-between rounded-lg border px-3 py-2 text-sm bg-card-color border-border-color text-font-color placeholder:text-font-color-100 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
-        onClick={() => context.setOpen(!context.open)}
+        onClick={() => {
+          if (context.disabled || (props as any).disabled) return;
+          context.setOpen(!context.open);
+        }}
+        disabled={context.disabled || (props as any).disabled}
         {...props}
       >
         {children}

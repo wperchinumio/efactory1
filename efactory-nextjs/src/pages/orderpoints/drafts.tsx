@@ -67,7 +67,9 @@ export default function DraftsPage() {
 
   async function onEdit(order_id: number) {
     const data = await readOrderPoints({ action: 'read', order_id, from_draft: true })
-    storeOrderDraft(data as any)
+    // Normalize to legacy draft shape so OrderPoints detects draft mode reliably
+    const responseData = { data: { draft_order: data } } as any
+    storeOrderDraft(responseData)
     router.push('/orderpoints')
   }
 

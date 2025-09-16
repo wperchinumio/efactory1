@@ -454,8 +454,8 @@ export default function OrderPointsPage() {
         setIsInitialized(true)
         
         // Determine if this is a draft or regular order based on the data structure
-        // Use the isDraft metadata from consumeOrderDraft, or fall back to order_id check
-        const isDraft = orderData.isDraft || (order_id && String(order_id).startsWith('D'))
+        // Only trust the metadata we stored in session (no inference)
+        const isDraft = !!(orderData as any).isDraft
         
         
         if (isDraft) {
@@ -743,6 +743,10 @@ export default function OrderPointsPage() {
   
   // Handle browser beforeunload event to warn about unsaved changes
   useEffect(() => {
+    // Expose a global hint so NavigationLoadingContext can avoid starting the progress
+    if (typeof window !== 'undefined') {
+      (window as any).__EF_HAS_UNSAVED_CHANGES = hasUnsavedChanges
+    }
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault()
@@ -1384,11 +1388,11 @@ export default function OrderPointsPage() {
       const res = await updateOrder(orderHeader.order_id, header, convertedOrderDetail)
       
       // Use the response data directly (includes fresh detail_id values for new items)
-      if (res.data) {
+      if (res) {
         
         // Update the cart with fresh data (including new detail_id values)
-        const header = res.data.order_header || {}
-        const detail = Array.isArray(res.data.order_detail) ? res.data.order_detail : []
+        const header = (res as any).order_header || {}
+        const detail = Array.isArray((res as any).order_detail) ? (res as any).order_detail : []
         
         // Split flattened legacy header into our local states
         const {
@@ -2861,7 +2865,7 @@ export default function OrderPointsPage() {
                     >
                       {(() => {
                         const selectedItems = selectedRows.map(index => orderDetail[index]).filter(Boolean)
-                        const hasItemsInDatabase = selectedItems.some(item => item.detail_id > 0)
+                        const hasItemsInDatabase = selectedItems.some(item => (item?.detail_id ?? 0) > 0)
                         return hasItemsInDatabase ? 'Void selected' : 'Remove selected'
                       })()} {selectedRowsCount > 0 && `(${selectedRowsCount})`}
                     </Button>

@@ -257,14 +257,12 @@ export interface CreateOrderPointsResponse {
   draft_order?: OrderReadResponse;
 }
 
+// Legacy update response is not referenced elsewhere for structure; keep minimal fields we actually observe used
 export interface UpdateOrderResponse {
-  data: {
-    order_header: OrderHeaderDto;
-    order_detail: OrderDetailDto[];
-  };
-  error_message: string;
-  error_dialog: boolean;
-  internal_version: string;
+  order_header?: OrderHeaderDto;
+  order_detail?: OrderDetailDto[];
+  order_number?: string;
+  total_drafts?: number;
 }
 
 export interface SaveEntryResponse {

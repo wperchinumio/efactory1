@@ -1188,6 +1188,9 @@ export default function ReturnTrakEntryPage() {
   useEffect(() => {
     const routeChangeHandler = (url: string) => {
       if (hasUnsavedChanges) {
+        if (typeof window !== 'undefined') {
+          (window as any).__EF_HAS_UNSAVED_CHANGES = true
+        }
         pendingRouteRef.current = url;
         setShowLeaveConfirm(true);
         // Prevent navigation by throwing an error (this is the correct way)

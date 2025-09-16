@@ -98,6 +98,7 @@ import type {
   ExportAddressesRequest,
   AddressBookFilter,
   MassUploadEnvironment,
+  UpdateOrderResponse,
 } from '@/types/api/orderpoints';
 import type {
   FeedbackSubmissionRequest,
@@ -429,7 +430,7 @@ export async function updateOrder(order_id: number, order_header: OrderHeaderDto
   const res = await postJson<UpdateOrderResponse>('/api/orderpoints', body as any);
   
   
-  return res;
+  return res.data as any;
 }
 
 export async function readOrderPoints(params: ReadOrderPointsBody): Promise<OrderReadResponse | DraftOrderReadResponse> {
