@@ -25,6 +25,8 @@ export interface BaseFilterConfig {
   allowClear?: boolean;
   allOptionHidden?: boolean;
   nosort?: boolean;
+  // Optional hint to force single-select dropdown behavior
+  singleSelect?: boolean;
 }
 
 export interface DropdownFilterConfig extends BaseFilterConfig {

@@ -256,7 +256,7 @@ export const gridFilterConfigs: GridFilterConfig = {
     consigned: { field: 'consigned', title: 'CONSIGNED', type: 'BOOLEAN_QF' } as any,
     returns: { field: 'returns', title: 'RETURNS', type: 'BOOLEAN_QF' } as any,
     dcl_purchased: { field: 'dcl_purchased', title: 'DCL PURCHASED', type: 'BOOLEAN_QF' } as any,
-    status: { field: 'status', title: 'STATUS', type: 'DROPDOWN_QF', options: [ { key: 'Received', value: 'received', oper: '=' }, { key: 'To Receive', value: 'to_receive', oper: '=' } ] } as any,
+    status: { field: 'status', title: 'STATUS', type: 'DROPDOWN_QF', singleSelect: true, options: [ { key: 'Received', value: 'received', oper: '=' }, { key: 'To Receive', value: 'to_receive', oper: '=' } ] } as any,
   },
   'items-onhold': {
     inv_type_region: warehouseQF,
@@ -299,7 +299,7 @@ export const gridFilterConfigs: GridFilterConfig = {
     inv_type_region: warehouseQF,
     build_date: { field: 'build_date', title: 'START DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
     completion_date: { field: 'completion_date', title: 'COMPLETION DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
-    wo_status: { field: 'wo_status', title: 'WO STATUS', type: 'DROPDOWN_QF', allOptionHidden: true, options: [ { key: 'Open', value: 'open', oper: '=' }, { key: 'Complete', value: 'complete', oper: '=' } ] } as any,
+    wo_status: { field: 'wo_status', title: 'WO STATUS', type: 'DROPDOWN_QF', singleSelect: true, allOptionHidden: true, options: [ { key: 'Open', value: 'open', oper: '=' }, { key: 'Complete', value: 'complete', oper: '=' } ] } as any,
   },
   // =====================
   // Inventory: Returns
@@ -309,8 +309,8 @@ export const gridFilterConfigs: GridFilterConfig = {
     issued_date: { field: 'issued_date', title: 'ISSUED DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
     p_receipt_date: { field: 'p_receipt_date', title: 'P RECEIPT DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
     i_receipt_date: { field: 'i_receipt_date', title: 'I RECEIPT DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
-    return_status: { field: 'return_status', title: 'RETURN STATUS', type: 'DROPDOWN_QF', options: [ { key: 'Open', value: 'open', oper: '=' }, { key: 'Received', value: 'received', oper: '=' } ] } as any,
-    return_type: { field: 'return_type', title: 'RETURN TYPE', type: 'DROPDOWN_QF', options: [ { key: 'RMA', value: 'RMA', oper: '=' }, { key: 'Undeliverables', value: 'Undeliverables', oper: '=' } ] } as any,
+    return_status: { field: 'return_status', title: 'RETURN STATUS', type: 'DROPDOWN_QF', singleSelect: true, options: [ { key: 'Open', value: 'open', oper: '=' }, { key: 'Received', value: 'received', oper: '=' } ] } as any,
+    return_type: { field: 'return_type', title: 'RETURN TYPE', type: 'DROPDOWN_QF', singleSelect: true, options: [ { key: 'All', value: '', oper: '=' }, { key: 'RMA', value: 'RMA', oper: '=' }, { key: 'Undeliverables', value: 'Undeliverables', oper: '=' } ] } as any,
   },
   // =====================
   // ReturnTrak RMAs
@@ -345,7 +345,8 @@ export const gridFilterConfigs: GridFilterConfig = {
     rma_date: { field: 'rma_date', title: 'RMA DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
     account_number: accountNumberQF,
     rma_type_code: { field: 'rma_type_code', title: 'RMA TYPE', type: 'DROPDOWN_QF' } as any,
-    rma_status: { field: 'rma_status', title: 'RMA STATUS', type: 'DROPDOWN_QF', options: [
+    rma_status: { field: 'rma_status', title: 'RMA STATUS', type: 'DROPDOWN_QF', singleSelect: true, options: [
+      { key: 'All', value: '', oper: '=' },
       { key: 'Open', value: 1, oper: '=' },
       { key: 'Closed', value: 2, oper: '=' },
       { key: 'Expired', value: 3, oper: '=' },
@@ -360,9 +361,16 @@ export const gridFilterConfigs: GridFilterConfig = {
     rma_date: { field: 'rma_date', title: 'RMA DATE', type: 'DATE_RANGE_CUSTOM_QF' } as any,
     account_number: accountNumberQF,
     rma_type_code: { field: 'rma_type_code', title: 'RMA TYPE', type: 'DROPDOWN_QF' } as any,
-    rma_status: { field: 'rma_status', title: 'RMA STATUS', type: 'DROPDOWN_QF' } as any,
+    rma_status: { field: 'rma_status', title: 'RMA STATUS', type: 'DROPDOWN_QF', singleSelect: true, options: [
+      { key: 'All', value: '', oper: '=' },
+      { key: 'Open', value: 1, oper: '=' },
+      { key: 'Closed', value: 2, oper: '=' },
+      { key: 'Expired', value: 3, oper: '=' },
+      { key: 'Canceled', value: 4, oper: '=' },
+    ] } as any,
     location: { field: 'location', title: 'RMA WAREHOUSE', type: 'DROPDOWN_QF', options: [] } as any,
-    items_view: { field: 'items_view', title: 'ITEMS VIEW', type: 'DROPDOWN_QF', options: [
+    items_view: { field: 'items_view', title: 'ITEMS VIEW', type: 'DROPDOWN_QF', singleSelect: true, options: [
+      { key: 'All', value: '', oper: '=' },
       { key: 'Authorized', value: 'authorized', oper: '=' },
       { key: 'Replacement', value: 'replacement', oper: '=' },
     ] } as any,

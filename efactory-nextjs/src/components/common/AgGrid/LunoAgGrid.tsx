@@ -8,7 +8,7 @@ import { getAuthToken } from '@/lib/auth/storage';
 import { getCachedViewApiResponseIfExist, cacheViewApiResponse, removeExpiredViewsFromStorage } from '@/lib/grid/viewCache';
 import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView, GridSortSpec } from '@/types/api/grid';
 import type { FilterConfig, FilterState } from '@/types/api/filters';
-import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer } from './renderers';
+import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer, RmaLinkRenderer, StrongTextRenderer, PrimaryEmphasisRenderer, WarningTextRenderer, BoolRenderer, RmaTypeRenderer, BundleTypeRenderer, BundlePLRenderer, FilterLinkNumberRenderer, ItemLinkRenderer, BundleLinkRenderer, OrderOrRmaLinkRenderer, RtLinkRenderer, InvoiceRenderer, InvoiceLinksRenderer } from './renderers';
 import GridFilters from '@/components/filters/grid/GridFilters';
 import LoadingSpinner, { SkeletonGrid } from '@/components/common/LoadingSpinner';
 
@@ -20,7 +20,7 @@ export interface LunoAgGridProps<T = any> {
   onFetchRows: (page: number, pageSize: number, filter: GridFilter, sort: any, filter_id?: any) => Promise<GridRowResponse<T>>;
   paginationWord?: string; // for external display
   applyServerSort?: boolean;
-  onRowClicked?: (row: T) => void;
+  onRowClicked?: (row: T, event?: any) => void;
   // Legacy fixed columns
   showIndexColumn?: boolean;
   showOrderTypeColumn?: boolean;
@@ -50,9 +50,23 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     cellDataType: field.data_type === 'number' ? 'number' : 
                   field.data_type === 'date' || field.data_type === 'datetime' ? 'date' : 
                   'text', // Map data types to AG Grid supported types
-    cellClass: (params) => {
-      const align = field.align || 'left';
-      return align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
+    cellClass: () => {
+      const align = (field.align || 'left').toLowerCase();
+      // Use AG Grid's native alignment classes to work with flex cell layout
+      if (align === 'right') return ['ag-right-aligned-cell', 'text-right'];
+      if (align === 'center') return ['ag-center-aligned-cell', 'text-center'];
+      return ['text-left'];
+    },
+    // Enforce flex justification for Quartz theme which uses flex cells
+    cellStyle: () => {
+      const align = (field.align || 'left').toLowerCase();
+      const justify = align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start';
+      return {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: justify as any,
+        textAlign: align as any,
+      } as any;
     },
   };
 
@@ -129,6 +143,10 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
       colDef.type = 'numericColumn';
     } else if (id === 'fmtorderlink') {
       colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+    } else if (id === 'fmtorderorrmalink') {
+      colDef.cellRenderer = (p: any) => <OrderOrRmaLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+    } else if (id === 'fmtrmalink') {
+      colDef.cellRenderer = (p: any) => <RmaLinkRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtorderstage') {
       colDef.cellRenderer = (p: any) => <OrderStageRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtorderstatus') {
@@ -139,6 +157,36 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
       colDef.cellRenderer = (p: any) => <CarrierRenderer data={p.data} />;
     } else if (id === 'fmttracking') {
       colDef.cellRenderer = (p: any) => <TrackingRenderer data={p.data} field={p.colDef.field} />;
+    } else if (id === 'fmtitemlink') {
+      colDef.cellRenderer = (p: any) => <ItemLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+    } else if (id === 'fmtbundlelink') {
+      colDef.cellRenderer = (p: any) => <BundleLinkRenderer value={p.value} data={p.data} />;
+    } else if (id === 'fmtrtlink') {
+      colDef.cellRenderer = (p: any) => <RtLinkRenderer value={p.value} data={p.data} />;
+    } else if (id === 'fmtinv') {
+      colDef.cellRenderer = (p: any) => <InvoiceRenderer data={p.data} />;
+    } else if (id === 'fmtinvlinks') {
+      colDef.cellRenderer = (p: any) => <InvoiceLinksRenderer data={p.data} />;
+    } else if (id === 'fmtstrong') {
+      colDef.cellRenderer = (p: any) => <StrongTextRenderer value={p.value} />;
+    } else if (id === 'fmtmain') {
+      colDef.cellRenderer = (p: any) => <PrimaryEmphasisRenderer value={p.value} />;
+    } else if (id === 'fmtwarning') {
+      colDef.cellRenderer = (p: any) => <WarningTextRenderer value={p.value} />;
+    } else if (id === 'fmtbool') {
+      colDef.cellRenderer = (p: any) => <BoolRenderer value={p.value} />;
+    } else if (id === 'fmtrmatype') {
+      colDef.cellRenderer = (p: any) => <RmaTypeRenderer value={p.value} />;
+    } else if (id === 'fmtbundletype') {
+      colDef.cellRenderer = (p: any) => <BundleTypeRenderer value={p.value} />;
+    } else if (id === 'fmtbundlepl') {
+      colDef.cellRenderer = (p: any) => <BundlePLRenderer value={p.value} />;
+    } else if (
+      id === 'fmtdemandqty' || id === 'fmtdemandqty2' || id === 'fmtqonhandlink' || id === 'fmtqonholdlink' || id === 'fmtqonfflink' || id === 'fmtqopenpolink' || id === 'fmtqopenrmalink' || id === 'fmtqopenwolink' || id === 'fmtbeginbalancelink' || id === 'fmtsalesqtylink' || id === 'fmtreceiptslink' || id === 'fmtassembledqtylink' || id === 'fmttransferqtylink' || id === 'fmtadjustedqtylink' || id === 'fmtreturnqtylink' || id === 'fmtcountadjustedlink' || id === 'fmtqtyshippedlink' || id === 'fmtqtyalllink'
+    ) {
+      // Approximate legacy FilterLink behavior by linking to current path with qf_* params
+      const dec = Number(args[0] || '0');
+      colDef.cellRenderer = (p: any) => <FilterLinkNumberRenderer value={p.value} field={p.colDef.field} decimals={dec} />;
     }
   }
 
@@ -645,23 +693,20 @@ export function LunoAgGrid<T = any>({
             });
           }
         });
-      } else if (filterValue && filterValue.value !== null && filterValue.value !== '') {
-        // Handle single FilterValue
-        // Handle multi-select values (comma-separated)
-        if (filterValue.value.includes(',')) {
-          // Multi-select: use 'in' operator
-          filterConditions.push({
-            field: filterValue.field,
-            oper: 'in',
-            value: filterValue.value,
-          });
+      } else if (filterValue && (filterValue as any).value !== null && (filterValue as any).value !== '') {
+        // Handle single FilterValue (robust types)
+        const v = (filterValue as any).value;
+        const fieldName = (filterValue as any).field;
+        const oper = (filterValue as any).oper;
+        if (Array.isArray(v)) {
+          // Multi-select array → use 'in' with comma-separated values
+          filterConditions.push({ field: fieldName, oper: 'in', value: v.join(',') });
+        } else if (typeof v === 'string' && v.includes(',')) {
+          // Multi-select string (comma-separated)
+          filterConditions.push({ field: fieldName, oper: 'in', value: v });
         } else {
-          // Single value: use original operator
-          filterConditions.push({
-            field: filterValue.field,
-            oper: filterValue.oper,
-            value: filterValue.value,
-          });
+          // Primitive types (string|number|boolean)
+          filterConditions.push({ field: fieldName, oper, value: v });
         }
       }
     });
@@ -977,7 +1022,7 @@ export function LunoAgGrid<T = any>({
             rowData={rows}
             columnDefs={colDefs}
             onGridReady={onGridReady}
-            onRowClicked={(ev) => onRowClicked?.(ev.data)}
+            onRowClicked={(ev) => onRowClicked?.(ev.data, ev)}
             defaultColDef={{ 
               resizable: true, 
               sortable: !(loading || !rowsUrl),

@@ -240,7 +240,10 @@ export default function GridPage({
   }, []);
 
   // Handle row clicks to set up navigation and navigate to order
-  const handleRowClick = useCallback((row: any) => {
+  const handleRowClick = useCallback((row: any, ev?: any) => {
+    // If the original event target is an anchor, don't open order overlay
+    const isAnchor = ev?.event?.target?.closest && ev.event.target.closest('a');
+    if (isAnchor) return;
     if (onRowClicked) {
       onRowClicked(row);
       return;

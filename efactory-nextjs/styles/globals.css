@@ -493,6 +493,27 @@ body[data-luno-theme="dynamic"] {
   line-height: 1.4;
 }
 
+/* Ensure alignment classes actually move content in Quartz flex layout */
+.ag-right-aligned-cell .ag-cell-value {
+  justify-content: flex-end;
+  text-align: right;
+}
+.ag-center-aligned-cell .ag-cell-value {
+  justify-content: center;
+  text-align: center;
+}
+.ag-left-aligned-cell .ag-cell-value {
+  justify-content: flex-start;
+  text-align: left;
+}
+/* Also align the flex wrapper to enforce content placement */
+.ag-right-aligned-cell .ag-cell-wrapper { justify-content: flex-end !important; }
+.ag-center-aligned-cell .ag-cell-wrapper { justify-content: center !important; }
+.ag-left-aligned-cell .ag-cell-wrapper { justify-content: flex-start !important; }
+/* Fallback: ensure the cell itself has text-align for non-flex children */
+.ag-right-aligned-cell { text-align: right !important; }
+.ag-center-aligned-cell { text-align: center !important; }
+
 .ag-theme-quartz .ag-header-cell,
 .ag-theme-quartz-dark .ag-header-cell {
   display: flex;

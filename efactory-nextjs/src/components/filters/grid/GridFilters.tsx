@@ -146,8 +146,8 @@ export default function GridFilters({
     
     switch (config.type) {
       case 'DROPDOWN_QF':
-        // Check if this is a single-select filter (destination)
-        if (config.field === 'international_code' || config.field === 'destination') {
+        // Single-select hint (destination/international_code/status etc.)
+        if ((config as any).singleSelect || config.field === 'international_code' || config.field === 'destination') {
           // Single-select for destination
           let currentValue = '';
           if (value && !Array.isArray(value)) {
