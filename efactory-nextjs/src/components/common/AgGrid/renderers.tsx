@@ -47,10 +47,11 @@ export function PrimaryLinkRenderer({ value, data, field }: { value: any; data?:
   const base = typeof window !== 'undefined' ? window.location.pathname : router.pathname;
   const url = `${base}?orderNum=${encodeURIComponent(orderNum || String(value))}` + (accountNum ? `&accountNum=${encodeURIComponent(accountNum)}` : '');
   const onClick = (e: React.MouseEvent) => {
+    // Do not stop propagation so the grid row click can capture rows for navigation context
     e.preventDefault();
     router.push(url);
   };
-  return <a className="text-primary hover:underline font-semibold" style={{ display: 'inline-block', minWidth: 0 }} href={url} onClick={(e) => { e.stopPropagation(); onClick(e); }}>{String(value)}</a>;
+  return <a className="text-primary hover:underline font-semibold" style={{ display: 'inline-block', minWidth: 0 }} href={url} onClick={onClick}>{String(value)}</a>;
 }
 
 export function RmaLinkRenderer({ value, data }: { value: any; data?: any }) {
@@ -145,7 +146,9 @@ export function BundleLinkRenderer({ value, data }: { value: any; data?: any }) 
 export function OrderOrRmaLinkRenderer({ value, data, field }: { value: any; data?: any; field?: string }) {
   const hasRma = data?.rma_number;
   if (hasRma) return <RmaLinkRenderer value={data?.rma_number} data={data} />;
-  return <PrimaryLinkRenderer value={value} data={data} field={field} />;
+  const props: { value: any; data?: any; field?: string } = { value, data };
+  if (typeof field === 'string') props.field = field;
+  return <PrimaryLinkRenderer {...props} />;
 }
 
 // ReturnTrak link (generic): route with rmaNum param

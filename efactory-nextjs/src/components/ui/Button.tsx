@@ -66,8 +66,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({
            chartColor === 'chart4' ? 'bg-chart-color4 text-white hover:bg-chart-color4/90 focus:ring-chart-color4 border border-chart-color4' :
            'bg-chart-color5 text-white hover:bg-chart-color5/90 focus:ring-chart-color5 border border-chart-color5',
     
-    // Static color variants
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 border border-red-600',
+    // Static color variants (theme-aware via CSS variables)
+    danger: 'bg-[var(--danger)] text-white hover:bg-[var(--danger)] focus:ring-[var(--danger)] border border-[var(--danger)]',
     success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 border border-green-600',
     warning: 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500 border border-yellow-600'
   };

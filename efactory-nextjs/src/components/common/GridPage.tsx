@@ -11,6 +11,7 @@ import OrderOverview from '@/components/overview/OrderOverview';
 import MultipleOrdersGrid from '@/components/overview/MultipleOrdersGrid';
 import type { OrderDetailResult } from '@/types/api/orders';
 import { useOrderNavigation, type OrderNavigationItem } from '@/contexts/OrderNavigationContext';
+import { usePriorityFilters } from '@/hooks/useFulfillmentNavigation';
 
 export interface GridPageProps {
   resource: string; // e.g., 'fulfillment-open'
@@ -128,6 +129,7 @@ export default function GridPage({
   const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
   const [currentRows, setCurrentRows] = useState<any[]>([]);
   const orderNavigation = useOrderNavigation();
+  const { applyPriorityFilters } = usePriorityFilters();
 
   useEffect(() => {
     // Always attempt load once per mount; allow rerun if resource changes
@@ -141,7 +143,23 @@ export default function GridPage({
         setViewsUrl(cachedData.url);
         setViews(cachedData.views);
         const selected = cachedData.views.find((v: any) => v.selected) || cachedData.views[0];
-        setSelectedView(selected?.view || null);
+        let finalView = selected?.view || null;
+        
+        // Apply priority filters if they exist (cached view)
+        if (finalView) {
+          const originalFilters = finalView.filter || { and: [] };
+          const filtersWithPriority = applyPriorityFilters(originalFilters);
+          
+          if (JSON.stringify(filtersWithPriority) !== JSON.stringify(originalFilters)) {
+            console.log('🎯 GridPage (cached): Applying priority filters to view');
+            finalView = {
+              ...finalView,
+              filter: filtersWithPriority
+            };
+          }
+        }
+        
+        setSelectedView(finalView);
       }
     } catch {}
 
@@ -154,7 +172,26 @@ export default function GridPage({
         setViewsUrl(viewData.url);
         setViews(viewData.views);
         const selected = viewData.views.find(v => v.selected) || viewData.views[0];
-        setSelectedView(selected?.view || null);
+        let finalView = selected?.view || null;
+        
+        // Apply priority filters if they exist
+        if (finalView) {
+          const originalFilters = finalView.filter || { and: [] };
+          const filtersWithPriority = applyPriorityFilters(originalFilters);
+          
+          if (JSON.stringify(filtersWithPriority) !== JSON.stringify(originalFilters)) {
+            console.log('🎯 GridPage: Applying priority filters to view');
+            console.log('📋 Original view filters:', originalFilters);
+            console.log('🚀 Priority-enhanced filters:', filtersWithPriority);
+            
+            finalView = {
+              ...finalView,
+              filter: filtersWithPriority
+            };
+          }
+        }
+        
+        setSelectedView(finalView);
 
         // Persist full response in cache for next mount (needs url + views structure)
         cacheViewApiResponse(resource, { data: [viewData] });
@@ -241,34 +278,37 @@ export default function GridPage({
 
   // Handle row clicks to set up navigation and navigate to order
   const handleRowClick = useCallback((row: any, ev?: any) => {
-    // If the original event target is an anchor, don't open order overlay
+    // Determine order identifiers from row
+    const orderNumber = row.order_number || row.orderNumber || row.order_num;
+    const accountNumber = row.account_number || row.accountNumber || row.account_num;
+    // Detect anchor clicks (e.g., clicking the order link cell)
     const isAnchor = ev?.event?.target?.closest && ev.event.target.closest('a');
-    if (isAnchor) return;
+
     if (onRowClicked) {
       onRowClicked(row);
       return;
     }
 
-    // Check if this row has order information for navigation
-    const orderNumber = row.order_number || row.orderNumber || row.order_num;
-    const accountNumber = row.account_number || row.accountNumber || row.account_num;
-    
     if (orderNumber && currentRows.length > 0) {
       // Convert current rows to navigation items
       const navigationItems: OrderNavigationItem[] = currentRows
-        .filter(r => r.order_number || r.orderNumber || r.order_num) // Only include rows with order numbers
+        .filter(r => r.order_number || r.orderNumber || r.order_num)
         .map(r => ({
           order_number: r.order_number || r.orderNumber || r.order_num,
           account_number: r.account_number || r.accountNumber || r.account_num,
-          ...r // Include all row data
+          ...r
         }));
 
-      // Set up navigation context only if we have valid navigation items
       if (navigationItems.length > 0) {
         orderNavigation.setOrderList(navigationItems, orderNumber, pageKey);
       }
 
-      // Navigate to order detail
+      if (isAnchor) {
+        // Renderer will perform router.push; avoid double navigation
+        return;
+      }
+
+      // Navigate to order detail when clicking row (non-anchor areas)
       const q = new URLSearchParams();
       q.set('orderNum', orderNumber);
       if (accountNumber) {

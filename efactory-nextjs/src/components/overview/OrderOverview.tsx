@@ -271,10 +271,11 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
               <div className="flex items-center">
                 <Button
                   onClick={onClose}
-                  variant="outline"
+                  variant="danger"
                   size="small"
                   icon={<IconX className="w-5 h-5" />}
-                  className="h-8 w-8 p-0 text-red-600 hover:text-red-600 hover:bg-red-50 border-2 border-red-600 hover:border-red-600"
+                  className="h-8 w-8 p-0"
+                  iconOnly
                 />
                 <div className="h-4 w-px bg-border-color ml-3"></div>
               </div>

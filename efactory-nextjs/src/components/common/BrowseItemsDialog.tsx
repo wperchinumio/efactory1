@@ -4,7 +4,7 @@ import { Input, Label, Button, Select, SelectTrigger, SelectValue, SelectContent
 import { IconChevronLeft, IconChevronRight, IconChevronsLeft, IconChevronsRight } from '@tabler/icons-react';
 import { fetchInventoryForCart } from '@/services/api';
 import { returntrakInventoryCache } from '@/services/returntrakInventoryCache';
-import { InventoryItemForCartDto } from '@/types/api/orderpoints';
+import { InventoryItemForCartDto } from '@/types/api/inventory';
 
 interface BrowseItemsDialogProps {
   open: boolean;

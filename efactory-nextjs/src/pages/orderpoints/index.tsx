@@ -23,7 +23,8 @@ import { consumeOrderDraft } from '@/services/orderEntryCache'
 import { inventoryCache } from '@/services/inventoryCache'
 import { addressBookCache } from '@/services/addressBookCache'
 import formatOrderId from '@/utils/formatOrderId'
-import type { OrderHeaderDto, OrderDetailDto, InventoryStatusForCartBody, AddressDto, OrderPointsSettingsDto, ReadAddressesResponse } from '@/types/api/orderpoints'
+import type { OrderHeaderDto, OrderDetailDto, AddressDto, OrderPointsSettingsDto, ReadAddressesResponse } from '@/types/api/orderpoints'
+import type { InventoryStatusForCartBody } from '@/types/api/inventory'
 
 
 function isFiniteNumber(v: any): v is number {
