@@ -355,6 +355,14 @@ function OrderTopBar({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, 
                 </>
               )}
               
+              {/* Inline loading indicator while navigating to next/previous */}
+              {isNavigating && (
+                <div className="flex items-center gap-2 mr-3 text-xs text-font-color-100">
+                  <div className="w-3 h-3 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Loading...</span>
+                </div>
+              )}
+
               <div className="flex items-center gap-1">
                 <div className="relative">
                   <Button
@@ -733,6 +741,18 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
   const prevOrderNumberRef = useRef(currentOrderNumber)
   
   useEffect(() => {
+    // Signal to global nav loader to suppress while this component is active
+    if (typeof window !== 'undefined') {
+      ;(window as any).__EF_SUPPRESS_NAV_LOADING = true
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        ;(window as any).__EF_SUPPRESS_NAV_LOADING = false
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     // If order number changed, we're done navigating
     if (prevOrderNumberRef.current !== currentOrderNumber) {
       setIsNavigating(false)
@@ -865,18 +885,7 @@ export default function OrderOverview({ data, onClose, variant = 'overlay', onPr
           isNavigating={isNavigating}
         />
         
-        <div className={`flex-1 overflow-y-auto transition-all duration-200 relative ${isNavigating ? 'blur-sm opacity-60 pointer-events-none' : ''}`}>
-          {/* Loading overlay during navigation */}
-          {isNavigating && (
-            <div className="absolute inset-0 bg-background/20 z-10 flex items-center justify-center">
-              <div className="bg-background border border-border-color rounded-lg p-4 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-sm text-font-color-100">Loading order...</span>
-                </div>
-              </div>
-            </div>
-          )}
+        <div className={`flex-1 overflow-y-auto transition-all duration-200 relative ${isNavigating ? 'blur-[1px] opacity-98' : ''}`}>
           <div className="p-3 space-y-2">
             {/* Main Layout: 2 MAIN COLUMNS */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-2">

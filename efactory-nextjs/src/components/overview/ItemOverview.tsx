@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { IconChevronLeft, IconChevronRight, IconRefresh, IconX } from '@tabler/icons-react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -21,6 +21,18 @@ type Props = {
 };
 
 export default function ItemOverview({ data, onClose, onPrevious, onNext, hasPrevious, hasNext, currentIndex, totalItems, onRefresh, loading }: Props) {
+  useEffect(() => {
+    // Suppress global nav loader while this component is mounted
+    if (typeof window !== 'undefined') {
+      ;(window as any).__EF_SUPPRESS_NAV_LOADING = true
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        ;(window as any).__EF_SUPPRESS_NAV_LOADING = false
+      }
+    }
+  }, [])
+
   const charts = data.charts || [];
   const stock = data.stock || [];
   const detail = data.detail || {};

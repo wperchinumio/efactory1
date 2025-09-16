@@ -12,6 +12,18 @@ export default function ItemOverviewPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Suppress global nav loader while on ItemOverview page
+    if (typeof window !== 'undefined') {
+      ;(window as any).__EF_SUPPRESS_NAV_LOADING = true
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        ;(window as any).__EF_SUPPRESS_NAV_LOADING = false
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (!itemNum) return;
     (async () => {
       try {

@@ -123,7 +123,7 @@ export default function GridPage({
       const token = getAuthToken();
       const regionsMap = (token?.user_data as any)?.calc_account_regions || {};
       const keys = Object.keys(regionsMap);
-      if (keys.length > 0) return keys[0];
+      if (keys.length > 0) return keys[0] ?? '';
       const account = (token?.user_data as any)?.account || (token?.user_data as any)?.calc_accounts?.[0] || '';
       const region = (token?.user_data as any)?.region || (token?.user_data as any)?.calc_locations?.[0] || '';
       return account && region ? `${account}.${region}` : '';
@@ -144,6 +144,8 @@ export default function GridPage({
   const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
   const [currentRows, setCurrentRows] = useState<any[]>([]);
   const [itemOverlay, setItemOverlay] = useState<any | null>(null);
+  const orderOverlayRef = React.useRef<OrderDetailResult | null>(null);
+  const itemOverlayRef = React.useRef<any | null>(null);
   const orderNavigation = useOrderNavigation();
   const { applyPriorityFilters } = usePriorityFilters();
 
@@ -230,8 +232,10 @@ export default function GridPage({
     if (!orderNum) {
       setOrderOverlay(null);
     } else {
-      // Show immediate overlay placeholder while loading (legacy parity)
-      setOrderOverlay({ kind: 'loading' } as any);
+      // If no current overlay shown, show initial placeholder; otherwise keep previous data visible
+      if (!orderOverlayRef.current) {
+        setOrderOverlay({ kind: 'loading' } as any);
+      }
       try {
         const result = await readOrderDetail(orderNum, accountNum || undefined);
         setOrderOverlay(result);
@@ -244,8 +248,10 @@ export default function GridPage({
     if (!itemNum) {
       setItemOverlay(null);
     } else {
-      // Show immediate overlay placeholder while loading (legacy parity)
-      setItemOverlay({ loading: true } as any);
+      // If no current item overlay, show initial placeholder; otherwise keep previous data visible
+      if (!itemOverlayRef.current) {
+        setItemOverlay({ loading: true } as any);
+      }
       try {
         // Build minimal request using defaults (account_wh from local storage via API layer)
         const { readItemDetail } = await import('@/services/api');
@@ -262,6 +268,10 @@ export default function GridPage({
   useEffect(() => {
     refreshOrderData();
   }, [refreshOrderData]);
+
+  // Track latest overlays in refs for refresh behavior
+  useEffect(() => { orderOverlayRef.current = orderOverlay; }, [orderOverlay]);
+  useEffect(() => { itemOverlayRef.current = itemOverlay; }, [itemOverlay]);
 
   const onFetchRows = useCallback(
     async (page: number, pageSize: number, filter: GridFilter, sort: any, filter_id?: any): Promise<GridRowResponse<any>> => {
@@ -345,6 +355,8 @@ export default function GridPage({
         return;
       }
 
+      // Show immediate placeholder overlay BEFORE route change for instant UX
+      setOrderOverlay({ kind: 'loading' } as any);
       // Navigate to order detail when clicking row (non-anchor areas)
       const q = new URLSearchParams();
       q.set('orderNum', orderNumber);
@@ -357,6 +369,8 @@ export default function GridPage({
 
     // If user clicked somewhere else on rows in Items pages, open item detail
     if (!orderNumber && itemNumber) {
+      // Show immediate placeholder item overlay BEFORE route change
+      setItemOverlay({ loading: true } as any);
       const q = new URLSearchParams();
       q.set('itemNum', itemNumber);
       const base = router.pathname;
@@ -434,27 +448,14 @@ export default function GridPage({
     );
   }
 
-  // Show immediate placeholder overlay while item is loading (legacy parity)
-  if (itemOverlay && (itemOverlay as any).loading) {
-    return (
-      <div className="p-4 w-full">
-        <ItemOverview data={{} as any} loading onClose={() => {
-          const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
-          if (q.has('itemNum')) q.delete('itemNum');
-          const base = (router as any).pathname || '';
-          const search = q.toString();
-          router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
-        }} />
-      </div>
-    );
-  }
+  // Do not replace content with a loading placeholder; keep previous item data visible
 
-  // If an item overview is requested and loaded, replace grid with inline overview (same UX as orders)
-  if (itemOverlay && !itemOverlay.noResponse && !(itemOverlay as any).loading) {
+  // If an item overview is requested and loaded OR loading, replace grid with inline overview
+  if (itemOverlay && !itemOverlay.noResponse) {
     return (
       <div className="p-4 w-full">
         <ItemOverview
-          data={itemOverlay}
+          data={(itemOverlay as any).loading ? ({} as any) : itemOverlay}
           onClose={() => {
             const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
             if (q.has('itemNum')) q.delete('itemNum');
@@ -463,38 +464,20 @@ export default function GridPage({
             router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
           }}
           onRefresh={refreshOrderData as any}
+          loading={(itemOverlay as any).loading}
         />
       </div>
     );
   }
 
-  // Show immediate placeholder overlay while order is loading (legacy parity)
-  if (orderOverlay && (orderOverlay as any).kind === 'loading') {
-    return (
-      <div className="p-4 w-full">
-        <OrderOverview
-          // @ts-ignore – pass minimal shape and use loading states inside component
-          data={{} as any}
-          variant="inline"
-          onClose={() => {
-            const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
-            if (q.has('orderNum')) q.delete('orderNum');
-            if (q.has('accountNum')) q.delete('accountNum');
-            const base = (router as any).pathname || '';
-            const search = q.toString();
-            router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
-          }}
-        />
-      </div>
-    );
-  }
+  // Do not replace content with a loading placeholder; keep previous order data visible
 
-  // If an order overview is requested and single result loaded, replace grid with inline overview
-  if (orderOverlay && (orderOverlay as any).kind === 'single') {
+  // If an order overview is requested and single result loaded OR loading, replace grid with inline overview
+  if (orderOverlay && ((orderOverlay as any).kind === 'single' || (orderOverlay as any).kind === 'loading')) {
     return (
       <div className="p-4 w-full">
         <OrderOverview
-          data={(orderOverlay as any).order}
+          data={(orderOverlay as any).kind === 'single' ? (orderOverlay as any).order : ({} as any)}
           onClose={() => {
             orderNavigation.clearNavigation();
             const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
@@ -514,6 +497,8 @@ export default function GridPage({
           hasNext={orderNavigation.canNavigateNext()}
           currentIndex={orderNavigation.getCurrentIndex()}
           totalItems={orderNavigation.getTotalCount()}
+          // Pass a light loading hint when we're in loading state
+          {...(((orderOverlay as any).kind === 'loading') ? { } : {})}
         />
       </div>
     );

@@ -30,13 +30,38 @@ export const NavigationLoadingProvider: React.FC<NavigationLoadingProviderProps>
     let progressValue = 0;
 
     const handleRouteChangeStart = (url: string) => {
+      // If pages/components request to suppress global navigation loading, honor it
+      if (typeof window !== 'undefined' && (window as any).__EF_SUPPRESS_NAV_LOADING) {
+        return;
+      }
+
       // Only exclude hash-only changes, but include query parameter changes
       const currentPathWithQuery = router.asPath.split('#')[0];
       const newPathWithQuery = url.split('#')[0];
-      
+
       // If only the hash changed, don't show loading
       if (currentPathWithQuery === newPathWithQuery) {
         return;
+      }
+
+      // Suppress global loader when navigating within these overview pages
+      // even if the URL's query changes (next/prev actions)
+      try {
+        const suppressPages = new Set(['/overview/order-overview', '/overview/item-overview']);
+        const currentUrl = new URL(window.location.href);
+        const nextUrl = new URL(url, window.location.origin);
+
+        // Normalize by trimming trailing slashes (except root)
+        const normalize = (p: string) => (p !== '/' && p.endsWith('/') ? p.slice(0, -1) : p);
+        const currentPath = normalize(currentUrl.pathname);
+        const nextPath = normalize(nextUrl.pathname);
+
+        // If staying on the same overview page path, suppress global navigation loading
+        if (currentPath === nextPath && suppressPages.has(currentPath)) {
+          return;
+        }
+      } catch (_) {
+        // If URL parsing fails, fall back to default behavior
       }
 
       // If a page indicates unsaved-changes blocking is active, do NOT start the animation
