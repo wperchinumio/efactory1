@@ -1174,6 +1174,9 @@ export default function ReturnTrakEntryPage() {
 
   // Warn on browser refresh/close
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__EF_HAS_UNSAVED_CHANGES = hasUnsavedChanges
+    }
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges) {
         e.preventDefault();
@@ -2518,8 +2521,8 @@ export default function ReturnTrakEntryPage() {
             </p>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowLeaveConfirm(false); pendingRouteRef.current = null; }}>Stay</Button>
-            <Button onClick={() => { const next = pendingRouteRef.current; setShowLeaveConfirm(false); setHasUnsavedChanges(false); if (next) router.push(next); }}>Leave</Button>
+            <Button variant="outline" onClick={() => { setShowLeaveConfirm(false); pendingRouteRef.current = null; if (typeof window !== 'undefined') { (window as any).__EF_HAS_UNSAVED_CHANGES = hasUnsavedChanges } }}>Stay</Button>
+            <Button onClick={() => { const next = pendingRouteRef.current; setShowLeaveConfirm(false); setHasUnsavedChanges(false); if (typeof window !== 'undefined') { (window as any).__EF_HAS_UNSAVED_CHANGES = false } if (next) router.push(next); }}>Leave</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
