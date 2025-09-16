@@ -1,5 +1,5 @@
 import { fetchInventoryForCart } from './api';
-import { InventoryItemForCartDto } from '../types/api/orderpoints';
+import { InventoryItemForCartDto } from '../types/api/inventory';
 
 interface InventoryCacheEntry {
   data: InventoryItemForCartDto[];

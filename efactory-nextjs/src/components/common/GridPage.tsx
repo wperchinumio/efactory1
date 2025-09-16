@@ -46,6 +46,16 @@ function deriveTitleFromPath(pathname: string): string {
     '/order-items/backlog': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'BACKLOG ITEMS' },
     '/order-items/shipped': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'SHIPPED ITEMS' },
     '/order-items/all': { pageTitle: 'ORDER ITEMS', pageSubtitle: 'ALL ITEMS' },
+    // Items (Inventory)
+    '/inventory/items/status': { pageTitle: 'ITEMS', pageSubtitle: 'STATUS' },
+    '/inventory/items/receiving': { pageTitle: 'ITEMS', pageSubtitle: 'RECEIVING' },
+    '/inventory/items/onhold': { pageTitle: 'ITEMS', pageSubtitle: 'ON HOLD' },
+    '/inventory/items/transactions': { pageTitle: 'ITEMS', pageSubtitle: 'TRANSACTIONS' },
+    '/inventory/items/lotmaster': { pageTitle: 'ITEMS', pageSubtitle: 'LOT MASTER' },
+    '/inventory/items/asofadate': { pageTitle: 'ITEMS', pageSubtitle: 'AS OF A DATE' },
+    '/inventory/items/trsummary': { pageTitle: 'ITEMS', pageSubtitle: 'TRANSACTION SUMMARY' },
+    '/inventory/items/cyclecount': { pageTitle: 'ITEMS', pageSubtitle: 'CYCLE COUNT' },
+    '/inventory/items/dg-data': { pageTitle: 'ITEMS', pageSubtitle: 'DG DATA' },
     
     // Ship Detail
     '/detail/freight': { pageTitle: 'SHIP DETAIL', pageSubtitle: 'FREIGHT' },
@@ -67,6 +77,9 @@ function deriveTitleFromPath(pathname: string): string {
     '/edi/tp-items': { pageTitle: 'EDI', pageSubtitle: 'TP ITEMS' },
     '/edi/tp-addresses': { pageTitle: 'EDI', pageSubtitle: 'TP Addresses' },
     '/transportation/orders': { pageTitle: 'ORDERS', pageSubtitle: 'FREIGHT' },
+    // Inventory (root pages)
+    '/inventory/assembly': { pageTitle: 'ASSEMBLY', pageSubtitle: '' },
+    '/inventory/returns': { pageTitle: 'RETURNS', pageSubtitle: '' },
   };
 
   const title = pathToTitle[pathname];

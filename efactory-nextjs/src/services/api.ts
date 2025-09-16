@@ -73,8 +73,6 @@ import type {
   DraftOrderReadResponse,
   GenerateOrderNumberBody,
   GenerateOrderNumberResponse,
-  InventoryItemForCartDto,
-  InventoryStatusForCartBody,
   ListDraftsBody,
   ListDraftsResponse,
   OrderDetailDto as OPOrderDetailDto,
@@ -100,6 +98,29 @@ import type {
   MassUploadEnvironment,
   UpdateOrderResponse,
 } from '@/types/api/orderpoints';
+import type {
+  InventoryItemForCartDto,
+  InventoryStatusForCartBody,
+  ReadDangerousGoodsBody,
+  ReadDangerousGoodsResponse,
+  UpdateDangerousGoodsBody,
+  ReadLotRevisionBody,
+  ReadLotRevisionResponse,
+  UpdateLotRevisionBody,
+  ReadBundleDataBody,
+  ReadBundleDataResponse,
+  SaveBundleDataBody,
+  ExpireBundleBody,
+  EditAsnLineBody,
+  CancelAsnLineBody,
+  CloseShortAsnLineBody,
+  ReadItemDetailBody,
+  ReadItemDetailResponse,
+  UpdateItemBody,
+  UpdateItemResponse,
+  ReadCyclecountChartBody,
+  ReadCyclecountChartResponse,
+} from '@/types/api/inventory';
 import type {
   FeedbackSubmissionRequest,
   FeedbackSubmissionResponse,
@@ -536,6 +557,88 @@ export async function fetchInventoryForCart(args: Omit<InventoryStatusForCartBod
   const res = await postJson<{ rows: InventoryItemForCartDto[]; total: number }>('/api/inventory', payload as any);
   // Some legacy responses use data.rows; normalize
   return res.data;
+}
+
+// ==========================
+// Inventory: DG Data
+// ==========================
+export async function readDangerousGoods(item_number: string, account_wh: string): Promise<ReadDangerousGoodsResponse['data']> {
+  const body: ReadDangerousGoodsBody = { action: 'get_dg_data', item_number, account_wh };
+  const res = await postJson<ReadDangerousGoodsResponse>('/api/inventory', body as any);
+  return res.data as any;
+}
+
+export async function updateDangerousGoods(data: UpdateDangerousGoodsBody['data']): Promise<void> {
+  const body: UpdateDangerousGoodsBody = { action: 'post_dg_data', data };
+  await postJson<Record<string, never>>('/api/inventory', body as any);
+}
+
+// ==========================
+// Inventory: Lot Revision
+// ==========================
+export async function readLotRevision(payload: ReadLotRevisionBody): Promise<ReadLotRevisionResponse['data']> {
+  const res = await postJson<ReadLotRevisionResponse>('/api/inventory', payload as any);
+  return res.data as any;
+}
+
+export async function updateLotRevision(lot_master: UpdateLotRevisionBody['data']): Promise<void> {
+  const body: UpdateLotRevisionBody = { action: 'post_lot_revision', data: lot_master };
+  await postJson<Record<string, never>>('/api/inventory', body as any);
+}
+
+// ==========================
+// Inventory: Bundle & ASN Helpers
+// ==========================
+export async function readBundleData(bundle_item_id: number, warehouseRegion: string): Promise<ReadBundleDataResponse['data']> {
+  const body: ReadBundleDataBody = { action: 'get_bundle_data', bundle_item_id, warehouse: warehouseRegion };
+  const res = await postJson<ReadBundleDataResponse>('/api/inventory', body as any);
+  return res.data as any;
+}
+
+export async function saveBundleData(data: SaveBundleDataBody['data']): Promise<void> {
+  const body: SaveBundleDataBody = { action: 'save_bundle_data', data };
+  await postJson<Record<string, never>>('/api/inventory', body as any);
+}
+
+export async function expireBundle(bundle_item_id: number, warehouseRegion: string): Promise<void> {
+  const body: ExpireBundleBody = { action: 'expire_bundle', data: { bundle_item_id, warehouse: warehouseRegion } };
+  await postJson<Record<string, never>>('/api/inventory', body as any);
+}
+
+export async function editAsnLine(dcl_po: string | number, dcl_po_line: string | number, order_type: string, new_date: string): Promise<void> {
+  const body: EditAsnLineBody = { action: 'edit_asn_line', data: { dcl_po, dcl_po_line, order_type, new_date } };
+  await postJson<Record<string, never>>('/api/inventory', body as any);
+}
+
+export async function cancelAsnLine(dcl_po: string | number, dcl_po_line: string | number, order_type: string): Promise<void> {
+  const body: CancelAsnLineBody = { action: 'cancel_asn_line', data: { dcl_po, dcl_po_line, order_type } };
+  await postJson<Record<string, never>>('/api/inventory', body as any);
+}
+
+export async function closeShortAsnLine(dcl_po: string | number, dcl_po_line: string | number, order_type: string): Promise<void> {
+  const body: CloseShortAsnLineBody = { action: 'close_short_asn_line', data: { dcl_po, dcl_po_line, order_type } };
+  await postJson<Record<string, never>>('/api/inventory', body as any);
+}
+
+// ==========================
+// Inventory: Item Detail (Invoices/Edit Item)
+// ==========================
+export async function readItemDetail(payload: ReadItemDetailBody): Promise<ReadItemDetailResponse['data']> {
+  const res = await postJson<ReadItemDetailResponse>('/api/inventory', payload as any);
+  return res.data as any;
+}
+
+export async function updateItem(payload: UpdateItemBody): Promise<UpdateItemResponse['data']> {
+  const res = await postJson<UpdateItemResponse>('/api/inventory', payload as any);
+  return res.data as any;
+}
+
+// ==========================
+// Inventory: Cyclecount Chart (Analytics)
+// ==========================
+export async function readCyclecountChart(body: ReadCyclecountChartBody): Promise<ReadCyclecountChartResponse['data']> {
+  const res = await postJson<ReadCyclecountChartResponse>('/api/inventory', body as any);
+  return res.data as any;
 }
 
 // Order Points Settings

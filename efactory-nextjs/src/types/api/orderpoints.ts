@@ -214,27 +214,7 @@ export interface CloneOrderBody {
   account_number: string;
 }
 
-// Inventory modal
-export interface InventoryFilterClause {
-  field: string;
-  oper: '=' | '!=' | '>' | '<' | '>=' | '<=' | 'like';
-  value: string | number | boolean;
-}
-
-export interface InventoryStatusForCartBody {
-  resource: 'inventory-status-for-cart';
-  action: 'read';
-  page_size: number;
-  page_num: number;
-  sort?: Array<Record<string, 'asc' | 'desc'>>;
-  filter: { and: InventoryFilterClause[] };
-}
-
-export interface InventoryItemForCartDto {
-  item_number: string;
-  description: string;
-  qty_net: number;
-}
+// Inventory modal types moved to src/types/api/inventory.ts
 
 // Responses (partial, extend as needed)
 export interface GenerateOrderNumberResponse {
