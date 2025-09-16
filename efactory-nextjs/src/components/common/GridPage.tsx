@@ -8,6 +8,7 @@ import { getFiltersForPage } from '@/lib/filters/filterConfigs';
 import type { GridFilter, GridRowResponse, GridSelectedView, GridViewItemMeta } from '@/types/api/grid';
 import type { FilterState } from '@/types/api/filters';
 import OrderOverview from '@/components/overview/OrderOverview';
+import ItemOverview from '@/components/overview/ItemOverview';
 import MultipleOrdersGrid from '@/components/overview/MultipleOrdersGrid';
 import type { OrderDetailResult } from '@/types/api/orders';
 import { useOrderNavigation, type OrderNavigationItem } from '@/contexts/OrderNavigationContext';
@@ -116,6 +117,20 @@ export default function GridPage({
   showOrderTypeColumn = true,
   onRowClicked,
 }: GridPageProps) {
+  async function getDefaultAccountWh(): Promise<string> {
+    try {
+      const { getAuthToken } = await import('@/lib/auth/storage');
+      const token = getAuthToken();
+      const regionsMap = (token?.user_data as any)?.calc_account_regions || {};
+      const keys = Object.keys(regionsMap);
+      if (keys.length > 0) return keys[0];
+      const account = (token?.user_data as any)?.account || (token?.user_data as any)?.calc_accounts?.[0] || '';
+      const region = (token?.user_data as any)?.region || (token?.user_data as any)?.calc_locations?.[0] || '';
+      return account && region ? `${account}.${region}` : '';
+    } catch {
+      return '';
+    }
+  }
   const router = useRouter();
   const [viewsUrl, setViewsUrl] = useState<string>('');
   const [views, setViews] = useState<GridViewItemMeta[]>([]);
@@ -128,6 +143,7 @@ export default function GridPage({
   const gridControlsRef = React.useRef<{ refresh: () => void; resetAll: () => void } | null>(null);
   const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
   const [currentRows, setCurrentRows] = useState<any[]>([]);
+  const [itemOverlay, setItemOverlay] = useState<any | null>(null);
   const orderNavigation = useOrderNavigation();
   const { applyPriorityFilters } = usePriorityFilters();
 
@@ -213,13 +229,33 @@ export default function GridPage({
     const accountNum = q.get('accountNum');
     if (!orderNum) {
       setOrderOverlay(null);
-      return;
+    } else {
+      // Show immediate overlay placeholder while loading (legacy parity)
+      setOrderOverlay({ kind: 'loading' } as any);
+      try {
+        const result = await readOrderDetail(orderNum, accountNum || undefined);
+        setOrderOverlay(result);
+      } catch (e) {
+        setOrderOverlay({ kind: 'not_found' } as any);
+      }
     }
-    try {
-      const result = await readOrderDetail(orderNum, accountNum || undefined);
-      setOrderOverlay(result);
-    } catch (e) {
-      setOrderOverlay({ kind: 'not_found' } as any);
+    // Item overlay: ?itemNum=...
+    const itemNum = q.get('itemNum');
+    if (!itemNum) {
+      setItemOverlay(null);
+    } else {
+      // Show immediate overlay placeholder while loading (legacy parity)
+      setItemOverlay({ loading: true } as any);
+      try {
+        // Build minimal request using defaults (account_wh from local storage via API layer)
+        const { readItemDetail } = await import('@/services/api');
+        const account_wh = await getDefaultAccountWh();
+        const payload: any = { action: 'item_detail', item_number: itemNum, warehouse: '', account_wh, weeks: false };
+        const result = await readItemDetail(payload);
+        setItemOverlay(result);
+      } catch {
+        setItemOverlay({ noResponse: true });
+      }
     }
   }, [router.asPath]);
 
@@ -281,6 +317,7 @@ export default function GridPage({
     // Determine order identifiers from row
     const orderNumber = row.order_number || row.orderNumber || row.order_num;
     const accountNumber = row.account_number || row.accountNumber || row.account_num;
+    const itemNumber = row.item_number || row.itemNumber || row.item_num;
     // Detect anchor clicks (e.g., clicking the order link cell)
     const isAnchor = ev?.event?.target?.closest && ev.event.target.closest('a');
 
@@ -314,6 +351,14 @@ export default function GridPage({
       if (accountNumber) {
         q.set('accountNum', accountNumber);
       }
+      const base = router.pathname;
+      router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
+    }
+
+    // If user clicked somewhere else on rows in Items pages, open item detail
+    if (!orderNumber && itemNumber) {
+      const q = new URLSearchParams();
+      q.set('itemNum', itemNumber);
       const base = router.pathname;
       router.push(`${base}?${q.toString()}`, undefined, { shallow: true });
     }
@@ -385,6 +430,61 @@ export default function GridPage({
             <button onClick={() => window.location.reload()} className="btn btn-primary">Retry</button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Show immediate placeholder overlay while item is loading (legacy parity)
+  if (itemOverlay && (itemOverlay as any).loading) {
+    return (
+      <div className="p-4 w-full">
+        <ItemOverview data={{} as any} loading onClose={() => {
+          const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
+          if (q.has('itemNum')) q.delete('itemNum');
+          const base = (router as any).pathname || '';
+          const search = q.toString();
+          router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+        }} />
+      </div>
+    );
+  }
+
+  // If an item overview is requested and loaded, replace grid with inline overview (same UX as orders)
+  if (itemOverlay && !itemOverlay.noResponse && !(itemOverlay as any).loading) {
+    return (
+      <div className="p-4 w-full">
+        <ItemOverview
+          data={itemOverlay}
+          onClose={() => {
+            const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
+            if (q.has('itemNum')) q.delete('itemNum');
+            const base = (router as any).pathname || '';
+            const search = q.toString();
+            router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+          }}
+          onRefresh={refreshOrderData as any}
+        />
+      </div>
+    );
+  }
+
+  // Show immediate placeholder overlay while order is loading (legacy parity)
+  if (orderOverlay && (orderOverlay as any).kind === 'loading') {
+    return (
+      <div className="p-4 w-full">
+        <OrderOverview
+          // @ts-ignore – pass minimal shape and use loading states inside component
+          data={{} as any}
+          variant="inline"
+          onClose={() => {
+            const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
+            if (q.has('orderNum')) q.delete('orderNum');
+            if (q.has('accountNum')) q.delete('accountNum');
+            const base = (router as any).pathname || '';
+            const search = q.toString();
+            router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+          }}
+        />
       </div>
     );
   }
@@ -496,6 +596,26 @@ export default function GridPage({
         onProvideRefresh={(api) => { gridControlsRef.current = api; }}
       />
       ) : null}
+      {itemOverlay && !itemOverlay.noResponse && (
+        <div className="mt-4">
+          <ItemOverview
+            data={itemOverlay}
+            onClose={() => {
+              const q = new URLSearchParams(router.asPath.split('?')[1] || '');
+              if (q.has('itemNum')) q.delete('itemNum');
+              const base = (router as any).pathname || '';
+              const search = q.toString();
+              router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
+            }}
+            onRefresh={refreshOrderData as any}
+          />
+        </div>
+      )}
+      {itemOverlay && itemOverlay.noResponse && (
+        <div className="mt-4 px-4 py-10 text-center text-font-color-100 border border-border-color rounded-xl bg-card-color">
+          Item not found.
+        </div>
+      )}
       {orderOverlay && orderOverlay.kind === 'single' && (
         <div className="mt-4">
           <OrderOverview

@@ -192,13 +192,87 @@ export interface ReadItemDetailBody {
   weeks: string | number | boolean; // legacy uses truthy/number of weeks
 }
 
+// ============================
+// Item Detail (overview/status page parity)
+// ============================
+
+export interface ItemChartPointDto {
+  period: string;
+  shipped?: number;
+  returned?: number;
+  received?: number;
+  adjusted?: number;
+}
+
+export interface ItemStockRowDto {
+  location?: string; // e.g., "LA"
+  branch?: string;   // e.g., "ZLDC"
+  qty_onhand?: number;
+  qty_onhold?: number;
+  qty_comm?: number;
+  qty_proc?: number;
+  qty_ff?: number;
+  qty_net?: number;
+  open_wo?: number;
+  open_po?: number;
+  open_rma?: number;
+}
+
+export interface ItemShippingDto {
+  upc?: string;
+  weight?: string | number;
+  dimension?: string;
+  serial_no?: string;
+  serial_format?: string;
+  lot_days?: string | number;
+  lot_format?: string;
+}
+
+export interface ItemExportDto {
+  eccn?: string;
+  hcode?: string;
+  hcode_ca?: string;
+  coo?: string;
+  gl?: string;
+  cat?: string;
+}
+
+export interface ItemDgDto {
+  li_b_cat?: string;
+  li_b_conf?: string;
+  li_t_type?: string;
+  cell_rp?: string | number;
+  unit_innerc?: string | number;
+  unit_masterc?: string | number;
+  wh_cell?: string | number;
+  net_wh?: string | number;
+}
+
+export interface ItemDetailSectionDto {
+  item_number?: string;
+  desc1?: string;
+  desc2?: string;
+  lot_exp?: string | number;
+  reorder?: string | number;
+  reorder_qty?: string | number;
+  lot_assign?: string;
+  pack?: string | number;
+  cat1?: string;
+  cat2?: string;
+  cat3?: string; // KEY indicator
+  cat4?: string;
+  warehouse?: string;
+}
+
 export interface ItemDetailResponseData {
-  detail?: { item_number?: string; [key: string]: unknown };
-  shipping?: Record<string, unknown>;
-  export?: Record<string, unknown>;
-  dg?: Record<string, unknown>;
-  edi?: unknown[];
-  [key: string]: unknown;
+  detail?: ItemDetailSectionDto;
+  shipping?: ItemShippingDto;
+  export?: ItemExportDto;
+  dg?: ItemDgDto;
+  edi?: Array<{ tp?: string; item_number?: string }>;
+  charts?: ItemChartPointDto[];
+  stock?: ItemStockRowDto[];
+  noResponse?: boolean; // legacy pattern when not found
 }
 
 export type ReadItemDetailResponse = ApiResponse<ItemDetailResponseData>;

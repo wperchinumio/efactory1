@@ -5,6 +5,7 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import AuthErrorBoundary from "@/components/auth/AuthErrorBoundary";
 import { ToastContainer } from "@/components/ui/Toast";
 import { OrderNavigationProvider } from "@/contexts/OrderNavigationContext";
+import { ItemNavigationProvider } from "@/contexts/ItemNavigationContext";
 import "../../styles/globals.css";
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -61,6 +62,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <AuthErrorBoundary>
         <AuthGuard isAuthRoute={isAuthRoute}>
           <OrderNavigationProvider>
+            <ItemNavigationProvider>
             {
               isAuthRoute ? (
                 <AuthLayout>
@@ -72,6 +74,7 @@ export default function App({ Component, pageProps }: AppProps) {
                 </Layout>
               )
             }
+            </ItemNavigationProvider>
           </OrderNavigationProvider>
         </AuthGuard>
         <ToastContainer />

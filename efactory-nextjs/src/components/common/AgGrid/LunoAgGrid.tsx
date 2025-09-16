@@ -211,14 +211,16 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     }
   }
 
-  // Fallback: if the legacy view doesn't provide render but column is order_stage, apply renderer
-  if (!colDef.cellRenderer && field.field && field.field.toLowerCase() === 'order_stage') {
-    colDef.cellRenderer = (p: any) => <OrderStageRenderer value={p.value} data={p.data} />;
-  }
-
-  // Fallback: if the legacy view doesn't provide render but column is order_number, apply link renderer
-  if (!colDef.cellRenderer && field.field && field.field.toLowerCase() === 'order_number') {
-    colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+  // Fallbacks (safe): only apply when no renderer was set above
+  if (!colDef.cellRenderer && field.field) {
+    const ff = field.field.toLowerCase();
+    if (ff === 'order_stage') {
+      colDef.cellRenderer = (p: any) => <OrderStageRenderer value={p.value} data={p.data} />;
+    } else if (ff === 'order_number') {
+      colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+    } else if (ff === 'item_number' || ff.endsWith('item_number')) {
+      colDef.cellRenderer = (p: any) => <ItemLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+    }
   }
 
   return colDef;

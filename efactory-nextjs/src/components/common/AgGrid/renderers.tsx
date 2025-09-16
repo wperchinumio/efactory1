@@ -120,14 +120,18 @@ export function FilterLinkNumberRenderer({ value, field, decimals = 0 }: { value
   );
 }
 
-// Item link: emulate legacy item link behavior via filter params
+// Item link: EXACT same pattern as orders, but with ?itemNum
 export function ItemLinkRenderer({ value, data, field = 'item_number' }: { value: any; data?: any; field?: string }) {
   const router = useRouter();
-  const item = String(value ?? data?.[field] ?? '');
+  const item = String(value ?? (data ? data[field] : '') ?? '');
   if (!item) return <span />;
   const base = typeof window !== 'undefined' ? window.location.pathname : router.pathname;
-  const url = `${base}?qf_field=${encodeURIComponent(field)}&qf_value=${encodeURIComponent(item)}`;
-  const onClick = (e: React.MouseEvent) => { e.preventDefault(); router.push(url); };
+  const url = `${base}?itemNum=${encodeURIComponent(item)}`;
+  const onClick = (e: React.MouseEvent) => {
+    // Mirror order renderer behavior: allow row click to capture navigation list
+    e.preventDefault();
+    router.push(url);
+  };
   return <a href={url} onClick={onClick} className="text-primary font-semibold" style={{ display: 'inline-block', minWidth: 0 }}>{item}</a>;
 }
 
@@ -140,36 +144,6 @@ export function BundleLinkRenderer({ value, data }: { value: any; data?: any }) 
   const url = `${base}?qf_field=bundle_item_number&qf_value=${encodeURIComponent(bundle)}`;
   const onClick = (e: React.MouseEvent) => { e.preventDefault(); router.push(url); };
   return <a href={url} onClick={onClick} className="text-primary font-semibold" style={{ display: 'inline-block', minWidth: 0 }}>{bundle}</a>;
-}
-
-// Order or RMA link: pick best available
-export function OrderOrRmaLinkRenderer({ value, data, field }: { value: any; data?: any; field?: string }) {
-  const hasRma = data?.rma_number;
-  if (hasRma) return <RmaLinkRenderer value={data?.rma_number} data={data} />;
-  const props: { value: any; data?: any; field?: string } = { value, data };
-  if (typeof field === 'string') props.field = field;
-  return <PrimaryLinkRenderer {...props} />;
-}
-
-// ReturnTrak link (generic): route with rmaNum param
-export function RtLinkRenderer({ value, data }: { value: any; data?: any }) {
-  return <RmaLinkRenderer value={value} data={data} />;
-}
-
-// Invoice icons/text (light approximation)
-export function InvoiceRenderer({ data }: { data?: any }) {
-  const hasInvoice = !!data?.url_invoice;
-  if (!hasInvoice) return <span />;
-  return (
-    <span className="inline-flex gap-2">
-      <span title="Invoice (PDF)">🧾</span>
-      <span title="Invoice Detail (Excel)">📊</span>
-    </span>
-  );
-}
-
-export function InvoiceLinksRenderer({ data }: { data?: any }) {
-  return <InvoiceRenderer data={data} />;
 }
 
 // Map order type to a color class similar to legacy
@@ -211,13 +185,13 @@ export function OrderTypePill({ orderType }: { orderType?: string }) {
   );
 }
 
-// Legacy-like order stage: color-coded bar with label (kept as originally implemented)
+// Legacy-like order stage bar
 export function OrderStageRenderer({ value, data }: { value: number; data?: any }) {
   const stage = Number(value || 0);
   const label: string = data?.stage_description || '';
   const colorMap = {
-    dark: '#111827',            // dark
-    redThunderbird: '#D91E18',  // thunderbird
+    dark: '#111827',
+    redThunderbird: '#D91E18',
     red: '#EF4444',
     yellowGold: '#E87E04',
     yellowHaze: '#c5bf66',
@@ -250,16 +224,8 @@ export function OrderStageRenderer({ value, data }: { value: number; data?: any 
 export function OrderStatusRenderer({ value }: { value: any }) {
   const status = Number(value);
   const label = status === 0 ? 'On Hold' : status === 1 ? 'Normal' : status === 2 ? 'Rush' : 'Unknown';
-  
-  // Use exact legacy colors to ensure operators can distinguish status correctly
-  if (status === 0) {
-    // ON HOLD uses #c11515 (font-red-soft from legacy)
-    return <span className="font-semibold" style={{ color: '#c11515' }}>{label}</span>;
-  } else if (status === 2) {
-    // RUSH uses #8775a7 (font-purple-plum from legacy)
-    return <span className="font-semibold" style={{ color: '#8775a7' }}>{label}</span>;
-  }
-  
+  if (status === 0) return <span className="font-semibold" style={{ color: '#c11515' }}>{label}</span>;
+  if (status === 2) return <span className="font-semibold" style={{ color: '#8775a7' }}>{label}</span>;
   return <span>{label}</span>;
 }
 
@@ -285,13 +251,7 @@ export function CarrierRenderer({ data }: { data: any }) {
       <span className="font-semibold">{carrier}</span> - <span>{service}</span>
       <br />
       {trl ? (
-        <a
-          href={trl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-primary text-[14px]"
-          onClick={(e) => { e.stopPropagation(); }}
-        >
+        <a href={trl} target="_blank" rel="noreferrer" className="text-primary text-[14px]" onClick={(e) => { e.stopPropagation(); }}>
           {tr}
         </a>
       ) : (
@@ -308,18 +268,26 @@ export function TrackingRenderer({ data, field }: { data: any; field: string }) 
   if (trl) {
     return (
       <span className="text-primary font-semibold">
-        <a
-          href={trl}
-          target="_blank"
-          rel="noreferrer"
-          onClick={(e) => { e.stopPropagation(); }}
-        >
-          {tr}
-        </a>
+        <a href={trl} target="_blank" rel="noreferrer" onClick={(e) => { e.stopPropagation(); }}>{tr}</a>
       </span>
     );
   }
   return <span className="text-primary font-semibold">{tr}</span>;
+}
+
+export function InvoiceRenderer({ data }: { data?: any }) {
+  const hasInvoice = !!data?.url_invoice;
+  if (!hasInvoice) return <span />;
+  return (
+    <span className="inline-flex gap-2">
+      <span title="Invoice (PDF)">🧾</span>
+      <span title="Invoice Detail (Excel)">📊</span>
+    </span>
+  );
+}
+
+export function InvoiceLinksRenderer({ data }: { data?: any }) {
+  return <InvoiceRenderer data={data} />;
 }
 
 // ==========================
