@@ -124,6 +124,56 @@ export const totalTypeQF: FilterConfig = {
   type: 'TOTAL_QF'
 };
 
+// Invoices
+export const invoiceDateQF: FilterConfig = {
+  field: 'invoice_date',
+  title: 'INVOICE DATE',
+  type: 'DATE_RANGE_CUSTOM_QF',
+  iconClassName: 'fa fa-calendar',
+  width: '140px',
+  allowClear: true
+};
+
+// Freight Charges (billing)
+function generateBillingPeriodOptions(count: number = 17) {
+  const options: { key: string; value: string; oper: '=' }[] = [];
+  const now = new Date();
+  for (let i = 0; i < count; i++) {
+    // End of month of the (now - i months)
+    const d = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const s = `${yyyy}-${mm}`;
+    options.push({ key: s, value: s, oper: '=' });
+  }
+  return options;
+}
+
+export const tbpPeriodQF: FilterConfig = {
+  field: 'tbp_period',
+  title: 'BILLING PERIOD',
+  type: 'DROPDOWN_QF',
+  iconClassName: 'fa fa-calendar',
+  width: '140px',
+  nosort: true,
+  // Multi-select by default (singleSelect omitted)
+  options: generateBillingPeriodOptions(),
+} as any;
+
+export const billingCategoryQF: FilterConfig = {
+  field: 'billing_category',
+  title: 'CATEGORY',
+  type: 'DROPDOWN_QF',
+  iconClassName: 'fa fa-list',
+  width: '160px',
+  nosort: true,
+  options: [
+    { key: 'Fulfillment', value: 'GF01', oper: '=' },
+    { key: 'Returns, Others', value: 'GF02', oper: '=' },
+    { key: 'Adjustments', value: 'GF03', oper: '=' },
+  ]
+} as any;
+
 // Grid-specific filter configurations
 export const gridFilterConfigs: GridFilterConfig = {
   'orders-open': {
@@ -441,6 +491,18 @@ export const gridFilterConfigs: GridFilterConfig = {
     international_code: intCodeQF,
     received_date: receivedDateQF
   }
+};
+
+// Extend with Invoices admin tasks
+gridFilterConfigs['invoices-all'] = {
+  invoice_date: invoiceDateQF,
+};
+
+gridFilterConfigs['invoices-freight-charges'] = {
+  tbp_period: tbpPeriodQF,
+  inv_type_region: warehouseQF,
+  account_number: accountNumberQF,
+  billing_category: billingCategoryQF,
 };
 
 // Helper function to get filters for a specific page

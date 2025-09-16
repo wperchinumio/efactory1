@@ -2,6 +2,7 @@
 // Source: src/components/OrderPoints/**/redux.js
 
 import type { ApiResponse } from './index';
+import type { GridFilter } from './grid';
 
 // Common
 export interface AddressDto {
@@ -352,4 +353,36 @@ export interface ReadOrderPointsSettingsRequest {
 
 export type ReadOrderPointsSettingsResponse = ApiResponse<OrderPointsSettingsDto>;
 
+
+// ==========================
+// FTP Batches (OrderPoints)
+// ==========================
+
+export interface FtpBatchRow {
+  id: number;
+  row_id?: number;
+  account_number: string;
+  location: string;
+  received_date: string; // ISO date/time
+  name: string; // batch name
+  filename?: string | null;
+  ack_filename?: string | null;
+  total_orders?: number;
+  total_imported?: number;
+  error_message?: string | null;
+  has_email?: boolean | number; // legacy may send 0/1
+}
+
+export interface ListFtpBatchesBody {
+  action: 'list_batches';
+  filter: GridFilter;
+  page_num: number;
+  page_size: number;
+  sort: Array<Record<string, 'asc' | 'desc'>>;
+}
+
+export interface ListFtpBatchesResponse {
+  rows: FtpBatchRow[];
+  total: number;
+}
 

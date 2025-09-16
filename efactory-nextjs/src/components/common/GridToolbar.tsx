@@ -22,6 +22,10 @@ export interface GridToolbarProps {
   currentSort: Array<Record<string, 'asc' | 'desc'>>;
   // Latest filter state from LunoAgGrid (used for export conversion)
   filterState?: FilterState;
+  // Visibility toggles (for pages without views/filters/export)
+  showViewsActions?: boolean;
+  showFilterActions?: boolean;
+  showRefresh?: boolean;
 }
 
 function buildExportFilter(filterState?: FilterState, fallback?: GridFilter): GridFilter {
@@ -54,7 +58,10 @@ export default function GridToolbar({
   onRefresh,
   currentFilter,
   currentSort,
-  filterState
+  filterState,
+  showViewsActions = true,
+  showFilterActions = true,
+  showRefresh = true,
 }: GridToolbarProps) {
   const [savedFilters, setSavedFilters] = useState<{ id: number; name: string; selected?: boolean }[]>([]);
   const [loadingFilters, setLoadingFilters] = useState(false);
@@ -160,121 +167,73 @@ export default function GridToolbar({
 
           {/* Right side - Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Views Split Button */}
-            <div className="inline-flex rounded-md border border-border-color bg-card-color shadow-sm">
-              {/* Left side - Refresh button */}
-              <button 
-                onClick={() => {
-                  // Refresh the grid by calling the API again
-                  onRefresh?.();
-                }}
-                className="inline-flex items-center h-8 px-3 text-xs font-medium rounded-l-md border-r border-border-color bg-card-color text-font-color hover:bg-primary-10 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 min-w-[100px]"
-              >
-                <IconRefresh size={12} className="mr-2" />
-                {selectedLabel}
-              </button>
-              
-              {/* Right side - Dropdown trigger */}
-              <div className="relative">
+            {showViewsActions ? (
+              <div className="inline-flex rounded-md border border-border-color bg-card-color shadow-sm">
                 <button 
-                  className="inline-flex items-center justify-center h-8 px-2 text-xs font-medium rounded-r-md bg-card-color text-font-color hover:bg-primary-10 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={() => setViewsOpen(!viewsOpen)}
+                  onClick={() => { onRefresh?.(); }}
+                  className="inline-flex items-center h-8 px-3 text-xs font-medium rounded-l-md border-r border-border-color bg-card-color text-font-color hover:bg-primary-10 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 min-w-[100px]"
                 >
-                  <IconChevronDown size={12} />
+                  <IconRefresh size={12} className="mr-2" />
+                  {selectedLabel}
                 </button>
-                
-                {viewsOpen && (
-                  <>
-                    <div 
-                      className="fixed inset-0 z-10" 
-                      onClick={() => setViewsOpen(false)}
-                    />
-                    <div 
-                      className="absolute right-0 top-full mt-1 min-w-[200px] bg-card-color border border-border-color text-font-color shadow-xl rounded-md z-20"
-                      style={{ 
-                        backgroundColor: 'var(--card-color)', 
-                        borderColor: 'var(--border-color)',
-                        color: 'var(--font-color)',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                      }}
-                    >
-                      <div className="text-sm font-medium text-font-color px-2 py-1.5 border-b border-border-color">Views</div>
-                      {views.map((v) => (
-                        <button
-                          key={v.id} 
-                          onClick={() => {
-                            handleSelectView(v.id);
-                            setViewsOpen(false);
-                          }} 
-                          className={`w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 flex items-center ${v.selected ? 'bg-primary-10' : ''}`}
-                          style={{ backgroundColor: v.selected ? 'var(--primary-10)' : 'transparent' }}
-                        >
-                          <div className="w-3 h-3 mr-2 flex items-center justify-center">
-                            {v.selected && <IconCheck size={12} className="text-primary" />}
-                          </div>
-                          <span className={v.selected ? 'font-semibold text-primary' : 'text-font-color'}>{v.name}</span>
+                <div className="relative">
+                  <button 
+                    className="inline-flex items-center justify-center h-8 px-2 text-xs font-medium rounded-r-md bg-card-color text-font-color hover:bg-primary-10 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => setViewsOpen(!viewsOpen)}
+                  >
+                    <IconChevronDown size={12} />
+                  </button>
+                  {viewsOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setViewsOpen(false)} />
+                      <div 
+                        className="absolute right-0 top-full mt-1 min-w-[200px] bg-card-color border border-border-color text-font-color shadow-xl rounded-md z-20"
+                        style={{ backgroundColor: 'var(--card-color)', borderColor: 'var(--border-color)', color: 'var(--font-color)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
+                      >
+                        <div className="text-sm font-medium text-font-color px-2 py-1.5 border-b border-border-color">Views</div>
+                        {views.map((v) => (
+                          <button
+                            key={v.id}
+                            onClick={() => { handleSelectView(v.id); setViewsOpen(false); }}
+                            className={`w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 flex items-center ${v.selected ? 'bg-primary-10' : ''}`}
+                            style={{ backgroundColor: v.selected ? 'var(--primary-10)' : 'transparent' }}
+                          >
+                            <div className="w-3 h-3 mr-2 flex items-center justify-center">{v.selected && <IconCheck size={12} className="text-primary" />}</div>
+                            <span className={v.selected ? 'font-semibold text-primary' : 'text-font-color'}>{v.name}</span>
+                          </button>
+                        ))}
+                        <div className="border-t border-border-color my-1"></div>
+                        <button onClick={() => { setManageOpen(true); setViewsOpen(false); }} className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center">
+                          <IconSettings size={12} className="mr-2" />
+                          Customize…
                         </button>
-                      ))}
-                      <div className="border-t border-border-color my-1"></div>
-                      <button 
-                        onClick={() => {
-                          setManageOpen(true);
-                          setViewsOpen(false);
-                        }} 
-                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center"
-                      >
-                        <IconSettings size={12} className="mr-2" />
-                        Customize…
-                      </button>
-                      <div className="border-t border-border-color my-1"></div>
-                      <button 
-                        onClick={() => {
-                          handleExport('excel');
-                          setViewsOpen(false);
-                        }} 
-                        disabled={!!exporting} 
-                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50"
-                      >
-                        {exporting === 'excel' ? 'Exporting…' : 'Export to Excel'}
-                      </button>
-                      <button 
-                        onClick={() => {
-                          handleExport('csv');
-                          setViewsOpen(false);
-                        }} 
-                        disabled={!!exporting} 
-                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50"
-                      >
-                        {exporting === 'csv' ? 'Exporting…' : 'Export to CSV'}
-                      </button>
-                      <button 
-                        onClick={() => {
-                          handleExport('zip');
-                          setViewsOpen(false);
-                        }} 
-                        disabled={!!exporting} 
-                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50"
-                      >
-                        {exporting === 'zip' ? 'Exporting…' : 'Export to Zip'}
-                      </button>
-                      <div className="border-t border-border-color my-1"></div>
-                      <button 
-                        onClick={() => {
-                          setScheduleOpen(true);
-                          setViewsOpen(false);
-                        }} 
-                        className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center"
-                      >
-                        <IconCalendar size={12} className="mr-2" />
-                        Schedule report…
-                      </button>
-                    </div>
-                  </>
-                )}
+                        <div className="border-t border-border-color my-1"></div>
+                        <button onClick={() => { handleExport('excel'); setViewsOpen(false); }} disabled={!!exporting} className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50">{exporting === 'excel' ? 'Exporting…' : 'Export to Excel'}</button>
+                        <button onClick={() => { handleExport('csv'); setViewsOpen(false); }} disabled={!!exporting} className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50">{exporting === 'csv' ? 'Exporting…' : 'Export to CSV'}</button>
+                        <button onClick={() => { handleExport('zip'); setViewsOpen(false); }} disabled={!!exporting} className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color disabled:opacity-50">{exporting === 'zip' ? 'Exporting…' : 'Export to Zip'}</button>
+                        <div className="border-t border-border-color my-1"></div>
+                        <button onClick={() => { setScheduleOpen(true); setViewsOpen(false); }} className="w-full text-left text-sm px-2 py-1.5 hover:bg-primary-10 text-font-color flex items-center">
+                          <IconCalendar size={12} className="mr-2" />
+                          Schedule report…
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
+            ) : (
+              showRefresh ? (
+                <button 
+                  onClick={() => { onRefresh?.(); }}
+                  className="inline-flex items-center h-8 px-3 text-xs font-medium rounded-md border border-border-color bg-card-color text-font-color hover:bg-primary-10 focus:outline-none focus:ring-1 focus:ring-primary focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <IconRefresh size={12} className="mr-2" />
+                  Refresh
+                </button>
+              ) : null
+            )}
 
-            {/* Filters Dropdown */}
+            {showFilterActions && (
             <div className="relative">
               <button 
                 className={`inline-flex items-center justify-between h-8 px-3 text-xs font-medium rounded-md border focus:outline-none focus:ring-1 focus:ring-opacity-20 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 min-w-[100px] ${
@@ -369,6 +328,7 @@ export default function GridToolbar({
                 </>
               )}
             </div>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRouter } from 'next/router';
+import { downloadFtpAck, downloadFtpBatch } from '@/services/api';
 
 export function DateRenderer({ value }: { value: any }) {
   if (!value) return <span />;
@@ -316,4 +317,60 @@ export function TrackingRenderer({ data, field }: { data: any; field: string }) 
     );
   }
   return <span className="text-primary font-semibold">{tr}</span>;
+}
+
+// ==========================
+// FTP Batches custom cells
+// ==========================
+
+export function FtpBatchFileRenderer({ data }: { data: any }) {
+  const id = data?.id ?? data?.batch_id;
+  const filename = data?.filename;
+  if (!id || !filename) return <span />;
+  const onClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try { await downloadFtpBatch(id); } catch {}
+  };
+  return (
+    <a href="#" onClick={onClick} className="text-primary font-semibold" title="Download batch file">
+      {String(filename)}
+    </a>
+  );
+}
+
+export function FtpAckFileRenderer({ data }: { data: any }) {
+  const id = data?.id ?? data?.batch_id;
+  const filename = data?.ack_filename;
+  if (!id || !filename) return <span />;
+  const onClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try { await downloadFtpAck(id); } catch {}
+  };
+  return (
+    <a href="#" onClick={onClick} className="text-primary font-semibold" title="Download ACK file">
+      {String(filename)}
+    </a>
+  );
+}
+
+export function FtpTotalImportedRenderer({ value, data }: { value: any; data: any }) {
+  const router = useRouter();
+  const count = Number(value ?? 0);
+  if (!count) return <span>0</span>;
+  const onClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Navigate to Orders All with query params similar to legacy quick filter behavior
+    const received = data?.received_date ? String(data.received_date).slice(0, 10) : '';
+    const batch = data?.name ? String(data.name) : '';
+    const url = `/orders/all?received_date=${encodeURIComponent(received)}&batch=${encodeURIComponent(batch)}`;
+    router.push(url);
+  };
+  return (
+    <a href="#" onClick={onClick} className="text-primary font-semibold">
+      {count.toLocaleString()}
+    </a>
+  );
 }

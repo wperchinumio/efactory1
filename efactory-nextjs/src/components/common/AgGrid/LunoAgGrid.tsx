@@ -9,6 +9,7 @@ import { getCachedViewApiResponseIfExist, cacheViewApiResponse, removeExpiredVie
 import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView, GridSortSpec } from '@/types/api/grid';
 import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer, RmaLinkRenderer, StrongTextRenderer, PrimaryEmphasisRenderer, WarningTextRenderer, BoolRenderer, RmaTypeRenderer, BundleTypeRenderer, BundlePLRenderer, FilterLinkNumberRenderer, ItemLinkRenderer, BundleLinkRenderer, OrderOrRmaLinkRenderer, RtLinkRenderer, InvoiceRenderer, InvoiceLinksRenderer } from './renderers';
+import { downloadInvoiceDetail, downloadInvoicePdf } from '@/services/api';
 import GridFilters from '@/components/filters/grid/GridFilters';
 import LoadingSpinner, { SkeletonGrid } from '@/components/common/LoadingSpinner';
 
@@ -649,7 +650,49 @@ export function LunoAgGrid<T = any>({
         },
       });
     }
-    // Flags / Invoice columns can be added later when needed.
+    // Add Invoice column (icons) similar to legacy when requested
+    if (showInvoiceAllColumn) {
+      preCols.push({
+        headerName: '',
+        field: '__invoice_all__',
+        width: 100,
+        minWidth: 90,
+        maxWidth: 130,
+        pinned: null,
+        sortable: false,
+        suppressHeaderMenuButton: true,
+        cellRenderer: (p: any) => {
+          const hasInvoice = !!p.data?.url_invoice;
+          const hasInvoiceDetail = !!p.data?.url_invoice_detail;
+          const docNo = p.data?.doc_no;
+          if (!hasInvoice && !hasInvoiceDetail) return <span />;
+          return (
+            <span className="inline-flex items-center gap-2">
+              {hasInvoice ? (
+                <a
+                  href="#"
+                  title="Invoice (PDF)"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (docNo) downloadInvoicePdf(String(docNo)); }}
+                  className="text-red-600"
+                >
+                  🧾
+                </a>
+              ) : null}
+              {hasInvoiceDetail ? (
+                <a
+                  href="#"
+                  title="Invoice Detail (Excel)"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (docNo) downloadInvoiceDetail(String(docNo)); }}
+                  className="text-green-700"
+                >
+                  📊
+                </a>
+              ) : null}
+            </span>
+          );
+        }
+      });
+    }
 
     const defs = (viewToUse.fields || [])
       .filter((f: any) => !INTERNAL_COLUMN_FIELDS.has(f.field))
@@ -955,8 +998,10 @@ export function LunoAgGrid<T = any>({
         <div className="pagination-text font-medium text-font-color">
           {total > 0 ? `${startRow} to ${endRow} of ${total.toLocaleString()} ${paginationWord}` : `0 ${paginationWord}`}
         </div>
-        {total > 0 && (
-          <div className="flex items-center space-x-1">
+        {
+          // Always show pagination controls for consistent UX even when no rows
+        }
+        <div className="flex items-center space-x-1">
             <button
               onClick={() => fetchPage(1, undefined, undefined, currentSort)}
               disabled={page === 1}
@@ -999,8 +1044,7 @@ export function LunoAgGrid<T = any>({
             >
               Last
             </button>
-          </div>
-        )}
+        </div>
       </div>
     );
   };

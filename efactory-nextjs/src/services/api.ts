@@ -97,6 +97,10 @@ import type {
   AddressBookFilter,
   MassUploadEnvironment,
   UpdateOrderResponse,
+  // FTP Batches
+  FtpBatchRow,
+  ListFtpBatchesBody,
+  ListFtpBatchesResponse,
 } from '@/types/api/orderpoints';
 import type {
   InventoryItemForCartDto,
@@ -822,5 +826,53 @@ export async function readOrderFrom(order_id: number | string, location: string,
   const body = { action: 'read', order_id, location, from_draft } as any;
   const res = await postJson<{ data?: any }>('/api/orderpoints', body as any);
   return res.data;
+}
+
+// ==========================
+// Invoicing: Document downloads (PDF/Excel)
+// ==========================
+
+export async function downloadInvoicePdf(doc_no: string | number): Promise<void> {
+  // Legacy expects GET /api/documents/{doc_no}I
+  const id = `${doc_no}I`;
+  await httpRequestRaw<Blob>({ method: 'get', path: `/api/documents/${encodeURIComponent(String(id))}` });
+}
+
+export async function downloadInvoiceDetail(doc_no: string | number): Promise<void> {
+  // Legacy expects GET /api/documents/{doc_no}D
+  const id = `${doc_no}D`;
+  await httpRequestRaw<Blob>({ method: 'get', path: `/api/documents/${encodeURIComponent(String(id))}` });
+}
+
+// ==========================
+// OrderPoints: FTP Batches
+// ==========================
+
+export async function listFtpBatches(
+  page_num: number,
+  page_size: number,
+  filter: any,
+  sort: Array<Record<string, 'asc' | 'desc'>>,
+): Promise<{ rows: FtpBatchRow[]; total: number }> {
+  const body: ListFtpBatchesBody = {
+    action: 'list_batches',
+    filter,
+    page_num,
+    page_size,
+    sort,
+  } as any;
+  const res = await postJson<{ data: ListFtpBatchesResponse }>('/api/orderpoints', body as any);
+  return (res.data as unknown) as ListFtpBatchesResponse;
+}
+
+export async function downloadFtpBatch(id: number | string): Promise<void> {
+  // Legacy uses POST with action params and triggers file download; emulate via raw GET header trick
+  const headers = { 'X-Download-Params': JSON.stringify({ action: 'get_batch_content', id }) } as any;
+  await httpRequestRaw<Blob>({ method: 'get', path: '/api/orderpoints', headers });
+}
+
+export async function downloadFtpAck(id: number | string): Promise<void> {
+  const headers = { 'X-Download-Params': JSON.stringify({ action: 'get_ack_content', id }) } as any;
+  await httpRequestRaw<Blob>({ method: 'get', path: '/api/orderpoints', headers });
 }
 
