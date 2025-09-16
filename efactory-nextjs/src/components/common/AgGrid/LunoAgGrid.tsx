@@ -41,6 +41,26 @@ try {
   ModuleRegistry.registerModules([AllCommunityModule]);
 } catch {}
 
+/**
+ * VIEW_WIDTH_OFFSET_PX
+ *
+ * Temporary visual calibration for column widths coming from the legacy /views API.
+ * The same view definitions are shared by legacy and the new app. In the new app
+ * (AG Grid Quartz + Tailwind), columns render slightly narrower due to different
+ * paddings and font metrics. To preserve parity without changing server data, we
+ * add a small offset here. When persisting widths locally or back to the server,
+ * subtract this constant to keep the stored width identical to the legacy value.
+ */
+const VIEW_WIDTH_OFFSET_PX = 30;
+
+// Fields reserved for legacy fixed columns; should not be rendered from view API
+const INTERNAL_COLUMN_FIELDS = new Set<string>([
+  '__row_index__',
+  '__order_type__',
+  '__flags__',
+  '__invoice_all__',
+]);
+
 function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, number>): ColDef {
   const colDef: ColDef = {
     field: field.field,
@@ -70,10 +90,10 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     },
   };
 
-  // Use cached width if available, otherwise use field width
-  const width = cachedWidths?.[field.field] || field.width;
-  if (width) {
-    colDef.width = width;
+  // Use cached width if available, otherwise use field width, then apply offset
+  const width = cachedWidths?.[field.field] ?? field.width;
+  if (typeof width === 'number' && !Number.isNaN(width)) {
+    colDef.width = Math.max(0, width + VIEW_WIDTH_OFFSET_PX);
   }
 
   // Add header filter if field is filterable - use AG Grid server-side filtering
@@ -307,6 +327,8 @@ export function LunoAgGrid<T = any>({
       const cached = getCachedViewApiResponseIfExist(resource);
       if (cached?.data?.[0]?.views?.[0]?.view) {
         const view = cached.data[0].views[0].view as GridSelectedView;
+        // Filter out internal fields to avoid flashing raw names
+        view.fields = (view.fields || []).filter((f: any) => !INTERNAL_COLUMN_FIELDS.has(f.field));
         return view;
       }
     } catch {}
@@ -546,7 +568,15 @@ export function LunoAgGrid<T = any>({
         ],
       };
       try {
-        window.localStorage.setItem(key, JSON.stringify(payload));
+        // Store widths without visual offset
+        const sanitized = JSON.parse(JSON.stringify(payload));
+        try {
+          const fields = sanitized?.data?.[0]?.views?.[0]?.view?.fields || [];
+          fields.forEach((f: any) => {
+            if (typeof f.width === 'number') f.width = Math.max(0, f.width - VIEW_WIDTH_OFFSET_PX);
+          });
+        } catch {}
+        window.localStorage.setItem(key, JSON.stringify(sanitized));
       } catch {}
     }
   }, [resource, selectedView]);
@@ -558,6 +588,7 @@ export function LunoAgGrid<T = any>({
     
     if (viewToUse?.fields) {
       viewToUse.fields.forEach((field: any) => {
+        if (INTERNAL_COLUMN_FIELDS.has(field.field)) return;
         if (field.width) {
           cachedWidths[field.field] = field.width;
         }
@@ -620,7 +651,9 @@ export function LunoAgGrid<T = any>({
     }
     // Flags / Invoice columns can be added later when needed.
 
-    const defs = (viewToUse.fields || []).map(field => mapFieldToColDef(field, cachedWidths));
+    const defs = (viewToUse.fields || [])
+      .filter((f: any) => !INTERNAL_COLUMN_FIELDS.has(f.field))
+      .map(field => mapFieldToColDef(field, cachedWidths));
     return [...preCols, ...defs];
   }, [cachedView, selectedView.fields, showIndexColumn, showOrderTypeColumn, resource]);
 
