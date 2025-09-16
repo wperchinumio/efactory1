@@ -151,7 +151,7 @@ export default function OverviewPage() {
   const [orderOverlay, setOrderOverlay] = useState<OrderDetailResult | null>(null);
 
   // Chart theme and animation hooks
-  const { echartsThemeName } = useChartTheme();
+  const { echartsThemeName, isDark } = useChartTheme();
   const { triggerDataLoadAnimation, getAnimationSettings } = useChartAnimation();
   const chart30DaysAnimation = useChartAnimation();
   const chartRmaAnimation = useChartAnimation();
@@ -232,6 +232,8 @@ export default function OverviewPage() {
       setOrders(o);
       // Trigger chart animations after data load
       triggerDataLoadAnimation();
+      chart30DaysAnimation.triggerDataLoadAnimation();
+      chartRmaAnimation.triggerDataLoadAnimation();
     } finally {
       setIsRefreshing(false);
     }
@@ -523,8 +525,21 @@ export default function OverviewPage() {
     const option = useMemo(() => {
       if (!activity?.length) return {};
       
+      const totals = activity.map(p => (p.received || 0) + (p.shipped || 0));
+      const isSmallShare = (idx: number, value: number) => {
+        const total = totals[idx] || 0;
+        return total > 0 && value / total < 0.15;
+      };
+
       return {
         ...chart30DaysAnimation.getAnimationSettings(),
+        // Override animation style just for 30 Days Activity
+        animationDuration: 900,
+        animationEasing: 'elasticOut',
+        animationDelay: (idx: number) => idx * 25,
+        animationDurationUpdate: 500,
+        animationEasingUpdate: 'cubicOut',
+        animationDelayUpdate: (idx: number) => idx * 15,
         tooltip: { 
           trigger: 'axis', 
           axisPointer: { type: 'shadow' }
@@ -586,15 +601,60 @@ export default function OverviewPage() {
             name: 'Received', 
             type: 'bar', 
             stack: 'orders', 
-            data: activity.map(p => p.received || null),
-            emphasis: { focus: 'series' },
+            data: activity.map(p => {
+              const received = p.received || 0;
+              const shipped = p.shipped || 0;
+              if (!received) return null;
+              const isTop = !shipped;
+              return isTop 
+                ? { value: received, itemStyle: { borderRadius: [4, 4, 0, 0] } }
+                : received;
+            }),
+            emphasis: { focus: 'none' },
+            blur: { itemStyle: { opacity: 1 } },
+            animationEasing: 'elasticOut',
+            animationDuration: 900,
+            animationDelay: (idx: number) => idx * 25,
+            animationEasingUpdate: 'cubicOut',
+            animationDurationUpdate: 500,
+            animationDelayUpdate: (idx: number) => idx * 15,
+            itemStyle: {
+              shadowBlur: 4,
+              shadowColor: 'rgba(0, 0, 0, 0.1)',
+              shadowOffsetY: 2
+            },
             label: {
               show: true,
               position: 'inside',
-              color: '#ffffff',
               fontSize: 10,
               fontWeight: 'normal',
-              formatter: (params: any) => params.value > 0 ? params.value : ''
+              borderWidth: 0,
+              textBorderWidth: 0,
+              rich: {
+                inside: { color: '#ffffff' },
+                outside: { color: isDark ? '#ffffff' : '#333333' }
+              },
+              formatter: (params: any) => {
+                const idx = params.dataIndex;
+                const shippedVal = activity?.[idx]?.shipped || 0;
+                const receivedVal = activity?.[idx]?.received || 0;
+                if (shippedVal > 0 && isSmallShare(idx, receivedVal)) return '';
+                if (!(params.value > 0)) return '';
+                const isOutside = shippedVal === 0 && isSmallShare(idx, receivedVal);
+                return isOutside ? `{outside|${params.value}}` : `{inside|${params.value}}`;
+              }
+            },
+            labelLayout: (params: any) => {
+              const idx = params.dataIndex;
+              const shippedVal = activity?.[idx]?.shipped || 0;
+              const receivedVal = activity?.[idx]?.received || 0;
+              if (shippedVal === 0 && isSmallShare(idx, receivedVal)) {
+                return { y: params.rect.y - 4, verticalAlign: 'bottom', align: 'center' };
+              }
+              if (shippedVal > 0 && isSmallShare(idx, receivedVal)) {
+                return { hide: true };
+              }
+              return {};
             }
           },
           { 
@@ -602,19 +662,51 @@ export default function OverviewPage() {
             type: 'bar', 
             stack: 'orders', 
             data: activity.map(p => p.shipped || null),
-            emphasis: { focus: 'series' },
+            emphasis: { focus: 'none' },
+            blur: { itemStyle: { opacity: 1 } },
+            animationEasing: 'elasticOut',
+            animationDuration: 900,
+            animationDelay: (idx: number) => idx * 25 + 120,
+            animationEasingUpdate: 'cubicOut',
+            animationDurationUpdate: 500,
+            animationDelayUpdate: (idx: number) => idx * 15 + 60,
+            itemStyle: {
+              borderRadius: [4, 4, 0, 0],
+              shadowBlur: 4,
+              shadowColor: 'rgba(0, 0, 0, 0.1)',
+              shadowOffsetY: 2
+            },
             label: {
               show: true,
               position: 'inside',
-              color: '#ffffff',
               fontSize: 10,
               fontWeight: 'normal',
-              formatter: (params: any) => params.value > 0 ? params.value : ''
+              borderWidth: 0,
+              textBorderWidth: 0,
+              rich: {
+                inside: { color: '#ffffff' },
+                outside: { color: isDark ? '#ffffff' : '#333333' }
+              },
+              formatter: (params: any) => {
+                const idx = params.dataIndex;
+                const val = activity?.[idx]?.shipped || 0;
+                if (!(params.value > 0)) return '';
+                const isOutside = isSmallShare(idx, val);
+                return isOutside ? `{outside|${params.value}}` : `{inside|${params.value}}`;
+              }
+            },
+            labelLayout: (params: any) => {
+              const idx = params.dataIndex;
+              const val = activity?.[idx]?.shipped || 0;
+              if (isSmallShare(idx, val)) {
+                return { y: params.rect.y - 4, verticalAlign: 'bottom', align: 'center' };
+              }
+              return {};
             }
           }
         ],
       };
-    }, [activity, chart30DaysAnimation.getAnimationSettings]);
+    }, [activity, chart30DaysAnimation.getAnimationSettings, isDark]);
     
     return (
       <ReactECharts 
@@ -631,8 +723,21 @@ export default function OverviewPage() {
     const option = useMemo(() => {
       if (!rmaActivity?.length) return {};
       
+      const totals = rmaActivity.map(p => (p.issued || 0) + (p.closed || 0));
+      const isSmallShare = (idx: number, value: number) => {
+        const total = totals[idx] || 0;
+        return total > 0 && value / total < 0.15;
+      };
+
       return {
         ...chartRmaAnimation.getAnimationSettings(),
+        // Override animation style just for RMA chart
+        animationDuration: 900,
+        animationEasing: 'elasticOut',
+        animationDelay: (idx: number) => idx * 25,
+        animationDurationUpdate: 500,
+        animationEasingUpdate: 'cubicOut',
+        animationDelayUpdate: (idx: number) => idx * 15,
         tooltip: { 
           trigger: 'axis', 
           axisPointer: { type: 'shadow' }
@@ -694,15 +799,60 @@ export default function OverviewPage() {
             name: 'Authorized', 
             type: 'bar', 
             stack: 'rma', 
-            data: rmaActivity.map(p => p.issued || null),
-            emphasis: { focus: 'series' },
+            data: rmaActivity.map(p => {
+              const issued = p.issued || 0;
+              const closed = p.closed || 0;
+              if (!issued) return null;
+              const isTop = !closed;
+              return isTop 
+                ? { value: issued, itemStyle: { borderRadius: [4, 4, 0, 0] } }
+                : issued;
+            }),
+            emphasis: { focus: 'none' },
+            blur: { itemStyle: { opacity: 1 } },
+            animationEasing: 'elasticOut',
+            animationDuration: 900,
+            animationDelay: (idx: number) => idx * 25,
+            animationEasingUpdate: 'cubicOut',
+            animationDurationUpdate: 500,
+            animationDelayUpdate: (idx: number) => idx * 15,
+            itemStyle: {
+              shadowBlur: 4,
+              shadowColor: 'rgba(0, 0, 0, 0.1)',
+              shadowOffsetY: 2
+            },
             label: {
               show: true,
               position: 'inside',
-              color: '#ffffff',
               fontSize: 10,
               fontWeight: 'normal',
-              formatter: (params: any) => params.value > 0 ? params.value : ''
+              borderWidth: 0,
+              textBorderWidth: 0,
+              rich: {
+                inside: { color: '#ffffff' },
+                outside: { color: isDark ? '#ffffff' : '#333333' }
+              },
+              formatter: (params: any) => {
+                const idx = params.dataIndex;
+                const closedVal = rmaActivity?.[idx]?.closed || 0;
+                const issuedVal = rmaActivity?.[idx]?.issued || 0;
+                if (closedVal > 0 && isSmallShare(idx, issuedVal)) return '';
+                if (!(params.value > 0)) return '';
+                const isOutside = closedVal === 0 && isSmallShare(idx, issuedVal);
+                return isOutside ? `{outside|${params.value}}` : `{inside|${params.value}}`;
+              }
+            },
+            labelLayout: (params: any) => {
+              const idx = params.dataIndex;
+              const closedVal = rmaActivity?.[idx]?.closed || 0;
+              const issuedVal = rmaActivity?.[idx]?.issued || 0;
+              if (closedVal === 0 && isSmallShare(idx, issuedVal)) {
+                return { y: params.rect.y - 4, verticalAlign: 'bottom', align: 'center' };
+              }
+              if (closedVal > 0 && isSmallShare(idx, issuedVal)) {
+                return { hide: true };
+              }
+              return {};
             }
           },
           { 
@@ -710,19 +860,51 @@ export default function OverviewPage() {
             type: 'bar', 
             stack: 'rma', 
             data: rmaActivity.map(p => p.closed || null),
-            emphasis: { focus: 'series' },
+            emphasis: { focus: 'none' },
+            blur: { itemStyle: { opacity: 1 } },
+            animationEasing: 'elasticOut',
+            animationDuration: 900,
+            animationDelay: (idx: number) => idx * 25 + 120,
+            animationEasingUpdate: 'cubicOut',
+            animationDurationUpdate: 500,
+            animationDelayUpdate: (idx: number) => idx * 15 + 60,
+            itemStyle: {
+              borderRadius: [4, 4, 0, 0],
+              shadowBlur: 4,
+              shadowColor: 'rgba(0, 0, 0, 0.1)',
+              shadowOffsetY: 2
+            },
             label: {
               show: true,
               position: 'inside',
-              color: '#ffffff',
               fontSize: 10,
               fontWeight: 'normal',
-              formatter: (params: any) => params.value > 0 ? params.value : ''
+              borderWidth: 0,
+              textBorderWidth: 0,
+              rich: {
+                inside: { color: '#ffffff' },
+                outside: { color: isDark ? '#ffffff' : '#333333' }
+              },
+              formatter: (params: any) => {
+                if (!(params.value > 0)) return '';
+                const idx = params.dataIndex;
+                const val = rmaActivity?.[idx]?.closed || 0;
+                const isOutside = isSmallShare(idx, val);
+                return isOutside ? `{outside|${params.value}}` : `{inside|${params.value}}`;
+              }
+            },
+            labelLayout: (params: any) => {
+              const idx = params.dataIndex;
+              const val = rmaActivity?.[idx]?.closed || 0;
+              if (isSmallShare(idx, val)) {
+                return { y: params.rect.y - 4, verticalAlign: 'bottom', align: 'center' };
+              }
+              return {};
             }
           }
         ],
       };
-    }, [rmaActivity, chartRmaAnimation.getAnimationSettings]);
+    }, [rmaActivity, chartRmaAnimation.getAnimationSettings, isDark]);
     
     return (
       <ReactECharts 

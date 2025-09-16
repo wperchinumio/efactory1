@@ -207,56 +207,6 @@ export function generateEChartsTheme(config: ChartThemeConfig): any {
         color: config.legendColor
       }
     },
-    // Hide data labels in dark mode
-    series: {
-      label: {
-        show: !isDark, // Hide labels in dark mode, show in light mode
-        color: config.textColor,
-        fontSize: 12,
-        fontWeight: 'normal',
-        // Remove border for cleaner look
-        borderWidth: 0,
-        borderColor: 'transparent',
-        backgroundColor: 'transparent'
-      }
-    },
-    // Specific configurations for different chart types
-    bar: {
-      label: {
-        show: !isDark,
-        color: config.textColor,
-        fontSize: 12,
-        borderWidth: 0,
-        backgroundColor: 'transparent'
-      }
-    },
-    line: {
-      label: {
-        show: !isDark,
-        color: config.textColor,
-        fontSize: 12,
-        borderWidth: 0,
-        backgroundColor: 'transparent'
-      }
-    },
-    pie: {
-      label: {
-        show: !isDark,
-        color: config.textColor,
-        fontSize: 12,
-        borderWidth: 0,
-        backgroundColor: 'transparent'
-      }
-    },
-    scatter: {
-      label: {
-        show: !isDark,
-        color: config.textColor,
-        fontSize: 12,
-        borderWidth: 0,
-        backgroundColor: 'transparent'
-      }
-    },
     categoryAxis: {
       axisLine: {
         lineStyle: {
