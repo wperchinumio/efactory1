@@ -676,7 +676,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                     </div>
                 </div>
             </div>
-            <div className={`fixed top-0 bg-card-color z-[5] h-svh w-full max-w-[500px] transition-all duration-200 ${themeSetting ? 'ltr:right-0 rtl:left-0' : 'ltr:-right-full rtl:-left-full'}`}>
+            <div className={`fixed top-0 bg-card-color h-svh w-full max-w-[500px] transition-all duration-200 ${themeSetting ? 'ltr:right-0 rtl:left-0' : 'ltr:-right-full rtl:-left-full'}`} style={{ zIndex: 1001 }}>
                 <div className='md:px-6 px-4 md:py-4 py-3 flex items-center justify-between gap-4 border-b border-border-color'>
                     <div className='text-[20px]/[30px] font-medium'>
                         Theme Settings
@@ -807,7 +807,7 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                     </button>
                 </div>
             </div>
-            <div onClick={toggleThemeSetting} className={`fixed z-[4] w-full h-full left-0 top-0 bg-black-50 backdrop-blur-[2px] transition-all duration-500 ease-in-out ${themeSetting ? 'opacity-1 visible overflow-auto' : 'opacity-0 invisible overflow-hidden'}`}></div>
+            <div onClick={toggleThemeSetting} className={`fixed w-full h-full left-0 top-0 bg-black-50 backdrop-blur-[2px] transition-all duration-500 ease-in-out ${themeSetting ? 'opacity-1 visible overflow-auto' : 'opacity-0 invisible overflow-hidden'}`} style={{ zIndex: 50 }}></div>
             
             {/* Feedback Modal */}
             <ContactForm 
