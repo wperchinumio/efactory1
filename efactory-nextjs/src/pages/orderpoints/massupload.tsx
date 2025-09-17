@@ -268,7 +268,7 @@ export default function MassUploadPage(){
                         </Button>
                         {file && !uploading && (
                           <Button 
-                            onClick={onUpload} 
+                            onClick={() => onUpload()} 
                             variant="primary"
                             size="small"
                             className="w-full sm:w-auto"

@@ -35,21 +35,25 @@ export const RmaNavigationProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const setRmaList = (items: RmaNavigationItem[], currentRmaNumber: string, sourceContext?: string) => {
     const index = Math.max(0, items.findIndex(i => (i.rma_number || '').toString() === (currentRmaNumber || '').toString()))
-    setNavigationState({ items, currentIndex: index, sourceContext })
+    setNavigationState({ 
+      items, 
+      currentIndex: index, 
+      ...(sourceContext !== undefined ? { sourceContext } : {})
+    })
   }
 
   const getPreviousRma = (): RmaNavigationItem | null => {
     if (!navigationState) return null
     const idx = navigationState.currentIndex - 1
     if (idx < 0 || idx >= navigationState.items.length) return null
-    return navigationState.items[idx]
+    return navigationState.items[idx] || null
   }
 
   const getNextRma = (): RmaNavigationItem | null => {
     if (!navigationState) return null
     const idx = navigationState.currentIndex + 1
     if (idx < 0 || idx >= navigationState.items.length) return null
-    return navigationState.items[idx]
+    return navigationState.items[idx] || null
   }
 
   const navigateToPrevious = (): RmaNavigationItem | null => {

@@ -122,7 +122,7 @@ function LoginUserPageInner() {
 	useEffect(() => {
 		if (filtered.length === 1) {
 			// Auto-select the single result
-			setSelectedUsername(filtered[0].username);
+			setSelectedUsername(filtered[0]?.username || '');
 		} else if (filtered.length > 1 && selectedUsername) {
 			// Check if currently selected user is still in filtered results
 			const isStillInResults = filtered.some(acc => acc.username === selectedUsername);

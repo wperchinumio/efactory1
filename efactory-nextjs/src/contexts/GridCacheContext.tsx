@@ -51,29 +51,41 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
     sort?: any,
     fromRowClick?: boolean
   ) => {
+    console.log('🔥🔥🔥 SETCACHEDDATA CALLED!!! 🔥🔥🔥');
+    console.log('🔥 CACHE SET - pageKey:', pageKey, 'dataLength:', data.length, 'fromRowClick:', fromRowClick);
+    
     setCache(prev => {
       const existing = prev[pageKey];
       // If fromRowClick is not explicitly provided, preserve the existing value
       const finalFromRowClick = fromRowClick !== undefined ? fromRowClick : (existing?.fromRowClick || false);
       
-      console.log('🎯 setCachedData called:', { pageKey, fromRowClick, existingFromRowClick: existing?.fromRowClick, finalFromRowClick });
+      console.log('🔥 CACHE SET - existing fromRowClick:', existing?.fromRowClick, 'final fromRowClick:', finalFromRowClick);
+      
+      const newCacheItem = {
+        data,
+        columns,
+        totalCount,
+        lastUpdated: Date.now(),
+        ...(viewId !== undefined ? { viewId } : {}),
+        ...(filters !== undefined ? { filters } : {}),
+        ...(sort !== undefined ? { sort } : {}),
+        fromRowClick: finalFromRowClick,
+        ...(existing?.selectedRowIndex !== undefined ? { selectedRowIndex: existing.selectedRowIndex } : {}),
+        ...(existing?.selectedRowData !== undefined ? { selectedRowData: existing.selectedRowData } : {}),
+        ...(existing?.scrollTop !== undefined ? { scrollTop: existing.scrollTop } : {}),
+        ...(existing?.scrollLeft !== undefined ? { scrollLeft: existing.scrollLeft } : {})
+      };
+      
+      console.log('🔥 CACHE SET - new cache item:', {
+        pageKey,
+        dataLength: newCacheItem.data.length,
+        fromRowClick: newCacheItem.fromRowClick,
+        hasFilters: !!newCacheItem.filters
+      });
       
       return {
         ...prev,
-        [pageKey]: {
-          data,
-          columns,
-          totalCount,
-          lastUpdated: Date.now(),
-          viewId,
-          filters,
-          sort,
-          fromRowClick: finalFromRowClick,
-          selectedRowIndex: existing?.selectedRowIndex,
-          selectedRowData: existing?.selectedRowData,
-          scrollTop: existing?.scrollTop,
-          scrollLeft: existing?.scrollLeft
-        }
+        [pageKey]: newCacheItem
       };
     });
   }, []);
@@ -133,13 +145,20 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [cache]);
 
   const clearCache = useCallback((pageKey?: string) => {
+    console.log('🔥🔥🔥 CLEARCACHE CALLED!!! 🔥🔥🔥');
+    console.log('🔥 CACHE CLEAR - pageKey:', pageKey);
+    
     if (pageKey) {
       setCache(prev => {
+        const existing = prev[pageKey];
+        console.log('🔥 CACHE CLEAR - had existing cache:', !!existing, 'fromRowClick:', existing?.fromRowClick);
+        
         const newCache = { ...prev };
         delete newCache[pageKey];
         return newCache;
       });
     } else {
+      console.log('🔥 CACHE CLEAR - clearing ALL cache');
       setCache({});
     }
   }, []);

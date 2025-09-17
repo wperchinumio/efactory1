@@ -84,7 +84,10 @@ export default function EditItemDialog({ open, onOpenChange, item, accountWh, on
       ...prev,
       edi: [
         ...prev.edi.slice(0, index),
-        { tp: prev.edi[index]?.tp, item_number: buyerItemNumber },
+        { 
+          ...(prev.edi[index]?.tp ? { tp: prev.edi[index]!.tp } : {}),
+          item_number: buyerItemNumber 
+        },
         ...prev.edi.slice(index + 1)
       ]
     }));

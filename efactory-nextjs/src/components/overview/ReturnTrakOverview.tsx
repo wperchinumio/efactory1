@@ -36,7 +36,7 @@ type Props = {
   onRefresh?: () => void
 }
 
-const ConfirmDialog: React.FC<{ open: boolean; title: string; confirmText?: string; onConfirm: () => void; onOpenChange: (v: boolean) => void }>
+const ConfirmDialog: React.FC<{ open: boolean; title: string; confirmText?: string; onConfirm: () => void; onOpenChange: (v: boolean) => void; children?: React.ReactNode }>
   = ({ open, title, confirmText = 'Confirm', onConfirm, onOpenChange, children }) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent>
@@ -45,7 +45,7 @@ const ConfirmDialog: React.FC<{ open: boolean; title: string; confirmText?: stri
       </DialogHeader>
       <div className="py-2">{children}</div>
       <DialogFooter>
-        <Button variant="default" onClick={onConfirm}>{confirmText}</Button>
+        <Button variant="primary" onClick={onConfirm}>{confirmText}</Button>
         <Button variant="danger" onClick={() => onOpenChange(false)}>Cancel</Button>
       </DialogFooter>
     </DialogContent>
@@ -259,19 +259,19 @@ export default function ReturnTrakOverview({ data, onClose, variant = 'inline', 
               )}
 
               <div className="flex flex-wrap gap-2 pt-2">
-                <Button size="sm" variant="danger" disabled={!canRequestCancel} onClick={() => setShowCancel(true)}>
+                <Button size="small" variant="danger" disabled={!canRequestCancel} onClick={() => setShowCancel(true)}>
                   <IconTrash className="w-4 h-4" /> Request Cancellation
                 </Button>
-                <Button size="sm" variant="warning" disabled={!canRequestCancel} onClick={() => setShowExpire(true)}>
+                <Button size="small" variant="warning" disabled={!canRequestCancel} onClick={() => setShowExpire(true)}>
                   <IconCalendarX className="w-4 h-4" /> Expire RMA
                 </Button>
-                <Button size="sm" variant="secondary" onClick={() => setShowResend(true)}>
+                <Button size="small" variant="secondary" onClick={() => setShowResend(true)}>
                   <IconMail className="w-4 h-4" /> Re-send Issued RMA Email
                 </Button>
-                <Button size="sm" variant="default" disabled={!hasCustomFields} onClick={() => setShowEditCustom(true)}>
+                <Button size="small" variant="primary" disabled={!hasCustomFields} onClick={() => setShowEditCustom(true)}>
                   <IconEdit className="w-4 h-4" /> Edit Custom Fields
                 </Button>
-                <Button size="sm" variant="outline" disabled={!acknowledged} onClick={() => setShowResetAck(true)}>
+                <Button size="small" variant="outline" disabled={!acknowledged} onClick={() => setShowResetAck(true)}>
                   <IconMailOff className="w-4 h-4" /> Reset Acknowledged
                 </Button>
               </div>

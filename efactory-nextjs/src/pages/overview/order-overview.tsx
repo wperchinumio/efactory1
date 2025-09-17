@@ -133,6 +133,18 @@ export default function OrderOverviewPage() {
     )
   }
 
+  if (loading || !orderData) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="text-font-color-100">Loading order details...</div>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
   return (
     <Layout>
         <OrderOverview
