@@ -348,7 +348,6 @@ export function LunoAgGrid<T = any>({
   const [themeClass, setThemeClass] = useState(() => getThemeClass());
   const [filterState, setFilterState] = useState<FilterState>(() => {
     const initial = initialFilterState || {};
-    console.log('🔥 LunoAgGrid: Initializing filterState with:', JSON.stringify(initial));
     return initial;
   });
   const [cachedView, setCachedViewState] = useState<GridSelectedView | null>(() => {
@@ -463,9 +462,6 @@ export function LunoAgGrid<T = any>({
     const base = viewToUse?.filter;
     const resetState = mapGridFilterToFilterState(base);
     
-    console.log('🔥 RESET ALL - server filter:', base);
-    console.log('🔥 RESET ALL - mapped resetState:', resetState);
-    console.log('🔥 RESET ALL - current filterState:', filterState);
     
     // Force GridFilters to remount with new key to ensure UI updates
     setFilterResetKey(prev => prev + 1);
@@ -802,7 +798,6 @@ export function LunoAgGrid<T = any>({
     // Skip if we already have initialFilterState (it was set in useState)
     if (hasInitialFilterStateRef.current) {
       didInitFilterStateRef.current = true;
-      console.log('🔥 Using initialFilterState from cache:', JSON.stringify(initialFilterState));
       return;
     }
     
@@ -810,7 +805,6 @@ export function LunoAgGrid<T = any>({
       didInitFilterStateRef.current = true;
       const base = (cachedView || selectedView)?.filter;
       const init = mapGridFilterToFilterState(base);
-      console.log('🔥 LunoAgGrid: Setting filterState from view filter:', JSON.stringify(init));
       setFilterState(init);
     }
   }, [cachedView, selectedView, initialFilters]);
@@ -820,11 +814,9 @@ export function LunoAgGrid<T = any>({
     // Remove the blocking check - let onFetchRows handle the cache logic
     const pageKey = resource;
     const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
-    console.log(`📞 fetchPage: pageKey: ${pageKey}, returningFromOverview:`, returningFromOverview);
     
     // If rowsUrl isn't ready yet, keep the loading overlay visible and wait
     if (!rowsUrl) {
-      console.log('🚫 fetchPage: BLOCKED - no rowsUrl');
       return;
     }
 
@@ -951,7 +943,6 @@ export function LunoAgGrid<T = any>({
       if (appliedInitialRef.current === key) return;
       appliedInitialRef.current = key;
       const uiState = mapGridFilterToFilterState(initialFilters);
-      console.log('🎯 Restoring filter state from cache:', uiState);
       setFiltersInitialOverride(uiState);
       setFilterState(uiState);
       setPage(1);
@@ -970,7 +961,6 @@ export function LunoAgGrid<T = any>({
   useEffect(() => {
     // Single initial fetch per mount once rowsUrl is ready
     if (!didInitialFetchRef.current && rowsUrl && (cachedView || selectedView)) {
-      console.log('🎯 LunoAgGrid: Making initial data fetch', { rowsUrl, hasCachedView: !!cachedView, hasSelectedView: !!selectedView });
       didInitialFetchRef.current = true;
       
       // Just call fetchPage - it will check if we're returning from overview
@@ -1202,7 +1192,6 @@ export function LunoAgGrid<T = any>({
   }, [handleScroll]);
 
   function onGridReady(e: GridReadyEvent) {
-    console.log('🔥 onGridReady called');
     gridApiRef.current = e.api;
     
     // Set up scroll tracking
@@ -1261,11 +1250,9 @@ export function LunoAgGrid<T = any>({
   }
 
   function onFilterChanged() {
-    console.log('🔥 onFilterChanged called');
     
     // Reset to page 1 when filters change
     if (isBatchingResetRef.current) {
-      console.log('🔥 onFilterChanged: SKIP - isBatchingReset');
       return; // suppress intermediate fetches during Reset All
     }
     

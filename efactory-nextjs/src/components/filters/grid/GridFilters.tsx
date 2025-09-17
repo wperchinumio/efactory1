@@ -30,7 +30,6 @@ export default function GridFilters({
   onResetAll
 }: GridFiltersProps) {
   const [filterState, setFilterState] = useState<FilterState>(() => {
-    console.log('🔥 GridFilters: Initializing with initialState:', JSON.stringify(initialState));
     return initialState || {};
   });
   const prevInitialStateRef = useRef<FilterState | undefined>(initialState);
@@ -42,7 +41,6 @@ export default function GridFilters({
     const isDifferent = JSON.stringify(initialState) !== JSON.stringify(prevInitialStateRef.current);
     
     if (hasInitialState && isDifferent) {
-      console.log('🔥 GridFilters: Updating filterState from initialState:', JSON.stringify(initialState));
       setFilterState(initialState);
       prevInitialStateRef.current = initialState;
     }
@@ -143,7 +141,6 @@ export default function GridFilters({
 
   const renderFilter = (key: string, config: FilterConfig) => {
     const value = filterState[key];
-    console.log(`🔥 GridFilters renderFilter: key=${key}, filterState=`, JSON.stringify(filterState), 'value=', value);
     
     switch (config.type) {
       case 'DROPDOWN_QF':
@@ -154,7 +151,6 @@ export default function GridFilters({
           if (value && !Array.isArray(value)) {
             currentValue = value.value || '';
           }
-          console.log(`🔥 GridFilters: Single-select ${key} value:`, value, 'currentValue:', currentValue);
           
           return (
             <GridSingleSelectFilter

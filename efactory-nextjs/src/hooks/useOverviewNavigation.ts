@@ -27,12 +27,9 @@ export function useOverviewNavigation({
    * This ensures the grid uses cached data and doesn't make API calls
    */
   const handleCloseOverview = useCallback(() => {
-    console.log(`🔥 OVERVIEW CLOSING - pageKey: ${pageKey}`);
-    console.log(`🔥 Current URL: ${router.asPath}`);
     
     // CRITICAL: Set flag to use cache when returning to grid
     gridCache.setReturningFromOverview(pageKey, true);
-    console.log(`🔥 SET returningFromOverview flag for pageKey: ${pageKey}`);
     
     // Clear navigation context if provided
     if (navigationContext) {
@@ -49,7 +46,6 @@ export function useOverviewNavigation({
     const search = q.toString();
     const targetUrl = search ? `${base}?${search}` : base;
     
-    console.log(`🔥 NAVIGATING BACK TO: ${targetUrl}`);
     router.push(targetUrl, undefined, { shallow: true });
   }, [pageKey, queryParams, navigationContext, router, gridCache]);
 

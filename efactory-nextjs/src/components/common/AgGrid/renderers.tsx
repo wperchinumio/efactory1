@@ -77,6 +77,7 @@ export function ReturnTrakRenderer({ value, data }: { value: any; data?: any }) 
   const base = typeof window !== 'undefined' ? window.location.pathname : router.pathname;
   const url = `${base}?rmaNum=${encodeURIComponent(rmaNum)}` + (accountNum ? `&accountNum=${encodeURIComponent(accountNum)}` : '');
   const onClick = (e: React.MouseEvent) => {
+    // Allow row click handler to fire for navigation context setup
     e.preventDefault();
     router.push(url);
   };
