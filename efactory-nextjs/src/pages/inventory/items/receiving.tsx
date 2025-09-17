@@ -5,7 +5,7 @@ export default function ItemsReceivingPage() {
   return (
     <GridPage
       resource="inventory-receiving"
-      pageKey="items-receiving"
+      pageKey="inventory-receiving"
       paginationWord="items"
       showIndexColumn
       showOrderTypeColumn={false}

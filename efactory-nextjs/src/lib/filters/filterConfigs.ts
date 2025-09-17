@@ -296,13 +296,13 @@ export const gridFilterConfigs: GridFilterConfig = {
   // =====================
   // Items (Inventory)
   // =====================
-  'items-status': {
+  'inventory-status': {
     inv_type_region: warehouseQF,
     flags: flagsQF,
     omit_zero_qty: { ...qtyVarianceQF, field: 'omit_zero_qty', title: 'OMIT ZERO QTY' },
     omit_obsolete: { ...qtyVarianceQF, field: 'omit_obsolete', title: 'OMIT OBSOLETE' },
   },
-  'items-receiving': {
+  'inventory-receiving': {
     inv_type_region: warehouseQF,
     received_date: { ...receivedDateQF, allowClear: true },
     consigned: { field: 'consigned', title: 'CONSIGNED', type: 'BOOLEAN_QF' } as any,
@@ -310,35 +310,35 @@ export const gridFilterConfigs: GridFilterConfig = {
     dcl_purchased: { field: 'dcl_purchased', title: 'DCL PURCHASED', type: 'BOOLEAN_QF' } as any,
     status: { field: 'status', title: 'STATUS', type: 'DROPDOWN_QF', singleSelect: true, options: [ { key: 'Received', value: 'received', oper: '=' }, { key: 'To Receive', value: 'to_receive', oper: '=' } ] } as any,
   },
-  'items-onhold': {
+  'inventory-onhold': {
     inv_type_region: warehouseQF,
     show_all: { field: 'show_all', title: 'SHOW ALL LOCATIONS', type: 'BOOLEAN_QF' } as any,
   },
-  'items-transactions': {
+  'inventory-transactions': {
     inv_type_region: warehouseQF,
     transaction_date: { field: 'transaction_date', title: 'TRANSACTION DATE', type: 'DATE_RANGE_CUSTOM_QF', allowClear: false },
   },
-  'items-lotmaster': {
+  'inventory-lotmaster': {
     inv_type_region: warehouseQF,
     omit_zero_qty: { field: 'omit_zero_qty', title: 'OMIT ZERO QTY', type: 'BOOLEAN_QF' } as any,
     omit_expired: { field: 'omit_expired', title: 'OMIT EXPIRED LOTS', type: 'BOOLEAN_QF' } as any,
   },
-  'items-asofadate': {
+  'inventory-asofadate': {
     inv_type_region: warehouseQF,
     on_date: { field: 'on_date', title: 'AS OF DATE', type: 'DATE_QF', allowClear: false } as any,
     omit_zero_qty: { field: 'omit_zero_qty', title: 'OMIT ZERO QTY', type: 'BOOLEAN_QF' } as any,
     omit_obsolete: { field: 'omit_obsolete', title: 'OMIT OBSOLETE', type: 'BOOLEAN_QF' } as any,
   },
-  'items-trsummary': {
+  'inventory-transaction-summary': {
     inv_type_region: warehouseQF,
     transaction_date: { field: 'transaction_date', title: 'TRANSACTION DATE', type: 'DATE_RANGE_CUSTOM_QF', allowClear: false },
   },
-  'items-cyclecount': {
+  'inventory-cyclecount': {
     inv_type_region: warehouseQF,
     cycle_count_date: { field: 'cycle_count_date', title: 'CYCLE COUNT DATE', type: 'DATE_RANGE_CUSTOM_QF', allowClear: false },
     qty_variance: qtyVarianceQF,
   },
-  'items-dg-data': {
+  'inventory-dangerous-goods': {
     account_wh: { field: 'account_wh', title: 'Account-WH', type: 'DROPDOWN_QF', options: [] } as any,
     battery_category: { field: 'battery_category', title: 'Battery Category', type: 'DROPDOWN_QF', options: [ { key: 'ION - Ion', value: 'ION', oper: '=' }, { key: 'MTL - Metal', value: 'MTL', oper: '=' } ] } as any,
     battery_configuration: { field: 'battery_configuration', title: 'Battery Config.', type: 'DROPDOWN_QF', options: [ { key: 'SKU - SKU Only', value: 'SKU', oper: '=' }, { key: 'CNT - Contained', value: 'CNT', oper: '=' }, { key: 'PCK - Packed', value: 'PCK', oper: '=' } ] } as any,

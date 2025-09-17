@@ -5,7 +5,7 @@ export default function ItemsOnHoldPage() {
   return (
     <GridPage
       resource="inventory-onhold"
-      pageKey="items-onhold"
+      pageKey="inventory-onhold"
       paginationWord="items"
       showIndexColumn
       showOrderTypeColumn={false}

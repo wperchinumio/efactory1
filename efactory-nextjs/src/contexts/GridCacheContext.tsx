@@ -13,6 +13,9 @@ export interface GridCacheItem {
   filters?: any;
   sort?: any;
   fromRowClick?: boolean; // Flag to indicate cache was populated after row click
+  agFilterModel?: any; // AG Grid header filter model
+  filterState?: any; // UI filter state
+  returningFromOverview?: boolean; // Flag to indicate we're returning from overview
 }
 
 interface GridCacheState {
@@ -21,7 +24,7 @@ interface GridCacheState {
 
 interface GridCacheContextType {
   getCachedData: (pageKey: string) => GridCacheItem | null;
-  setCachedData: (pageKey: string, data: any[], columns: any[], totalCount: number, viewId?: string, filters?: any, sort?: any, fromRowClick?: boolean) => void;
+  setCachedData: (pageKey: string, data: any[], columns: any[], totalCount: number, viewId?: string, filters?: any, sort?: any, fromRowClick?: boolean, agFilterModel?: any, filterState?: any) => void;
   setSelectedRow: (pageKey: string, rowIndex: number, rowData: any) => void;
   getSelectedRow: (pageKey: string) => { index: number; data: any } | null;
   setScrollPosition: (pageKey: string, scrollTop: number, scrollLeft: number) => void;
@@ -30,6 +33,10 @@ interface GridCacheContextType {
   isDataFresh: (pageKey: string, maxAge?: number) => boolean;
   updateRowData: (pageKey: string, rowIndex: number, newData: any) => void;
   markCacheFromRowClick: (pageKey: string, filters?: any) => void;
+  setAgFilterModel: (pageKey: string, agFilterModel: any) => void;
+  setFilterState: (pageKey: string, filterState: any) => void;
+  setReturningFromOverview: (pageKey: string, returning: boolean) => void;
+  isReturningFromOverview: (pageKey: string) => boolean;
 }
 
 const GridCacheContext = createContext<GridCacheContextType | undefined>(undefined);
@@ -49,17 +56,15 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
     viewId?: string, 
     filters?: any, 
     sort?: any,
-    fromRowClick?: boolean
+    fromRowClick?: boolean,
+    agFilterModel?: any,
+    filterState?: any
   ) => {
-    console.log('🔥🔥🔥 SETCACHEDDATA CALLED!!! 🔥🔥🔥');
-    console.log('🔥 CACHE SET - pageKey:', pageKey, 'dataLength:', data.length, 'fromRowClick:', fromRowClick);
     
     setCache(prev => {
       const existing = prev[pageKey];
       // If fromRowClick is not explicitly provided, preserve the existing value
       const finalFromRowClick = fromRowClick !== undefined ? fromRowClick : (existing?.fromRowClick || false);
-      
-      console.log('🔥 CACHE SET - existing fromRowClick:', existing?.fromRowClick, 'final fromRowClick:', finalFromRowClick);
       
       const newCacheItem = {
         data,
@@ -70,18 +75,13 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
         ...(filters !== undefined ? { filters } : {}),
         ...(sort !== undefined ? { sort } : {}),
         fromRowClick: finalFromRowClick,
+        ...(agFilterModel !== undefined ? { agFilterModel } : (existing?.agFilterModel ? { agFilterModel: existing.agFilterModel } : {})),
+        ...(filterState !== undefined ? { filterState } : (existing?.filterState ? { filterState: existing.filterState } : {})),
         ...(existing?.selectedRowIndex !== undefined ? { selectedRowIndex: existing.selectedRowIndex } : {}),
         ...(existing?.selectedRowData !== undefined ? { selectedRowData: existing.selectedRowData } : {}),
         ...(existing?.scrollTop !== undefined ? { scrollTop: existing.scrollTop } : {}),
         ...(existing?.scrollLeft !== undefined ? { scrollLeft: existing.scrollLeft } : {})
       };
-      
-      console.log('🔥 CACHE SET - new cache item:', {
-        pageKey,
-        dataLength: newCacheItem.data.length,
-        fromRowClick: newCacheItem.fromRowClick,
-        hasFilters: !!newCacheItem.filters
-      });
       
       return {
         ...prev,
@@ -145,20 +145,13 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
   }, [cache]);
 
   const clearCache = useCallback((pageKey?: string) => {
-    console.log('🔥🔥🔥 CLEARCACHE CALLED!!! 🔥🔥🔥');
-    console.log('🔥 CACHE CLEAR - pageKey:', pageKey);
-    
     if (pageKey) {
       setCache(prev => {
-        const existing = prev[pageKey];
-        console.log('🔥 CACHE CLEAR - had existing cache:', !!existing, 'fromRowClick:', existing?.fromRowClick);
-        
         const newCache = { ...prev };
         delete newCache[pageKey];
         return newCache;
       });
     } else {
-      console.log('🔥 CACHE CLEAR - clearing ALL cache');
       setCache({});
     }
   }, []);
@@ -192,11 +185,9 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
   const markCacheFromRowClick = useCallback((pageKey: string, filters?: any) => {
     setCache(prev => {
       const existing = prev[pageKey];
-      console.log('🎯 markCacheFromRowClick called:', { pageKey, hasExisting: !!existing, existingFromRowClick: existing?.fromRowClick });
       
       if (!existing) {
         // Create a minimal cache entry to mark the row click
-        console.log('🎯 Creating new cache entry with fromRowClick: true');
         return {
           ...prev,
           [pageKey]: {
@@ -210,7 +201,6 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
         };
       }
       
-      console.log('🎯 Updating existing cache entry with fromRowClick: true');
       return {
         ...prev,
         [pageKey]: {
@@ -222,6 +212,85 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
     });
   }, []);
 
+  const setAgFilterModel = useCallback((pageKey: string, agFilterModel: any) => {
+    setCache(prev => {
+      const existing = prev[pageKey];
+      
+      // If cache exists, update it
+      if (existing) {
+        return {
+          ...prev,
+          [pageKey]: {
+            ...existing,
+            agFilterModel
+          }
+        };
+      }
+      
+      // If no cache exists, create a minimal one to store the filter model
+      return {
+        ...prev,
+        [pageKey]: {
+          data: [],
+          columns: [],
+          totalCount: 0,
+          lastUpdated: Date.now(),
+          agFilterModel
+        }
+      };
+    });
+  }, []);
+
+  const setFilterState = useCallback((pageKey: string, filterState: any) => {
+    setCache(prev => {
+      const existing = prev[pageKey];
+      if (!existing) return prev;
+      
+      return {
+        ...prev,
+        [pageKey]: {
+          ...existing,
+          filterState
+        }
+      };
+    });
+  }, []);
+
+  const setReturningFromOverview = useCallback((pageKey: string, returning: boolean) => {
+    setCache(prev => {
+      const existing = prev[pageKey];
+      
+      if (returning && !existing) {
+        // Create a minimal cache entry to track returning state
+        return {
+          ...prev,
+          [pageKey]: {
+            data: [],
+            columns: [],
+            totalCount: 0,
+            lastUpdated: Date.now(),
+            returningFromOverview: true
+          }
+        };
+      }
+      
+      if (!existing) return prev;
+      
+      return {
+        ...prev,
+        [pageKey]: {
+          ...existing,
+          returningFromOverview: returning
+        }
+      };
+    });
+  }, []);
+
+  const isReturningFromOverview = useCallback((pageKey: string): boolean => {
+    const cached = cache[pageKey];
+    return cached?.returningFromOverview === true;
+  }, [cache]);
+
   const value: GridCacheContextType = {
     getCachedData,
     setCachedData,
@@ -232,7 +301,11 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
     clearCache,
     isDataFresh,
     updateRowData,
-    markCacheFromRowClick
+    markCacheFromRowClick,
+    setAgFilterModel,
+    setFilterState,
+    setReturningFromOverview,
+    isReturningFromOverview
   };
 
   return (

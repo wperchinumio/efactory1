@@ -5,7 +5,7 @@ export default function ItemsLotMasterPage() {
   return (
     <GridPage
       resource="inventory-lotmaster"
-      pageKey="items-lotmaster"
+      pageKey="inventory-lotmaster"
       paginationWord="items"
       showIndexColumn
       showOrderTypeColumn={false}

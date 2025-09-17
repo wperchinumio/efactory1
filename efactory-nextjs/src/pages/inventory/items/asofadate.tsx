@@ -5,7 +5,7 @@ export default function ItemsAsOfADatePage() {
   return (
     <GridPage
       resource="inventory-asofadate"
-      pageKey="items-asofadate"
+      pageKey="inventory-asofadate"
       paginationWord="items"
       showIndexColumn
       showOrderTypeColumn={false}

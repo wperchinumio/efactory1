@@ -5,7 +5,7 @@ export default function ItemsStatusPage() {
   return (
     <GridPage
       resource="inventory-status"
-      pageKey="items-status"
+      pageKey="inventory-status"
       paginationWord="items"
       showIndexColumn
       showOrderTypeColumn={false}

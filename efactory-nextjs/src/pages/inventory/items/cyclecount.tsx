@@ -5,7 +5,7 @@ export default function ItemsCycleCountPage() {
   return (
     <GridPage
       resource="inventory-cyclecount"
-      pageKey="items-cyclecount"
+      pageKey="inventory-cyclecount"
       paginationWord="items"
       showIndexColumn
       showOrderTypeColumn={false}

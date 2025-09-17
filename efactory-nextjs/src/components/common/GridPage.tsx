@@ -14,6 +14,7 @@ import type { OrderDetailResult } from '@/types/api/orders';
 import { useOrderNavigation, type OrderNavigationItem } from '@/contexts/OrderNavigationContext';
 import { useItemNavigation, type ItemNavigationItem } from '@/contexts/ItemNavigationContext';
 import { usePriorityFilters } from '@/hooks/useFulfillmentNavigation';
+import { useOrderOverviewNavigation, useItemOverviewNavigation } from '@/hooks/useOverviewNavigation';
 import { useGridCache } from '@/contexts/GridCacheContext';
 
 export interface GridPageProps {
@@ -134,13 +135,24 @@ export default function GridPage({
     }
   }
   const router = useRouter();
+  const gridCache = useGridCache();
   
   const [viewsUrl, setViewsUrl] = useState<string>('');
   const [views, setViews] = useState<GridViewItemMeta[]>([]);
   const [selectedView, setSelectedView] = useState<GridSelectedView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filterState, setFilterState] = useState<FilterState>({});
+  const [filterState, setFilterState] = useState<FilterState>(() => {
+    // Check if we're returning from overview and have cached filter state
+    if (gridCache.isReturningFromOverview(pageKey)) {
+      const cachedData = gridCache.getCachedData(pageKey);
+      if (cachedData?.filterState) {
+        console.log('🔥 GridPage: Initializing filterState from cache:', JSON.stringify(cachedData.filterState));
+        return cachedData.filterState;
+      }
+    }
+    return {};
+  });
   const [refreshKey, setRefreshKey] = useState(0);
   const loadedResourceRef = React.useRef<string | null>(null);
   const gridControlsRef = React.useRef<{ refresh: () => void; resetAll: () => void; saveScrollPosition?: () => void } | null>(null);
@@ -153,66 +165,44 @@ export default function GridPage({
   const orderNavigation = useOrderNavigation();
   const itemNavigation = useItemNavigation();
   const { applyPriorityFilters } = usePriorityFilters();
-  const gridCache = useGridCache();
+  
+  // Shared overview navigation handlers
+  const { handleCloseOverview: handleCloseOrderOverview } = useOrderOverviewNavigation(pageKey, orderNavigation);
+  const { handleCloseOverview: handleCloseItemOverview } = useItemOverviewNavigation(pageKey, itemNavigation);
   
   // Track if we're returning from overview (cache should only be used in this case)
   // ALWAYS start as false - only set to true when clicking X in overview
   
 
   useEffect(() => {
-    console.log('🔥 GridPage useEffect MOUNT - resource:', resource, 'pageKey:', pageKey);
+    console.log('🔥 GridPage MOUNT');
     
     // Always attempt load once per mount; allow rerun if resource changes
     loadedResourceRef.current = resource;
     
     // Only clear cache if NOT returning from overview
-    const returningFromOverview = (() => {
-      try {
-        const flag = window.sessionStorage.getItem(`returningFromOverview.${pageKey}`);
-        console.log('🔥 SESSION STORAGE CHECK - returningFromOverview flag:', flag, 'for pageKey:', pageKey);
-        return flag === 'true';
-      } catch {
-        console.log('🔥 SESSION STORAGE ERROR - defaulting to false');
-        return false;
-      }
-    })();
-    
-    console.log('🔥 RETURNING FROM OVERVIEW:', returningFromOverview);
+    const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
     
     if (!returningFromOverview) {
-      console.log('🔥 NOT RETURNING FROM OVERVIEW - Clearing cache on initial load for pageKey:', pageKey);
+      console.log('🔥 GridPage: Clearing cache on mount (not returning from overview)');
       gridCache.clearCache(pageKey);
     } else {
-      console.log('🔥 RETURNING FROM OVERVIEW - preserving cache for pageKey:', pageKey);
+      console.log('🔥 GridPage: returningFromOverview=true');
       
       // IMMEDIATELY load cached data into current state to prevent API calls
       const cachedData = gridCache.getCachedData(pageKey);
-      console.log('🔥 CACHED DATA CHECK:', {
-        hasCachedData: !!cachedData,
-        fromRowClick: cachedData?.fromRowClick,
-        dataLength: cachedData?.data?.length || 0,
-        hasFilters: !!cachedData?.filters
-      });
       
       if (cachedData && cachedData.fromRowClick) {
-        console.log('🔥 IMMEDIATELY loading cached data into grid state - rows:', cachedData.data.length);
+        console.log('🔥 GridPage: Found cache with fromRowClick=true');
+        console.log('🔥 GridPage: Cache filterState:', JSON.stringify(cachedData.filterState));
         setCurrentRows(cachedData.data);
         currentRowsRef.current = cachedData.data;
         
-        // Also restore filter state immediately
-        if (cachedData.filters) {
-          // Convert cached filters back to UI filter state
-          try {
-            const uiState: FilterState = {};
-            // Simple conversion - you may need to adjust this based on your filter structure
-            console.log('🔥 RESTORING FILTER STATE from cache');
-            setFilterState(uiState);
-          } catch (err) {
-            console.log('🔥 ERROR restoring filter state:', err);
-          }
+        // Restore filter state immediately
+        if (cachedData.filterState) {
+          console.log('🔥 GridPage: Setting filterState from cache');
+          setFilterState(cachedData.filterState);
         }
-      } else {
-        console.log('🔥 NO VALID CACHED DATA - will need to fetch');
       }
     }
 
@@ -342,10 +332,7 @@ export default function GridPage({
 
   const onFetchRows = useCallback(
     async (page: number, pageSize: number, filter: GridFilter, sort: any, filter_id?: any): Promise<GridRowResponse<any>> => {
-      console.log('🔥🔥🔥 ONFETCHROWS CALLED!!! 🔥🔥🔥');
-      console.log('🔥 ONFETCHROWS PARAMS:', { page, pageSize, pageKey, resource });
-      console.log('🔥 ONFETCHROWS FILTER:', JSON.stringify(filter));
-      console.log('🔥 ONFETCHROWS SORT:', JSON.stringify(sort));
+      console.log('🔥 onFetchRows called - pageKey:', pageKey);
       
       if (!viewsUrl || !selectedView) {
         console.log('🔥 NO VIEWS URL OR SELECTED VIEW - returning empty');
@@ -373,17 +360,13 @@ export default function GridPage({
       const normalizedCachedFilter = normalizeFilterForCache(cachedData?.filters);
       
       // Check if we should use cached data (ONLY when BOTH conditions are met)
-      const returningFromOverview = window.sessionStorage.getItem(`returningFromOverview.${pageKey}`) === 'true';
+      const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
       const cacheFromRowClick = cachedData?.fromRowClick === true;
       const shouldUseCache = returningFromOverview && cacheFromRowClick;
       
-      console.log('🔥 CACHE FLAGS CHECK:', {
-        returningFromOverview,
-        cacheFromRowClick,
-        shouldUseCache,
-        hasCachedData: !!cachedData,
-        isCachedDataFresh
-      });
+      if (returningFromOverview) {
+        console.log('🔥 returningFromOverview=true, cacheFromRowClick=', cacheFromRowClick);
+      }
       
       // Detailed validation logging
       const hasSelectedView = !!selectedView?.id;
@@ -418,25 +401,32 @@ export default function GridPage({
       
       // Use cache if returning from overview with row click - be more lenient on other conditions
       if (shouldUseCache && cachedData && isCachedDataFresh) {
-        console.log('🔥✅ USING CACHED DATA - NO API CALL!!!', { 
-          pageKey, 
-          cachedRows: cachedData.data.length, 
-          viewId: cachedData.viewId,
-          selectedViewId: selectedView.id,
-          returningFromOverview,
-          cacheFromRowClick,
-          cachedFilters: cachedData.filters
-        });
+        console.log('🔥 USING CACHE - NO API CALL');
+        console.log('🔥 pageKey:', pageKey);
+        console.log('🔥 Cached data:', cachedData);
+        console.log('🔥 Cached data length:', cachedData.data?.length);
+        console.log('🔥 First cached item:', cachedData.data?.[0]);
+        
         // Use cached data
         setCurrentRows(cachedData.data);
         currentRowsRef.current = cachedData.data;
         
-        // CRITICAL: Clear the flags and DESTROY the cache after using it
-        try {
-          window.sessionStorage.removeItem(`returningFromOverview.${pageKey}`);
-          console.log('🎯 DESTROYING CACHE after use for pageKey:', pageKey);
-          gridCache.clearCache(pageKey);
-        } catch {}
+        // Restore filter state if available
+        if (cachedData.filterState) {
+          console.log('🔥✅ RESTORING FILTER STATE from cache');
+          setFilterState(cachedData.filterState);
+        }
+        
+        // DO NOT clear the flag here - it needs to stay true until the grid is fully initialized
+        console.log('🔥 KEEPING returningFromOverview=true for now');
+        
+        // Clear the flag after a delay to ensure all grid events have processed
+        setTimeout(() => {
+          console.log('🔥 NOW setting returningFromOverview to false (delayed)');
+          gridCache.setReturningFromOverview(pageKey, false);
+        }, 1000); // 1 second should be enough for all grid initialization
+        
+        console.log('🔥🔥🔥 CACHE USED - THIS SHOULD BE THE ONLY CALL! 🔥🔥🔥');
         
         return {
           resource,
@@ -461,14 +451,7 @@ export default function GridPage({
         });
       }
       
-      console.log('🔥❌ MAKING API CALL - NO CACHE USED!!!', {
-        pageKey,
-        resource,
-        viewsUrl,
-        page,
-        pageSize,
-        reason: 'Cache conditions not met'
-      });
+      console.log('🔥 MAKING API CALL');
       
       try {
         const result = await readGridRows<any>(viewsUrl, {
@@ -498,9 +481,6 @@ export default function GridPage({
           sort
           // Don't pass fromRowClick - let it preserve existing value
         );
-        try {
-          window.sessionStorage.setItem(`grid.lastFilter.${pageKey}`, JSON.stringify(mergedFilter || {}));
-        } catch {}
         
         return result;
       } catch (err) {
@@ -512,7 +492,11 @@ export default function GridPage({
   );
 
 
-  const filters = useMemo(() => getFiltersForPage(pageKey), [pageKey]);
+  const filters = useMemo(() => {
+    const pageFilters = getFiltersForPage(pageKey);
+    console.log('🔥 GridPage filters config:', Object.keys(pageFilters));
+    return pageFilters;
+  }, [pageKey]);
   // NEVER use cached filters on initial page load - always use default server filter
   // effectiveInitialFilters is removed - filters come from selectedView.filter only
 
@@ -613,13 +597,13 @@ export default function GridPage({
     return null;
   }, [gridCache, pageKey]);
 
-  // Handle row clicks to set up navigation and navigate to order
+  // Handle row clicks to set up navigation and navigate to overview
   const handleRowClick = useCallback((row: any, ev?: any) => {
-    // Determine order identifiers from row
+    // Determine identifiers from row - could be order, item, RMA, etc.
     const orderNumber = row.order_number || row.orderNumber || row.order_num;
     const accountNumber = row.account_number || row.accountNumber || row.account_num;
     const itemNumber = row.item_number || row.itemNumber || row.item_num;
-    // Detect anchor clicks (e.g., clicking the order link cell)
+    // Detect anchor clicks (e.g., clicking the link cell)
     const isAnchor = ev?.event?.target?.closest && ev.event.target.closest('a');
 
     if (onRowClicked) {
@@ -634,10 +618,18 @@ export default function GridPage({
       gridCache.setSelectedRow(pageKey, rowIndex, row);
     }
 
-    // ONLY do the heavy cache/filter work if we're actually navigating to overview (anchor click)
-    if (orderNumber && isAnchor && currentRowsRef.current.length > 0) {
-      // CRITICAL: Create/update cache with current grid data BEFORE navigating
+    // GENERIC CACHE CREATION: If clicking an anchor (navigating to any overview), create cache
+    if (isAnchor && currentRowsRef.current.length > 0) {
       try {
+        console.log(`🔥 CACHE CREATED for pageKey: ${pageKey} on anchor click`);
+        console.log('🔥 Current rows length:', currentRowsRef.current.length);
+        console.log('🔥 First row to cache:', currentRowsRef.current[0]);
+        
+        // Get AG Grid filter model from cache (it's updated by onAgFilterModelChange)
+        const currentCache = gridCache.getCachedData(pageKey);
+        const agFilterModel = currentCache?.agFilterModel;
+        
+        // Build the merged filter
         const baseFilter: GridFilter = (selectedView?.filter as any) || { and: [] };
         // Convert panel filterState into conditions
         const uiConditions: GridFilterCondition[] = (() => {
@@ -688,12 +680,7 @@ export default function GridPage({
         const mergedConditions: GridFilterCondition[] = Object.values(mergedBy).flat();
         const mergedFilter: GridFilter = mergedConditions.length > 0 ? { and: mergedConditions } : baseFilter;
         
-        // CRITICAL: Cache the current grid data with the latest filter state
-        console.log('🔥🔥🔥 CREATING CACHE BEFORE NAVIGATION!!! 🔥🔥🔥');
-        console.log('🔥 CACHE CREATION - pageKey:', pageKey, 'rows:', currentRowsRef.current.length);
-        console.log('🔥 CACHE CREATION - mergedFilter:', JSON.stringify(mergedFilter));
-        console.log('🔥 CACHE CREATION - selectedView.id:', selectedView?.id);
-        
+        console.log('🔥 SAVING filterState to cache:', JSON.stringify(filterState));
         gridCache.setCachedData(
           pageKey,
           currentRowsRef.current, // Current grid data
@@ -702,21 +689,25 @@ export default function GridPage({
           selectedView?.id?.toString(),
           mergedFilter, // Latest merged filter (NOT server filter)
           undefined, // sort
-          true // fromRowClick = true
+          true, // fromRowClick = true
+          agFilterModel, // AG Grid header filter model
+          filterState // Current UI filter state
         );
         
-        console.log('🔥 CACHE CREATED - verifying:', gridCache.getCachedData(pageKey)?.fromRowClick);
+        // Save current scroll position before navigating
+        if (gridControlsRef.current && (gridControlsRef.current as any).saveScrollPosition) {
+          (gridControlsRef.current as any).saveScrollPosition();
+        }
         
-        try { window.sessionStorage.setItem(`grid.lastFilter.${pageKey}`, JSON.stringify(mergedFilter || {})); } catch {}
+        // Set flag to indicate we're going to an overview - cache will be used when returning
+        gridCache.setReturningFromOverview(pageKey, true);
       } catch (err) {
         console.error('🎯 Error creating cache before navigation:', err);
       }
+    }
 
-      // Save current scroll position before navigating
-      if (gridControlsRef.current && (gridControlsRef.current as any).saveScrollPosition) {
-        (gridControlsRef.current as any).saveScrollPosition();
-      }
-
+    // Handle order-specific navigation setup
+    if (orderNumber && isAnchor) {
       // Convert current rows to navigation items
       const navigationItems: OrderNavigationItem[] = currentRowsRef.current
         .filter(r => r.order_number || r.orderNumber || r.order_num)
@@ -729,11 +720,6 @@ export default function GridPage({
       if (navigationItems.length > 0) {
         orderNavigation.setOrderList(navigationItems, orderNumber, pageKey);
       }
-
-      // Set flag to indicate we're going to order overview - cache will be used when returning
-      try {
-        window.sessionStorage.setItem(`returningFromOverview.${pageKey}`, 'true');
-      } catch {}
       
       // The anchor renderer will handle the actual navigation
       // We just need to set up the navigation context and cache flag
@@ -742,12 +728,7 @@ export default function GridPage({
 
     // Handle item navigation for item grids (only on anchor clicks)
     if (!orderNumber && itemNumber && isAnchor) {
-      // Set flag to indicate we're going to item overview - cache will be used when returning
-      try {
-        window.sessionStorage.setItem(`returningFromOverview.${pageKey}`, 'true');
-      } catch {}
-      
-      // Set up item navigation if we have current rows
+      // Set up item navigation (cache already created above)
       if (currentRowsRef.current.length > 0) {
         const navigationItems: ItemNavigationItem[] = currentRowsRef.current
           .filter(r => r.item_number || r.itemNumber || r.item_num)
@@ -912,14 +893,7 @@ export default function GridPage({
       <div className="p-4 w-full">
         <ItemOverview
           data={(itemOverlay as any).loading ? ({} as any) : itemOverlay}
-          onClose={() => {
-            itemNavigation.clearNavigation();
-            const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
-            if (q.has('itemNum')) q.delete('itemNum');
-            const base = (router as any).pathname || '';
-            const search = q.toString();
-            router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
-          }}
+          onClose={handleCloseItemOverview}
           onRefresh={refreshOrderData as any}
           loading={(itemOverlay as any).loading}
           {...(itemNavigation.hasNavigation() ? {
@@ -943,27 +917,7 @@ export default function GridPage({
       <div className="p-4 w-full">
         <OrderOverview
           data={(orderOverlay as any).kind === 'single' ? (orderOverlay as any).order : ({} as any)}
-          onClose={() => {
-            console.log('🔥🔥🔥 ORDER OVERVIEW CLOSE CLICKED!!! 🔥🔥🔥');
-            console.log('🔥 SETTING returningFromOverview flag for pageKey:', pageKey);
-            
-            // Set flag to use cache when returning
-            try {
-              window.sessionStorage.setItem(`returningFromOverview.${pageKey}`, 'true');
-              console.log('🔥 SESSION STORAGE SET - returningFromOverview =', window.sessionStorage.getItem(`returningFromOverview.${pageKey}`));
-            } catch (err) {
-              console.log('🔥 ERROR setting session storage:', err);
-            }
-            
-            orderNavigation.clearNavigation();
-            const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
-            if (q.has('orderNum')) q.delete('orderNum');
-            if (q.has('accountNum')) q.delete('accountNum');
-            const base = (router as any).pathname || '';
-            const search = q.toString();
-            console.log('🔥 NAVIGATING BACK TO:', search ? `${base}?${search}` : base);
-            router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
-          }}
+          onClose={handleCloseOrderOverview}
           variant="inline"
           onRefresh={refreshOrderData}
           {...(orderNavigation.hasNavigation() ? {
@@ -987,14 +941,7 @@ export default function GridPage({
         <div className="mt-2">
           <MultipleOrdersGrid
             orders={(orderOverlay as any).orders}
-            onClose={() => {
-              const q = new URLSearchParams((router as any).asPath.split('?')[1] || '');
-              if (q.has('orderNum')) q.delete('orderNum');
-              if (q.has('accountNum')) q.delete('accountNum');
-              const base = (router as any).pathname || '';
-              const search = q.toString();
-              router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
-            }}
+            onClose={handleCloseOrderOverview}
           />
         </div>
       </div>
@@ -1051,6 +998,15 @@ export default function GridPage({
           const cachedData = gridCache.getCachedData(pageKey);
           return cachedData?.filters || null;
         })()}
+        {...(() => {
+          // Use the current filterState if we're returning from overview
+          const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
+          if (returningFromOverview && filterState && Object.keys(filterState).length > 0) {
+            console.log('🔥 RESTORING initialFilterState from current state:', JSON.stringify(filterState));
+            return { initialFilterState: filterState };
+          }
+          return {};
+        })()}
         paginationWord={paginationWord}
         onFetchRows={onFetchRows}
         onRowClicked={handleRowClick}
@@ -1074,19 +1030,23 @@ export default function GridPage({
           };
         }}
         initialAgFilterModel={(() => {
-          try {
-            const raw = window.sessionStorage.getItem(`grid.agmodel.${pageKey}`);
-            const model = raw ? JSON.parse(raw) : undefined;
-            if (model && Object.keys(model).length > 0) {
-              console.log('🎯 Restoring AG Grid filter model:', model);
-            }
-            return model;
-          } catch { return undefined; }
+          // ONLY restore AG Grid filter model when returning from overview
+          const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
+          if (!returningFromOverview) {
+            console.log('🔥 NOT restoring AG Grid filter model - not returning from overview');
+            return undefined;
+          }
+          
+          const cachedData = gridCache.getCachedData(pageKey);
+          const model = cachedData?.agFilterModel;
+          if (model && Object.keys(model).length > 0) {
+            console.log('🎯 Restoring AG Grid filter model:', model);
+          }
+          return model;
         })()}
         onAgFilterModelChange={(model) => {
-          try {
-            window.sessionStorage.setItem(`grid.agmodel.${pageKey}` , JSON.stringify(model || {}));
-          } catch {}
+          // Store AG Grid filter model in cache
+          gridCache.setAgFilterModel(pageKey, model);
         }}
         {...(() => {
           const selectedRow = restoreSelectedRow();
@@ -1108,14 +1068,7 @@ export default function GridPage({
         <div className="mt-4">
           <ItemOverview
             data={itemOverlay}
-            onClose={() => {
-              itemNavigation.clearNavigation();
-              const q = new URLSearchParams(router.asPath.split('?')[1] || '');
-              if (q.has('itemNum')) q.delete('itemNum');
-              const base = (router as any).pathname || '';
-              const search = q.toString();
-              router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
-            }}
+            onClose={handleCloseItemOverview}
             onRefresh={refreshOrderData as any}
             {...(itemNavigation.hasNavigation() ? {
               onPrevious: handleNavigateItemPrevious,
@@ -1137,26 +1090,7 @@ export default function GridPage({
         <div className="mt-4">
           <OrderOverview
             data={orderOverlay.order}
-            onClose={() => {
-              console.log('🔥🔥🔥 ORDER OVERVIEW CLOSE CLICKED (SECOND HANDLER)!!! 🔥🔥🔥');
-              console.log('🔥 SETTING returningFromOverview flag for pageKey:', pageKey);
-              
-              // Set flag to indicate we're returning from overview - cache will be used
-              try {
-                window.sessionStorage.setItem(`returningFromOverview.${pageKey}`, 'true');
-                console.log('🔥 SESSION STORAGE SET - returningFromOverview =', window.sessionStorage.getItem(`returningFromOverview.${pageKey}`));
-              } catch (err) {
-                console.log('🔥 ERROR setting session storage:', err);
-              }
-              orderNavigation.clearNavigation();
-              const q = new URLSearchParams(router.asPath.split('?')[1] || '');
-              if (q.has('orderNum')) q.delete('orderNum');
-              if (q.has('accountNum')) q.delete('accountNum');
-              const base = (router as any).pathname || '';
-              const search = q.toString();
-              console.log('🔥 NAVIGATING BACK TO:', search ? `${base}?${search}` : base);
-              router.push(search ? `${base}?${search}` : base, undefined as any, { shallow: true } as any);
-            }}
+            onClose={handleCloseOrderOverview}
             variant="inline"
             onRefresh={refreshOrderData}
             {...(orderNavigation.hasNavigation() ? {

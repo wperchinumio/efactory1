@@ -12,6 +12,7 @@ import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, Or
 import { downloadInvoiceDetail, downloadInvoicePdf } from '@/services/api';
 import GridFilters from '@/components/filters/grid/GridFilters';
 import LoadingSpinner, { SkeletonGrid } from '@/components/common/LoadingSpinner';
+import { useGridCache } from '@/contexts/GridCacheContext';
 
 export interface LunoAgGridProps<T = any> {
   resource: string; // e.g., 'fulfillment-open'
@@ -44,6 +45,8 @@ export interface LunoAgGridProps<T = any> {
   // AG Grid header filter model persistence (optional)
   initialAgFilterModel?: any;
   onAgFilterModelChange?: (model: any) => void;
+  // Initial filter state for the UI filter panel
+  initialFilterState?: FilterState;
 }
 
 // Ensure community modules are registered once
@@ -116,7 +119,7 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
       colDef.floatingFilter = true;
       colDef.filterParams = {
         buttons: ['reset', 'apply'],
-        closeOnApply: false,
+        closeOnApply: true,
         suppressAndOrCondition: true,
         filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
         defaultOption: 'equals',
@@ -127,7 +130,7 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
       colDef.floatingFilter = true;
       colDef.filterParams = {
         buttons: ['reset', 'apply'],
-        closeOnApply: false,
+        closeOnApply: true,
         suppressAndOrCondition: true,
         filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
         defaultOption: 'equals',
@@ -139,7 +142,7 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
       colDef.floatingFilter = true;
       colDef.filterParams = {
         buttons: ['reset', 'apply'],
-        closeOnApply: false,
+        closeOnApply: true,
         suppressAndOrCondition: true,
         filterOptions: ['contains', 'equals', 'startsWith', 'endsWith'],
         defaultOption: 'equals',
@@ -335,13 +338,19 @@ export function LunoAgGrid<T = any>({
   scrollLeft,
   initialAgFilterModel,
   onAgFilterModelChange,
+  initialFilterState,
 }: LunoAgGridProps<T>) {
   const gridApiRef = useRef<GridApi | null>(null);
+  const gridCache = useGridCache();
   const [rows, setRows] = useState<T[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [themeClass, setThemeClass] = useState(() => getThemeClass());
-  const [filterState, setFilterState] = useState<FilterState>({});
+  const [filterState, setFilterState] = useState<FilterState>(() => {
+    const initial = initialFilterState || {};
+    console.log('🔥 LunoAgGrid: Initializing filterState with:', JSON.stringify(initial));
+    return initial;
+  });
   const [cachedView, setCachedViewState] = useState<GridSelectedView | null>(() => {
     // Synchronously read cached view BEFORE first render to avoid flicker
     try {
@@ -368,6 +377,7 @@ export function LunoAgGrid<T = any>({
   const [containerPxHeight, setContainerPxHeight] = useState<number | null>(null);
   const isBatchingResetRef = useRef<boolean>(false);
   const [filtersInitialOverride, setFiltersInitialOverride] = useState<FilterState | null>(null);
+  const [filterResetKey, setFilterResetKey] = useState(0);
 
   // Keep cached view up to date if resource changes (rare)
   useEffect(() => {
@@ -452,6 +462,13 @@ export function LunoAgGrid<T = any>({
     // Always reset to the server-provided default view filter
     const base = viewToUse?.filter;
     const resetState = mapGridFilterToFilterState(base);
+    
+    console.log('🔥 RESET ALL - server filter:', base);
+    console.log('🔥 RESET ALL - mapped resetState:', resetState);
+    console.log('🔥 RESET ALL - current filterState:', filterState);
+    
+    // Force GridFilters to remount with new key to ensure UI updates
+    setFilterResetKey(prev => prev + 1);
     // Set an explicit initial override so the Filter panel immediately reflects the reset
     setFiltersInitialOverride(resetState);
     // Update our internal state so fetch logic uses the same values
@@ -462,6 +479,10 @@ export function LunoAgGrid<T = any>({
     setTimeout(() => {
       fetchPage(1, resetState);
       isBatchingResetRef.current = false;
+      // Clear the override after a short delay to ensure GridFilters has processed it
+      setTimeout(() => {
+        setFiltersInitialOverride(null);
+      }, 100);
     }, 0);
   };
 
@@ -772,20 +793,38 @@ export function LunoAgGrid<T = any>({
   // otherwise fall back to the server default baseline.
   // Initialize filterState from server baseline on first view load (unless parent provides initialFilters)
   const didInitFilterStateRef = useRef<boolean>(false);
+  const hasInitialFilterStateRef = useRef<boolean>(!!initialFilterState);
+  
   useEffect(() => {
     if (didInitFilterStateRef.current) return;
     if (initialFilters) return; // parent-driven init handled elsewhere
+    
+    // Skip if we already have initialFilterState (it was set in useState)
+    if (hasInitialFilterStateRef.current) {
+      didInitFilterStateRef.current = true;
+      console.log('🔥 Using initialFilterState from cache:', JSON.stringify(initialFilterState));
+      return;
+    }
+    
     if (cachedView || selectedView) {
       didInitFilterStateRef.current = true;
       const base = (cachedView || selectedView)?.filter;
       const init = mapGridFilterToFilterState(base);
+      console.log('🔥 LunoAgGrid: Setting filterState from view filter:', JSON.stringify(init));
       setFilterState(init);
     }
   }, [cachedView, selectedView, initialFilters]);
 
   async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[], forceRefresh?: boolean) {
+    
+    // Remove the blocking check - let onFetchRows handle the cache logic
+    const pageKey = resource;
+    const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
+    console.log(`📞 fetchPage: pageKey: ${pageKey}, returningFromOverview:`, returningFromOverview);
+    
     // If rowsUrl isn't ready yet, keep the loading overlay visible and wait
     if (!rowsUrl) {
+      console.log('🚫 fetchPage: BLOCKED - no rowsUrl');
       return;
     }
 
@@ -920,17 +959,24 @@ export function LunoAgGrid<T = any>({
       if (gridApiRef.current) {
         fetchPage(1, uiState);
       }
+      // Clear the override after a short delay to ensure GridFilters has processed it
+      setTimeout(() => {
+        setFiltersInitialOverride(null);
+      }, 100);
     } catch {}
   }, [initialFilters]);
   const didInitialFetchRef = useRef<boolean>(false);
+  
   useEffect(() => {
     // Single initial fetch per mount once rowsUrl is ready
     if (!didInitialFetchRef.current && rowsUrl && (cachedView || selectedView)) {
       console.log('🎯 LunoAgGrid: Making initial data fetch', { rowsUrl, hasCachedView: !!cachedView, hasSelectedView: !!selectedView });
       didInitialFetchRef.current = true;
+      
+      // Just call fetchPage - it will check if we're returning from overview
       fetchPage(1);
     }
-  }, [rowsUrl, cachedView, selectedView]);
+  }, [rowsUrl, cachedView, selectedView, resource]);
 
   // Expose refresh/reset API to parent so refresh does not reset grid filters
   useEffect(() => {
@@ -1016,6 +1062,7 @@ export function LunoAgGrid<T = any>({
       }
     }
   }, [scrollTop, scrollLeft]);
+
 
   // Use AG Grid's built-in row positioning with proper data loading timing
   useEffect(() => {
@@ -1155,6 +1202,7 @@ export function LunoAgGrid<T = any>({
   }, [handleScroll]);
 
   function onGridReady(e: GridReadyEvent) {
+    console.log('🔥 onGridReady called');
     gridApiRef.current = e.api;
     
     // Set up scroll tracking
@@ -1178,6 +1226,10 @@ export function LunoAgGrid<T = any>({
       e.api.sizeColumnsToFit();
     }
 
+    // Check if we're restoring from cache
+    const pageKey = resource;
+    const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
+
     // Apply initial AG header filter model (if provided) BEFORE first fetch
     if (initialAgFilterModel && typeof (e.api as any).setFilterModel === 'function') {
       try {
@@ -1193,6 +1245,7 @@ export function LunoAgGrid<T = any>({
     // If we deferred the initial fetch due to initial filters/model, run it now
     if (!didInitialFetchRef.current && rowsUrl && (cachedView || selectedView)) {
       didInitialFetchRef.current = true;
+      // Just call fetchPage - it will check if we're returning from overview
       fetchPage(1);
     }
   }
@@ -1208,14 +1261,23 @@ export function LunoAgGrid<T = any>({
   }
 
   function onFilterChanged() {
+    console.log('🔥 onFilterChanged called');
+    
     // Reset to page 1 when filters change
-    if (isBatchingResetRef.current) return; // suppress intermediate fetches during Reset All
+    if (isBatchingResetRef.current) {
+      console.log('🔥 onFilterChanged: SKIP - isBatchingReset');
+      return; // suppress intermediate fetches during Reset All
+    }
+    
+    // Update the filter model in cache
     try {
       if (onAgFilterModelChange && gridApiRef.current) {
         const model = (gridApiRef.current as any).getFilterModel ? (gridApiRef.current as any).getFilterModel() : null;
         if (model) onAgFilterModelChange(model);
       }
     } catch {}
+    
+    // Just call fetchPage - it will check if we're returning from overview
     setPage(1);
     fetchPage(1);
   }
@@ -1388,10 +1450,11 @@ export function LunoAgGrid<T = any>({
       {showFilters && Object.keys(filters).length > 0 && (
         <div ref={filtersRef}>
           <GridFilters
+            key={filterResetKey}
             filters={filters}
             onFiltersChange={handleFiltersChange}
             disabled={loading || !rowsUrl}
-            initialState={filterState}
+            initialState={filtersInitialOverride || filterState}
             onResetAll={handleResetAll}
           />
         </div>
