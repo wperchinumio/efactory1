@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import GridToolbar from '@/components/common/GridToolbar';
-import { LunoAgGrid } from '@/components/common/AgGrid/LunoAgGrid';
+import LunoAgGrid from '@/components/common/AgGrid/LunoAgGrid';
 import { listGridViews, readGridRows, readOrderDetail } from '@/services/api';
 import { getCachedViewApiResponseIfExist, cacheViewApiResponse } from '@/lib/grid/viewCache';
 import { getFiltersForPage } from '@/lib/filters/filterConfigs';
@@ -1040,7 +1040,7 @@ export default function GridPage({
         currentSort={currentSort as any}
         filterState={filterState}
       />
-      {(!orderOverlay || orderOverlay.kind !== 'single') && !rmaOverlay && !itemOverlay ? (
+      {(!orderOverlay || orderOverlay.kind !== 'single') && !rmaOverlay && !itemOverlay && viewsUrl ? (
         <LunoAgGrid
         key={refreshKey}
         resource={resource}
@@ -1082,21 +1082,28 @@ export default function GridPage({
           };
         }}
         initialAgFilterModel={(() => {
-          // ONLY restore AG Grid filter model when returning from overview
+          // ONLY restore filter store when returning from overview
           const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
           if (!returningFromOverview) {
             return undefined;
           }
           
           const cachedData = gridCache.getCachedData(pageKey);
-          const model = cachedData?.agFilterModel;
-          if (model && Object.keys(model).length > 0) {
+          const filterStore = cachedData?.agFilterModel; // This now contains our window filter store
+          if (filterStore && Object.keys(filterStore).length > 0) {
+            // Restore to resource-specific window store
+            if (typeof window !== 'undefined') {
+              (window as any).__wildcardFilterStores = (window as any).__wildcardFilterStores || {};
+              (window as any).__wildcardFilterStores[resource] = filterStore;
+            }
           }
-          return model;
+          return undefined; // We don't use AG Grid filter model anymore
         })()}
         onAgFilterModelChange={(model) => {
-          // Store AG Grid filter model in cache
-          gridCache.setAgFilterModel(pageKey, model);
+          // Store our resource-specific window filter store in cache
+          const filterStores = (window as any).__wildcardFilterStores || {};
+          const filterStore = filterStores[resource] || {};
+          gridCache.setAgFilterModel(pageKey, filterStore);
         }}
         {...(() => {
           const selectedRow = restoreSelectedRow();

@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import type { GridFieldDef, GridFilter, GridRowResponse, GridSelectedView, GridSortSpec } from '@/types/api/grid';
 import type { FtpBatchRow } from '@/types/api/orderpoints';
-import { LunoAgGrid } from '@/components/common/AgGrid/LunoAgGrid';
+import LunoAgGrid from '@/components/common/AgGrid/LunoAgGrid';
 import GridToolbar from '@/components/common/GridToolbar';
 import type { FilterConfig } from '@/types/api/filters';
 import { DateTimeRenderer, NumberRenderer, FtpAckFileRenderer, FtpBatchFileRenderer, FtpTotalImportedRenderer } from '@/components/common/AgGrid/renderers';

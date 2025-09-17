@@ -14,6 +14,14 @@ import { IconFileTypePdf, IconFileSpreadsheet } from '@tabler/icons-react';
 import GridFilters from '@/components/filters/grid/GridFilters';
 import LoadingSpinner, { SkeletonGrid } from '@/components/common/LoadingSpinner';
 import { useGridCache } from '@/contexts/GridCacheContext';
+// Import custom filters only on client side
+let WildcardTextFilter: any;
+let WildcardTextFloatingFilter: any;
+
+if (typeof window !== 'undefined') {
+  WildcardTextFilter = require('./filters/WildcardTextFilter').WildcardTextFilter;
+  WildcardTextFloatingFilter = require('./filters/WildcardTextFloatingFilter').WildcardTextFloatingFilter;
+}
 
 export interface LunoAgGridProps<T = any> {
   resource: string; // e.g., 'fulfillment-open'
@@ -124,8 +132,9 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
         suppressAndOrCondition: true,
         filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
         defaultOption: 'equals',
-        suppressFilterButton: true,
+        suppressFilterButton: false,
       };
+      colDef.suppressHeaderFilterButton = true;
     } else if (dataType === 'date' || dataType === 'datetime') {
       colDef.filter = 'agDateColumnFilter';
       colDef.floatingFilter = true;
@@ -135,11 +144,17 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
         suppressAndOrCondition: true,
         filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
         defaultOption: 'equals',
-        suppressFilterButton: true,
+        suppressFilterButton: false,
       };
+      colDef.suppressHeaderFilterButton = true;
     } else {
-      // Default to text filter for string and other types
-      colDef.filter = 'agTextColumnFilter';
+      // Default to text filter for string and other types - use custom wildcard filter if available
+      if (typeof window !== 'undefined' && WildcardTextFilter && WildcardTextFloatingFilter) {
+        colDef.filter = WildcardTextFilter;
+        colDef.floatingFilterComponent = WildcardTextFloatingFilter;
+      } else {
+        colDef.filter = 'agTextColumnFilter';
+      }
       colDef.floatingFilter = true;
       colDef.filterParams = {
         buttons: ['reset', 'apply'],
@@ -147,7 +162,17 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
         suppressAndOrCondition: true,
         filterOptions: ['contains', 'equals', 'startsWith', 'endsWith'],
         defaultOption: 'equals',
+        suppressFilterButton: false,  // Show the button so we can suppress it properly
+        // Disable automatic filter triggering
+        debounceMs: 0,
+        applyMiniFilterWhileTyping: false
+      };
+      // Add CSS class to hide the filter button
+      colDef.floatingFilterComponentParams = {
         suppressFilterButton: true,
+        className: 'hide-filter-button',
+        // Disable automatic sync between floating filter and main filter
+        suppressSyncWithFilter: true
       };
     }
   }
@@ -376,6 +401,9 @@ export function LunoAgGrid<T = any>({
   const filtersRef = useRef<HTMLDivElement | null>(null);
   const [containerPxHeight, setContainerPxHeight] = useState<number | null>(null);
   const isBatchingResetRef = useRef<boolean>(false);
+  const filterChangeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFilterModelRef = useRef<string>('');
+  const filterChangeCountRef = useRef<number>(0);
   const [filtersInitialOverride, setFiltersInitialOverride] = useState<FilterState | null>(null);
   const [filterResetKey, setFilterResetKey] = useState(0);
 
@@ -432,6 +460,12 @@ export function LunoAgGrid<T = any>({
   // Reset All: restore server view.filter, clear AG Grid header filters, and refetch
   const handleResetAll = () => {
     const api = gridApiRef.current;
+    
+    // Clear our resource-specific window filter store
+    if (typeof window !== 'undefined' && (window as any).__wildcardFilterStores) {
+      (window as any).__wildcardFilterStores[resource] = {};
+    }
+    
     if (api) {
       try {
         isBatchingResetRef.current = true;
@@ -819,13 +853,12 @@ export function LunoAgGrid<T = any>({
   }, [cachedView, selectedView, initialFilters]);
 
   async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[], forceRefresh?: boolean) {
-    
     // Remove the blocking check - let onFetchRows handle the cache logic
     const pageKey = resource;
     const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
     
     // If rowsUrl isn't ready yet, keep the loading overlay visible and wait
-    if (!rowsUrl) {
+    if (!rowsUrl || !selectedView) {
       return;
     }
 
@@ -862,17 +895,37 @@ export function LunoAgGrid<T = any>({
       return conditions;
     };
 
+    // TEMPORARY HACK: Use our external filter store instead of AG Grid's broken filter model
     const buildConditionsFromAgModel = (): GridFilterCondition[] => {
       const conditions: GridFilterCondition[] = [];
-      if (!gridApiRef.current) return conditions;
-      const filterModel = gridApiRef.current.getFilterModel();
-      if (!filterModel || Object.keys(filterModel).length === 0) return conditions;
-      Object.entries(filterModel).forEach(([field, fm]: [string, any]) => {
-        if (fm && fm.filter !== undefined && fm.filter !== null && fm.filter !== '') {
-          const oper = fm.type || 'contains';
-          conditions.push({ field, oper, value: fm.filter });
+      
+      // Access the resource-specific filter store
+      const filterStores = (window as any).__wildcardFilterStores || {};
+      const filterStore = filterStores[resource] || {};
+      console.log('[DEBUG] Building filter conditions for resource:', resource, 'filterStore:', filterStore);
+      
+      Object.entries(filterStore).forEach(([field, value]: [string, any]) => {
+        if (value && value.trim()) {
+          const trimmedValue = value.trim();
+          let oper = 'equals';
+          let filterValue = trimmedValue;
+          
+          // Parse wildcards
+          if (trimmedValue.startsWith('*') && trimmedValue.endsWith('*') && trimmedValue.length > 2) {
+            oper = 'contains';
+            filterValue = trimmedValue.slice(1, -1);
+          } else if (trimmedValue.startsWith('*') && trimmedValue.length > 1) {
+            oper = 'endsWith';
+            filterValue = trimmedValue.slice(1);
+          } else if (trimmedValue.endsWith('*') && trimmedValue.length > 1) {
+            oper = 'startsWith';
+            filterValue = trimmedValue.slice(0, -1);
+          }
+          
+          conditions.push({ field, oper, value: filterValue });
         }
       });
+      
       return conditions;
     };
 
@@ -936,6 +989,7 @@ export function LunoAgGrid<T = any>({
       setRows(response.rows || []);
       setTotal(response.total || 0);
       setPage(nextPage); // Update page state after successful API call
+      
     } catch (error) {
       
     } finally {
@@ -1189,6 +1243,9 @@ export function LunoAgGrid<T = any>({
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
       }
+      if (filterChangeTimeoutRef.current) {
+        clearTimeout(filterChangeTimeoutRef.current);
+      }
       // Clean up scroll event listener
       const api = gridApiRef.current;
       if (api && !api.isDestroyed) {
@@ -1202,6 +1259,19 @@ export function LunoAgGrid<T = any>({
 
   function onGridReady(e: GridReadyEvent) {
     gridApiRef.current = e.api;
+    
+    // Prevent AG Grid from managing focus
+    const gridApi = e.api as any;
+    if (gridApi.focusService) {
+      // Override focus methods to prevent stealing focus
+      const originalFocusInto = gridApi.focusService.focusInto;
+      gridApi.focusService.focusInto = function(element: any) {
+        // Only allow focus if it's not a floating filter input
+        if (!document.activeElement?.classList.contains('ag-floating-filter-input')) {
+          return originalFocusInto.call(this, element);
+        }
+      };
+    }
     
     // Set up scroll tracking
     const gridBodyViewport = (e.api as any).getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
@@ -1228,15 +1298,16 @@ export function LunoAgGrid<T = any>({
     const pageKey = resource;
     const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
 
-    // Apply initial AG header filter model (if provided) BEFORE first fetch
-    if (initialAgFilterModel && typeof (e.api as any).setFilterModel === 'function') {
-      try {
-        isBatchingResetRef.current = true; // suppress fetch on onFilterChanged
-        (e.api as any).setFilterModel(initialAgFilterModel);
-        (e.api as any).onFilterChanged && (e.api as any).onFilterChanged();
-      } catch {}
-      finally {
-        isBatchingResetRef.current = false;
+    // The initialAgFilterModel now restores our window filter store in GridPage
+    // So we just need to trigger a filter change if we have filters
+    if (initialAgFilterModel !== undefined) {
+      const filterStores = (window as any).__wildcardFilterStores || {};
+      const filterStore = filterStores[resource] || {};
+      if (Object.keys(filterStore).length > 0) {
+        // Trigger filter change to apply restored filters
+        setTimeout(() => {
+          (e.api as any).onFilterChanged && (e.api as any).onFilterChanged();
+        }, 100);
       }
     }
 
@@ -1258,25 +1329,38 @@ export function LunoAgGrid<T = any>({
     }
   }
 
-  function onFilterChanged() {
+  const onFilterChanged = useMemo(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
     
-    // Reset to page 1 when filters change
-    if (isBatchingResetRef.current) {
-      return; // suppress intermediate fetches during Reset All
-    }
-    
-    // Update the filter model in cache
-    try {
-      if (onAgFilterModelChange && gridApiRef.current) {
-        const model = (gridApiRef.current as any).getFilterModel ? (gridApiRef.current as any).getFilterModel() : null;
-        if (model) onAgFilterModelChange(model);
+    return function() {
+      // Reset to page 1 when filters change
+      if (isBatchingResetRef.current) {
+        return; // suppress intermediate fetches during Reset All
       }
-    } catch {}
-    
-    // Just call fetchPage - it will check if we're returning from overview
-    setPage(1);
-    fetchPage(1);
-  }
+      
+      // Clear previous timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      // Set new timeout
+      timeoutId = setTimeout(() => {
+        // Update the filter model in cache ONLY after debounce
+        // This prevents cache updates while user is typing
+        try {
+          if (onAgFilterModelChange) {
+            // Pass our resource-specific filter store to the cache
+            const filterStores = (window as any).__wildcardFilterStores || {};
+            const filterStore = filterStores[resource] || {};
+            onAgFilterModelChange(filterStore);
+          }
+        } catch {}
+        
+        setPage(1);
+        fetchPage(1);
+      }, 100);
+    };
+  }, [onAgFilterModelChange]);
 
   function persistColumnState() {
     try {
@@ -1442,6 +1526,11 @@ export function LunoAgGrid<T = any>({
 
   return (
     <div className="w-full">
+      <style jsx global>{`
+        .ag-floating-filter .ag-floating-filter-button {
+          display: none !important;
+        }
+      `}</style>
       {/* Filter Panel */}
       {showFilters && Object.keys(filters).length > 0 && (
         <div ref={filtersRef}>
@@ -1472,6 +1561,7 @@ export function LunoAgGrid<T = any>({
           <AgGridReact
             theme="legacy"
             rowData={rows}
+            context={{ resource }}
             columnDefs={colDefs}
             onGridReady={onGridReady}
             onRowClicked={(ev) => onRowClicked?.(ev.data, ev)}
@@ -1497,6 +1587,12 @@ export function LunoAgGrid<T = any>({
               mode: 'singleRow',
               checkboxes: false,
               enableClickSelection: true
+            }}
+            onCellClicked={(params) => {
+              // Handle row selection on cell click
+              if (params.node) {
+                params.node.setSelected(true);
+              }
             }}
             multiSortKey="ctrl"
             getRowStyle={(params) => ({
