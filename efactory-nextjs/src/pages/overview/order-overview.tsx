@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '@/components/layout/Layout'
 import OrderOverview from '@/components/overview/OrderOverview'
@@ -11,6 +11,7 @@ export default function OrderOverviewPage() {
   const [orderData, setOrderData] = useState<OrderDetailDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isNavigatingAway, setIsNavigatingAway] = useState(false)
 
   useEffect(() => {
     if (orderNum && accountNum) {
@@ -22,7 +23,8 @@ export default function OrderOverviewPage() {
     try {
       setLoading(true)
       setError(null)
-      const result = await readOrderDetail(orderNumber, accountNumber)
+      // NO forceRefresh - use cached data
+      const result = await readOrderDetail(orderNumber, accountNumber, undefined, false)
       
       if (result.kind === 'single') {
         setOrderData(result.order)
@@ -42,6 +44,7 @@ export default function OrderOverviewPage() {
   }
 
   const handleClose = () => {
+    setIsNavigatingAway(true)
     router.back()
   }
 
@@ -96,7 +99,7 @@ export default function OrderOverviewPage() {
     )
   }
 
-  if (!orderData) {
+  if (!orderData && !isNavigatingAway) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-screen">
@@ -111,6 +114,19 @@ export default function OrderOverviewPage() {
             >
               Go Back
             </button>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  // Show loading state when navigating away to prevent flash
+  if (isNavigatingAway) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="text-font-color-100">Returning to grid...</div>
           </div>
         </div>
       </Layout>

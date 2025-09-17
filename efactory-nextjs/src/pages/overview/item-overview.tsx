@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/layout/Layout';
 import ItemOverview from '@/components/overview/ItemOverview';
@@ -36,7 +36,8 @@ export default function ItemOverviewPage() {
         const region = (token?.user_data as any)?.region || (token?.user_data?.calc_locations?.[0] ?? '');
         const account_wh = account && region ? `${account}.${region}` : '';
         const payload: any = { action: 'item_detail', item_number: itemNum, warehouse: '', account_wh, weeks: false };
-        const result = await readItemDetail(payload);
+        // NO forceRefresh - use cached data
+        const result = await readItemDetail(payload, false);
         setData(result);
       } catch (e) {
         setError('Failed to load item data');

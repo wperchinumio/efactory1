@@ -126,15 +126,8 @@ export default function GridFilters({
   };
 
   const handleResetAll = () => {
-    // Notify parent first so it can batch-suppress fetches during reset
+    // Delegate reset to parent; parent will update initialState and/or remount us
     onResetAll?.();
-    if (initialState) {
-      setFilterState(initialState);
-      onFiltersChange(initialState);
-    } else {
-      setFilterState({});
-      onFiltersChange({});
-    }
   };
 
   const getActiveFilterCount = () => {

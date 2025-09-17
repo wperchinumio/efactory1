@@ -151,6 +151,45 @@ export interface RmaReadResponse {
   to_ship: RmaShipItemDto[];
 }
 
+// Optional extras returned by legacy detail endpoint
+export interface RmaCustomFieldValueDto {
+  title: string;
+  value: string;
+  type: 'text' | 'selection';
+}
+
+export interface RmaChartPointDto {
+  period: string; // e.g., '2024-01-01' or week label
+  qty: number;
+}
+
+export interface RmaChartDto {
+  title: string; // e.g., 'Received'
+  value: string; // legend label
+  perc: number;  // percent of total
+  list: RmaChartPointDto[];
+}
+
+export interface RmaOmDetailDto {
+  line_number?: number;
+  item_number?: string;
+  item_desciption?: string; // legacy typo kept for compatibility
+  condition_code?: string;
+  condition?: string;
+  disposition_code?: string;
+  disposition?: string;
+  received_date?: string;
+  received_serialnumber?: string;
+  received_quantity?: number;
+  is_cancelled?: boolean;
+}
+
+export interface RmaDetailResponse extends RmaReadResponse {
+  custom_fields?: RmaCustomFieldValueDto[];
+  charts?: RmaChartDto[];
+  om_details?: RmaOmDetailDto[];
+}
+
 // Save payload uses slightly different field names (header composed from form)
 export interface RmaHeaderSaveDto {
   // lifecycle
@@ -259,5 +298,29 @@ export interface DeleteRmaDraftsRequest { action: 'delete_draft'; rma_ids: numbe
 
 // Convenience envelope type
 export type ApiEnvelope<T> = ApiResponse<T>;
+
+// ==========================
+// ReturnTrak: RMA Detail + Operations
+// ==========================
+
+export interface ReadRmaDetailRequest {
+  action: 'read';
+  resource?: 'rma';
+  rma_number: string;
+  account_number?: string | null;
+  weeks?: boolean; // charts interval flag (legacy)
+}
+export type ReadRmaDetailResponse = ApiResponse<RmaDetailResponse>;
+
+export interface ExpireRmaRequest { action: 'expire'; rma_id: number }
+export interface CancelRmaRequest { action: 'cancel'; rma_id: number }
+export interface ResetRmaAcknowledgedRequest { action: 'reset_ack'; rma_id: number }
+export interface IssueRmaEmailRequest { action: 'issue_rma_email'; rma_id: number; email: string }
+
+export interface UpdateRmaCustomFieldsRequest {
+  action: 'update_custom_fields';
+  rma_id: number;
+  data: Partial<Record<`cf${number}`, string>>; // cf1..cf7
+}
 
 

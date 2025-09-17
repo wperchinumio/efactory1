@@ -1,0 +1,20 @@
+{
+  "EDE": { "bg": "#7a0bb6", "text": "#ffffff" },
+  "EDI": { "bg": "#e7505a", "text": "#ffffff" },
+  "REST": { "bg": "#4A4E54", "text": "#ffffff" },
+  "SOAP": { "bg": "#7d8894", "text": "#ffffff" },
+  "RTRE": { "bg": "#7d8894", "text": "#ffffff" },
+  "RTSO": { "bg": "#7d8894", "text": "#ffffff" },
+  "AMZN": { "bg": "#4b77be", "text": "#ffffff" },
+  "BIGP": { "bg": "#4b77be", "text": "#ffffff" },
+  "CHAD": { "bg": "#4b77be", "text": "#ffffff" },
+  "MAGP": { "bg": "#4b77be", "text": "#ffffff" },
+  "MAGS": { "bg": "#4b77be", "text": "#ffffff" },
+  "SHOP": { "bg": "#4b77be", "text": "#ffffff" },
+  "SHST": { "bg": "#4b77be", "text": "#ffffff" },
+  "STLS": { "bg": "#4b77be", "text": "#ffffff" },
+  "WOOP": { "bg": "#4b77be", "text": "#ffffff" },
+  "OPEF": { "bg": "#44b6ae", "text": "#ffffff" },
+  "RTEF": { "bg": "#44b6ae", "text": "#ffffff" },
+  "_default": { "bg": "#95a5a6", "text": "#ffffff" }
+}

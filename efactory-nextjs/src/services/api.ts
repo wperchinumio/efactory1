@@ -143,6 +143,8 @@ import type {
   ReadRmaEntryRequest,
   ReadRmaEntryResponse,
   ReadRmaFromOrderRequest,
+  ReadRmaDetailRequest,
+  ReadRmaDetailResponse,
   ReadRmaGeneralSettingsRequest,
   ReadRmaSettingsRequest,
   ReadRmaSettingsResponse,
@@ -154,6 +156,11 @@ import type {
   RmaShipItemDto,
   SaveRmaEntryRequest,
   SaveRmaEntryResponse,
+  ExpireRmaRequest,
+  CancelRmaRequest,
+  ResetRmaAcknowledgedRequest,
+  IssueRmaEmailRequest,
+  UpdateRmaCustomFieldsRequest,
 } from '@/types/api/returntrak';
 import type {
   OrderDetailDto as OrdersOrderDetailDto,
@@ -627,8 +634,15 @@ export async function closeShortAsnLine(dcl_po: string | number, dcl_po_line: st
 // ==========================
 // Inventory: Item Detail (Invoices/Edit Item)
 // ==========================
-export async function readItemDetail(payload: ReadItemDetailBody): Promise<ReadItemDetailResponse['data']> {
-  const res = await postJson<ReadItemDetailResponse>('/api/inventory', payload as any);
+export async function readItemDetail(payload: ReadItemDetailBody, forceRefresh?: boolean): Promise<ReadItemDetailResponse['data']> {
+  // Add cache-busting headers if forceRefresh is true
+  const headers = forceRefresh ? { 
+    'Cache-Control': 'no-cache, no-store, must-revalidate', 
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  } : undefined;
+  
+  const res = await postJson<ReadItemDetailResponse>('/api/inventory', payload as any, headers);
   return res.data as any;
 }
 
@@ -737,6 +751,28 @@ export async function readRmaFromOrder(account_number: string, order_number: str
   return res.data as any;
 }
 
+export async function readRmaDetail(rma_number: string, account_number?: string | null, weeks?: boolean, forceRefresh?: boolean): Promise<ReadRmaDetailResponse['data']> {
+  const body: ReadRmaDetailRequest = {
+    action: 'read',
+    resource: 'rma',
+    rma_number,
+    account_number: account_number ?? undefined,
+    weeks: weeks ?? false,
+    // Add timestamp for cache-busting if forceRefresh is true
+    ...(forceRefresh && { _timestamp: Date.now() }),
+  } as any;
+  
+  // Add cache-busting headers if forceRefresh is true
+  const headers = forceRefresh ? { 
+    'Cache-Control': 'no-cache, no-store, must-revalidate', 
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  } : undefined;
+  
+  const res = await postJson<ReadRmaDetailResponse>('/api/returntrak', body as any, headers);
+  return res.data as any;
+}
+
 export async function saveRma(
   rma_header: RmaHeaderSaveDto,
   to_receive: RmaAuthItemDto[],
@@ -761,10 +797,39 @@ export async function deleteRmaDrafts(rma_ids: number[]): Promise<void> {
 }
 
 // ==========================
+// ReturnTrak: RMA Detail toolbar actions (legacy parity)
+// ==========================
+
+export async function expireRma(rma_id: number): Promise<void> {
+  const body: ExpireRmaRequest = { action: 'expire', rma_id } as any;
+  await postJson<Record<string, never>>('/api/returntrak', body);
+}
+
+export async function cancelRma(rma_id: number): Promise<void> {
+  const body: CancelRmaRequest = { action: 'cancel', rma_id } as any;
+  await postJson<Record<string, never>>('/api/returntrak', body);
+}
+
+export async function resetRmaAcknowledged(rma_id: number): Promise<void> {
+  const body: ResetRmaAcknowledgedRequest = { action: 'reset_ack', rma_id } as any;
+  await postJson<Record<string, never>>('/api/returntrak', body);
+}
+
+export async function issueRmaEmail(rma_id: number, email: string): Promise<void> {
+  const body: IssueRmaEmailRequest = { action: 'issue_rma_email', rma_id, email } as any;
+  await postJson<Record<string, never>>('/api/returntrak', body);
+}
+
+export async function updateRmaCustomFields(rma_id: number, data: UpdateRmaCustomFieldsRequest['data']): Promise<void> {
+  const body: UpdateRmaCustomFieldsRequest = { action: 'update_custom_fields', rma_id, data } as any;
+  await postJson<Record<string, never>>('/api/returntrak', body);
+}
+
+// ==========================
 // Order Detail (Fulfillment) API
 // ==========================
 
-export async function readOrderDetail(order_number: string, account_number?: string | null, policy_code?: string | number | null): Promise<OrderDetailResult> {
+export async function readOrderDetail(order_number: string, account_number?: string | null, policy_code?: string | number | null, forceRefresh?: boolean): Promise<OrderDetailResult> {
   const filters: any[] = [];
   if (order_number) filters.push({ order_num: order_number } as any);
   if (account_number && String(account_number).trim().length > 0) filters.push({ account_num: account_number } as any);
@@ -778,9 +843,18 @@ export async function readOrderDetail(order_number: string, account_number?: str
     filter: { and: filters, or: [] },
     fields: ['*'],
     policy_code: policy_code ?? undefined,
+    // Add timestamp for cache-busting if forceRefresh is true
+    ...(forceRefresh && { _timestamp: Date.now() }),
   } as any;
 
-  const res = await postJson<ReadOrderDetailResponse>('/api/fulfillment', body as any);
+  // Add cache-busting headers if forceRefresh is true
+  const headers = forceRefresh ? { 
+    'Cache-Control': 'no-cache, no-store, must-revalidate', 
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  } : undefined;
+
+  const res = await postJson<ReadOrderDetailResponse>('/api/fulfillment', body as any, headers);
   const rows = (res?.data?.rows || res?.data?.data?.rows || (res as any)?.rows || []) as OrdersOrderDetailDto[];
   if (rows.length === 1) return { kind: 'single', order: rows[0] as OrdersOrderDetailDto };
   if (rows.length === 0) return { kind: 'not_found' };

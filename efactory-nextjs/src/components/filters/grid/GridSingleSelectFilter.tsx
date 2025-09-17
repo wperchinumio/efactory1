@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ChevronDownIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import type { DropdownFilterConfig, FilterOption } from '@/types/api/filters';
 import { getAuthToken } from '@/lib/auth/storage';
+import { getOptionsForField } from '@/lib/filters/filterOptionsService';
 import { setActiveMenu, clearActiveMenu, closeActiveMenu } from './openMenuRegistry';
 import { useGlobalFilterData } from '@/hooks/useGlobalFilterData';
 
@@ -30,33 +31,55 @@ export default function GridSingleSelectFilter({
     setSelectedValue(value || '');
   }, [value]);
 
-  // Load options based on field type
+  // Load options based on field type (once per field change)
+  const loadedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (config.options && config.options.length > 0) {
-      setOptions(config.options);
-    } else {
+    let cancelled = false;
+    async function loadOptions() {
+      // Prevent refetch loops; only refetch when field changes
+      if (loadedRef.current === config.field) return;
+      if (config.options && config.options.length > 0) {
+        setOptions(config.options);
+        loadedRef.current = config.field;
+        return;
+      }
       setLoading(true);
       const authToken = getAuthToken();
-      let apiOptions: FilterOption[] = [];
-
-      switch (config.field) {
-        case 'international_code':
-        case 'destination':
-          // Use hardcoded destination options (matching analytics)
-          apiOptions = [
-            { key: 'All', value: '', oper: '=' as const },
-            { key: 'Domestic', value: '0', oper: '=' as const },
-            { key: 'International', value: '1', oper: '<>' as const }
-          ];
-          break;
-        default:
-          apiOptions = [];
+      try {
+        let apiOptions: FilterOption[] = [];
+        switch (config.field) {
+          case 'international_code':
+          case 'destination':
+            // Use hardcoded destination options (matching analytics)
+            apiOptions = [
+              { key: 'All', value: '', oper: '=' as const },
+              { key: 'Domestic', value: '0', oper: '=' as const },
+              { key: 'International', value: '1', oper: '<>' as const }
+            ];
+            break;
+          default:
+            // Generic loader for dynamic options (includes account_number)
+            apiOptions = await getOptionsForField(config.field);
+            break;
+        }
+        // Always prepend an explicit All option
+        const withAll: FilterOption[] = [{ key: 'All', value: '', oper: '=' as const }, ...apiOptions];
+        if (!cancelled) {
+          setOptions(withAll);
+          loadedRef.current = config.field;
+        }
+      } catch {
+        if (!cancelled) {
+          setOptions([{ key: 'All', value: '', oper: '=' as const }]);
+          loadedRef.current = config.field;
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      setOptions(apiOptions);
-      setLoading(false);
     }
-  }, [config.field, config.options, globalData]);
+    loadOptions();
+    return () => { cancelled = true; };
+  }, [config.field, config.options]);
 
   // Use all options since search is removed
   const filteredOptions = options;

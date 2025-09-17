@@ -16,6 +16,8 @@ export const accountNumberQF: FilterConfig = {
   title: 'ACCOUNT',
   type: 'DROPDOWN_QF',
   options: [],
+  // Force single-select UI with implicit "All" default
+  singleSelect: true as any,
   iconClassName: 'fa fa-user',
   width: '100px'
 };

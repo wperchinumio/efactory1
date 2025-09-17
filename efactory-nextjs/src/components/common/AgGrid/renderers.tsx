@@ -1,6 +1,7 @@
 import React from 'react';
 import { useRouter } from 'next/router';
 import { downloadFtpAck, downloadFtpBatch } from '@/services/api';
+import { getChannelColor } from '@/lib/channelColors';
 
 export function DateRenderer({ value }: { value: any }) {
   if (!value) return <span />;
@@ -47,7 +48,7 @@ export function PrimaryLinkRenderer({ value, data, field }: { value: any; data?:
   const base = typeof window !== 'undefined' ? window.location.pathname : router.pathname;
   const url = `${base}?orderNum=${encodeURIComponent(orderNum || String(value))}` + (accountNum ? `&accountNum=${encodeURIComponent(accountNum)}` : '');
   const onClick = (e: React.MouseEvent) => {
-    // Do not stop propagation so the grid row click can capture rows for navigation context
+    // Allow row click handler to fire for navigation context setup
     e.preventDefault();
     router.push(url);
   };
@@ -58,7 +59,21 @@ export function RmaLinkRenderer({ value, data }: { value: any; data?: any }) {
   const router = useRouter();
   if (!value) return <span />;
   const rmaNum = String(value);
-  const accountNum = data?.account_number;
+  const accountNum = data?.account_number || data?.original_account_number || data?.shipping_account_number;
+  const base = typeof window !== 'undefined' ? window.location.pathname : router.pathname;
+  const url = `${base}?rmaNum=${encodeURIComponent(rmaNum)}` + (accountNum ? `&accountNum=${encodeURIComponent(accountNum)}` : '');
+  const onClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push(url);
+  };
+  return <a className="text-primary hover:underline font-semibold" href={url} onClick={onClick}>{String(value)}</a>;
+}
+
+export function ReturnTrakRenderer({ value, data }: { value: any; data?: any }) {
+  const router = useRouter();
+  if (!value) return <span />;
+  const rmaNum = String(value);
+  const accountNum = data?.account_number || data?.original_account_number || data?.shipping_account_number;
   const base = typeof window !== 'undefined' ? window.location.pathname : router.pathname;
   const url = `${base}?rmaNum=${encodeURIComponent(rmaNum)}` + (accountNum ? `&accountNum=${encodeURIComponent(accountNum)}` : '');
   const onClick = (e: React.MouseEvent) => {
@@ -148,38 +163,15 @@ export function BundleLinkRenderer({ value, data }: { value: any; data?: any }) 
 
 // Map order type to a color class similar to legacy
 export function getOrderTypePillClass(orderType?: string): string {
-  switch ((orderType || '').toUpperCase()) {
-    case 'EDE':
-      return 'bg-purple-400 text-white';
-    case 'EDI':
-      return 'bg-red-400 text-white';
-    case 'REST':
-    case 'SOAP':
-    case 'RTRE':
-    case 'RTSO':
-      return 'bg-neutral-600 text-white';
-    case 'AMZN':
-    case 'BIGP':
-    case 'CHAD':
-    case 'MAGP':
-    case 'MAGS':
-    case 'SHOP':
-    case 'SHST':
-    case 'STLS':
-    case 'WOOP':
-      return 'bg-blue-400 text-white';
-    case 'OPEF':
-    case 'RTEF':
-      return 'bg-emerald-500 text-white';
-    default:
-      return 'bg-gray-400 text-white';
-  }
+  const { bg, text } = getChannelColor(orderType);
+  // Use inline style via style prop when rendering; keep class for spacing/shape only
+  return `text-[11px] font-semibold`;
 }
 
 export function OrderTypePill({ orderType }: { orderType?: string }) {
-  const cls = getOrderTypePillClass(orderType);
+  const { bg, text } = getChannelColor(orderType);
   return (
-    <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${cls}`}>
+    <span className={`px-2 py-0.5 rounded text-[11px] font-semibold`} style={{ backgroundColor: bg, color: text }}>
       {orderType || ''}
     </span>
   );

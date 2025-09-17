@@ -12,6 +12,7 @@ export interface GridCacheItem {
   viewId?: string;
   filters?: any;
   sort?: any;
+  fromRowClick?: boolean; // Flag to indicate cache was populated after row click
 }
 
 interface GridCacheState {
@@ -20,7 +21,7 @@ interface GridCacheState {
 
 interface GridCacheContextType {
   getCachedData: (pageKey: string) => GridCacheItem | null;
-  setCachedData: (pageKey: string, data: any[], columns: any[], totalCount: number, viewId?: string, filters?: any, sort?: any) => void;
+  setCachedData: (pageKey: string, data: any[], columns: any[], totalCount: number, viewId?: string, filters?: any, sort?: any, fromRowClick?: boolean) => void;
   setSelectedRow: (pageKey: string, rowIndex: number, rowData: any) => void;
   getSelectedRow: (pageKey: string) => { index: number; data: any } | null;
   setScrollPosition: (pageKey: string, scrollTop: number, scrollLeft: number) => void;
@@ -28,6 +29,7 @@ interface GridCacheContextType {
   clearCache: (pageKey?: string) => void;
   isDataFresh: (pageKey: string, maxAge?: number) => boolean;
   updateRowData: (pageKey: string, rowIndex: number, newData: any) => void;
+  markCacheFromRowClick: (pageKey: string, filters?: any) => void;
 }
 
 const GridCacheContext = createContext<GridCacheContextType | undefined>(undefined);
@@ -46,22 +48,34 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
     totalCount: number, 
     viewId?: string, 
     filters?: any, 
-    sort?: any
+    sort?: any,
+    fromRowClick?: boolean
   ) => {
-    setCache(prev => ({
-      ...prev,
-      [pageKey]: {
-        data,
-        columns,
-        totalCount,
-        lastUpdated: Date.now(),
-        viewId,
-        filters,
-        sort,
-        selectedRowIndex: prev[pageKey]?.selectedRowIndex,
-        selectedRowData: prev[pageKey]?.selectedRowData
-      }
-    }));
+    setCache(prev => {
+      const existing = prev[pageKey];
+      // If fromRowClick is not explicitly provided, preserve the existing value
+      const finalFromRowClick = fromRowClick !== undefined ? fromRowClick : (existing?.fromRowClick || false);
+      
+      console.log('🎯 setCachedData called:', { pageKey, fromRowClick, existingFromRowClick: existing?.fromRowClick, finalFromRowClick });
+      
+      return {
+        ...prev,
+        [pageKey]: {
+          data,
+          columns,
+          totalCount,
+          lastUpdated: Date.now(),
+          viewId,
+          filters,
+          sort,
+          fromRowClick: finalFromRowClick,
+          selectedRowIndex: existing?.selectedRowIndex,
+          selectedRowData: existing?.selectedRowData,
+          scrollTop: existing?.scrollTop,
+          scrollLeft: existing?.scrollLeft
+        }
+      };
+    });
   }, []);
 
   const setSelectedRow = useCallback((pageKey: string, rowIndex: number, rowData: any) => {
@@ -133,22 +147,57 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
   const isDataFresh = useCallback((pageKey: string, maxAge: number = 5 * 60 * 1000): boolean => {
     const cached = cache[pageKey];
     if (!cached) return false;
+    // If maxAge is 0, data is always fresh (no timeout)
+    if (maxAge === 0) return true;
     return Date.now() - cached.lastUpdated < maxAge;
   }, [cache]);
 
-  const updateRowData = useCallback((pageKey: string, rowIndex: number, newData: any) => {
+  const updateRowData = useCallback((pageKey: string, rowIndex: number, newRowData: any) => {
     setCache(prev => {
       const existing = prev[pageKey];
       if (!existing) return prev;
       
-      const newData = [...existing.data];
-      newData[rowIndex] = { ...newData[rowIndex], ...newData };
+      const updatedData = [...existing.data];
+      updatedData[rowIndex] = { ...updatedData[rowIndex], ...newRowData };
       
       return {
         ...prev,
         [pageKey]: {
           ...existing,
-          data: newData
+          data: updatedData
+        }
+      };
+    });
+  }, []);
+
+  const markCacheFromRowClick = useCallback((pageKey: string, filters?: any) => {
+    setCache(prev => {
+      const existing = prev[pageKey];
+      console.log('🎯 markCacheFromRowClick called:', { pageKey, hasExisting: !!existing, existingFromRowClick: existing?.fromRowClick });
+      
+      if (!existing) {
+        // Create a minimal cache entry to mark the row click
+        console.log('🎯 Creating new cache entry with fromRowClick: true');
+        return {
+          ...prev,
+          [pageKey]: {
+            data: [],
+            columns: [],
+            totalCount: 0,
+            lastUpdated: Date.now(),
+            fromRowClick: true,
+            filters: filters
+          }
+        };
+      }
+      
+      console.log('🎯 Updating existing cache entry with fromRowClick: true');
+      return {
+        ...prev,
+        [pageKey]: {
+          ...existing,
+          fromRowClick: true,
+          filters: filters || existing.filters
         }
       };
     });
@@ -163,7 +212,8 @@ export const GridCacheProvider: React.FC<{ children: ReactNode }> = ({ children 
     getScrollPosition,
     clearCache,
     isDataFresh,
-    updateRowData
+    updateRowData,
+    markCacheFromRowClick
   };
 
   return (

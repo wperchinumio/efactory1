@@ -1,6 +1,6 @@
 // Service to populate filter options from API calls
 import { getAuthToken } from '@/lib/auth/storage';
-import { postJson } from '@/lib/api/http';
+import { getJson } from '@/lib/api/http';
 
 export interface FilterOption {
   key: string;
@@ -20,7 +20,7 @@ export async function getWarehouseOptions(): Promise<FilterOption[]> {
 
   try {
     // Get warehouses from global API
-    const response = await postJson('/api/global', {});
+    const response = await getJson('/api/global?admin=1');
 
     const warehouses = (response.data as any)?.warehouses || {};
     const options: FilterOption[] = [];
@@ -52,7 +52,7 @@ export async function getLocationOptions(): Promise<FilterOption[]> {
 
   try {
     // Get locations from global API
-    const response = await postJson('/api/global', {});
+    const response = await getJson('/api/global?admin=1');
 
     const warehouses = (response.data as any)?.warehouses || {};
     const options: FilterOption[] = [];
@@ -84,10 +84,21 @@ export async function getAccountOptions(): Promise<FilterOption[]> {
 
   try {
     // Get accounts from global API
-    const response = await postJson('/api/global', {});
+    const response = await getJson('/api/global?admin=1');
 
-    const accounts = (response.data as any)?.calc_accounts || [];
-    const options: FilterOption[] = accounts.map((account: string) => ({
+    let accounts: string[] = (response.data as any)?.calc_accounts || [];
+
+    // Fallback: use accounts from auth token if API returns empty
+    if (!accounts || accounts.length === 0) {
+      try {
+        const { getAuthToken } = await import('@/lib/auth/storage');
+        const token = getAuthToken();
+        const fromToken = (token?.user_data as any)?.calc_accounts || [];
+        if (Array.isArray(fromToken) && fromToken.length > 0) accounts = fromToken;
+      } catch {}
+    }
+
+    const options: FilterOption[] = (accounts || []).map((account: string) => ({
       key: account,
       value: account,
       oper: '='
@@ -97,7 +108,21 @@ export async function getAccountOptions(): Promise<FilterOption[]> {
     return options;
   } catch (error) {
     console.error('Failed to load account options:', error);
-    return [];
+    // Final fallback: try token directly
+    try {
+      const { getAuthToken } = await import('@/lib/auth/storage');
+      const token = getAuthToken();
+      const fromToken = (token?.user_data as any)?.calc_accounts || [];
+      const options: FilterOption[] = (fromToken || []).map((account: string) => ({
+        key: account,
+        value: account,
+        oper: '='
+      }));
+      optionsCache.set(cacheKey, options);
+      return options;
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -110,7 +135,7 @@ export async function getOrderTypeOptions(): Promise<FilterOption[]> {
 
   try {
     // Get order types from global API
-    const response = await postJson('/api/global', {});
+    const response = await getJson('/api/global?admin=1');
 
     const orderTypes = (response.data as any)?.order_types || {};
     const options: FilterOption[] = Object.keys(orderTypes).map((orderTypeKey) => ({
@@ -136,7 +161,7 @@ export async function getAccountRegionOptions(): Promise<FilterOption[]> {
 
   try {
     // Get account regions from global API
-    const response = await postJson('/api/global', {});
+    const response = await getJson('/api/global?admin=1');
 
     const calcAccountRegions = (response.data as any)?.calc_account_regions || {};
     const options: FilterOption[] = Object.keys(calcAccountRegions)

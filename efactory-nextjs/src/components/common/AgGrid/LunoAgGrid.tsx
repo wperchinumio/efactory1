@@ -8,7 +8,7 @@ import { getAuthToken } from '@/lib/auth/storage';
 import { getCachedViewApiResponseIfExist, cacheViewApiResponse, removeExpiredViewsFromStorage } from '@/lib/grid/viewCache';
 import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, GridSelectedView, GridSortSpec } from '@/types/api/grid';
 import type { FilterConfig, FilterState } from '@/types/api/filters';
-import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer, RmaLinkRenderer, StrongTextRenderer, PrimaryEmphasisRenderer, WarningTextRenderer, BoolRenderer, RmaTypeRenderer, BundleTypeRenderer, BundlePLRenderer, FilterLinkNumberRenderer, ItemLinkRenderer, BundleLinkRenderer, OrderOrRmaLinkRenderer, RtLinkRenderer, InvoiceRenderer, InvoiceLinksRenderer } from './renderers';
+import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer, RmaLinkRenderer, ReturnTrakRenderer, StrongTextRenderer, PrimaryEmphasisRenderer, WarningTextRenderer, BoolRenderer, RmaTypeRenderer, BundleTypeRenderer, BundlePLRenderer, FilterLinkNumberRenderer, ItemLinkRenderer, BundleLinkRenderer, InvoiceRenderer, InvoiceLinksRenderer } from './renderers';
 import { downloadInvoiceDetail, downloadInvoicePdf } from '@/services/api';
 import GridFilters from '@/components/filters/grid/GridFilters';
 import LoadingSpinner, { SkeletonGrid } from '@/components/common/LoadingSpinner';
@@ -41,6 +41,9 @@ export interface LunoAgGridProps<T = any> {
   // Scroll position
   scrollTop?: number | undefined; // Vertical scroll position to restore
   scrollLeft?: number | undefined; // Horizontal scroll position to restore
+  // AG Grid header filter model persistence (optional)
+  initialAgFilterModel?: any;
+  onAgFilterModelChange?: (model: any) => void;
 }
 
 // Ensure community modules are registered once
@@ -171,9 +174,11 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     } else if (id === 'fmtorderlink') {
       colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
     } else if (id === 'fmtorderorrmalink') {
-      colDef.cellRenderer = (p: any) => <OrderOrRmaLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+      colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
     } else if (id === 'fmtrmalink') {
       colDef.cellRenderer = (p: any) => <RmaLinkRenderer value={p.value} data={p.data} />;
+    } else if (id === 'fmtreturntrak') {
+      colDef.cellRenderer = (p: any) => <ReturnTrakRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtorderstage') {
       colDef.cellRenderer = (p: any) => <OrderStageRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtorderstatus') {
@@ -189,7 +194,7 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     } else if (id === 'fmtbundlelink') {
       colDef.cellRenderer = (p: any) => <BundleLinkRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtrtlink') {
-      colDef.cellRenderer = (p: any) => <RtLinkRenderer value={p.value} data={p.data} />;
+      colDef.cellRenderer = (p: any) => <ReturnTrakRenderer value={p.value} data={p.data} />;
     } else if (id === 'fmtinv') {
       colDef.cellRenderer = (p: any) => <InvoiceRenderer data={p.data} />;
     } else if (id === 'fmtinvlinks') {
@@ -226,6 +231,8 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
       colDef.cellRenderer = (p: any) => <PrimaryLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
     } else if (ff === 'item_number' || ff.endsWith('item_number')) {
       colDef.cellRenderer = (p: any) => <ItemLinkRenderer value={p.value} data={p.data} field={p.colDef.field} />;
+    } else if (ff === 'rma_number' || ff.endsWith('rma_number') || ff === 'rma_num' || ff.endsWith('rma_num') || ff === 'rma#' || ff.includes('rma_number') || ff.includes('rma_num')) {
+      colDef.cellRenderer = (p: any) => <ReturnTrakRenderer value={p.value} data={p.data} />;
     }
   }
 
@@ -326,6 +333,8 @@ export function LunoAgGrid<T = any>({
   selectedRowData,
   scrollTop,
   scrollLeft,
+  initialAgFilterModel,
+  onAgFilterModelChange,
 }: LunoAgGridProps<T>) {
   const gridApiRef = useRef<GridApi | null>(null);
   const [rows, setRows] = useState<T[]>([]);
@@ -358,6 +367,7 @@ export function LunoAgGrid<T = any>({
   const filtersRef = useRef<HTMLDivElement | null>(null);
   const [containerPxHeight, setContainerPxHeight] = useState<number | null>(null);
   const isBatchingResetRef = useRef<boolean>(false);
+  const [filtersInitialOverride, setFiltersInitialOverride] = useState<FilterState | null>(null);
 
   // Keep cached view up to date if resource changes (rare)
   useEffect(() => {
@@ -439,14 +449,18 @@ export function LunoAgGrid<T = any>({
       } catch {}
     }
     const viewToUse = cachedView || selectedView;
-    const base = initialFilters || viewToUse?.filter;
-    const initialState = mapGridFilterToFilterState(base);
-    setFilterState(initialState);
-    onFilterStateChange?.(initialState);
+    // Always reset to the server-provided default view filter
+    const base = viewToUse?.filter;
+    const resetState = mapGridFilterToFilterState(base);
+    // Set an explicit initial override so the Filter panel immediately reflects the reset
+    setFiltersInitialOverride(resetState);
+    // Update our internal state so fetch logic uses the same values
+    setFilterState(resetState);
+    onFilterStateChange?.(resetState);
     setPage(1);
     // Perform exactly one fetch after batch clearing is done (delay a tick to let UI settle)
     setTimeout(() => {
-      fetchPage(1, initialState);
+      fetchPage(1, resetState);
       isBatchingResetRef.current = false;
     }, 0);
   };
@@ -749,80 +763,123 @@ export function LunoAgGrid<T = any>({
 
   const filterPanelInitialState: FilterState = useMemo(() => {
     const viewToUse = cachedView || selectedView;
-    const base = initialFilters || viewToUse?.filter;
+    // Always show server default filters in the panel's Reset baseline
+    const base = viewToUse?.filter;
     return mapGridFilterToFilterState(base);
+  }, [cachedView, selectedView]);
+
+  // What the panel should display: if we currently have a user-applied filterState, prefer it;
+  // otherwise fall back to the server default baseline.
+  // Initialize filterState from server baseline on first view load (unless parent provides initialFilters)
+  const didInitFilterStateRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (didInitFilterStateRef.current) return;
+    if (initialFilters) return; // parent-driven init handled elsewhere
+    if (cachedView || selectedView) {
+      didInitFilterStateRef.current = true;
+      const base = (cachedView || selectedView)?.filter;
+      const init = mapGridFilterToFilterState(base);
+      setFilterState(init);
+    }
   }, [cachedView, selectedView, initialFilters]);
 
-  async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[]) {
+  async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[], forceRefresh?: boolean) {
     // If rowsUrl isn't ready yet, keep the loading overlay visible and wait
     if (!rowsUrl) {
       return;
     }
+
+    // Let GridPage handle all cache logic - just call onFetchRows directly
+    // The cache check is handled in GridPage.onFetchRows
     const viewToUse = customView || cachedView || selectedView;
-    const baseFilter: GridFilter = initialFilters || viewToUse.filter;
+    // Always use server-provided default as base; UI/AG filters overlay on top
+    const baseFilter: GridFilter = viewToUse.filter;
     const currentFilterState = customFilterState || filterState;
-    
-    // Convert filter state to GridFilter format
-    const filterConditions: GridFilterCondition[] = [];
-    // Start with server-provided base filter from the selected view
-    if ((baseFilter as any)?.and && Array.isArray((baseFilter as any).and)) {
-      filterConditions.push(...((baseFilter as any).and as GridFilterCondition[]));
-    }
-    
-    // Add filter state conditions
-    Object.values(currentFilterState).forEach(filterValue => {
-      if (Array.isArray(filterValue)) {
-        // Handle array of FilterValue (date ranges, etc.)
-        filterValue.forEach(fv => {
-          if (fv && fv.value !== null && fv.value !== '') {
-            filterConditions.push({
-              field: fv.field,
-              oper: fv.oper,
-              value: fv.value,
-            });
+
+    // Helpers: normalize FilterState and AG Grid model into GridFilterCondition[] and merge by field
+    const buildConditionsFromFilterState = (state: FilterState): GridFilterCondition[] => {
+      const conditions: GridFilterCondition[] = [];
+      Object.values(state).forEach((filterValue) => {
+        if (Array.isArray(filterValue)) {
+          filterValue.forEach((fv) => {
+            if (fv && fv.value !== null && fv.value !== '') {
+              conditions.push({ field: fv.field, oper: fv.oper, value: fv.value });
+            }
+          });
+        } else if (filterValue && (filterValue as any).value !== null && (filterValue as any).value !== '') {
+          const v = (filterValue as any).value;
+          const fieldName = (filterValue as any).field;
+          const oper = (filterValue as any).oper;
+          if (Array.isArray(v)) {
+            conditions.push({ field: fieldName, oper: 'in', value: v.join(',') });
+          } else if (typeof v === 'string' && v.includes(',')) {
+            conditions.push({ field: fieldName, oper: 'in', value: v });
+          } else {
+            conditions.push({ field: fieldName, oper, value: v });
           }
-        });
-      } else if (filterValue && (filterValue as any).value !== null && (filterValue as any).value !== '') {
-        // Handle single FilterValue (robust types)
-        const v = (filterValue as any).value;
-        const fieldName = (filterValue as any).field;
-        const oper = (filterValue as any).oper;
-        if (Array.isArray(v)) {
-          // Multi-select array → use 'in' with comma-separated values
-          filterConditions.push({ field: fieldName, oper: 'in', value: v.join(',') });
-        } else if (typeof v === 'string' && v.includes(',')) {
-          // Multi-select string (comma-separated)
-          filterConditions.push({ field: fieldName, oper: 'in', value: v });
-        } else {
-          // Primitive types (string|number|boolean)
-          filterConditions.push({ field: fieldName, oper, value: v });
         }
-      }
-    });
-    
-    // Use AG Grid's built-in server-side filtering
-    let currentFilter = baseFilter;
-    if (gridApiRef.current) {
+      });
+      return conditions;
+    };
+
+    const buildConditionsFromAgModel = (): GridFilterCondition[] => {
+      const conditions: GridFilterCondition[] = [];
+      if (!gridApiRef.current) return conditions;
       const filterModel = gridApiRef.current.getFilterModel();
-      if (Object.keys(filterModel).length > 0) {
-        // Convert AG Grid filter model to our GridFilter format using AG Grid's native operators
-        Object.entries(filterModel).forEach(([field, filterState]: [string, any]) => {
-          if (filterState.filter) {
-            // Use AG Grid's native filter type as the operator
-            const oper = filterState.type || 'contains';
-            filterConditions.push({
-              field,
-              oper,
-              value: filterState.filter,
-            });
-          }
-        });
-      }
+      if (!filterModel || Object.keys(filterModel).length === 0) return conditions;
+      Object.entries(filterModel).forEach(([field, fm]: [string, any]) => {
+        if (fm && fm.filter !== undefined && fm.filter !== null && fm.filter !== '') {
+          const oper = fm.type || 'contains';
+          conditions.push({ field, oper, value: fm.filter });
+        }
+      });
+      return conditions;
+    };
+
+    const groupByField = (arr: GridFilterCondition[]): Record<string, GridFilterCondition[]> => {
+      const byField: Record<string, GridFilterCondition[]> = {};
+      arr.forEach((c) => {
+        if (!c || !c.field) return;
+        const key = String(c.field);
+        if (!byField[key]) byField[key] = [];
+        byField[key]!.push(c);
+      });
+      return byField;
+    };
+
+    const baseConditions = Array.isArray((baseFilter as any)?.and) ? ((baseFilter as any).and as GridFilterCondition[]) : [];
+    const uiConditions = buildConditionsFromFilterState(currentFilterState);
+    const agConditions = buildConditionsFromAgModel();
+
+    // Merge with precedence: base < UI filters < AG Grid header filters
+    const mergedByField = {
+      ...groupByField(baseConditions),
+    } as Record<string, GridFilterCondition[]>;
+
+    const applyOverlay = (overlay: GridFilterCondition[]) => {
+      const g = groupByField(overlay);
+      Object.keys(g).forEach((field) => {
+        mergedByField[field] = g[field]!; // replace existing field conditions entirely
+      });
+    };
+
+    applyOverlay(uiConditions);
+    applyOverlay(agConditions);
+
+    const mergedConditions: GridFilterCondition[] = Object.values(mergedByField).flat();
+
+    // Final currentFilter with merged conditions
+    let currentFilter: GridFilter = baseFilter;
+    if (mergedConditions.length > 0) {
+      currentFilter = { and: mergedConditions };
     }
     
-    // Combine all filter conditions
-    if (filterConditions.length > 0) {
-      currentFilter = { and: filterConditions };
+    // Add cache-busting timestamp if forceRefresh is true
+    if (forceRefresh) {
+      currentFilter = {
+        ...currentFilter,
+        _timestamp: Date.now()
+      } as any;
     }
     
     // Use custom sort if provided, otherwise use current sort state, otherwise use view sort
@@ -846,10 +903,30 @@ export function LunoAgGrid<T = any>({
     }
   }
 
+  // Apply incoming initialFilters (from parent preservation) as UI filters on mount/update
+  const appliedInitialRef = useRef<string | null>(null);
+  useEffect(() => {
+    try {
+      if (!initialFilters) return;
+      const key = JSON.stringify(initialFilters);
+      if (appliedInitialRef.current === key) return;
+      appliedInitialRef.current = key;
+      const uiState = mapGridFilterToFilterState(initialFilters);
+      console.log('🎯 Restoring filter state from cache:', uiState);
+      setFiltersInitialOverride(uiState);
+      setFilterState(uiState);
+      setPage(1);
+      // Defer fetch until grid API is ready so AG header model can overlay correctly
+      if (gridApiRef.current) {
+        fetchPage(1, uiState);
+      }
+    } catch {}
+  }, [initialFilters]);
   const didInitialFetchRef = useRef<boolean>(false);
   useEffect(() => {
     // Single initial fetch per mount once rowsUrl is ready
     if (!didInitialFetchRef.current && rowsUrl && (cachedView || selectedView)) {
+      console.log('🎯 LunoAgGrid: Making initial data fetch', { rowsUrl, hasCachedView: !!cachedView, hasSelectedView: !!selectedView });
       didInitialFetchRef.current = true;
       fetchPage(1);
     }
@@ -860,12 +937,23 @@ export function LunoAgGrid<T = any>({
     if (!onProvideRefresh) return;
     const api = {
       refresh: () => {
-        // Re-fetch current page using current AG Grid filter model and sort
+        // Re-fetch current page using current AG Grid filter model and sort with ALL filters
         const nextPage = page || 1;
-        fetchPage(nextPage);
+        fetchPage(nextPage, undefined, undefined, undefined, true); // forceRefresh = true
       },
       resetAll: () => {
         handleResetAll();
+      },
+      getFilterModel: () => {
+        try { return gridApiRef.current?.getFilterModel?.() || null; } catch { return null; }
+      },
+      setFilterModel: (model: any) => {
+        try {
+          if (gridApiRef.current && model) {
+            gridApiRef.current.setFilterModel(model);
+            (gridApiRef.current as any).onFilterChanged && (gridApiRef.current as any).onFilterChanged();
+          }
+        } catch {}
       }
     };
     try {
@@ -896,7 +984,7 @@ export function LunoAgGrid<T = any>({
     const api = gridApiRef.current;
     if (!api) return;
     
-    const gridBodyViewport = api.getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
+    const gridBodyViewport = (api as any).getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
     if (gridBodyViewport) {
       // Clear existing timeout
       if (scrollTimeoutRef.current) {
@@ -952,11 +1040,13 @@ export function LunoAgGrid<T = any>({
           
           // Method 3: By order_number or item_number if available
           if (!targetRowNode && selectedRowData) {
-            const keyField = selectedRowData.order_number ? 'order_number' : 
-                           selectedRowData.item_number ? 'item_number' : null;
+            const sr: any = selectedRowData as any;
+            const keyField: 'order_number' | 'item_number' | null = sr.order_number ? 'order_number' : 
+                           sr.item_number ? 'item_number' : null;
             if (keyField) {
               api.forEachNode((node: any) => {
-                if (node.data && node.data[keyField] === selectedRowData[keyField]) {
+                const nd: any = node.data;
+                if (nd && sr && nd[keyField] === sr[keyField]) {
                   targetRowNode = node;
                 }
               });
@@ -968,7 +1058,7 @@ export function LunoAgGrid<T = any>({
             const actualRowIndex = targetRowNode.rowIndex;
             
             // First, ensure the row is visible (this handles scrolling automatically)
-            api.ensureIndexVisible(actualRowIndex, 'middle');
+            api.ensureIndexVisible(Number(actualRowIndex ?? 0), 'middle');
             
             // Then select the row
             api.deselectAll();
@@ -1056,7 +1146,7 @@ export function LunoAgGrid<T = any>({
       // Clean up scroll event listener
       const api = gridApiRef.current;
       if (api && !api.isDestroyed) {
-        const gridBodyViewport = api.getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
+        const gridBodyViewport = (api as any).getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
         if (gridBodyViewport) {
           gridBodyViewport.removeEventListener('scroll', handleScroll);
         }
@@ -1068,9 +1158,9 @@ export function LunoAgGrid<T = any>({
     gridApiRef.current = e.api;
     
     // Set up scroll tracking
-    const gridBodyViewport = e.api.getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
+    const gridBodyViewport = (e.api as any).getGridBodyContainer?.() || document.querySelector('.ag-body-viewport');
     if (gridBodyViewport) {
-      gridBodyViewport.addEventListener('scroll', handleScroll);
+      (gridBodyViewport as any).addEventListener('scroll', handleScroll);
     }
 
     // Show grid immediately if no positioning needed
@@ -1087,6 +1177,24 @@ export function LunoAgGrid<T = any>({
     if (!hasCachedWidths) {
       e.api.sizeColumnsToFit();
     }
+
+    // Apply initial AG header filter model (if provided) BEFORE first fetch
+    if (initialAgFilterModel && typeof (e.api as any).setFilterModel === 'function') {
+      try {
+        isBatchingResetRef.current = true; // suppress fetch on onFilterChanged
+        (e.api as any).setFilterModel(initialAgFilterModel);
+        (e.api as any).onFilterChanged && (e.api as any).onFilterChanged();
+      } catch {}
+      finally {
+        isBatchingResetRef.current = false;
+      }
+    }
+
+    // If we deferred the initial fetch due to initial filters/model, run it now
+    if (!didInitialFetchRef.current && rowsUrl && (cachedView || selectedView)) {
+      didInitialFetchRef.current = true;
+      fetchPage(1);
+    }
   }
 
   function onPaginationChanged() {
@@ -1102,6 +1210,12 @@ export function LunoAgGrid<T = any>({
   function onFilterChanged() {
     // Reset to page 1 when filters change
     if (isBatchingResetRef.current) return; // suppress intermediate fetches during Reset All
+    try {
+      if (onAgFilterModelChange && gridApiRef.current) {
+        const model = (gridApiRef.current as any).getFilterModel ? (gridApiRef.current as any).getFilterModel() : null;
+        if (model) onAgFilterModelChange(model);
+      }
+    } catch {}
     setPage(1);
     fetchPage(1);
   }
@@ -1277,7 +1391,7 @@ export function LunoAgGrid<T = any>({
             filters={filters}
             onFiltersChange={handleFiltersChange}
             disabled={loading || !rowsUrl}
-            initialState={filterPanelInitialState}
+            initialState={filterState}
             onResetAll={handleResetAll}
           />
         </div>
