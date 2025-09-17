@@ -173,6 +173,12 @@ import type {
   CloneOrderBody as OrdersCloneOrderBody,
   ResendShipConfirmationBody,
 } from '@/types/api/orders';
+import type {
+  ReadRateCardsRequest,
+  ReadRateCardsResponse,
+  ExportRateCardsRequest,
+  RateCardRowDto,
+} from '@/types/api/transportation';
 
 // Overview API
 export async function fetchFulfillments(): Promise<FulfillmentRowDto[]> {
@@ -948,5 +954,49 @@ export async function downloadFtpBatch(id: number | string): Promise<void> {
 export async function downloadFtpAck(id: number | string): Promise<void> {
   const headers = { 'X-Download-Params': JSON.stringify({ action: 'get_ack_content', id }) } as any;
   await httpRequestRaw<Blob>({ method: 'get', path: '/api/orderpoints', headers });
+}
+
+// ==========================
+// Transportation: Rate Cards
+// ==========================
+
+export async function readRateCards(
+  filter: ReadRateCardsRequest['filter'],
+  page_num: number = 1,
+  page_size: number = 1000000,
+  sort: ReadRateCardsRequest['sort'] = [{ service: 'desc' } as any],
+): Promise<RateCardRowDto[]> {
+  const body: ReadRateCardsRequest = {
+    action: 'read',
+    resource: 'rate-cards',
+    fields: ['*'],
+    filter,
+    page_num,
+    page_size,
+    sort,
+  } as any;
+  const res = await postJson<{ data: ReadRateCardsResponse }>('/api/transportation', body as any);
+  // Normalize potential legacy envelopes
+  const data = (res?.data as any) || (res as any);
+  const rows: RateCardRowDto[] = data?.rows || data?.data?.rows || [];
+  return rows;
+}
+
+export async function exportRateCards(
+  filter: ExportRateCardsRequest['filter'],
+  format: ExportRateCardsRequest['format'] = 'excel_rate_cards',
+): Promise<void> {
+  const body: ExportRateCardsRequest = {
+    action: 'export',
+    resource: 'rate-cards',
+    fields: ['*'],
+    filter,
+    page_num: 1,
+    page_size: 1000000,
+    sort: [{ service: 'desc' } as any],
+    format,
+  } as any;
+  const headers = { 'X-Download-Params': JSON.stringify(body) } as any;
+  await httpRequestRaw<Blob>({ method: 'get', path: '/api/transportation', headers });
 }
 
