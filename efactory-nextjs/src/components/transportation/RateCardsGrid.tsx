@@ -563,14 +563,14 @@ export default function RateCardsGrid({ className = '', style }: RateCardsGridPr
               </>
             ) : (
               <>
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-font-color mb-3">Ready to Load Rate Data</h3>
-                  <p className="text-font-color-100 text-lg max-w-lg leading-relaxed">
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-bold text-font-color mb-2">Ready to Load Rate Data</h3>
+                  <p className="text-font-color-100 text-sm max-w-lg leading-relaxed">
                     Select a carrier and region above, then click "Get Rates" to view comprehensive shipping rate information.
                   </p>
                 </div>
-                <div className="flex items-center space-x-3 text-base text-font-color-100 bg-card-color px-6 py-3 rounded-lg shadow-sm border border-border-color">
-                  <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: carrierTheme.primary }} />
+                <div className="flex items-center space-x-2 text-sm text-font-color-100 bg-card-color px-4 py-2 rounded-lg shadow-sm border border-border-color">
+                  <div className="w-2 h-2 rounded-full shadow-sm" style={{ backgroundColor: carrierTheme.primary }} />
                   <span>Ready to fetch <strong className="text-font-color">{carrier}</strong> rates for <strong className="text-font-color">{region}</strong></span>
                 </div>
               </>
