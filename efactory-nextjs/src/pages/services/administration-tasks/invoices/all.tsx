@@ -9,6 +9,7 @@ export default function InvoicesAllPage() {
       paginationWord="invoice"
       showIndexColumn
       showOrderTypeColumn={false}
+      showInvoiceAllColumn={true}
     />
   );
 }

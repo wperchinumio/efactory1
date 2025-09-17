@@ -1,4 +1,4 @@
-import { postJson, getJson, httpRequest, postJsonRaw, postFormData, httpRequestRaw } from '@/lib/api/http';
+import { postJson, getJson, httpRequest, postJsonRaw, postFormData, httpRequestRaw, downloadFile } from '@/lib/api/http';
 import type {
   GridRowResponse,
   GridSelectedView,
@@ -913,15 +913,37 @@ export async function readOrderFrom(order_id: number | string, location: string,
 // ==========================
 
 export async function downloadInvoicePdf(doc_no: string | number): Promise<void> {
-  // Legacy expects GET /api/documents/{doc_no}I
+  // Legacy expects GET /api/documents/{doc_no}I with X-DocType: Invoice header
   const id = `${doc_no}I`;
-  await httpRequestRaw<Blob>({ method: 'get', path: `/api/documents/${encodeURIComponent(String(id))}` });
+  try {
+    await downloadFile(`/api/documents/${encodeURIComponent(String(id))}`, undefined, 'Invoice');
+  } catch (error) {
+    // Show toast error like legacy system
+    const { toast } = await import('@/components/ui/use-toast');
+    toast({
+      title: "Download Failed",
+      description: "File not found!",
+      variant: "destructive",
+    });
+    throw error;
+  }
 }
 
 export async function downloadInvoiceDetail(doc_no: string | number): Promise<void> {
-  // Legacy expects GET /api/documents/{doc_no}D
+  // Legacy expects GET /api/documents/{doc_no}D with X-DocType: Invoice header
   const id = `${doc_no}D`;
-  await httpRequestRaw<Blob>({ method: 'get', path: `/api/documents/${encodeURIComponent(String(id))}` });
+  try {
+    await downloadFile(`/api/documents/${encodeURIComponent(String(id))}`, undefined, 'Invoice');
+  } catch (error) {
+    // Show toast error like legacy system
+    const { toast } = await import('@/components/ui/use-toast');
+    toast({
+      title: "Download Failed",
+      description: "File not found!",
+      variant: "destructive",
+    });
+    throw error;
+  }
 }
 
 // ==========================
@@ -997,6 +1019,6 @@ export async function exportRateCards(
     format,
   } as any;
   const headers = { 'X-Download-Params': JSON.stringify(body) } as any;
-  await httpRequestRaw<Blob>({ method: 'get', path: '/api/transportation', headers });
+  await downloadFile('/api/transportation', headers);
 }
 

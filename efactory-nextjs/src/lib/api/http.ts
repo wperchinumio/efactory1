@@ -159,6 +159,100 @@ export function getJsonRaw<TResponse = unknown>(path: string, headers?: Record<s
 	return httpRequestRaw<TResponse>({ method: 'get', path, headers: headers || {} });
 }
 
+// File download helper that mimics legacy DownloadSource behavior
+export async function downloadFile(
+	path: string,
+	headers?: Record<string, string>,
+	xDocTypeHeader?: string,
+): Promise<void> {
+	const base = getBaseUrl();
+	const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+	const url = `${base}/${cleanPath}`;
+
+	const requestHeaders: Record<string, string> = {
+		'Content-type': 'application/x-www-form-urlencoded',
+		...(headers ?? {}),
+	};
+
+	const token = getAccessToken();
+	if (token) requestHeaders['X-Access-Token'] = token;
+	
+	// Add X-DocType header if specified (like legacy system)
+	if (xDocTypeHeader) requestHeaders['X-DocType'] = xDocTypeHeader;
+
+	// Use XMLHttpRequest like legacy system for proper file download handling
+	const xhr = new XMLHttpRequest();
+	xhr.open('GET', url, true);
+	
+	// Set headers
+	Object.entries(requestHeaders).forEach(([key, value]) => {
+		xhr.setRequestHeader(key, value);
+	});
+	
+	xhr.responseType = 'arraybuffer';
+
+	return new Promise((resolve, reject) => {
+		xhr.onload = function () {
+			if (this.status === 200) {
+				// Get filename from Content-Disposition header
+				let filename = '';
+				const disposition = xhr.getResponseHeader('Content-Disposition');
+				if (disposition && disposition.indexOf('attachment') !== -1) {
+					const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+					const matches = filenameRegex.exec(disposition);
+					if (matches != null && matches[1]) {
+						filename = matches[1].replace(/['"]/g, '');
+					}
+				}
+
+				// Get content type
+				const contentType = xhr.getResponseHeader('Content-Type') || 'application/octet-stream';
+
+				// Create blob and trigger download
+				const blob = new Blob([this.response], { type: contentType });
+				
+				if (typeof window !== 'undefined') {
+					if (typeof window.navigator.msSaveBlob !== 'undefined') {
+						// IE workaround
+						window.navigator.msSaveBlob(blob, filename);
+					} else {
+						const URL = window.URL || window.webkitURL;
+						const downloadUrl = URL.createObjectURL(blob);
+						
+						if (filename) {
+							// use HTML5 a[download] attribute to specify filename
+							const a = document.createElement("a");
+							
+							// safari doesn't support this yet
+							if (typeof a.download === 'undefined') {
+								window.location.href = downloadUrl;
+							} else {
+								a.href = downloadUrl;
+								a.download = filename;
+								document.body.appendChild(a);
+								a.click();
+								document.body.removeChild(a);
+							}
+						} else {
+							window.location.href = downloadUrl;
+						}
+						setTimeout(() => URL.revokeObjectURL(downloadUrl), 100); // cleanup
+					}
+				}
+				resolve();
+			} else {
+				reject(new Error(`Download failed with status ${this.status}`));
+			}
+		};
+		
+		xhr.onerror = function() {
+			reject(new Error('Download failed'));
+		};
+		
+		xhr.send();
+	});
+}
+
 // Multipart/form-data upload helper that follows our centralized token/error handling
 export async function postFormData<TResponse = unknown>(
 	path: string,

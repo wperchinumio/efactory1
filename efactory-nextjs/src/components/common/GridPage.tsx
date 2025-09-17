@@ -25,6 +25,7 @@ export interface GridPageProps {
   paginationWord?: string;
   showIndexColumn?: boolean;
   showOrderTypeColumn?: boolean;
+  showInvoiceAllColumn?: boolean;
   onRowClicked?: (row: any) => void;
 }
 
@@ -120,6 +121,7 @@ export default function GridPage({
   paginationWord = 'rows',
   showIndexColumn = true,
   showOrderTypeColumn = true,
+  showInvoiceAllColumn = false,
   onRowClicked,
 }: GridPageProps) {
   async function getDefaultAccountWh(): Promise<string> {
@@ -1061,6 +1063,7 @@ export default function GridPage({
         onRowClicked={handleRowClick}
         showIndexColumn={showIndexColumn}
         showOrderTypeColumn={showOrderTypeColumn}
+        showInvoiceAllColumn={showInvoiceAllColumn}
         filters={filters}
         showFilters={true}
         onFilterStateChange={(state) => setFilterState(state)}

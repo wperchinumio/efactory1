@@ -10,6 +10,7 @@ import type { GridFieldDef, GridFilter, GridFilterCondition, GridRowResponse, Gr
 import type { FilterConfig, FilterState } from '@/types/api/filters';
 import { DateRenderer, DateTimeRenderer, NumberRenderer, PrimaryLinkRenderer, OrderTypePill, OrderStageRenderer, OrderStatusRenderer, ShipToRenderer, CarrierRenderer, TrackingRenderer, RmaLinkRenderer, ReturnTrakRenderer, StrongTextRenderer, PrimaryEmphasisRenderer, WarningTextRenderer, BoolRenderer, RmaTypeRenderer, BundleTypeRenderer, BundlePLRenderer, FilterLinkNumberRenderer, ItemLinkRenderer, BundleLinkRenderer, InvoiceRenderer, InvoiceLinksRenderer } from './renderers';
 import { downloadInvoiceDetail, downloadInvoicePdf } from '@/services/api';
+import { IconFileTypePdf, IconFileSpreadsheet } from '@tabler/icons-react';
 import GridFilters from '@/components/filters/grid/GridFilters';
 import LoadingSpinner, { SkeletonGrid } from '@/components/common/LoadingSpinner';
 import { useGridCache } from '@/contexts/GridCacheContext';
@@ -713,24 +714,32 @@ export function LunoAgGrid<T = any>({
           return (
             <span className="inline-flex items-center gap-2">
               {hasInvoice ? (
-                <a
-                  href="#"
+                <button
+                  type="button"
                   title="Invoice (PDF)"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (docNo) downloadInvoicePdf(String(docNo)); }}
-                  className="text-red-600"
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    if (docNo) downloadInvoicePdf(String(docNo)); 
+                  }}
+                  className="text-red-500 hover:text-red-600 transition-colors p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                 >
-                  🧾
-                </a>
+                  <IconFileTypePdf className="w-5 h-5" strokeWidth={1.5} />
+                </button>
               ) : null}
               {hasInvoiceDetail ? (
-                <a
-                  href="#"
+                <button
+                  type="button"
                   title="Invoice Detail (Excel)"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (docNo) downloadInvoiceDetail(String(docNo)); }}
-                  className="text-green-700"
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    e.stopPropagation(); 
+                    if (docNo) downloadInvoiceDetail(String(docNo)); 
+                  }}
+                  className="text-green-600 hover:text-green-700 transition-colors p-1 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
                 >
-                  📊
-                </a>
+                  <IconFileSpreadsheet className="w-5 h-5" strokeWidth={1.5} />
+                </button>
               ) : null}
             </span>
           );

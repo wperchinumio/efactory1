@@ -273,163 +273,305 @@ export default function RateCardsGrid({ className = '', style }: RateCardsGridPr
     }
   };
 
-   // Custom grid scroll handlers
-   const gridRef = useRef<HTMLDivElement>(null);
-   const headerRef = useRef<HTMLDivElement>(null);
-   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
+  // Custom grid scroll handlers
+  const gridRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const topSectionRef = useRef<HTMLDivElement>(null);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
+  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
+  const [gridHeight, setGridHeight] = useState(400);
 
-   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-     const target = e.target as HTMLDivElement;
-     setScrollPosition({ x: target.scrollLeft, y: target.scrollTop });
-     
-     // Sync header horizontal scroll with body
-     if (headerRef.current) {
-       headerRef.current.scrollLeft = target.scrollLeft;
-     }
-   }, []);
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    setScrollPosition({ x: target.scrollLeft, y: target.scrollTop });
+    
+    // Sync header horizontal scroll with body
+    if (headerRef.current) {
+      headerRef.current.scrollLeft = target.scrollLeft;
+    }
+  }, []);
 
-  // Get grid height from style prop or default
-  const gridHeight = (style as any)?.['--grid-height'] || '500px';
+  // Enhanced height calculation based on actual grid position
+  const calculateGridHeight = useCallback(() => {
+    // Only apply height restrictions if browser height > 400px
+    if (window.innerHeight <= 400) {
+      setGridHeight(0); // No height restriction if browser too small
+      return;
+    }
+
+    if (gridContainerRef.current) {
+      // Get the actual position of the grid container
+      const gridRect = gridContainerRef.current.getBoundingClientRect();
+      const gridTop = gridRect.top;
+      
+      // Calculate available height from grid position to bottom of viewport
+      const availableHeight = window.innerHeight - gridTop - 20; // 20px buffer for scrollbar visibility
+      
+      // Ensure minimum height of 200px for usability
+      const finalHeight = Math.max(200, availableHeight);
+      
+      setGridHeight(finalHeight);
+    }
+  }, []);
+
+  // Dynamic height calculation with proper positioning
+  useEffect(() => {
+    // Calculate height after component mounts and data loads
+    const timeoutId = setTimeout(calculateGridHeight, 100);
+    
+    const handleResize = () => {
+      // Debounce resize events
+      clearTimeout(timeoutId);
+      setTimeout(calculateGridHeight, 50);
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+    };
+  }, [calculateGridHeight, hasData, zones.length, services.length]);
+
+  // Use ResizeObserver to detect content changes that affect grid position
+  useEffect(() => {
+    if (!topSectionRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Recalculate height when top section content changes (e.g., text wrapping)
+      setTimeout(calculateGridHeight, 50);
+    });
+
+    resizeObserver.observe(topSectionRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [calculateGridHeight]);
 
   return (
     <div className={`w-full ${className}`} style={style}>
-      {/* Header with filters */}
-      <div className="bg-card-color border border-border-color rounded-t-lg p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <TruckIcon className="h-5 w-5 text-primary" />
-            <h1 className="text-xl font-semibold text-font-color">Rate Cards</h1>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="flex items-end space-x-3 mb-4">
-          {/* Carrier Filter */}
-          <div className="flex flex-col">
-            <label className="text-xs font-medium text-font-color-100 mb-1 uppercase tracking-wide">Carrier</label>
-            <GridSingleSelectFilter
-              config={CARRIER_FILTER_CONFIG}
-              value={carrier}
-              onChange={setCarrier}
-            />
-          </div>
-
-          {/* Region Filter */}
-          <div className="flex flex-col">
-            <label className="text-xs font-medium text-font-color-100 mb-1 uppercase tracking-wide">Region</label>
-            <GridSingleSelectFilter
-              config={REGION_FILTER_CONFIG}
-              value={region}
-              onChange={setRegion}
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={fetchRateCards}
-              disabled={loading}
-              className="btn btn-primary flex items-center space-x-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ backgroundColor: carrierTheme.primary }}
-            >
-              {loading ? (
-                <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
-              ) : (
-                <TruckIcon className="h-3 w-3" />
-              )}
-              <span>Get Rates</span>
-            </button>
-
-            <button
-              onClick={handleExport}
-              disabled={!hasData || loading}
-              className="btn btn-outline-secondary p-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ArrowDownTrayIcon className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Current Selection Info */}
-        {hasData && (
-          <div className="mb-4 p-3 rounded-md border" style={{ backgroundColor: carrierTheme.light, borderColor: carrierTheme.primary + '20' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: carrierTheme.primary }} />
-                   <span className="text-sm font-medium text-font-color">
-                     {activeCarrier === 'APC' ? 'Passport' : activeCarrier} - {region}
-                   </span>
+      {/* Ultra-Compact Header */}
+      <div ref={topSectionRef} className="bg-card-color border border-border-color rounded-t-lg shadow-sm">
+        {/* Single Row Header with Everything */}
+        <div className="px-3 py-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {/* Left: Title + Carrier Info */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center space-x-1.5">
+                <div className="p-1 rounded" style={{ backgroundColor: carrierTheme.light }}>
+                  <TruckIcon className="h-4 w-4" style={{ color: carrierTheme.primary }} />
                 </div>
-                <div className="text-xs text-font-color-100">
-                  {zones.length} zones • {gridData.length} weight tiers
+                <h1 className="text-lg font-bold text-font-color">Rate Cards</h1>
+              </div>
+
+              {/* Carrier Info - Compact */}
+              {hasData && (
+                <div className="flex items-center gap-2 px-2 py-1 rounded border bg-body-color" style={{ borderColor: carrierTheme.primary + '40' }}>
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: carrierTheme.primary }} />
+                  <span className="text-xs font-semibold text-font-color">
+                    {activeCarrier === 'APC' ? 'Passport' : activeCarrier} - {region}
+                  </span>
+                  <span className="text-xs text-font-color-100">
+                    {zones.length}z • {gridData.length}w
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Filters + Action Buttons */}
+            <div className="flex items-center gap-3">
+              {/* Filters */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-font-color-100">Carrier:</label>
+                  <GridSingleSelectFilter
+                    config={CARRIER_FILTER_CONFIG}
+                    value={carrier}
+                    onChange={setCarrier}
+                  />
+                </div>
+                <div className="flex items-center gap-1">
+                  <label className="text-xs text-font-color-100">Region:</label>
+                  <GridSingleSelectFilter
+                    config={REGION_FILTER_CONFIG}
+                    value={region}
+                    onChange={setRegion}
+                  />
                 </div>
               </div>
-              <div className="text-xs text-font-color-100">
-                Effective: {effectiveDate}
+
+              {/* Vertical Separator */}
+              <div className="w-px h-4 bg-border-color"></div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={fetchRateCards}
+                  disabled={loading}
+                  className="btn btn-primary flex items-center space-x-1 px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ 
+                    backgroundColor: carrierTheme.primary,
+                    borderColor: carrierTheme.primary,
+                    fontSize: '12px',
+                    padding: '4px 8px'
+                  }}
+                >
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-3 w-3 border-2 border-white border-t-transparent" />
+                  ) : (
+                    <TruckIcon className="h-3 w-3" />
+                  )}
+                  <span>Get Rates</span>
+                </button>
+                
+                {hasData && (
+                  <button
+                    onClick={handleExport}
+                    disabled={loading}
+                    className="btn btn-outline-secondary flex items-center space-x-1 px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Export to Excel"
+                    style={{ fontSize: '12px', padding: '4px 8px' }}
+                  >
+                    <ArrowDownTrayIcon className="h-3 w-3" />
+                    <span>Export</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Compact Information Panel */}
+        {hasData && (
+          <div className="px-3 py-2 border-t border-border-color">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+              {/* Delivery Surcharges - Compact */}
+              <div className="bg-body-color p-2 rounded border border-border-color">
+                <div className="text-xs font-semibold text-font-color-100 mb-1">Delivery Surcharges</div>
+                {surcharges && (
+                  <div className="text-xs space-y-0.5">
+                    <div className="flex justify-between">
+                      <span className="text-font-color">Ground Res:</span>
+                      <span className="font-semibold text-font-color">${surcharges.sc_g.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-font-color">Air Res:</span>
+                      <span className="font-semibold text-font-color">${surcharges.sc_a.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-font-color">Signature:</span>
+                      <span className="font-semibold text-font-color">${surcharges.sc_sr.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-font-color">Adult Sig:</span>
+                      <span className="font-semibold text-font-color">${surcharges.sc_asr.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+                {carrier !== 'USPS' && (
+                  <div className="text-xs text-font-color-100 italic mt-1">
+                    <sup className="text-red-500">*</sup> Rates include fuel surcharges
+                  </div>
+                )}
+              </div>
+
+              {/* Important Note - Compact */}
+              <div className="bg-body-color p-2 rounded border border-border-color">
+                <div className="text-xs font-semibold text-font-color-100 mb-1">Important Note</div>
+                <div className="text-xs text-font-color-100 leading-tight">
+                  Net rate tables are estimates only. Excludes most surcharges except fuel where applicable (signature, residential, delivery area, etc.). Surcharges may change per carrier discretion. Fuel changes weekly.
+                </div>
+              </div>
+
+              {/* Legal Disclaimer - Compact */}
+              <div className="bg-body-color p-2 rounded border border-border-color">
+                <div className="text-xs font-semibold text-font-color-100 mb-1">Legal Disclaimer</div>
+                <div className="text-xs text-font-color-100 leading-tight">
+                  Data provided "as is" without warranty. No guarantee of accuracy, completeness, or reliability. DCL disclaims all warranties and liability for direct, indirect, or consequential damages from data use or misuse.
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Service Type Filter Buttons */}
+        {/* Compact Service Type Filter Buttons */}
         {services.length > 0 && (
-          <div className="mb-4">
-            <div className="text-xs font-medium text-font-color-100 mb-2 uppercase tracking-wide">Service Types</div>
-            <div className="flex flex-wrap gap-1.5">
-              {services.map((service, index) => (
-                <button
-                  key={service}
-                  onClick={() => handleServiceSelect(index)}
-                  className={`btn btn-sm transition-all duration-200 ${
-                    selectedServiceIndex === index
-                      ? 'btn-primary text-white'
-                      : 'btn-outline-secondary text-font-color-100 hover:text-font-color'
-                  }`}
-                  style={{
-                    backgroundColor: selectedServiceIndex === index ? carrierTheme.primary : undefined,
-                    borderColor: selectedServiceIndex === index ? carrierTheme.primary : undefined,
-                  }}
-                >
-                  {service}
-                </button>
-              ))}
+          <div className="px-3 py-1 border-t border-border-color">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-font-color-100">Service:</span>
+              <div className="flex flex-wrap gap-1">
+                {services.map((service, index) => (
+                  <button
+                    key={service}
+                    onClick={() => handleServiceSelect(index)}
+                    className={`btn transition-all duration-200 font-medium text-xs ${
+                      selectedServiceIndex === index
+                        ? 'text-white shadow-sm'
+                        : 'btn-outline-secondary text-font-color-100 hover:text-font-color hover:shadow-sm'
+                    }`}
+                    style={{
+                      backgroundColor: selectedServiceIndex === index ? carrierTheme.primary : undefined,
+                      borderColor: selectedServiceIndex === index ? carrierTheme.primary : undefined,
+                      boxShadow: selectedServiceIndex === index ? `0 1px 4px ${carrierTheme.primary}30` : undefined,
+                      padding: '2px 6px',
+                      fontSize: '11px',
+                      lineHeight: '14px'
+                    }}
+                  >
+                    {service}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
       </div>
 
       {/* Custom Data Grid Container */}
-      <div className="bg-card-color border-l border-r border-border-color">
+      <div className="bg-card-color border-l border-r border-b border-border-color rounded-b-lg">
         {!hasData ? (
-          // Beautiful Placeholder or Error State
-          <div className="flex flex-col items-center justify-center py-20 px-6">
-            <div className="w-24 h-24 mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: carrierTheme.light }}>
-              <TruckIcon className="h-12 w-12" style={{ color: carrierTheme.primary }} />
+          // Enhanced Empty State with Professional Design
+          <div className="flex flex-col items-center justify-center py-12 px-6">
+            <div className="w-32 h-32 mb-8 rounded-2xl flex items-center justify-center shadow-lg" 
+                 style={{ 
+                   backgroundColor: carrierTheme.light,
+                   border: `2px solid ${carrierTheme.primary}20`
+                 }}>
+              <TruckIcon className="h-16 w-16" style={{ color: carrierTheme.primary }} />
             </div>
             {error ? (
               <>
-                <h3 className="text-xl font-semibold text-red-600 mb-2">Error Loading Data</h3>
-                <p className="text-font-color-100 text-center max-w-md mb-4">
-                  {error}
-                </p>
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-red-600 mb-3">Unable to Load Rate Data</h3>
+                  <p className="text-font-color-100 text-lg max-w-lg leading-relaxed">
+                    {error}
+                  </p>
+                </div>
                 <button
                   onClick={fetchRateCards}
-                  className="btn btn-primary"
-                  style={{ backgroundColor: carrierTheme.primary }}
+                  className="btn btn-primary px-8 py-3 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  style={{ 
+                    backgroundColor: carrierTheme.primary,
+                    borderColor: carrierTheme.primary,
+                    boxShadow: `0 4px 12px ${carrierTheme.primary}30`
+                  }}
                 >
+                  <TruckIcon className="h-5 w-5 mr-2" />
                   Try Again
                 </button>
               </>
             ) : (
               <>
-                <h3 className="text-xl font-semibold text-font-color mb-2">No Rate Data Available</h3>
-                <p className="text-font-color-100 text-center max-w-md">
-                  Select a carrier and region, then click "Get Rates" to view shipping rate information.
-                </p>
-                <div className="mt-6 flex items-center space-x-2 text-sm text-font-color-100">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: carrierTheme.primary }} />
-                  <span>Ready to fetch {carrier} rates for {region}</span>
+                <div className="text-center mb-8">
+                  <h3 className="text-2xl font-bold text-font-color mb-3">Ready to Load Rate Data</h3>
+                  <p className="text-font-color-100 text-lg max-w-lg leading-relaxed">
+                    Select a carrier and region above, then click "Get Rates" to view comprehensive shipping rate information.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3 text-base text-font-color-100 bg-card-color px-6 py-3 rounded-lg shadow-sm border border-border-color">
+                  <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: carrierTheme.primary }} />
+                  <span>Ready to fetch <strong className="text-font-color">{carrier}</strong> rates for <strong className="text-font-color">{region}</strong></span>
                 </div>
               </>
             )}
@@ -438,44 +580,53 @@ export default function RateCardsGrid({ className = '', style }: RateCardsGridPr
           // Custom Data Grid
           <div className="w-full relative">
             {loading && (
-              <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
-                <div className="flex flex-col items-center space-y-2">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-                  <div className="text-sm text-font-color-100">Loading rate data...</div>
+              <div className="absolute inset-0 bg-card-color bg-opacity-90 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="flex flex-col items-center space-y-4 p-8 bg-card-color rounded-xl shadow-lg border border-border-color">
+                  <div className="animate-spin rounded-full h-12 w-12 border-3 border-t-transparent" 
+                       style={{ borderColor: `${carrierTheme.primary}30`, borderTopColor: carrierTheme.primary }} />
+                  <div className="text-base font-medium text-font-color">Loading rate data...</div>
+                  <div className="text-sm text-font-color-100">Fetching {carrier} rates for {region}</div>
                 </div>
               </div>
             )}
             
              {/* Custom Grid with Proper Fixed Column */}
              <div className="relative">
-               {/* Fixed Header */}
-               <div className="sticky top-0 z-20">
-                 {/* Title Row */}
+               {/* Enhanced Professional Header */}
+               <div className="shadow-lg">
+                 {/* Title Row with Gradient - Compact */}
                  <div 
-                   className="flex items-center px-4 py-2 text-sm font-medium text-white"
-                   style={{ backgroundColor: carrierTheme.primary }}
+                   className="flex items-center px-4 py-2 text-white shadow-sm"
+                   style={{ 
+                     background: `linear-gradient(135deg, ${carrierTheme.primary} 0%, ${carrierTheme.dark} 100%)`,
+                     borderBottom: `1px solid ${carrierTheme.primary}40`
+                   }}
                  >
                    <div className="w-32 flex-shrink-0">
-                     <i>Customer Rate</i>
+                     <div className="text-sm font-bold tracking-wide">Customer Rate</div>
                    </div>
                    <div className="flex-1 text-center">
-                     <i>Zones</i> 
-                     <span className="ml-2">
-                       [Carrier: <b>{activeCarrier === 'APC' ? 'Passport' : activeCarrier}</b> - Region: <b>{region}</b>]
-                     </span>
+                     <div className="text-base font-bold tracking-wide">Zones</div>
+                     <div className="text-xs opacity-90 mt-0.5">
+                       {activeCarrier === 'APC' ? 'Passport' : activeCarrier} • {region} • {services[selectedServiceIndex] || 'All Services'}
+                     </div>
                    </div>
                  </div>
                  
-                 {/* Zone Headers Row */}
+                 {/* Zone Headers Row - Compact */}
                  <div 
-                   className="flex"
-                   style={{ backgroundColor: carrierTheme.accent }}
+                   className="flex shadow-sm"
+                   style={{ 
+                     backgroundColor: carrierTheme.accent,
+                     borderBottom: `2px solid ${carrierTheme.primary}`
+                   }}
                  >
                    <div 
-                     className="w-32 flex-shrink-0 px-4 py-3 text-sm font-semibold text-white border-r-2"
+                     className="w-32 flex-shrink-0 px-4 py-2 text-white border-r-2 bg-gradient-to-r from-transparent to-black/10"
                      style={{ borderRightColor: carrierTheme.primary }}
                    >
-                     Weight (lbs)
+                     <div className="text-xs font-bold uppercase tracking-wider">Weight</div>
+                     <div className="text-xs opacity-80">(lbs)</div>
                    </div>
                    <div 
                      ref={headerRef}
@@ -483,13 +634,17 @@ export default function RateCardsGrid({ className = '', style }: RateCardsGridPr
                      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                    >
                      <div className="flex min-w-max">
-                       {zones.map((zone) => (
+                       {zones.map((zone, index) => (
                          <div 
                            key={zone}
-                           className="flex-1 min-w-[100px] px-2 py-3 text-center text-sm font-semibold text-white border-r border-white"
-                           style={{ borderRightColor: 'rgba(255, 255, 255, 0.2)' }}
+                           className="flex-1 min-w-[90px] px-2 py-2 text-center text-white border-r"
+                           style={{ 
+                             borderRightColor: 'rgba(255, 255, 255, 0.15)',
+                             background: index % 2 === 0 ? 'rgba(255, 255, 255, 0.05)' : 'transparent'
+                           }}
                          >
-                           {zone}
+                           <div className="text-xs font-bold uppercase tracking-wider">Zone {zone}</div>
+                           <div className="text-xs opacity-80">Rate</div>
                          </div>
                        ))}
                      </div>
@@ -497,84 +652,96 @@ export default function RateCardsGrid({ className = '', style }: RateCardsGridPr
                  </div>
                </div>
 
-               {/* Grid Body with Fixed Column */}
+               {/* Enhanced Grid Body with Professional Styling */}
                <div 
-                 ref={gridRef}
-                 className="overflow-auto relative"
-                 style={{ height: gridHeight }}
+                 ref={gridContainerRef}
+                 className="overflow-auto relative bg-card-color"
+                 style={gridHeight > 0 ? { 
+                   height: `${gridHeight}px`,
+                   maxHeight: `${gridHeight}px`
+                 } : { 
+                   overflowY: 'visible',
+                   maxHeight: 'none'
+                 }}
                  onScroll={handleScroll}
                >
-                 <div className="flex">
-                   {/* Fixed Weight Column */}
+                 <div className="flex pb-6">
+                   {/* Enhanced Fixed Weight Column */}
                    <div 
-                     className="w-32 flex-shrink-0 sticky left-0 z-30"
+                     className="w-32 flex-shrink-0 sticky left-0 z-20"
                      style={{ 
                        backgroundColor: 'var(--card-color)',
-                       border: 'none !important',
-                       outline: 'none !important',
-                       boxShadow: '2px 0 4px rgba(0, 0, 0, 0.1)'
+                       boxShadow: '3px 0 8px rgba(0, 0, 0, 0.08)',
+                       borderRight: `2px solid ${carrierTheme.primary}20`
                      }}
                    >
                      {gridData.map((row, rowIndex) => (
                        <div 
                          key={row.weight}
                          onClick={() => handleRowSelect(rowIndex)}
-                         className={`px-4 py-3 text-sm font-semibold cursor-pointer transition-colors duration-200 group ${
+                         className={`px-4 py-2 font-bold cursor-pointer transition-all duration-200 border-b border-border-color ${
                            selectedRowIndex === rowIndex 
-                             ? 'bg-primary/20 text-font-color border-l-4 border-primary' 
-                             : 'bg-card-color text-font-color group-hover:bg-background-color group-hover:text-font-color'
+                             ? 'text-white shadow-md' 
+                             : 'text-font-color hover:bg-background-color hover:text-font-color'
                          }`}
                          style={{ 
-                           height: '48px',
+                           height: '36px',
                            display: 'flex',
                            alignItems: 'center',
-                           border: 'none !important',
-                           outline: 'none !important',
-                           borderTop: 'none !important',
-                           borderBottom: 'none !important',
-                           borderLeft: 'none !important',
-                           borderRight: 'none !important',
-                           margin: '0',
-                           boxSizing: 'border-box'
+                           backgroundColor: selectedRowIndex === rowIndex ? carrierTheme.primary : 'var(--card-color)',
+                           borderLeft: selectedRowIndex === rowIndex ? `3px solid ${carrierTheme.dark}` : '3px solid transparent',
                          }}
                        >
-                         {row.weight}
+                           <span className="text-sm">{row.weight}</span>
                        </div>
                      ))}
                    </div>
 
-                   {/* Scrollable Rate Columns */}
+                   {/* Enhanced Scrollable Rate Columns */}
                    <div className="flex-1 min-w-max">
                      {gridData.map((row, rowIndex) => (
                        <div 
                          key={row.weight}
                          onClick={() => handleRowSelect(rowIndex)}
-                         className={`flex cursor-pointer transition-colors duration-200 group ${
+                         className={`flex cursor-pointer transition-all duration-200 border-b border-border-color ${
                            selectedRowIndex === rowIndex 
-                             ? 'bg-primary/20 text-font-color' 
-                             : (rowIndex % 2 === 1 ? 'bg-background-color text-font-color group-hover:bg-background-color/80 group-hover:text-font-color' : 'bg-card-color text-font-color group-hover:bg-background-color group-hover:text-font-color')
+                             ? 'shadow-sm' 
+                             : 'hover:bg-background-color'
                          }`}
                          style={{ 
-                           height: '48px',
-                           alignItems: 'center'
+                           height: '36px',
+                           alignItems: 'center',
+                           backgroundColor: selectedRowIndex === rowIndex 
+                             ? `${carrierTheme.primary}10` 
+                             : (rowIndex % 2 === 1 ? 'var(--background-color)' : 'var(--card-color)')
                          }}
                        >
-                         {zones.map((zone) => (
+                         {zones.map((zone, zoneIndex) => (
                            <div 
                              key={zone}
-                             className={`flex-1 min-w-[100px] px-2 py-3 text-center text-sm font-medium border-r border-border-color ${
-                               selectedRowIndex === rowIndex 
-                                 ? 'bg-primary/20 text-font-color' 
-                                 : (rowIndex % 2 === 1 ? 'bg-background-color text-font-color group-hover:bg-background-color/80 group-hover:text-font-color' : 'bg-card-color text-font-color group-hover:bg-background-color group-hover:text-font-color')
+                             className={`flex-1 min-w-[90px] px-2 py-2 text-center border-r border-border-color ${
+                               selectedRowIndex === rowIndex ? 'font-semibold' : 'font-medium'
                              }`}
                              style={{ 
-                               height: '48px',
+                               height: '36px',
                                display: 'flex',
                                alignItems: 'center',
-                               justifyContent: 'center'
+                               justifyContent: 'center',
+                               background: zoneIndex % 2 === 0 ? 'rgba(0, 0, 0, 0.01)' : 'transparent'
                              }}
                            >
-                             {row.rates[zone] && row.rates[zone] > 0 ? `$${row.rates[zone].toFixed(2)}` : ''}
+                             {row.rates[zone] && row.rates[zone] > 0 ? (
+                               <div className="flex flex-col items-center">
+                                 <span className={`text-sm ${selectedRowIndex === rowIndex ? 'text-font-color' : 'text-font-color'}`}>
+                                   {row.rates[zone].toFixed(2)}
+                                 </span>
+                                 {selectedRowIndex === rowIndex && (
+                                   <span className="text-xs text-font-color-100">Zone {zone}</span>
+                                 )}
+                               </div>
+                             ) : (
+                               <span className="text-font-color-100 text-xs">—</span>
+                             )}
                            </div>
                          ))}
                        </div>
@@ -587,72 +754,6 @@ export default function RateCardsGrid({ className = '', style }: RateCardsGridPr
         )}
       </div>
 
-      {/* Disclosure Section */}
-      {hasData && (
-        <div className="bg-card-color border border-border-color rounded-b-lg p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Column - Effective Date & Surcharges */}
-            <div className="space-y-4">
-              {effectiveDate && (
-                <div>
-                  <div className="text-sm font-medium text-font-color-100 mb-2">Effective Date:</div>
-                  <div className="text-sm text-font-color">
-                    {effectiveDate}
-                    {carrier !== 'USPS' && <sup className="text-xs"> *</sup>}
-                  </div>
-                </div>
-              )}
-
-              {surcharges && (
-                <div>
-                  <div className="text-sm font-medium text-font-color-100 mb-2">Delivery Surcharges:</div>
-                  <div className="space-y-1 text-sm text-font-color">
-                    <div className="flex justify-between">
-                      <span>Ground Residential:</span>
-                      <span>${surcharges.sc_g.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Air Residential:</span>
-                      <span>${surcharges.sc_a.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Signature Required:</span>
-                      <span>${surcharges.sc_sr.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Adult Signature Required:</span>
-                      <span>${surcharges.sc_asr.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {carrier !== 'USPS' && (
-                <div className="text-xs text-font-color-100 italic">
-                  (*) transportation rates include fuel surcharges
-                </div>
-              )}
-            </div>
-
-            {/* Right Column - Notes & Disclaimer */}
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm font-medium text-font-color-100 mb-2">Note:</div>
-                <div className="text-xs text-font-color leading-relaxed">
-                  Net rate tables are estimates only. Net rate tables exclude all potential surcharges except for fuel where applicable (these surcharges include signature required, residential, delivery area surcharge, and more). Surcharges may change based on the carrier's discretion. Fuel changes on a weekly basis.
-                </div>
-              </div>
-
-              <div>
-                <div className="text-sm font-medium text-font-color-100 mb-2">Disclaimer:</div>
-                <div className="text-xs text-font-color leading-relaxed">
-                  Although the shipping cost data presented has been produced and processed from sources believed to be reliable, no warranty expressed or implied is made regarding accuracy, adequacy, completeness, legality, reliability, or usefulness of any information. DCL is providing this information "as is" and disclaims all warranties of any kind. In no event will DCL be liable to you or any third party for any direct, indirect, or consequential damages resulting from the use or misuse of this data.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
