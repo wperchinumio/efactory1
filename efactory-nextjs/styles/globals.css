@@ -581,6 +581,30 @@ body[data-luno-theme="dynamic"] {
   background: var(--ag-row-hover-color) !important;
 }
 
+/* EXACT target from DevTools: div.ag-header-cell.ag-floating-filter.ag-focus-managed::after */
+.ag-theme-quartz .ag-header-cell.ag-floating-filter.ag-focus-managed::after,
+.ag-theme-quartz-dark .ag-header-cell.ag-floating-filter.ag-focus-managed::after,
+.ag-theme-quartz .ag-header-cell.ag-floating-filter::after,
+.ag-theme-quartz-dark .ag-header-cell.ag-floating-filter::after {
+  content: none !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Hide AG Grid header menu (hamburger) button globally */
+.ag-theme-quartz .ag-header .ag-header-cell .ag-menu,
+.ag-theme-quartz-dark .ag-header .ag-header-cell .ag-menu,
+.ag-theme-quartz .ag-header .ag-header-cell .ag-floating-filter-button,
+.ag-theme-quartz-dark .ag-header .ag-header-cell .ag-floating-filter-button {
+  display: none !important;
+}
+
 .custom-scrollbar {
   scrollbar-color: var(--card-color) var(--card-color);
   scrollbar-width: thin;

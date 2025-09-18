@@ -24,6 +24,16 @@ export class NumberFloatingFilter implements IFloatingFilterComp {
     this.inputElement.type = 'text';
     this.inputElement.className = 'ag-floating-filter-input';
     this.inputElement.placeholder = '';
+    try { this.inputElement.setAttribute('data-field-id', this.fieldId); } catch {}
+    // Register with grid API and record focus for restoration after queries
+    try {
+      const apiAny = this.params.api as any;
+      apiAny.__floatingFilterInputs = apiAny.__floatingFilterInputs || {};
+      apiAny.__floatingFilterInputs[this.fieldId] = this.inputElement;
+      this.inputElement.addEventListener('focus', () => {
+        try { (this.params.api as any).__lastFocusedFloatingFilter = { fieldId: this.fieldId }; } catch {}
+      });
+    } catch {}
     
     // Initialize with stored value if exists
     const storedValue = (window as any).__wildcardFilterStore[this.fieldId] || '';
@@ -45,6 +55,7 @@ export class NumberFloatingFilter implements IFloatingFilterComp {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
+        try { (this.params.api as any).__lastFocusedFloatingFilter = { fieldId: this.fieldId }; } catch {}
         this.applyFilter();
       }
     });

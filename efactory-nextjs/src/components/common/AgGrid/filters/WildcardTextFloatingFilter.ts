@@ -26,6 +26,17 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
     this.inputElement.type = 'text';
     this.inputElement.className = 'ag-floating-filter-input';
     this.inputElement.placeholder = '';
+    try { this.inputElement.setAttribute('data-field-id', this.fieldId); } catch {}
+    // Register this input so the grid can restore focus after fetch
+    try {
+      const apiAny = this.params.api as any;
+      apiAny.__floatingFilterInputs = apiAny.__floatingFilterInputs || {};
+      apiAny.__floatingFilterInputs[this.fieldId] = this.inputElement;
+      // Update last focused when user focuses this field
+      this.inputElement.addEventListener('focus', () => {
+        try { (this.params.api as any).__lastFocusedFloatingFilter = { fieldId: this.fieldId }; } catch {}
+      });
+    } catch {}
     
     // Initialize with stored value if exists
     const storedValue = (window as any).__wildcardFilterStore[this.fieldId] || '';
@@ -47,7 +58,7 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        
+        try { (this.params.api as any).__lastFocusedFloatingFilter = { fieldId: this.fieldId }; } catch {}
         this.applyFilter();
       }
     };
@@ -142,6 +153,13 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
     if (this.inputElement && this.handleKeyDown) {
       this.inputElement.removeEventListener('keydown', this.handleKeyDown);
     }
+    // Unregister stored input
+    try {
+      const apiAny = this.params.api as any;
+      if (apiAny && apiAny.__floatingFilterInputs) {
+        delete apiAny.__floatingFilterInputs[this.fieldId];
+      }
+    } catch {}
     // Don't clear the store on destroy - we want to persist across re-renders
   }
 }

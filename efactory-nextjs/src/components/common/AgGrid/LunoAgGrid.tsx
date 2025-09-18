@@ -1037,7 +1037,6 @@ export function LunoAgGrid<T = any>({
     
     setLoading(true);
     try {
-      
       const response = await onFetchRows(nextPage, pageSize, currentFilter, sort, undefined);
       setRows(response.rows || []);
       setTotal(response.total || 0);
@@ -1047,6 +1046,29 @@ export function LunoAgGrid<T = any>({
       
     } finally {
       setLoading(false);
+      // Restore focus to the last focused floating filter input with retries
+      try {
+        const attemptFocus = (attempt: number) => {
+          if (attempt > 10) return; // give up after ~500ms
+          const apiAny = (gridApiRef.current as any) || {};
+          const last = apiAny.__lastFocusedFloatingFilter;
+          if (!last || !last.fieldId) return;
+          let input: HTMLInputElement | null = document.querySelector(`input.ag-floating-filter-input[data-field-id="${last.fieldId}"]`);
+          if (!input) {
+            const inputs = apiAny.__floatingFilterInputs || {};
+            input = inputs[last.fieldId] || null;
+          }
+          if (input && document.contains(input)) {
+            try {
+              input.focus({ preventScroll: true } as any);
+              if ((input as any).select) (input as any).select();
+              return; // success
+            } catch {}
+          }
+          setTimeout(() => attemptFocus(attempt + 1), 50);
+        };
+        setTimeout(() => attemptFocus(0), 50);
+      } catch {}
     }
   }
 
@@ -1339,6 +1361,20 @@ export function LunoAgGrid<T = any>({
       (gridBodyViewport as any).addEventListener('scroll', handleScroll);
     }
 
+    // Also attempt to restore focus if a last-focused filter exists when grid becomes ready
+    try {
+      const apiAny = e.api as any;
+      const last = apiAny.__lastFocusedFloatingFilter;
+      if (last && last.fieldId) {
+        setTimeout(() => {
+          const input: HTMLInputElement | null = document.querySelector(`input.ag-floating-filter-input[data-field-id="${last.fieldId}"]`);
+          if (input) {
+            try { input.focus({ preventScroll: true } as any); if ((input as any).select) (input as any).select(); } catch {}
+          }
+        }, 100);
+      }
+    } catch {}
+
     // Show grid immediately if no positioning needed
     if (selectedRowIndex === undefined && scrollTop === undefined) {
       const gridContainer = document.querySelector('.ag-root-wrapper');
@@ -1596,11 +1632,7 @@ export function LunoAgGrid<T = any>({
 
   return (
     <div className="w-full">
-      <style jsx global>{`
-        .ag-floating-filter .ag-floating-filter-button {
-          display: none !important;
-        }
-      `}</style>
+      <style jsx global>{``}</style>
       {/* Filter Panel */}
       {showFilters && Object.keys(filters).length > 0 && (
         <div ref={filtersRef}>
@@ -1641,7 +1673,9 @@ export function LunoAgGrid<T = any>({
               unSortIcon: false, // Hide unsort icon since we only have asc/desc
               // As of AG Grid v33+, use defaultColDef.sortingOrder instead of top-level prop
               sortingOrder: ['asc', 'desc'],
-              suppressHeaderMenuButton: (loading || !rowsUrl)
+              // Always hide the header menu (triple bar) across all columns
+              menuTabs: [],
+              suppressHeaderMenuButton: true
             }}
             onColumnResized={handleColumnResized}
             onColumnMoved={handleColumnMoved}
