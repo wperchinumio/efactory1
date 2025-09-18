@@ -84,6 +84,7 @@ import {
   IconPower,
 } from '@tabler/icons-react';
 import Calculator from '../../components/ui/Calculator';
+import { Dialog } from '@/components/ui/Dialog';
 
 interface SidebarMenuProps {
   setMobileNav?: (value: boolean) => void;
@@ -545,18 +546,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
   }, [pageUrl, sidebarAutoCollapse, visibleMenus, activeTopMenu, userApps, calculatedActiveSidebarMenu]);
 
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && calculatorOpen) {
-        setCalculatorOpen(false);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [calculatorOpen]);
+  // Dialog handles Escape and scroll locking
 
   return (
     <>
@@ -795,7 +785,7 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
         
         {/* Remaining buttons - Right side */}
         <div className='flex gap-5 flex-shrink-0'>
-          <button onClick={toggleCalculator} className={`transition-all duration-300 hover:text-secondary hover:scale-105 after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-sm after:transition-all after:duration-500 after:ease-in-out ${calculatorOpen ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+          <button onClick={toggleCalculator} className='transition-all duration-300 hover:text-secondary hover:scale-105'>
             <span title='Calculator'>
               <IconCalculator className='stroke-[1.5] w-[20px] h-[20px]' />
             </span>
@@ -807,11 +797,9 @@ const SidebarMenu: React.FC<SidebarMenuProps> = ({ setMobileNav }) => {
           </Link>
         </div>
       </div>
-      {calculatorOpen && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center'>
-          <Calculator onClose={() => setCalculatorOpen(false)} />
-        </div>
-      )}
+      <Dialog open={calculatorOpen} onOpenChange={setCalculatorOpen}>
+        <Calculator onClose={() => setCalculatorOpen(false)} />
+      </Dialog>
     </>
   );
 };

@@ -53,6 +53,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { getAuthToken } from '@/lib/auth/storage';
 import Calculator from '../ui/Calculator';
+import { Dialog } from '@/components/ui/Dialog';
 
 interface SidebarProps {
 	setMobileNav: (value: boolean) => void;
@@ -265,17 +266,17 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
             </ul>
             {/* bottom shortcuts unchanged */}
             <div className='sidebar-bottom-link flex justify-evenly gap-3 mx-0 px-3 py-2 border-t border-dashed border-border-color mt-auto sticky bottom-0 bg-body-color z-10 transition-all duration-300 ease-in-out'>
-                <button onClick={toggleSchedule} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-[2px] after:transition-all after:duration-500 after:ease-in-out ${schedule ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+                <button onClick={toggleSchedule} className='transition-all duration-300 hover:text-secondary'>
                     <span title='My Schedule'>
                         <IconCalendar className='stroke-[1.5] w-[20px] h-[20px]' />
                     </span>
                 </button>
-                <button onClick={toggleNote} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-[2px] after:transition-all after:duration-500 after:ease-in-out ${note ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+                <button onClick={toggleNote} className='transition-all duration-300 hover:text-secondary'>
                     <span title='My Note'>
                         <IconNote className='stroke-[1.5] w-[20px] h-[20px]' />
                     </span>
                 </button>
-                <button onClick={toggleCalculator} className={`transition-all duration-300 hover:text-secondary after:fixed after:z-[4] after:w-full after:h-full after:left-0 after:top-0 after:bg-black-50 after:backdrop-blur-[2px] after:transition-all after:duration-500 after:ease-in-out ${calculatorOpen ? 'after:opacity-1 after:visible after:overflow-auto' : 'after:opacity-0 after:invisible after:overflow-hidden'}`}>
+                <button onClick={toggleCalculator} className='transition-all duration-300 hover:text-secondary'>
                     <span title='Calculator'>
                         <IconCalculator className='stroke-[1.5] w-[20px] h-[20px]' />
                     </span>
@@ -287,11 +288,9 @@ export default function Sidebar({ setMobileNav, note, toggleNote, chat, toggleCh
   <IconPower className='stroke-[1.5] w-[20px] h-[20px]' />
 </Link>
             </div>
-            {calculatorOpen && (
-                <div className='fixed inset-0 z-50 flex items-center justify-center'>
-                    <Calculator onClose={() => setCalculatorOpen(false)} />
-                </div>
-            )}
+            <Dialog open={calculatorOpen} onOpenChange={setCalculatorOpen}>
+                <Calculator onClose={() => setCalculatorOpen(false)} />
+            </Dialog>
         </>
     )
 }
