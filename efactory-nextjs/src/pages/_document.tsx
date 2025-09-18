@@ -7,7 +7,6 @@ export default function Document() {
       <Head>
         <link rel="icon" href="/images/logo_square.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/images/logo_square.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="description" content="eFactory - Enterprise Factory Management System" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
