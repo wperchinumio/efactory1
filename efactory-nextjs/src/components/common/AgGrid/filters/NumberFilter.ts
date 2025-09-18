@@ -1,4 +1,4 @@
-import { IFilterComp, IFilterParams, PromiseOrValue } from 'ag-grid-community';
+import { IFilterComp, IFilterParams } from 'ag-grid-community';
 
 interface NumberFilterModel {
   type: string;
@@ -12,7 +12,7 @@ export class NumberFilter implements IFilterComp {
   private filterValue: string | null = null;
   private onFilterChangedCallback?: () => void;
 
-  init(params: IFilterParams): PromiseOrValue<void> {
+  init(params: IFilterParams): void {
     this.filterParams = params;
     
     // Register the filter changed callback
@@ -48,7 +48,7 @@ export class NumberFilter implements IFilterComp {
     return null;
   }
 
-  setModel(model: NumberFilterModel | null): PromiseOrValue<void> {
+  setModel(model: NumberFilterModel | null): void {
     if (model) {
       this.filterType = model.type || 'equals';
       this.filterValue = model.filter;

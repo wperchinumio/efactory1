@@ -390,27 +390,38 @@ export default function GridPage({
       const isCachedDataFresh = gridCache.isDataFresh(pageKey, 0); // 0 = no cache timeout, never reload
       
       const normalizedIncomingFilter = normalizeFilterForCache(filter);
+      
       const normalizedCachedFilter = normalizeFilterForCache(cachedData?.filters);
       
-      // Check if we should use cached data (ONLY when BOTH conditions are met)
+      // Check if we should use cached data (ONLY when returning from overview due to row click)
       const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
       const cacheFromRowClick = cachedData?.fromRowClick === true;
-      const shouldUseCache = returningFromOverview && cacheFromRowClick;
+      // Ensure the current header filter store matches what we cached when navigating to overview
+      let agStoreMatchesCache = true;
+      try {
+        if (typeof window !== 'undefined') {
+          const all = (window as any).__wildcardFilterStore || {};
+          const currentPath = window.location.pathname.replace(/\//g, '_');
+          const currentStore: Record<string, string> = {};
+          Object.entries(all).forEach(([key, value]) => {
+            if (key.startsWith(`${currentPath}__`)) {
+              const field = key.substring(`${currentPath}__`.length);
+              currentStore[field] = value as string;
+            }
+          });
+          const cachedStore = cachedData?.agFilterModel || {};
+          agStoreMatchesCache = JSON.stringify(currentStore) === JSON.stringify(cachedStore);
+        }
+      } catch {}
+      const shouldUseCache = returningFromOverview && cacheFromRowClick && agStoreMatchesCache;
       
-      if (returningFromOverview) {
-      }
-      
-      // Detailed validation logging
-      const hasSelectedView = !!selectedView?.id;
-      const viewIdMatch = !hasSelectedView || (cachedData?.viewId === selectedView?.id?.toString());
-      const filterMatch = JSON.stringify(normalizedCachedFilter) === JSON.stringify(normalizedIncomingFilter);
-      const sortMatch = JSON.stringify(cachedData?.sort) === JSON.stringify(sort);
       
       
       // Use cache if returning from overview with row click - be more lenient on other conditions
       if (shouldUseCache && cachedData && isCachedDataFresh) {
         
         // Use cached data
+        
         setCurrentRows(cachedData.data);
         currentRowsRef.current = cachedData.data;
         
@@ -419,12 +430,9 @@ export default function GridPage({
           setFilterState(cachedData.filterState);
         }
         
-        // DO NOT clear the flag here - it needs to stay true until the grid is fully initialized
-        
-        // Clear the flag after a delay to ensure all grid events have processed
-        setTimeout(() => {
-          gridCache.setReturningFromOverview(pageKey, false);
-        }, 1000); // 1 second should be enough for all grid initialization
+        // Immediately clear the flag so any subsequent actions (like changing header filters)
+        // will trigger fresh API calls rather than reusing the cache again.
+        try { gridCache.setReturningFromOverview(pageKey, false); } catch {}
         
         
         return {
@@ -434,9 +442,12 @@ export default function GridPage({
         };
       }
       
+      // No cache used here; proceed to API
+      
       
       
       try {
+        
         const result = await readGridRows<any>(viewsUrl, {
           action: 'read',
           fields: ['*'],
@@ -447,6 +458,7 @@ export default function GridPage({
           sort,
           filter_id: filter_id ?? '',
         });
+        
         
         // Store current rows for navigation
         setCurrentRows(result.rows || []);
@@ -1091,9 +1103,13 @@ export default function GridPage({
           const cachedData = gridCache.getCachedData(pageKey);
           const filterStore = cachedData?.agFilterModel; // This now contains our window filter store
         if (filterStore && Object.keys(filterStore).length > 0) {
-          // Restore to simple window store
+          // Restore to window store with page-prefixed keys so floating filters display values
           if (typeof window !== 'undefined') {
-            (window as any).__wildcardFilterStore = filterStore;
+            const currentPath = window.location.pathname.replace(/\//g, '_');
+            const store = (window as any).__wildcardFilterStore || ((window as any).__wildcardFilterStore = {});
+            Object.entries(filterStore).forEach(([field, value]) => {
+              store[`${currentPath}__${field}`] = value as string;
+            });
           }
         }
           return undefined; // We don't use AG Grid filter model anymore

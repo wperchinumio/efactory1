@@ -212,9 +212,10 @@ export async function downloadFile(
 				const blob = new Blob([this.response], { type: contentType });
 				
 				if (typeof window !== 'undefined') {
-					if (typeof window.navigator.msSaveBlob !== 'undefined') {
+					const navAny = (window.navigator as any);
+					if (typeof navAny.msSaveBlob !== 'undefined') {
 						// IE workaround
-						window.navigator.msSaveBlob(blob, filename);
+						navAny.msSaveBlob(blob, filename);
 					} else {
 						const URL = window.URL || window.webkitURL;
 						const downloadUrl = URL.createObjectURL(blob);

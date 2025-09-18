@@ -45,7 +45,6 @@ export class NumberFloatingFilter implements IFloatingFilterComp {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[NUMBER FILTER] ENTER PRESSED - calling applyFilter()');
         this.applyFilter();
       }
     });
@@ -55,12 +54,11 @@ export class NumberFloatingFilter implements IFloatingFilterComp {
     // Prevent multiple calls within 100ms
     const now = Date.now();
     if (now - this.lastApplyTime < 100) {
-      console.log('[NUMBER FILTER] applyFilter() BLOCKED - too soon after last call');
       return;
     }
     this.lastApplyTime = now;
     
-    console.log('[NUMBER FILTER] applyFilter() called');
+    
     // ALWAYS read from input field to get the most current value
     const value = (this.inputElement.value || '').trim();
     
@@ -102,7 +100,6 @@ export class NumberFloatingFilter implements IFloatingFilterComp {
     setTimeout(() => {
       // Access the debounced function stored on the API
       const debouncedFetch = (this.params.api as any).__debouncedFilterFetch;
-      console.log('[NUMBER FILTER] Calling debounced fetch');
       if (debouncedFetch) {
         debouncedFetch();
       }

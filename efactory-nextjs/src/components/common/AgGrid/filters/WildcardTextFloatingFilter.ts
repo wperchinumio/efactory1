@@ -19,7 +19,7 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
     // Use current URL path to make filters page-specific
     const currentPath = window.location.pathname.replace(/\//g, '_'); // Convert /orders/open to _orders_open
     this.fieldId = `${currentPath}__${params.column.getColId()}`;
-    console.log('FILTER INIT - path:', currentPath, 'fieldId:', this.fieldId);
+    
     
     // Create input element
     this.inputElement = document.createElement('input');
@@ -47,7 +47,7 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[TEXT FILTER] ENTER PRESSED - calling applyFilter()');
+        
         this.applyFilter();
       }
     };
@@ -58,7 +58,7 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
   }
 
   applyFilter(): void {
-    console.log('[TEXT FILTER] applyFilter() called - STACK TRACE:', new Error().stack);
+    
     // ALWAYS read from input field to get the most current value
     const value = (this.inputElement.value || '').trim();
     
@@ -69,7 +69,7 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
       delete (window as any).__wildcardFilterStore[this.fieldId];
     }
     
-    console.log('APPLY FILTER - input value:', this.inputElement.value, 'final value:', value, 'store after update:', (window as any).__wildcardFilterStore[this.fieldId]);
+    
     
     // Parse wildcard patterns
     let filterType = 'equals';
@@ -92,9 +92,9 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
     setTimeout(() => {
       // Access the debounced function stored on the API
       const debouncedFetch = (this.params.api as any).__debouncedFilterFetch;
-      const timestamp = Date.now();
-      console.log('[TEXT FILTER] Calling debounced fetch at', timestamp, 'for field:', this.fieldId);
+      
       if (debouncedFetch) {
+        try { (this.params.api as any).__wildcardLastApplied = Date.now(); } catch {}
         debouncedFetch();
       }
     }, 10);
@@ -102,10 +102,9 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
 
   onParentModelChanged(parentModel: any): void {
     // Don't let AG Grid update our input - we manage our own state
-    const filterStores = (window as any).__wildcardFilterStores || {};
-    const filterStore = filterStores[this.storeKey] || {};
+    const store = (window as any).__wildcardFilterStore || {};
     // Only update if we don't have a value in our store
-    if (!filterStore[this.fieldId]) {
+    if (!store[this.fieldId]) {
       if (!parentModel) {
         this.inputElement.value = '';
       } else {
@@ -128,7 +127,7 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
         }
         
         this.inputElement.value = displayValue;
-        filterStore[this.fieldId] = displayValue;
+        store[this.fieldId] = displayValue;
       }
     }
   }

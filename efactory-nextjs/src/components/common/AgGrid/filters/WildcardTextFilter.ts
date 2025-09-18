@@ -1,4 +1,4 @@
-import { IFilterComp, IFilterParams, IDoesFilterPassParams, PromiseOrValue } from 'ag-grid-community';
+import { IFilterComp, IFilterParams, IDoesFilterPassParams } from 'ag-grid-community';
 
 export interface WildcardFilterModel {
   type: string;
@@ -12,7 +12,7 @@ export class WildcardTextFilter implements IFilterComp {
   private gui!: HTMLDivElement;
   private onFilterChangedCallback: (() => void) | null = null;
 
-  init(params: IFilterParams): PromiseOrValue<void> {
+  init(params: IFilterParams): void {
     this.filterParams = params;
     
     // Register the filter changed callback
@@ -49,7 +49,7 @@ export class WildcardTextFilter implements IFilterComp {
     };
   }
 
-  setModel(model: WildcardFilterModel | null): PromiseOrValue<void> {
+  setModel(model: WildcardFilterModel | null): void {
     if (model) {
       this.filterType = model.type || 'equals';
       this.filterValue = model.filter;

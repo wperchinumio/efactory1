@@ -460,6 +460,7 @@ export function LunoAgGrid<T = any>({
 
   // Handle filter changes
   const handleFiltersChange = (newFilterState: FilterState) => {
+    try { gridCache.clearCache(resource); } catch {}
     setFilterState(newFilterState);
     onFilterStateChange?.(newFilterState);
     if (isBatchingResetRef.current) return; // skip fetching while Reset All is batching
@@ -535,6 +536,7 @@ export function LunoAgGrid<T = any>({
 
   // Handle sort changes - trigger remote sorting
   const handleSortChanged = (event: any) => {
+    try { gridCache.clearCache(resource); } catch {}
     // Get the sort model from the grid API
     const api = gridApiRef.current || event.api;
     if (!api) return;
@@ -869,6 +871,7 @@ export function LunoAgGrid<T = any>({
   }, [cachedView, selectedView, initialFilters]);
 
   async function fetchPage(nextPage: number, customFilterState?: FilterState, customView?: GridSelectedView, customSort?: GridSortSpec[], forceRefresh?: boolean) {
+    
     // Remove the blocking check - let onFetchRows handle the cache logic
     const pageKey = resource;
     const returningFromOverview = gridCache.isReturningFromOverview(pageKey);
@@ -917,14 +920,14 @@ export function LunoAgGrid<T = any>({
       
       // Access the simple filter store
       const filterStore = (window as any).__wildcardFilterStore || {};
-      console.log('GRID READING STORE:', JSON.stringify(filterStore));
+      
       
       Object.entries(filterStore).forEach(([fieldKey, value]: [string, any]) => {
         // Only process fields that belong to this page
         const currentPath = window.location.pathname.replace(/\//g, '_');
         if (fieldKey.startsWith(`${currentPath}__`)) {
           const field = fieldKey.substring(`${currentPath}__`.length);
-          console.log('GRID PROCESSING FIELD:', field, 'VALUE:', value);
+          
           if (value && value.trim()) {
             const trimmedValue = value.trim();
             let oper = 'equals';
@@ -991,6 +994,7 @@ export function LunoAgGrid<T = any>({
     const baseConditions = Array.isArray((baseFilter as any)?.and) ? ((baseFilter as any).and as GridFilterCondition[]) : [];
     const uiConditions = buildConditionsFromFilterState(currentFilterState);
     const agConditions = buildConditionsFromAgModel();
+    
 
     // Merge with precedence: base < UI filters < AG Grid header filters
     const mergedByField = {
@@ -1033,6 +1037,7 @@ export function LunoAgGrid<T = any>({
     
     setLoading(true);
     try {
+      
       const response = await onFetchRows(nextPage, pageSize, currentFilter, sort, undefined);
       setRows(response.rows || []);
       setTotal(response.total || 0);
@@ -1314,6 +1319,7 @@ export function LunoAgGrid<T = any>({
     // Store the debounced fetch function on the API so floating filters can access it
     (e.api as any).__debouncedFilterFetch = onFilterChanged;
     
+    
     // Prevent AG Grid from managing focus
     const gridApi = e.api as any;
     if (gridApi.focusService) {
@@ -1390,6 +1396,7 @@ export function LunoAgGrid<T = any>({
       if (isBatchingResetRef.current) {
         return; // suppress intermediate fetches during Reset All
       }
+      try { gridCache.clearCache(resource); } catch {}
       
       // Clear previous timeout
       if (timeoutId) {
@@ -1413,11 +1420,13 @@ export function LunoAgGrid<T = any>({
               }
             });
             onAgFilterModelChange(resourceFilters);
+            
           }
         } catch {}
         
         // Don't call setPage(1) here - it might trigger another fetchPage call
         // fetchPage(1) will update the page state internally
+        
         fetchPage(1);
       }, 100);
     };
