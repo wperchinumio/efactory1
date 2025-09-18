@@ -326,11 +326,6 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
             name: "red",
             color: "bg-theme-red",
         },
-        {
-            name: "dynamic",
-            color: "bg-primary-10",
-            icon: IconBrush,
-        },
     ]
 
     const [dynamicColorItem, setDynamicColorItem] = useState([
@@ -697,36 +692,11 @@ export default function Header({ toggleMobileNav, mobileNav, toggleNote, toggleC
                                     onClick={() => handleThemeChange(item.name)}
                                     className={`sm:w-[30px] w-[24px] sm:h-[26px] h-[20px] rounded-md flex items-center justify-center relative cursor-pointer ${item.color} ${selectedTheme === item.name ? 'after:absolute after:-left-1 after:-top-1 sm:after:w-[38px] after:w-[32px] sm:after:h-[34px] after:h-[28px] after:rounded-md after:border after:border-primary' : ''}`}
                                 >
-                                    {item.icon && <item.icon className='stroke-[1.5] w-[20px] h-[20px] cursor-pointer' />}
+                                    {('icon' in item) && (item as any).icon ? React.createElement((item as any).icon, { className: 'stroke-[1.5] w-[20px] h-[20px] cursor-pointer' }) : null}
                                 </li>
                             ))}
                         </ul>
-                        <div className='dynamic-color-setting relative md:p-4 py-4 px-3 border border-dashed border-primary rounded-xl mt-6'>
-                            <span className='inline-block bg-card-color px-1.5 font-semibold text-primary absolute -top-3'>
-                                Dynamic Color Setting
-                            </span>
-                            <ul className='sm:columns-2 gap-2'>
-                                {dynamicColorItem.map((item, index) => (
-                                    <li key={index}>
-                                        <div className='flex items-center gap-2'>
-                                            <button
-                                                className={`w-[26px] h-[16px] rounded-md border border-border-color ${item.color}`}
-                                                onClick={() => handleClickDynamicColor(index)}
-                                            ></button>
-                                            <label>
-                                                {item.label}
-                                            </label>
-                                        </div>
-                                        {item.displayColorPicker && (
-                                            <div className='absolute z-[2]'>
-                                                <div onClick={() => handleCloseDynamicColor(index)} className='fixed top-0 right-0 bottom-0 left-0' />
-                                                <ChromePicker color={item.colorValue} onChange={(newColor) => handleChangeDynamicColor(newColor, index)} />
-                                            </div>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                        {/* Dynamic Color Setting removed per request */}
                     </div>
                     <div className='relative mb-6 md:p-4 py-4 px-3 border border-dashed border-border-color rounded-xl'>
                         <span className='inline-block bg-card-color px-1.5 font-semibold absolute -top-3'>
