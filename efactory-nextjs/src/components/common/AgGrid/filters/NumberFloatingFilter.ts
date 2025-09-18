@@ -6,20 +6,18 @@ if (typeof window !== 'undefined') {
   (window as any).__wildcardFilterStore = (window as any).__wildcardFilterStore || {};
 }
 
-export class WildcardTextFloatingFilter implements IFloatingFilterComp {
+export class NumberFloatingFilter implements IFloatingFilterComp {
   private params!: IFloatingFilterParams;
   private inputElement!: HTMLInputElement;
   private fieldId: string = '';
   private lastApplyTime: number = 0;
-  private handleKeyDown!: (e: KeyboardEvent) => void;
 
   init(params: IFloatingFilterParams): void {
     this.params = params;
     
     // Use current URL path to make filters page-specific
-    const currentPath = window.location.pathname.replace(/\//g, '_'); // Convert /orders/open to _orders_open
+    const currentPath = window.location.pathname.replace(/\//g, '_');
     this.fieldId = `${currentPath}__${params.column.getColId()}`;
-    console.log('FILTER INIT - path:', currentPath, 'fieldId:', this.fieldId);
     
     // Create input element
     this.inputElement = document.createElement('input');
@@ -42,23 +40,27 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
       }
     });
 
-    // Handle Enter key - use named function to avoid duplicates
-    this.handleKeyDown = (e: KeyboardEvent) => {
+    // Handle Enter key
+    this.inputElement.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[TEXT FILTER] ENTER PRESSED - calling applyFilter()');
+        console.log('[NUMBER FILTER] ENTER PRESSED - calling applyFilter()');
         this.applyFilter();
       }
-    };
-    
-    // Remove any existing listeners and add new one
-    this.inputElement.removeEventListener('keydown', this.handleKeyDown);
-    this.inputElement.addEventListener('keydown', this.handleKeyDown);
+    });
   }
 
   applyFilter(): void {
-    console.log('[TEXT FILTER] applyFilter() called - STACK TRACE:', new Error().stack);
+    // Prevent multiple calls within 100ms
+    const now = Date.now();
+    if (now - this.lastApplyTime < 100) {
+      console.log('[NUMBER FILTER] applyFilter() BLOCKED - too soon after last call');
+      return;
+    }
+    this.lastApplyTime = now;
+    
+    console.log('[NUMBER FILTER] applyFilter() called');
     // ALWAYS read from input field to get the most current value
     const value = (this.inputElement.value || '').trim();
     
@@ -69,31 +71,38 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
       delete (window as any).__wildcardFilterStore[this.fieldId];
     }
     
-    console.log('APPLY FILTER - input value:', this.inputElement.value, 'final value:', value, 'store after update:', (window as any).__wildcardFilterStore[this.fieldId]);
-    
-    // Parse wildcard patterns
+    // Parse number operators
     let filterType = 'equals';
     let filterValue = value;
     
     if (value) {
-      if (value.startsWith('*') && value.endsWith('*') && value.length > 2) {
-        filterType = 'contains';
-        filterValue = value.slice(1, -1);
-      } else if (value.startsWith('*') && value.length > 1) {
-        filterType = 'endsWith';
-        filterValue = value.slice(1);
-      } else if (value.endsWith('*') && value.length > 1) {
-        filterType = 'startsWith';
-        filterValue = value.slice(0, -1);
+      if (value.startsWith('>=')) {
+        filterType = 'greaterThanOrEqual';
+        filterValue = value.substring(2).trim();
+      } else if (value.startsWith('<=')) {
+        filterType = 'lessThanOrEqual';
+        filterValue = value.substring(2).trim();
+      } else if (value.startsWith('<>') || value.startsWith('!=')) {
+        filterType = 'notEqual';
+        filterValue = value.substring(2).trim();
+      } else if (value.startsWith('>')) {
+        filterType = 'greaterThan';
+        filterValue = value.substring(1).trim();
+      } else if (value.startsWith('<')) {
+        filterType = 'lessThan';
+        filterValue = value.substring(1).trim();
+      } else if (value.startsWith('=')) {
+        filterType = 'equals';
+        filterValue = value.substring(1).trim();
       }
+      // If no operator, default to equals
     }
     
     // COMPLETELY BYPASS AG GRID - call the debounced fetch directly
     setTimeout(() => {
       // Access the debounced function stored on the API
       const debouncedFetch = (this.params.api as any).__debouncedFilterFetch;
-      const timestamp = Date.now();
-      console.log('[TEXT FILTER] Calling debounced fetch at', timestamp, 'for field:', this.fieldId);
+      console.log('[NUMBER FILTER] Calling debounced fetch');
       if (debouncedFetch) {
         debouncedFetch();
       }
@@ -102,33 +111,40 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
 
   onParentModelChanged(parentModel: any): void {
     // Don't let AG Grid update our input - we manage our own state
-    const filterStores = (window as any).__wildcardFilterStores || {};
-    const filterStore = filterStores[this.storeKey] || {};
     // Only update if we don't have a value in our store
-    if (!filterStore[this.fieldId]) {
+    if (!(window as any).__wildcardFilterStore[this.fieldId]) {
       if (!parentModel) {
         this.inputElement.value = '';
       } else {
-        // Restore the display with wildcards based on filter type
+        // Restore the display with operators based on filter type
         const { type, filter } = parentModel;
         let displayValue = filter || '';
         
         if (filter) {
           switch (type) {
-            case 'startsWith':
-              displayValue = filter + '*';
+            case 'greaterThanOrEqual':
+              displayValue = '>=' + filter;
               break;
-            case 'endsWith':
-              displayValue = '*' + filter;
+            case 'lessThanOrEqual':
+              displayValue = '<=' + filter;
               break;
-            case 'contains':
-              displayValue = '*' + filter + '*';
+            case 'greaterThan':
+              displayValue = '>' + filter;
               break;
+            case 'lessThan':
+              displayValue = '<' + filter;
+              break;
+            case 'notEqual':
+              displayValue = '<>' + filter;
+              break;
+            case 'equals':
+            default:
+              displayValue = filter;
           }
         }
         
         this.inputElement.value = displayValue;
-        filterStore[this.fieldId] = displayValue;
+        (window as any).__wildcardFilterStore[this.fieldId] = displayValue;
       }
     }
   }
@@ -139,10 +155,6 @@ export class WildcardTextFloatingFilter implements IFloatingFilterComp {
 
   // Clean up
   destroy(): void {
-    // Remove event listeners to prevent memory leaks
-    if (this.inputElement && this.handleKeyDown) {
-      this.inputElement.removeEventListener('keydown', this.handleKeyDown);
-    }
     // Don't clear the store on destroy - we want to persist across re-renders
   }
 }

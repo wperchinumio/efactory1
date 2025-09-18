@@ -1090,20 +1090,17 @@ export default function GridPage({
           
           const cachedData = gridCache.getCachedData(pageKey);
           const filterStore = cachedData?.agFilterModel; // This now contains our window filter store
-          if (filterStore && Object.keys(filterStore).length > 0) {
-            // Restore to resource-specific window store
-            if (typeof window !== 'undefined') {
-              (window as any).__wildcardFilterStores = (window as any).__wildcardFilterStores || {};
-              (window as any).__wildcardFilterStores[resource] = filterStore;
-            }
+        if (filterStore && Object.keys(filterStore).length > 0) {
+          // Restore to simple window store
+          if (typeof window !== 'undefined') {
+            (window as any).__wildcardFilterStore = filterStore;
           }
+        }
           return undefined; // We don't use AG Grid filter model anymore
         })()}
         onAgFilterModelChange={(model) => {
-          // Store our resource-specific window filter store in cache
-          const filterStores = (window as any).__wildcardFilterStores || {};
-          const filterStore = filterStores[resource] || {};
-          gridCache.setAgFilterModel(pageKey, filterStore);
+          // Store our simple window filter store in cache
+          gridCache.setAgFilterModel(pageKey, model);
         }}
         {...(() => {
           const selectedRow = restoreSelectedRow();

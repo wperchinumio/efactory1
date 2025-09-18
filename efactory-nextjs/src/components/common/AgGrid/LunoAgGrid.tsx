@@ -17,10 +17,14 @@ import { useGridCache } from '@/contexts/GridCacheContext';
 // Import custom filters only on client side
 let WildcardTextFilter: any;
 let WildcardTextFloatingFilter: any;
+let NumberFilter: any;
+let NumberFloatingFilter: any;
 
 if (typeof window !== 'undefined') {
   WildcardTextFilter = require('./filters/WildcardTextFilter').WildcardTextFilter;
   WildcardTextFloatingFilter = require('./filters/WildcardTextFloatingFilter').WildcardTextFloatingFilter;
+  NumberFilter = require('./filters/NumberFilter').NumberFilter;
+  NumberFloatingFilter = require('./filters/NumberFloatingFilter').NumberFloatingFilter;
 }
 
 export interface LunoAgGridProps<T = any> {
@@ -124,16 +128,22 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     const dataType = field.data_type || 'string';
     
     if (dataType === 'number') {
-      colDef.filter = 'agNumberColumnFilter';
+      // Use custom number filter that works with our bypass system
+      if (typeof window !== 'undefined' && NumberFilter && NumberFloatingFilter) {
+        colDef.filter = NumberFilter;
+        colDef.floatingFilterComponent = NumberFloatingFilter;
+      } else {
+        colDef.filter = 'agNumberColumnFilter';
+        colDef.filterParams = {
+          buttons: ['reset', 'apply'],
+          closeOnApply: true,
+          suppressAndOrCondition: true,
+          filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
+          defaultOption: 'equals',
+          suppressFilterButton: false,
+        };
+      }
       colDef.floatingFilter = true;
-      colDef.filterParams = {
-        buttons: ['reset', 'apply'],
-        closeOnApply: true,
-        suppressAndOrCondition: true,
-        filterOptions: ['equals', 'notEqual', 'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'],
-        defaultOption: 'equals',
-        suppressFilterButton: false,
-      };
       colDef.suppressHeaderFilterButton = true;
     } else if (dataType === 'date' || dataType === 'datetime') {
       colDef.filter = 'agDateColumnFilter';
@@ -461,9 +471,15 @@ export function LunoAgGrid<T = any>({
   const handleResetAll = () => {
     const api = gridApiRef.current;
     
-    // Clear our resource-specific window filter store
-    if (typeof window !== 'undefined' && (window as any).__wildcardFilterStores) {
-      (window as any).__wildcardFilterStores[resource] = {};
+    // Clear our window filter store for this page only
+    if (typeof window !== 'undefined' && (window as any).__wildcardFilterStore) {
+      const filterStore = (window as any).__wildcardFilterStore;
+      const currentPath = window.location.pathname.replace(/\//g, '_');
+      Object.keys(filterStore).forEach(key => {
+        if (key.startsWith(`${currentPath}__`)) {
+          delete filterStore[key];
+        }
+      });
     }
     
     if (api) {
@@ -899,30 +915,62 @@ export function LunoAgGrid<T = any>({
     const buildConditionsFromAgModel = (): GridFilterCondition[] => {
       const conditions: GridFilterCondition[] = [];
       
-      // Access the resource-specific filter store
-      const filterStores = (window as any).__wildcardFilterStores || {};
-      const filterStore = filterStores[resource] || {};
-      console.log('[DEBUG] Building filter conditions for resource:', resource, 'filterStore:', filterStore);
+      // Access the simple filter store
+      const filterStore = (window as any).__wildcardFilterStore || {};
+      console.log('GRID READING STORE:', JSON.stringify(filterStore));
       
-      Object.entries(filterStore).forEach(([field, value]: [string, any]) => {
-        if (value && value.trim()) {
-          const trimmedValue = value.trim();
-          let oper = 'equals';
-          let filterValue = trimmedValue;
-          
-          // Parse wildcards
-          if (trimmedValue.startsWith('*') && trimmedValue.endsWith('*') && trimmedValue.length > 2) {
-            oper = 'contains';
-            filterValue = trimmedValue.slice(1, -1);
-          } else if (trimmedValue.startsWith('*') && trimmedValue.length > 1) {
-            oper = 'endsWith';
-            filterValue = trimmedValue.slice(1);
-          } else if (trimmedValue.endsWith('*') && trimmedValue.length > 1) {
-            oper = 'startsWith';
-            filterValue = trimmedValue.slice(0, -1);
+      Object.entries(filterStore).forEach(([fieldKey, value]: [string, any]) => {
+        // Only process fields that belong to this page
+        const currentPath = window.location.pathname.replace(/\//g, '_');
+        if (fieldKey.startsWith(`${currentPath}__`)) {
+          const field = fieldKey.substring(`${currentPath}__`.length);
+          console.log('GRID PROCESSING FIELD:', field, 'VALUE:', value);
+          if (value && value.trim()) {
+            const trimmedValue = value.trim();
+            let oper = 'equals';
+            let filterValue = trimmedValue;
+            
+            // Parse wildcards (for strings) and operators (for numbers)
+            if (trimmedValue.startsWith('*') && trimmedValue.endsWith('*') && trimmedValue.length > 2) {
+              // String wildcard: *text*
+              oper = 'contains';
+              filterValue = trimmedValue.slice(1, -1);
+            } else if (trimmedValue.startsWith('*') && trimmedValue.length > 1) {
+              // String wildcard: *text
+              oper = 'endsWith';
+              filterValue = trimmedValue.slice(1);
+            } else if (trimmedValue.endsWith('*') && trimmedValue.length > 1) {
+              // String wildcard: text*
+              oper = 'startsWith';
+              filterValue = trimmedValue.slice(0, -1);
+            } else if (trimmedValue.startsWith('>=')) {
+              // Number operator: >=123
+              oper = 'greaterThanOrEqual';
+              filterValue = trimmedValue.substring(2).trim();
+            } else if (trimmedValue.startsWith('<=')) {
+              // Number operator: <=123
+              oper = 'lessThanOrEqual';
+              filterValue = trimmedValue.substring(2).trim();
+            } else if (trimmedValue.startsWith('<>') || trimmedValue.startsWith('!=')) {
+              // Number operator: <>123 or !=123
+              oper = 'notEqual';
+              filterValue = trimmedValue.substring(2).trim();
+            } else if (trimmedValue.startsWith('>')) {
+              // Number operator: >123
+              oper = 'greaterThan';
+              filterValue = trimmedValue.substring(1).trim();
+            } else if (trimmedValue.startsWith('<')) {
+              // Number operator: <123
+              oper = 'lessThan';
+              filterValue = trimmedValue.substring(1).trim();
+            } else if (trimmedValue.startsWith('=')) {
+              // Number operator: =123
+              oper = 'equals';
+              filterValue = trimmedValue.substring(1).trim();
+            }
+            
+            conditions.push({ field, oper, value: filterValue });
           }
-          
-          conditions.push({ field, oper, value: filterValue });
         }
       });
       
@@ -998,27 +1046,30 @@ export function LunoAgGrid<T = any>({
   }
 
   // Apply incoming initialFilters (from parent preservation) as UI filters on mount/update
-  const appliedInitialRef = useRef<string | null>(null);
-  useEffect(() => {
-    try {
-      if (!initialFilters) return;
-      const key = JSON.stringify(initialFilters);
-      if (appliedInitialRef.current === key) return;
-      appliedInitialRef.current = key;
-      const uiState = mapGridFilterToFilterState(initialFilters);
-      setFiltersInitialOverride(uiState);
-      setFilterState(uiState);
-      setPage(1);
-      // Defer fetch until grid API is ready so AG header model can overlay correctly
-      if (gridApiRef.current) {
-        fetchPage(1, uiState);
-      }
-      // Clear the override after a short delay to ensure GridFilters has processed it
-      setTimeout(() => {
-        setFiltersInitialOverride(null);
-      }, 100);
-    } catch {}
-  }, [initialFilters]);
+  // DISABLED: This was causing double API calls when filtering
+  // const appliedInitialRef = useRef<string | null>(null);
+  // const isFilteringRef = useRef<boolean>(false);
+  
+  // useEffect(() => {
+  //   try {
+  //     if (!initialFilters) return;
+  //     const key = JSON.stringify(initialFilters);
+  //     if (appliedInitialRef.current === key) return;
+  //     appliedInitialRef.current = key;
+  //     const uiState = mapGridFilterToFilterState(initialFilters);
+  //     setFiltersInitialOverride(uiState);
+  //     setFilterState(uiState);
+  //     setPage(1);
+  //     // Defer fetch until grid API is ready so AG header model can overlay correctly
+  //     if (gridApiRef.current) {
+  //       fetchPage(1, uiState);
+  //     }
+  //     // Clear the override after a short delay to ensure GridFilters has processed it
+  //     setTimeout(() => {
+  //       setFiltersInitialOverride(null);
+  //     }, 100);
+  //   } catch {}
+  // }, [initialFilters]);
   const didInitialFetchRef = useRef<boolean>(false);
   
   useEffect(() => {
@@ -1260,6 +1311,9 @@ export function LunoAgGrid<T = any>({
   function onGridReady(e: GridReadyEvent) {
     gridApiRef.current = e.api;
     
+    // Store the debounced fetch function on the API so floating filters can access it
+    (e.api as any).__debouncedFilterFetch = onFilterChanged;
+    
     // Prevent AG Grid from managing focus
     const gridApi = e.api as any;
     if (gridApi.focusService) {
@@ -1301,8 +1355,7 @@ export function LunoAgGrid<T = any>({
     // The initialAgFilterModel now restores our window filter store in GridPage
     // So we just need to trigger a filter change if we have filters
     if (initialAgFilterModel !== undefined) {
-      const filterStores = (window as any).__wildcardFilterStores || {};
-      const filterStore = filterStores[resource] || {};
+      const filterStore = (window as any).__wildcardFilterStore || {};
       if (Object.keys(filterStore).length > 0) {
         // Trigger filter change to apply restored filters
         setTimeout(() => {
@@ -1349,14 +1402,22 @@ export function LunoAgGrid<T = any>({
         // This prevents cache updates while user is typing
         try {
           if (onAgFilterModelChange) {
-            // Pass our resource-specific filter store to the cache
-            const filterStores = (window as any).__wildcardFilterStores || {};
-            const filterStore = filterStores[resource] || {};
-            onAgFilterModelChange(filterStore);
+            // Pass our filter store to the cache
+            const allFilters = (window as any).__wildcardFilterStore || {};
+            const resourceFilters: Record<string, string> = {};
+            const currentPath = window.location.pathname.replace(/\//g, '_');
+            Object.entries(allFilters).forEach(([key, value]) => {
+              if (key.startsWith(`${currentPath}__`)) {
+                const field = key.substring(`${currentPath}__`.length);
+                resourceFilters[field] = value as string;
+              }
+            });
+            onAgFilterModelChange(resourceFilters);
           }
         } catch {}
         
-        setPage(1);
+        // Don't call setPage(1) here - it might trigger another fetchPage call
+        // fetchPage(1) will update the page state internally
         fetchPage(1);
       }, 100);
     };
