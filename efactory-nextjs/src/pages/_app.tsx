@@ -1,3 +1,4 @@
+import React from 'react';
 import Head from 'next/head';
 import Layout from "@/components/layout/Layout";
 import AuthLayout from "@/components/layout/AuthLayout";
@@ -53,13 +54,11 @@ export default function App({ Component, pageProps }: AppProps) {
         setUserApps([]);
       }
     }
-  }, [isAuthRoute, router.pathname]);
+  }, [isAuthRoute]); // Removed router.pathname dependency to prevent unnecessary re-renders
 
   return (
     <>
       <Head>
-        <link rel="icon" href="/images/logo_square.svg" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.ico" />
         <title>eFactory</title>
       </Head>
       <AuthErrorBoundary>

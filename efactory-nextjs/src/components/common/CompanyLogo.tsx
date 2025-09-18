@@ -1,20 +1,22 @@
-import Image from 'next/image'
+// import Image from 'next/image' // Removed to prevent re-requests
+import React from 'react';
 
 interface CompanyLogoProps {
 	className?: string;
 	miniMode?: boolean;
 }
 
-export default function CompanyLogo({ className, miniMode = false }: CompanyLogoProps) {
+const CompanyLogo = React.memo(function CompanyLogo({ className, miniMode = false }: CompanyLogoProps) {
     if (miniMode) {
         // Show only the square DCL symbol from separate SVG file
         return (
-            <Image 
+            <img 
                 src="/images/logo_square.svg" 
                 alt="DCL Logo" 
                 width={30} 
                 height={29} 
                 className={className}
+                loading="eager"
             />
         )
     }
@@ -31,4 +33,6 @@ export default function CompanyLogo({ className, miniMode = false }: CompanyLogo
             <path d="M72.2,6.5h10.8V0.3H72.7c-8.8,0-12.3,4.5-13.6,9c-1.3-4.5-4.8-9-13.6-9H34.1v18.9h6.4V6.5h5.5 c5.9,0,7.1,4.3,7.1,8c0,2-0.5,4-1.4,5.5c-0.8,1.2-2.2,2.6-5.7,2.6H34.1v6.1H45c3.2,0,8.7,0,12.3-5.3c0.8-1.2,1.4-2.4,1.9-3.8 c0.4,1.4,1,2.6,1.9,3.8c3.6,5.3,9,5.3,12.3,5.3h9.9v-6.1H72.2c-3.5,0-4.9-1.5-5.7-2.6c-0.9-1.4-1.4-3.4-1.4-5.4 C65.2,10.8,66.4,6.5,72.2,6.5"></path>
         </svg>
     )
-}
+});
+
+export default CompanyLogo;
