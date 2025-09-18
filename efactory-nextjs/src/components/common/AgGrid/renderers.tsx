@@ -240,15 +240,15 @@ export function CarrierRenderer({ data }: { data: any }) {
   const tr = data?.tr || '';
   const trl = data?.trl || '';
   return (
-    <span className="leading-tight text-[14px]">
+    <span className="leading-tight text-[12px]">
       <span className="font-semibold">{carrier}</span> - <span>{service}</span>
       <br />
       {trl ? (
-        <a href={trl} target="_blank" rel="noreferrer" className="text-primary text-[14px]" onClick={(e) => { e.stopPropagation(); }}>
+        <a href={trl} target="_blank" rel="noreferrer" className="text-primary text-[12px]" onClick={(e) => { e.stopPropagation(); }}>
           {tr}
         </a>
       ) : (
-        <span className="text-primary font-semibold text-[14px]">{tr}</span>
+        <span className="text-primary font-semibold text-[12px]">{tr}</span>
       )}
     </span>
   );

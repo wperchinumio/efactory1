@@ -116,7 +116,7 @@ function mapFieldToColDef(field: GridFieldDef, cachedWidths?: Record<string, num
     },
   };
 
-  // Use cached width if available, otherwise use field width, then apply offset
+  // Apply width from cache (if available) or from server view, then add visual offset on render
   const width = cachedWidths?.[field.field] ?? field.width;
   if (typeof width === 'number' && !Number.isNaN(width)) {
     colDef.width = Math.max(0, width + VIEW_WIDTH_OFFSET_PX);
@@ -416,6 +416,7 @@ export function LunoAgGrid<T = any>({
   const filterChangeCountRef = useRef<number>(0);
   const [filtersInitialOverride, setFiltersInitialOverride] = useState<FilterState | null>(null);
   const [filterResetKey, setFilterResetKey] = useState(0);
+  const [currentColumnWidths, setCurrentColumnWidths] = useState<Record<string, number>>({});
 
   // Keep cached view up to date if resource changes (rare)
   useEffect(() => {
@@ -682,16 +683,22 @@ export function LunoAgGrid<T = any>({
   const colDefs: ColDef[] = useMemo(() => {
     // Use cached view immediately if available, otherwise use selectedView
     const viewToUse = cachedView || selectedView;
-    const cachedWidths: Record<string, number> = {};
-    
-    if (viewToUse?.fields) {
+    // Only apply cached widths when returning from an overview
+    const applyCachedWidths = (() => {
+      try { return gridCache.isReturningFromOverview(resource); } catch { return false; }
+    })();
+    const cachedWidths: Record<string, number> = applyCachedWidths ? {} : {};
+    if (applyCachedWidths && viewToUse?.fields) {
       viewToUse.fields.forEach((field: any) => {
         if (INTERNAL_COLUMN_FIELDS.has(field.field)) return;
-        if (field.width) {
+        if (typeof field.width === 'number') {
           cachedWidths[field.field] = field.width;
         }
       });
     }
+    
+    // Use current column widths if available, otherwise fall back to cached widths
+    const widthSource = Object.keys(currentColumnWidths).length > 0 ? currentColumnWidths : cachedWidths;
 
     const preCols: ColDef[] = [];
     if (showIndexColumn) {
@@ -801,9 +808,9 @@ export function LunoAgGrid<T = any>({
 
     const defs = (viewToUse.fields || [])
       .filter((f: any) => !INTERNAL_COLUMN_FIELDS.has(f.field))
-      .map(field => mapFieldToColDef(field, cachedWidths));
+      .map(field => mapFieldToColDef(field, widthSource));
     return [...preCols, ...defs];
-  }, [cachedView, selectedView.fields, showIndexColumn, showOrderTypeColumn, resource]);
+  }, [cachedView, selectedView.fields, showIndexColumn, showOrderTypeColumn, resource, currentColumnWidths]);
 
   // Convert GridFilter (from server view.filter) to FilterState for the filter panel UI
   function mapGridFilterToFilterState(filter?: GridFilter): FilterState {
@@ -1385,10 +1392,7 @@ export function LunoAgGrid<T = any>({
     }
     
     // Avoid overriding cached widths on first paint
-    const hasCachedWidths = Boolean(cachedView && (cachedView.fields || []).some(f => !!f.width));
-    if (!hasCachedWidths) {
-      e.api.sizeColumnsToFit();
-    }
+    // Never auto-fit on ready; respect current sizes and user adjustments
 
     // Check if we're restoring from cache
     const pageKey = resource;
@@ -1468,20 +1472,24 @@ export function LunoAgGrid<T = any>({
     };
   }, [onAgFilterModelChange]);
 
+  // Persist widths to cache, but only apply them when returning from overview
   function persistColumnState() {
     try {
       const api = gridApiRef.current;
       if (!api) return;
-      const allCols = api.getColumnDefs() || [];
-      const currentState = api.getColumnDefs()?.map((c: any) => c.field) || [];
-      // Derive order and widths from grid columns API
       const gridColumns = api.getColumns() || [];
       const order = gridColumns.map((gc) => gc.getColDef().field as string);
       const widthByField: Record<string, number> = {};
       gridColumns.forEach((gc) => {
         const f = gc.getColDef().field as string;
-        widthByField[f] = gc.getActualWidth();
+        const actual = gc.getActualWidth();
+        // Store without visual offset so we can add it back when applying
+        widthByField[f] = Math.max(0, actual - VIEW_WIDTH_OFFSET_PX);
       });
+      
+      // Update local state to preserve column widths during re-renders
+      setCurrentColumnWidths(widthByField);
+      
       const newFields: GridFieldDef[] = order
         .filter((f) => !!f)
         .map((f) => {
@@ -1493,9 +1501,12 @@ export function LunoAgGrid<T = any>({
             align: original?.align,
             render: original?.render,
             min_width: original?.min_width,
-            width: widthByField[f] || original?.width,
+            width: widthByField[f] ?? original?.width,
           } as GridFieldDef;
         });
+
+      // Immediately reflect new order in local state so re-renders (e.g., row click) don't reset column positions
+      // Do not alter local cachedView ordering here; only persist to cache for overview restoration
 
       const payload = getCachedViewApiResponseIfExist(resource) || {
         data: [
@@ -1667,6 +1678,8 @@ export function LunoAgGrid<T = any>({
             columnDefs={colDefs}
             onGridReady={onGridReady}
             onRowClicked={(ev) => onRowClicked?.(ev.data, ev)}
+            onColumnResized={handleColumnResized}
+            onColumnMoved={handleColumnMoved}
             defaultColDef={{ 
               resizable: true, 
               sortable: !(loading || !rowsUrl),
@@ -1677,8 +1690,6 @@ export function LunoAgGrid<T = any>({
               menuTabs: [],
               suppressHeaderMenuButton: true
             }}
-            onColumnResized={handleColumnResized}
-            onColumnMoved={handleColumnMoved}
             onFilterChanged={onFilterChanged}
             onSortChanged={handleSortChanged}
             pagination={false}
@@ -1691,12 +1702,6 @@ export function LunoAgGrid<T = any>({
               mode: 'singleRow',
               checkboxes: false,
               enableClickSelection: true
-            }}
-            onCellClicked={(params) => {
-              // Handle row selection on cell click
-              if (params.node) {
-                params.node.setSelected(true);
-              }
             }}
             multiSortKey="ctrl"
             getRowStyle={(params) => ({
