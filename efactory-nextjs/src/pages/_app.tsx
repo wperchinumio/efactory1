@@ -54,7 +54,7 @@ export default function App({ Component, pageProps }: AppProps) {
         setUserApps([]);
       }
     }
-  }, [isAuthRoute]); // Removed router.pathname dependency to prevent unnecessary re-renders
+  }, [isAuthRoute, router.pathname]); // Removed router.pathname dependency to prevent unnecessary re-renders
 
   return (
     <>
